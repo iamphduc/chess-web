@@ -1,0 +1,7 @@
+.piece {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  background-repeat: no-repeat;
+  background-size: contain;
+}

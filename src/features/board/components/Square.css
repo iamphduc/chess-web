@@ -1,0 +1,18 @@
+.square {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0;
+}
+.square:focus {
+  outline: none;
+}
+
+/* 
+  Board color scheme Wheat from http://omgchess.blogspot.com/2015/09/chess-board-color-schemes.html
+*/
+.square--dark {
+  background-color: rgb(187, 190, 100);
+}
+.square--light {
+  background-color: rgb(234, 240, 206);
+}
