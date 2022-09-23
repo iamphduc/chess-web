@@ -2,7 +2,7 @@ import React from "react";
 
 import "./Board.css";
 import { useAppSelector } from "app/hooks";
-import { BoardSquare } from "./components/BoardSquare";
+import { Square } from "./components/Square";
 
 export const Board = () => {
   const { history, possibleMoves } = useAppSelector((state) => state.board);
@@ -17,7 +17,7 @@ export const Board = () => {
       const isPossibleMove = possibleMoves.includes(squareIndex);
 
       squares.push(
-        <BoardSquare
+        <Square
           key={squareIndex}
           y={y}
           x={x}

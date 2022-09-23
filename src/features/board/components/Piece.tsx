@@ -4,21 +4,17 @@ import { motion } from "framer-motion";
 
 import "./Piece.css";
 import { PieceType } from "game/piece-type";
-import { useAppDispatch } from "app/hooks";
-import { selectPiece } from "../BoardSlice";
 import { pieceFactory } from "game/piece-factory";
 
 interface Props {
   pieceType: PieceType;
-  y: number;
-  x: number;
+  handleClick: () => void;
 }
 
-export const Piece = ({ pieceType, y, x }: Props) => {
+export const Piece = ({ pieceType, handleClick }: Props) => {
   const piece = pieceFactory.getPiece(pieceType);
   const image = piece.getImage();
 
-  const dispatch = useAppDispatch();
   const [{ isDragging }, drag, preview] = useDrag(
     () => ({
       type: pieceType,
@@ -28,10 +24,6 @@ export const Piece = ({ pieceType, y, x }: Props) => {
     }),
     [pieceType]
   );
-
-  const handleMouseDown = () => {
-    dispatch(selectPiece({ type: pieceType, y, x }));
-  };
 
   return (
     <>
@@ -43,7 +35,7 @@ export const Piece = ({ pieceType, y, x }: Props) => {
           backgroundImage: `url(${image})`,
           opacity: isDragging ? 0.5 : 1,
         }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleClick}
         layoutId={pieceType}
       />
     </>

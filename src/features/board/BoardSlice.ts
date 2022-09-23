@@ -28,8 +28,7 @@ interface BoardState {
 }
 
 interface MovePiecePayload {
-  toY: number;
-  toX: number;
+  to: Position;
 }
 
 const initialState = {
@@ -62,7 +61,9 @@ export const boardSlice = createSlice({
 
       if (!selectedPiece) return;
 
-      const { toY, toX } = action.payload;
+      const {
+        to: [toY, toX],
+      } = action.payload;
 
       const current = history[history.length - 1];
       const newSquares = JSON.parse(JSON.stringify(current.squares));
