@@ -13,7 +13,7 @@ export const Board = () => {
   for (let y = 0; y < 8; y++) {
     for (let x = 0; x < 8; x++) {
       const squareIndex = y * 8 + x;
-      const pieceDragType = current.squares[y][x];
+      const pieceType = current.squares[y][x];
       const isPossibleMove = possibleMoves.includes(squareIndex);
 
       squares.push(
@@ -21,7 +21,7 @@ export const Board = () => {
           key={squareIndex}
           y={y}
           x={x}
-          dragType={pieceDragType}
+          pieceType={pieceType}
           isPossibleMove={isPossibleMove}
         />
       );

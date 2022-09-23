@@ -2,12 +2,12 @@ import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
 import { initialSquares, HistorySquares } from "game/constants";
-import { PieceDragType } from "game/piece-type";
+import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
 import { Position } from "game/pieces/piece";
 
 export interface SelectedPiece {
-  dragType: PieceDragType;
+  type: PieceType;
   y: number;
   x: number;
 }
@@ -16,7 +16,7 @@ interface Move {
   from: Position;
   to: Position;
   isACheck: boolean;
-  capture?: PieceDragType;
+  capture?: PieceType;
   castling?: "KING_SIDE" | "QUEEN_SIDE";
 }
 
@@ -44,15 +44,15 @@ export const boardSlice = createSlice({
   reducers: {
     selectPiece: (state, action: PayloadAction<SelectedPiece>) => {
       state.selectedPiece = action.payload;
-      console.log(`Selected ${state.selectedPiece.dragType}`);
+      console.log(`Selected ${state.selectedPiece.type}`);
 
-      const { dragType, y, x } = action.payload;
+      const { type, y, x } = action.payload;
       const { history } = state;
 
       const current = history[history.length - 1];
       const possibleMoves = pieceFactory
-        .getPiece(dragType)
-        .getPossibleMoves(dragType, [y, x], current.squares);
+        .getPiece(type)
+        .getPossibleMoves(type, [y, x], current.squares);
 
       state.possibleMoves = possibleMoves;
     },
@@ -66,10 +66,10 @@ export const boardSlice = createSlice({
 
       const current = history[history.length - 1];
       const newSquares = JSON.parse(JSON.stringify(current.squares));
-      newSquares[toY][toX] = selectedPiece.dragType;
+      newSquares[toY][toX] = selectedPiece.type;
       newSquares[selectedPiece.y][selectedPiece.x] = null;
 
-      console.log(`${selectedPiece.dragType} moved to ${[toY, toX]}`);
+      console.log(`${selectedPiece.type} moved to ${[toY, toX]}`);
 
       state.history = [...history, { squares: newSquares }];
       state.possibleMoves = [-1];

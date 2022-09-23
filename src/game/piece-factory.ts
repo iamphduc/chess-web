@@ -1,28 +1,52 @@
-import { convertDragType } from "game/convert-drag-type";
-import { PieceDragType, PieceType } from "game/piece-type";
-import { king } from "./pieces/king";
-import { queen } from "./pieces/queen";
-import { bishop } from "./pieces/bishop";
-import { knight } from "./pieces/knight";
-import { rook } from "./pieces/rook";
+import { PieceType } from "game/piece-type";
+import { blackKing, whiteKing } from "./pieces/king";
+import { blackQueen, whiteQueen } from "./pieces/queen";
+import { blackBishop, whiteBishop } from "./pieces/bishop";
+import { blackKnight, whiteKnight } from "./pieces/knight";
+import { blackRook, whiteRook } from "./pieces/rook";
 import { blackPawn, whitePawn } from "./pieces/pawn";
 
 export class PieceFactory {
-  public getPiece(dragType: PieceDragType) {
-    const { type, isBlack } = convertDragType(dragType);
+  public getPiece(type: PieceType) {
     switch (type) {
-      case PieceType.Rook:
-        return rook;
-      case PieceType.Knight:
-        return knight;
-      case PieceType.Bishop:
-        return bishop;
-      case PieceType.Queen:
-        return queen;
-      case PieceType.King:
-        return king;
-      case PieceType.Pawn:
-        return isBlack ? blackPawn : whitePawn;
+      case PieceType.WhiteQueenRook:
+      case PieceType.WhiteKingRook:
+        return whiteRook;
+
+      case PieceType.BlackQueenRook:
+      case PieceType.BlackKingRook:
+        return blackRook;
+
+      case PieceType.WhiteQueenKnight:
+      case PieceType.WhiteKingKnight:
+        return whiteKnight;
+
+      case PieceType.BlackQueenKnight:
+      case PieceType.BlackKingKnight:
+        return blackKnight;
+
+      case PieceType.WhiteQueenBishop:
+      case PieceType.WhiteKingBishop:
+        return whiteBishop;
+
+      case PieceType.BlackQueenBishop:
+      case PieceType.BlackKingBishop:
+        return blackBishop;
+
+      case PieceType.WhiteQueen:
+        return whiteQueen;
+
+      case PieceType.BlackQueen:
+        return blackQueen;
+
+      case PieceType.WhiteKing:
+        return whiteKing;
+
+      case PieceType.BlackKing:
+        return blackKing;
+
+      default:
+        return type.includes("BLACK") ? blackPawn : whitePawn;
     }
   }
 }

@@ -1,14 +1,15 @@
+import WPawn from "assets/pawn-white.svg";
+import BPawn from "assets/pawn-black.svg";
 import { HistorySquares } from "game/constants";
-import { PieceDragType, PieceOccupied } from "game/piece-type";
+import { PieceType, PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
 
 export class Pawn extends Piece {
-  private readonly isBlack: boolean;
   private readonly initialPositions: number[][];
 
   constructor(isBlack = false) {
-    super();
-    this.isBlack = isBlack;
+    super(isBlack);
+
     this.initialPositions = [
       [8, 9, 10, 11, 12, 13, 14, 15],
       [48, 49, 50, 51, 52, 53, 54, 55],
@@ -16,7 +17,7 @@ export class Pawn extends Piece {
   }
 
   public getPossibleMoves(
-    dragType: PieceDragType,
+    type: PieceType,
     [fromY, fromX]: Position,
     squares: HistorySquares
   ): number[] {
@@ -28,7 +29,7 @@ export class Pawn extends Piece {
     const moves = [];
 
     // Move forward
-    if (super.getOccupiedSquare(dragType, [toY, toX], squares) === PieceOccupied.None) {
+    if (super.getOccupiedSquare(type, [toY, toX], squares) === PieceOccupied.None) {
       moves.push(dest);
       if (this.initialPositions[this.isBlack ? 0 : 1].includes(src)) {
         moves.push(dest + signed * 8);
@@ -37,14 +38,16 @@ export class Pawn extends Piece {
 
     // Capture Enemies
     [-1, 1].forEach((direction) => {
-      if (
-        super.getOccupiedSquare(dragType, [toY, toX - direction], squares) === PieceOccupied.Enemy
-      ) {
+      if (super.getOccupiedSquare(type, [toY, toX - direction], squares) === PieceOccupied.Enemy) {
         moves.push(dest - direction);
       }
     });
 
     return moves;
+  }
+
+  public getImage(): string {
+    return this.isBlack ? BPawn : WPawn;
   }
 }
 

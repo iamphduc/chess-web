@@ -2,7 +2,7 @@ import React from "react";
 import { useDrop } from "react-dnd";
 
 import "./BoardSquare.css";
-import { PieceDragType } from "game/piece-type";
+import { PieceType } from "game/piece-type";
 import { useAppSelector, useAppDispatch } from "app/hooks";
 import { movePiece } from "../BoardSlice";
 import { Square } from "./Square";
@@ -12,11 +12,11 @@ import { Piece } from "./Piece";
 interface Props {
   y: number;
   x: number;
-  dragType: PieceDragType | null;
+  pieceType: PieceType | null;
   isPossibleMove: boolean;
 }
 
-export const BoardSquare = ({ y, x, dragType, isPossibleMove }: Props) => {
+export const BoardSquare = ({ y, x, pieceType, isPossibleMove }: Props) => {
   const { selectedPiece } = useAppSelector((state) => state.board);
   const dispatch = useAppDispatch();
 
@@ -28,7 +28,7 @@ export const BoardSquare = ({ y, x, dragType, isPossibleMove }: Props) => {
 
   const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
-      accept: selectedPiece ? selectedPiece.dragType : "NONE",
+      accept: selectedPiece ? selectedPiece.type : "NONE",
       canDrop: () => isPossibleMove,
       drop: () => movePieceTo(y, x),
       collect: (monitor) => ({
@@ -42,13 +42,13 @@ export const BoardSquare = ({ y, x, dragType, isPossibleMove }: Props) => {
   return (
     <div ref={drop} className="board__square">
       <Square isDark={isDark}>
-        {dragType && <Piece y={y} x={x} dragType={dragType} />}
         {isOver && !canDrop && <Overlay type={OverlayType.Illegal} />}
         {isOver && canDrop && <Overlay type={OverlayType.Legal} />}
         {isPossibleMove && (
           <Overlay type={OverlayType.Possible} handleClick={() => movePieceTo(y, x)} />
         )}
       </Square>
+      {pieceType && <Piece y={y} x={x} pieceType={pieceType} />}
     </div>
   );
 };

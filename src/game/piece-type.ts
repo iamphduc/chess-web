@@ -1,13 +1,4 @@
 export enum PieceType {
-  Rook = "ROOK",
-  Knight = "KNIGHT",
-  Bishop = "BISHOP",
-  Queen = "QUEEN",
-  King = "KING",
-  Pawn = "PAWN",
-}
-
-export enum PieceDragType {
   WhiteQueenRook = "WHITE_QUEEN_ROOK",
   WhiteQueenKnight = "WHITE_QUEEN_KNIGHT",
   WhiteQueenBishop = "WHITE_QUEEN_BISHOP",

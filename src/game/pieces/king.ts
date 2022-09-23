@@ -1,12 +1,15 @@
+import WKing from "assets/king-white.svg";
+import BKing from "assets/king-black.svg";
 import { HistorySquares } from "game/constants";
-import { PieceDragType, PieceOccupied } from "game/piece-type";
+import { PieceType, PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
 
 export class King extends Piece {
   protected directions: [number, number][];
 
-  constructor() {
-    super();
+  constructor(isBlack = false) {
+    super(isBlack);
+
     this.directions = [
       // Above row
       [-1, -1],
@@ -23,7 +26,7 @@ export class King extends Piece {
   }
 
   public getPossibleMoves(
-    dragType: PieceDragType,
+    type: PieceType,
     [fromY, fromX]: Position,
     squares: HistorySquares
   ): number[] {
@@ -34,7 +37,7 @@ export class King extends Piece {
         return -1;
       }
 
-      const pieceOccupied = super.getOccupiedSquare(dragType, [toY, toX], squares);
+      const pieceOccupied = super.getOccupiedSquare(type, [toY, toX], squares);
       if (pieceOccupied === PieceOccupied.Ours) {
         return -1;
       }
@@ -44,6 +47,11 @@ export class King extends Piece {
 
     return moves;
   }
+
+  public getImage(): string {
+    return this.isBlack ? BKing : WKing;
+  }
 }
 
-export const king = new King();
+export const whiteKing = new King();
+export const blackKing = new King(true);

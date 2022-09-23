@@ -1,11 +1,25 @@
 import { HistorySquares } from "game/constants";
-import { PieceDragType, PieceOccupied } from "game/piece-type";
+import { PieceType, PieceOccupied } from "game/piece-type";
 
 export type Position = [number, number];
 
 export abstract class Piece {
+  protected readonly isBlack: boolean;
+
+  constructor(isBlack: boolean) {
+    this.isBlack = isBlack;
+  }
+
+  abstract getPossibleMoves(
+    type: PieceType,
+    [fromY, fromX]: Position,
+    squares: HistorySquares
+  ): number[];
+
+  abstract getImage(): string;
+
   public getOccupiedSquare(
-    dragType: PieceDragType,
+    type: PieceType,
     [toY, toX]: Position,
     squares: HistorySquares
   ): PieceOccupied {
@@ -15,7 +29,7 @@ export abstract class Piece {
       return PieceOccupied.None;
     }
 
-    const isSelectedPieceWhite = dragType.includes("WHITE");
+    const isSelectedPieceWhite = type.includes("WHITE");
     const isOccupiedPieceWhite = occupiedSquare.includes("WHITE");
     if (isSelectedPieceWhite === isOccupiedPieceWhite) {
       return PieceOccupied.Ours;
@@ -23,10 +37,4 @@ export abstract class Piece {
 
     return PieceOccupied.Enemy;
   }
-
-  abstract getPossibleMoves(
-    dragType: PieceDragType,
-    [fromY, fromX]: Position,
-    squares: HistorySquares
-  ): number[];
 }

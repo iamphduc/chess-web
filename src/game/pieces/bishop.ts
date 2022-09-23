@@ -1,12 +1,19 @@
-import { PieceDragType } from "game/piece-type";
+import WBishop from "assets/bishop-white.svg";
+import BBishop from "assets/bishop-black.svg";
+import { HistorySquares } from "game/constants";
+import { PieceType } from "game/piece-type";
 import { Position } from "./piece";
 import { Rook } from "./rook";
 
 export class Bishop extends Rook {
+  constructor(isBlack = false) {
+    super(isBlack);
+  }
+
   public getPossibleMoves(
-    dragType: PieceDragType,
+    type: PieceType,
     [fromY, fromX]: Position,
-    squares: any[]
+    squares: HistorySquares
   ): number[] {
     const moves: number[] = [];
     let y = fromY - 1;
@@ -14,7 +21,7 @@ export class Bishop extends Rook {
 
     // Top Left
     while (y >= 0 && x >= 0) {
-      if (!super.addPossibleMove(moves, dragType, [y, x], squares)) break;
+      if (!super.addPossibleMove(moves, type, [y, x], squares)) break;
       y -= 1;
       x -= 1;
     }
@@ -23,7 +30,7 @@ export class Bishop extends Rook {
     y = fromY - 1;
     x = fromX + 1;
     while (y >= 0 && x < 8) {
-      if (!super.addPossibleMove(moves, dragType, [y, x], squares)) break;
+      if (!super.addPossibleMove(moves, type, [y, x], squares)) break;
       y -= 1;
       x += 1;
     }
@@ -32,7 +39,7 @@ export class Bishop extends Rook {
     y = fromY + 1;
     x = fromX + 1;
     while (y < 8 && x < 8) {
-      if (!super.addPossibleMove(moves, dragType, [y, x], squares)) break;
+      if (!super.addPossibleMove(moves, type, [y, x], squares)) break;
       y += 1;
       x += 1;
     }
@@ -41,13 +48,18 @@ export class Bishop extends Rook {
     y = fromY + 1;
     x = fromX - 1;
     while (y < 8 && x >= 0) {
-      if (!super.addPossibleMove(moves, dragType, [y, x], squares)) break;
+      if (!super.addPossibleMove(moves, type, [y, x], squares)) break;
       y += 1;
       x -= 1;
     }
 
     return moves;
   }
+
+  public getImage(): string {
+    return this.isBlack ? BBishop : WBishop;
+  }
 }
 
-export const bishop = new Bishop();
+export const whiteBishop = new Bishop();
+export const blackBishop = new Bishop(true);

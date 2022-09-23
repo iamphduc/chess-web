@@ -1,30 +1,30 @@
-import { PieceDragType } from "game/piece-type";
+import { PieceType } from "game/piece-type";
 
-export type HistorySquares = (PieceDragType | null)[][];
+export type HistorySquares = (PieceType | null)[][];
 
 // prettier-ignore
 export const initialSquares: HistorySquares = [
   // 1st
   [
-    PieceDragType.BlackQueenRook,
-    PieceDragType.BlackQueenKnight,
-    PieceDragType.BlackQueenBishop,
-    PieceDragType.BlackQueen,
-    PieceDragType.BlackKing,
-    PieceDragType.BlackKingBishop,
-    PieceDragType.BlackKingKnight,
-    PieceDragType.BlackKingRook,
+    PieceType.BlackQueenRook,
+    PieceType.BlackQueenKnight,
+    PieceType.BlackQueenBishop,
+    PieceType.BlackQueen,
+    PieceType.BlackKing,
+    PieceType.BlackKingBishop,
+    PieceType.BlackKingKnight,
+    PieceType.BlackKingRook,
   ],
   // 2nd
   [
-    PieceDragType.BlackPawnA,
-    PieceDragType.BlackPawnB,
-    PieceDragType.BlackPawnC,
-    PieceDragType.BlackPawnD,
-    PieceDragType.BlackPawnE,
-    PieceDragType.BlackPawnF,
-    PieceDragType.BlackPawnG,
-    PieceDragType.BlackPawnH,
+    PieceType.BlackPawnA,
+    PieceType.BlackPawnB,
+    PieceType.BlackPawnC,
+    PieceType.BlackPawnD,
+    PieceType.BlackPawnE,
+    PieceType.BlackPawnF,
+    PieceType.BlackPawnG,
+    PieceType.BlackPawnH,
   ],
   // 3rd
   [null, null, null, null, null, null, null, null],
@@ -36,24 +36,24 @@ export const initialSquares: HistorySquares = [
   [null, null, null, null, null, null, null, null],
   // 7th
   [
-    PieceDragType.WhitePawnA,
-    PieceDragType.WhitePawnB,
-    PieceDragType.WhitePawnC,
-    PieceDragType.WhitePawnD,
-    PieceDragType.WhitePawnE,
-    PieceDragType.WhitePawnF,
-    PieceDragType.WhitePawnG,
-    PieceDragType.WhitePawnH,
+    PieceType.WhitePawnA,
+    PieceType.WhitePawnB,
+    PieceType.WhitePawnC,
+    PieceType.WhitePawnD,
+    PieceType.WhitePawnE,
+    PieceType.WhitePawnF,
+    PieceType.WhitePawnG,
+    PieceType.WhitePawnH,
   ],
   // 8th
   [
-    PieceDragType.WhiteQueenRook,
-    PieceDragType.WhiteQueenKnight,
-    PieceDragType.WhiteQueenBishop,
-    PieceDragType.WhiteQueen,
-    PieceDragType.WhiteKing,
-    PieceDragType.WhiteKingBishop,
-    PieceDragType.WhiteKingKnight,
-    PieceDragType.WhiteKingRook,
+    PieceType.WhiteQueenRook,
+    PieceType.WhiteQueenKnight,
+    PieceType.WhiteQueenBishop,
+    PieceType.WhiteQueen,
+    PieceType.WhiteKing,
+    PieceType.WhiteKingBishop,
+    PieceType.WhiteKingKnight,
+    PieceType.WhiteKingRook,
   ],
 ];

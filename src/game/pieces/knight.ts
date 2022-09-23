@@ -1,8 +1,11 @@
+import WKnight from "assets/knight-white.svg";
+import BKnight from "assets/knight-black.svg";
 import { King } from "./king";
 
 export class Knight extends King {
-  constructor() {
-    super();
+  constructor(isBlack = false) {
+    super(isBlack);
+
     this.directions = [
       // Top - Left
       [-2, -1],
@@ -18,6 +21,11 @@ export class Knight extends King {
       [-2, 1],
     ];
   }
+
+  public getImage(): string {
+    return this.isBlack ? BKnight : WKnight;
+  }
 }
 
-export const knight = new Knight();
+export const whiteKnight = new Knight();
+export const blackKnight = new Knight(true);
