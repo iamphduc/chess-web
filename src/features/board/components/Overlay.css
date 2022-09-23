@@ -1,19 +1,18 @@
 .overlay {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 0px;
+  left: 0px;
   height: 100%;
   width: 100%;
-  zindex: 1;
   opacity: 0.5;
 }
 
-.overlay--red {
+.overlay--illegal {
   background-color: #dc3545;
 }
-.overlay--green {
+.overlay--legal {
   background-color: #28a745;
 }
-.overlay--yellow {
+.overlay--possible {
   background-color: #ffc107;
 }

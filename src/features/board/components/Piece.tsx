@@ -1,5 +1,6 @@
 import React from "react";
 import { DragPreviewImage, useDrag } from "react-dnd";
+import { motion } from "framer-motion";
 
 import "./Piece.css";
 import WKnight from "assets/knight-white.svg";
@@ -21,8 +22,8 @@ import { selectPiece } from "../BoardSlice";
 
 interface Props {
   dragType: PieceDragType;
-  x: number;
   y: number;
+  x: number;
 }
 
 const getImage = (isBlack: boolean | undefined, type: PieceType) => {
@@ -37,12 +38,11 @@ const getImage = (isBlack: boolean | undefined, type: PieceType) => {
   return imageType[type];
 };
 
-export const Piece = ({ dragType, x, y }: Props) => {
+export const Piece = ({ dragType, y, x }: Props) => {
   const { isBlack, type } = convertDragType(dragType);
   const image = getImage(isBlack, type);
 
   const dispatch = useAppDispatch();
-
   const [{ isDragging }, drag, preview] = useDrag(
     () => ({
       type: dragType,
@@ -54,13 +54,13 @@ export const Piece = ({ dragType, x, y }: Props) => {
   );
 
   const handleMouseDown = () => {
-    dispatch(selectPiece({ dragType, x, y }));
+    dispatch(selectPiece({ dragType, y, x }));
   };
 
   return (
     <>
       <DragPreviewImage connect={preview} src={image} />
-      <div
+      <motion.div
         ref={drag}
         className={`piece piece__${dragType.toLowerCase()}`}
         style={{
@@ -68,6 +68,7 @@ export const Piece = ({ dragType, x, y }: Props) => {
           opacity: isDragging ? 0.5 : 1,
         }}
         onMouseDown={handleMouseDown}
+        layoutId={dragType}
       />
     </>
   );

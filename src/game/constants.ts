@@ -1,49 +1,59 @@
 import { PieceDragType } from "game/piece-type";
 
+export type HistorySquares = (PieceDragType | null)[][];
+
 // prettier-ignore
-export const piecesInitPosition = [
+export const initialSquares: HistorySquares = [
   // 1st
-  PieceDragType.BlackQueenRook,
-  PieceDragType.BlackQueenKnight,
-  PieceDragType.BlackQueenBishop,
-  PieceDragType.BlackQueen,
-  PieceDragType.BlackKing,
-  PieceDragType.BlackKingBishop,
-  PieceDragType.BlackKingKnight,
-  PieceDragType.BlackKingRook,
+  [
+    PieceDragType.BlackQueenRook,
+    PieceDragType.BlackQueenKnight,
+    PieceDragType.BlackQueenBishop,
+    PieceDragType.BlackQueen,
+    PieceDragType.BlackKing,
+    PieceDragType.BlackKingBishop,
+    PieceDragType.BlackKingKnight,
+    PieceDragType.BlackKingRook,
+  ],
   // 2nd
-  PieceDragType.BlackPawn1,
-  PieceDragType.BlackPawn2,
-  PieceDragType.BlackPawn3,
-  PieceDragType.BlackPawn4,
-  PieceDragType.BlackPawn5,
-  PieceDragType.BlackPawn6,
-  PieceDragType.BlackPawn7,
-  PieceDragType.BlackPawn8,
+  [
+    PieceDragType.BlackPawnA,
+    PieceDragType.BlackPawnB,
+    PieceDragType.BlackPawnC,
+    PieceDragType.BlackPawnD,
+    PieceDragType.BlackPawnE,
+    PieceDragType.BlackPawnF,
+    PieceDragType.BlackPawnG,
+    PieceDragType.BlackPawnH,
+  ],
   // 3rd
-  null, null, null, null, null, null, null, null,
+  [null, null, null, null, null, null, null, null],
   // 4th
-  null, null, null, null, null, null, null, null,
+  [null, null, null, null, null, null, null, null],
   // 5th
-  null, null, null, null, null, null, null, null,
+  [null, null, null, null, null, null, null, null],
   // 6th
-  null, null, null, null, null, null, null, null,
+  [null, null, null, null, null, null, null, null],
   // 7th
-  PieceDragType.WhitePawn1,
-  PieceDragType.WhitePawn2,
-  PieceDragType.WhitePawn3,
-  PieceDragType.WhitePawn4,
-  PieceDragType.WhitePawn5,
-  PieceDragType.WhitePawn6,
-  PieceDragType.WhitePawn7,
-  PieceDragType.WhitePawn8,
+  [
+    PieceDragType.WhitePawnA,
+    PieceDragType.WhitePawnB,
+    PieceDragType.WhitePawnC,
+    PieceDragType.WhitePawnD,
+    PieceDragType.WhitePawnE,
+    PieceDragType.WhitePawnF,
+    PieceDragType.WhitePawnG,
+    PieceDragType.WhitePawnH,
+  ],
   // 8th
-  PieceDragType.WhiteQueenRook,
-  PieceDragType.WhiteQueenKnight,
-  PieceDragType.WhiteQueenBishop,
-  PieceDragType.WhiteQueen,
-  PieceDragType.WhiteKing,
-  PieceDragType.WhiteKingBishop,
-  PieceDragType.WhiteKingKnight,
-  PieceDragType.WhiteKingRook,
+  [
+    PieceDragType.WhiteQueenRook,
+    PieceDragType.WhiteQueenKnight,
+    PieceDragType.WhiteQueenBishop,
+    PieceDragType.WhiteQueen,
+    PieceDragType.WhiteKing,
+    PieceDragType.WhiteKingBishop,
+    PieceDragType.WhiteKingKnight,
+    PieceDragType.WhiteKingRook,
+  ],
 ];

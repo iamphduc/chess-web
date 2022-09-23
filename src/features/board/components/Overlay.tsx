@@ -10,21 +10,14 @@ export enum OverlayType {
 
 interface Props {
   type: OverlayType;
+  handleClick?: () => void;
 }
 
-const getOverlayColor = (type: OverlayType) => {
-  switch (type) {
-    case OverlayType.Illegal:
-      return "red";
-    case OverlayType.Legal:
-      return "green";
-    case OverlayType.Possible:
-      return "yellow";
-  }
-};
-
-export const Overlay = ({ type }: Props) => {
-  const color = getOverlayColor(type);
-
-  return <div className={`overlay overlay--${color}`} />;
+export const Overlay = ({ type, handleClick }: Props) => {
+  return (
+    <div
+      className={`overlay overlay--${type.toLowerCase()}`}
+      onClick={() => handleClick && handleClick()}
+    />
+  );
 };
