@@ -3,6 +3,7 @@ import React from "react";
 import "./Board.css";
 import { useAppSelector } from "app/hooks";
 import { Square } from "./components/Square";
+import { AnimatePresence } from "framer-motion";
 
 export const Board = () => {
   const { history, possibleMoves } = useAppSelector((state) => state.board);
@@ -28,5 +29,9 @@ export const Board = () => {
     }
   }
 
-  return <div className="board">{squares}</div>;
+  return (
+    <div className="board">
+      <AnimatePresence>{squares}</AnimatePresence>
+    </div>
+  );
 };

@@ -37,6 +37,7 @@ export const Piece = ({ pieceType, handleClick }: Props) => {
         }}
         onMouseDown={handleClick}
         layoutId={pieceType}
+        key={pieceType}
       />
     </>
   );
