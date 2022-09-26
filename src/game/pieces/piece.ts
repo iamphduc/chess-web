@@ -18,7 +18,7 @@ export abstract class Piece {
 
   abstract getImage(): string;
 
-  public getOccupiedSquare(
+  protected getOccupiedSquare(
     type: PieceType,
     [toY, toX]: Position,
     squares: HistorySquares
@@ -36,5 +36,9 @@ export abstract class Piece {
     }
 
     return PieceOccupied.Enemy;
+  }
+
+  public isWhitePiece(): boolean {
+    return !this.isBlack;
   }
 }

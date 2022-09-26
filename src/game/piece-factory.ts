@@ -1,4 +1,5 @@
 import { PieceType } from "game/piece-type";
+import { Piece } from "./pieces/piece";
 import { blackKing, whiteKing } from "./pieces/king";
 import { blackQueen, whiteQueen } from "./pieces/queen";
 import { blackBishop, whiteBishop } from "./pieces/bishop";
@@ -7,7 +8,7 @@ import { blackRook, whiteRook } from "./pieces/rook";
 import { blackPawn, whitePawn } from "./pieces/pawn";
 
 export class PieceFactory {
-  public getPiece(type: PieceType) {
+  public getPiece(type: PieceType): Piece {
     switch (type) {
       case PieceType.WhiteQueenRook:
       case PieceType.WhiteKingRook:

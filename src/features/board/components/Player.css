@@ -1,0 +1,44 @@
+.player {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0px;
+}
+
+.player__info {
+  display: flex;
+  font-size: 1rem;
+}
+
+.player__avatar {
+  object-fit: cover;
+}
+
+.player__name {
+  margin: 0px 8px;
+  font-weight: 500;
+}
+
+.player__title {
+  background-color: #8b0000;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+
+.player__time {
+  background-color: rgba(255, 255, 255, 0.1);
+  font-size: 1.5rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0px 8px;
+}
+.player__time--running {
+  background-color: var(--background);
+  color: var(--text);
+}
+
+.player__timer {
+  margin-left: 20px;
+}

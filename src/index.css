@@ -1,5 +1,13 @@
+:root {
+  --background: #fff;
+  --text: rgba(0, 0, 0, 0.87);
+
+  --dark-background: #121212;
+  --dark-text: #fff;
+}
+
 body {
-  font: 14px "Century Gothic", Futura, sans-serif;
-  margin: 20px;
-  background-color: #ececea;
+  font-family: sans-serif;
+  background-color: var(--dark-background);
+  color: var(--dark-text);
 }

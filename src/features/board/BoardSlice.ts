@@ -22,6 +22,7 @@ interface Move {
 
 interface BoardState {
   history: { squares: HistorySquares }[];
+  isWhiteTurn: boolean;
   selectedPiece: SelectedPiece | null;
   possibleMoves: number[];
   moves: Move[];
@@ -33,6 +34,7 @@ interface MovePiecePayload {
 
 const initialState = {
   history: [{ squares: initialSquares }],
+  isWhiteTurn: true,
   selectedPiece: null,
   possibleMoves: [-1],
 } as BoardState;
@@ -74,6 +76,7 @@ export const boardSlice = createSlice({
 
       state.history = [...history, { squares: newSquares }];
       state.possibleMoves = [-1];
+      state.isWhiteTurn = !state.isWhiteTurn;
     },
   },
 });
