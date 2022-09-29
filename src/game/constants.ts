@@ -1,5 +1,5 @@
 import { PieceType } from "game/piece-type";
-import { Square } from "./piece-controllers";
+import { Square } from "./calculate-squares";
 
 // prettier-ignore
 const initialPiecesPosition = [
@@ -60,6 +60,6 @@ const initialPiecesPosition = [
 export const initialSquares: Square[][] = initialPiecesPosition.map((row) =>
   row.map((pieceType) => ({
     pieceType,
-    controllers: [],
+    isEnemyAttacked: false,
   }))
 );

@@ -1,6 +1,6 @@
 import WKing from "assets/king-white.svg";
 import BKing from "assets/king-black.svg";
-import { HistorySquares } from "game/piece-controllers";
+import { HistorySquares } from "game/calculate-squares";
 import { PieceType } from "game/piece-type";
 import { Position } from "./piece";
 import { Knight } from "./knight";
@@ -45,7 +45,7 @@ export class King extends Knight {
       squares[fromY][fromX - 4].pieceType ===
         (this.isBlack ? PieceType.BlackQueenRook : PieceType.WhiteQueenRook)
     ) {
-      if (!this.hasEnemyControlSquare([fromY, fromX - 1], squares)) {
+      if (!squares[fromY][fromX - 1].isEnemyAttacked) {
         moves.push([fromY, fromX - 2]);
       }
     }
@@ -57,18 +57,12 @@ export class King extends Knight {
       squares[fromY][fromX + 3].pieceType ===
         (this.isBlack ? PieceType.BlackKingRook : PieceType.WhiteKingRook)
     ) {
-      if (!this.hasEnemyControlSquare([fromY, fromX + 1], squares)) {
+      if (!squares[fromY][fromX + 1].isEnemyAttacked) {
         moves.push([fromY, fromX + 2]);
       }
     }
 
     return moves;
-  }
-
-  private hasEnemyControlSquare([toY, toX]: Position, squares: HistorySquares): boolean {
-    const { controllers } = squares[toY][toX];
-    const enemyColor = this.isBlack ? "WHITE" : "BLACK";
-    return controllers.some((pieceType: PieceType) => pieceType.includes(enemyColor));
   }
 
   public removePossibleCastling(castling: "QUEEN_SIDE" | "KING_SIDE" | "BOTH"): void {

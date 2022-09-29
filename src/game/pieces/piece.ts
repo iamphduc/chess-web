@@ -1,4 +1,4 @@
-import { HistorySquares } from "game/piece-controllers";
+import { HistorySquares } from "game/calculate-squares";
 import { PieceOccupied } from "game/piece-type";
 
 export type Position = [number, number];

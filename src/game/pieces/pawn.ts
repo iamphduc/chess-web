@@ -1,6 +1,6 @@
 import WPawn from "assets/pawn-white.svg";
 import BPawn from "assets/pawn-black.svg";
-import { HistorySquares } from "game/piece-controllers";
+import { HistorySquares } from "game/calculate-squares";
 import { PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
 
@@ -30,7 +30,7 @@ export class Pawn extends Piece {
     }
 
     // Capture enemies
-    const capturedMoves = this.getControlledSquares([fromY, fromX]);
+    const capturedMoves = this.getAttackedSquares([fromY, fromX]);
     if (toX - 1 >= 0 && super.getOccupiedSquare([toY, toX - 1], squares) === PieceOccupied.Enemy) {
       moves.push(capturedMoves[0]);
     }
@@ -41,7 +41,7 @@ export class Pawn extends Piece {
     return moves;
   }
 
-  public getControlledSquares([fromY, fromX]: Position): Position[] {
+  public getAttackedSquares([fromY, fromX]: Position): Position[] {
     const moves: Position[] = [];
 
     const directionYBasedOnColor = this.isBlack ? 1 : -1;

@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
-import { calculateControlledSquares, HistorySquares } from "game/piece-controllers";
+import { calculateSquares, HistorySquares } from "game/calculate-squares";
 import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
 import { Position } from "game/pieces/piece";
@@ -46,7 +46,15 @@ export const boardSlice = createSlice({
   initialState,
   reducers: {
     selectPiece: (state, action: PayloadAction<SelectedPiece>) => {
+      if (state.selectedPiece && state.selectedPiece.pieceType === action.payload.pieceType) {
+        console.log(`Deselected ${state.selectedPiece.pieceType}`);
+        state.selectedPiece = null;
+        state.possibleMoves = [];
+        return;
+      }
+
       state.selectedPiece = action.payload;
+
       console.log(`Selected ${state.selectedPiece.pieceType}`);
 
       const { pieceType, y, x } = action.payload;
@@ -62,16 +70,14 @@ export const boardSlice = createSlice({
         const newSquares = JSON.parse(JSON.stringify(current.squares));
 
         movePieceToSquare(newSquares, pieceType, [y, x], [toY, toX]);
-        const calculatedSquares = calculateControlledSquares(newSquares);
+        const calculatedSquares = calculateSquares(newSquares);
 
         let [kingY, kingX] = isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
         if (piece instanceof King) {
           [kingY, kingX] = [toY, toX];
         }
 
-        const { controllers } = calculatedSquares[kingY][kingX];
-        const enemyColor = isWhiteTurn ? "BLACK" : "WHITE";
-        if (controllers.some((pieceType: PieceType) => pieceType.includes(enemyColor))) return;
+        if (calculatedSquares[kingY][kingX].isEnemyAttacked) return;
 
         validMoves.push([toY, toX]);
       });
@@ -84,8 +90,6 @@ export const boardSlice = createSlice({
         const directionX = [-1, 1];
         directionX.forEach((direction) => {
           const fromX = toX + direction;
-
-          console.log(y, x, fromY, fromX);
 
           if (fromX < 0 || fromX >= 8) return;
           if (y !== fromY || x !== fromX) return;
@@ -187,20 +191,22 @@ export const boardSlice = createSlice({
         }
         if (Math.abs(fromX - toX) === 1) {
           const [enPassantY, enPassantX] = state.enPassantPosition;
-          newSquares[enPassantY][enPassantX] = { pieceType: null, controllers: [] };
+          if (enPassantY >= 0 && enPassantX >= 0) {
+            newSquares[enPassantY][enPassantX] = { pieceType: null, isEnemyAttacked: false };
+          }
         }
       } else {
         state.enPassantPosition = [-1, -1];
       }
 
-      const calculatedSquares = calculateControlledSquares(newSquares);
+      const calculatedSquares = calculateSquares(newSquares);
       state.history = [...history, { squares: calculatedSquares }];
       console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
 
       // King Check
-      const kingPosition = !isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
-      const enemyColor = !isWhiteTurn ? "BLACK" : "WHITE";
-      if (isKingInCheck(calculatedSquares, kingPosition, enemyColor)) {
+      const [kingY, kingX] = !isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
+
+      if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
         console.log("CHECKED");
         state.pieceAttackedKing = selectedPiece.pieceType;
       } else {
@@ -219,17 +225,8 @@ const movePieceToSquare = (
   [fromY, fromX]: Position,
   [toY, toX]: Position
 ): void => {
-  squares[toY][toX] = { pieceType, controllers: [] };
-  squares[fromY][fromX] = { pieceType: null, controllers: [] };
-};
-
-const isKingInCheck = (
-  squares: HistorySquares,
-  [kingY, kingX]: Position,
-  enemyColor: string
-): boolean => {
-  const { controllers } = squares[kingY][kingX];
-  return controllers.some((pieceType: PieceType) => pieceType.includes(enemyColor));
+  squares[toY][toX] = { pieceType, isEnemyAttacked: false };
+  squares[fromY][fromX] = { pieceType: null, isEnemyAttacked: false };
 };
 
 export const { selectPiece, movePiece } = boardSlice.actions;

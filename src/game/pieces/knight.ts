@@ -1,6 +1,6 @@
 import WKnight from "assets/knight-white.svg";
 import BKnight from "assets/knight-black.svg";
-import { HistorySquares } from "game/piece-controllers";
+import { HistorySquares } from "game/calculate-squares";
 import { PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
 

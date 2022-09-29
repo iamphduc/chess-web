@@ -1,6 +1,6 @@
 import WQueen from "assets/queen-white.svg";
 import BQueen from "assets/queen-black.svg";
-import { HistorySquares } from "game/piece-controllers";
+import { HistorySquares } from "game/calculate-squares";
 import { Piece, Position } from "./piece";
 import { Bishop } from "./bishop";
 import { Rook } from "./rook";

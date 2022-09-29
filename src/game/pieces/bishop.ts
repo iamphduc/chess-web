@@ -1,6 +1,6 @@
 import WBishop from "assets/bishop-white.svg";
 import BBishop from "assets/bishop-black.svg";
-import { HistorySquares } from "game/piece-controllers";
+import { HistorySquares } from "game/calculate-squares";
 import { Position } from "./piece";
 import { Rook } from "./rook";
 
