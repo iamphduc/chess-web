@@ -17,6 +17,7 @@ export interface SelectedPiece {
 interface BoardState {
   history: { squares: HistorySquares }[];
   isWhiteTurn: boolean;
+  pieceAttackedKing: PieceType | null;
   selectedPiece: SelectedPiece | null;
   possibleMoves: Position[];
   blackKingPosition: Position;
@@ -30,6 +31,7 @@ interface MovePiecePayload {
 const initialState = {
   history: [{ squares: initialSquares }],
   isWhiteTurn: true,
+  pieceAttackedKing: null,
   selectedPiece: null,
   possibleMoves: [],
   blackKingPosition: [0, 4],
@@ -53,7 +55,7 @@ export const boardSlice = createSlice({
       const possibleMoves = piece.getPossibleMoves([y, x], current.squares);
 
       let validMoves: Position[] = [];
-      for (const [toY, toX] of possibleMoves) {
+      possibleMoves.forEach(([toY, toX]) => {
         const newSquares = JSON.parse(JSON.stringify(current.squares));
 
         movePieceToSquare(newSquares, pieceType, [y, x], [toY, toX]);
@@ -66,16 +68,16 @@ export const boardSlice = createSlice({
 
         const { controllers } = calculatedSquares[kingY][kingX];
         const enemyColor = isWhiteTurn ? "BLACK" : "WHITE";
-        if (controllers.some((pieceType: PieceType) => pieceType.includes(enemyColor))) continue;
+        if (controllers.some((pieceType: PieceType) => pieceType.includes(enemyColor))) return;
 
         validMoves.push([toY, toX]);
-      }
+      });
 
       state.possibleMoves = validMoves;
     },
 
     movePiece: (state, action: PayloadAction<MovePiecePayload>) => {
-      const { history, selectedPiece } = state;
+      const { history, selectedPiece, isWhiteTurn, whiteKingPosition, blackKingPosition } = state;
 
       if (!selectedPiece) return;
 
@@ -155,9 +157,21 @@ export const boardSlice = createSlice({
 
       console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
 
-      state.history = [...history, { squares: calculateControlledSquares(newSquares) }];
-      state.possibleMoves = [];
+      const calculatedSquares = calculateControlledSquares(newSquares);
+
+      const kingPosition = !isWhiteTurn ? whiteKingPosition : blackKingPosition;
+      const enemyColor = !isWhiteTurn ? "BLACK" : "WHITE";
+
+      if (isKingInCheck(calculatedSquares, kingPosition, enemyColor)) {
+        console.log("CHECKED");
+        state.pieceAttackedKing = selectedPiece.pieceType;
+      } else {
+        state.pieceAttackedKing = null;
+      }
+
+      state.history = [...history, { squares: calculatedSquares }];
       state.isWhiteTurn = !state.isWhiteTurn;
+      state.possibleMoves = [];
     },
   },
 });
@@ -170,6 +184,15 @@ const movePieceToSquare = (
 ): void => {
   squares[toY][toX] = { pieceType, controllers: [] };
   squares[fromY][fromX] = { pieceType: null, controllers: [] };
+};
+
+const isKingInCheck = (
+  squares: HistorySquares,
+  [kingY, kingX]: Position,
+  enemyColor: string
+): boolean => {
+  const { controllers } = squares[kingY][kingX];
+  return controllers.some((pieceType: PieceType) => pieceType.includes(enemyColor));
 };
 
 export const { selectPiece, movePiece } = boardSlice.actions;

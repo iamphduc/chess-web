@@ -6,6 +6,7 @@ import "./Piece.css";
 import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
 import { useAppSelector } from "app/hooks";
+import { King } from "game/pieces/king";
 
 interface Props {
   pieceType: PieceType;
@@ -13,11 +14,14 @@ interface Props {
 }
 
 export const Piece = ({ pieceType, handleClick }: Props) => {
-  const { isWhiteTurn } = useAppSelector((state) => state.board);
+  const { isWhiteTurn, pieceAttackedKing } = useAppSelector((state) => state.board);
 
   const piece = pieceFactory.getPiece(pieceType);
   const image = piece.getImage();
   const isWhite = piece.isWhitePiece();
+
+  const isPieceAttackingKing = pieceAttackedKing === pieceType;
+  const isKingBeingAttacked = pieceAttackedKing && piece instanceof King && isWhite === isWhiteTurn;
 
   const [{ isDragging }, drag, preview] = useDrag(
     () => ({
@@ -38,7 +42,9 @@ export const Piece = ({ pieceType, handleClick }: Props) => {
       <DragPreviewImage connect={preview} src={image} />
       <motion.div
         ref={drag}
-        className={`piece piece__${pieceType.toLowerCase()}`}
+        className={`piece piece__${pieceType} ${
+          isPieceAttackingKing || isKingBeingAttacked ? "piece--check" : ""
+        }`}
         style={{
           backgroundImage: `url(${image})`,
           opacity: isDragging ? 0.5 : 1,
