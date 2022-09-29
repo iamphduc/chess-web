@@ -1,7 +1,7 @@
 import WRook from "assets/rook-white.svg";
 import BRook from "assets/rook-black.svg";
-import { HistorySquares } from "game/constants";
-import { PieceType, PieceOccupied } from "game/piece-type";
+import { HistorySquares } from "game/piece-controllers";
+import { PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
 
 export class Rook extends Piece {
@@ -9,52 +9,42 @@ export class Rook extends Piece {
     super(isBlack);
   }
 
-  public getPossibleMoves(
-    type: PieceType,
-    [fromY, fromX]: Position,
-    squares: HistorySquares
-  ): number[] {
-    const moves: number[] = [];
+  public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
+    const moves: Position[] = [];
 
     // Current -> Left
     for (let x = fromX - 1; x >= 0; x--) {
-      if (!this.addPossibleMove(moves, type, [fromY, x], squares)) break;
+      if (!this.canMoveAdded(moves, [fromY, x], squares)) break;
     }
 
     // Current -> Right
     for (let x = fromX + 1; x < 8; x++) {
-      if (!this.addPossibleMove(moves, type, [fromY, x], squares)) break;
+      if (!this.canMoveAdded(moves, [fromY, x], squares)) break;
     }
 
     // Current -> Top
     for (let y = fromY - 1; y >= 0; y--) {
-      if (!this.addPossibleMove(moves, type, [y, fromX], squares)) break;
+      if (!this.canMoveAdded(moves, [y, fromX], squares)) break;
     }
 
     // Current -> Bottom
     for (let y = fromY + 1; y < 8; y++) {
-      if (!this.addPossibleMove(moves, type, [y, fromX], squares)) break;
+      if (!this.canMoveAdded(moves, [y, fromX], squares)) break;
     }
 
     return moves;
   }
 
-  protected addPossibleMove(
-    moves: number[],
-    type: PieceType,
-    [y, x]: Position,
-    squares: any[]
-  ): boolean {
-    const pieceOccupied = super.getOccupiedSquare(type, [y, x], squares);
-    const dest = y * 8 + x;
+  protected canMoveAdded(moves: Position[], [y, x]: Position, squares: any[]): boolean {
+    const pieceOccupied = super.getOccupiedSquare([y, x], squares);
     if (pieceOccupied === PieceOccupied.Enemy) {
-      moves.push(dest);
+      moves.push([y, x]);
       return false;
     }
     if (pieceOccupied === PieceOccupied.Ours) {
       return false;
     }
-    moves.push(dest);
+    moves.push([y, x]);
     return true;
   }
 

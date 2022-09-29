@@ -1,8 +1,12 @@
 import WKnight from "assets/knight-white.svg";
 import BKnight from "assets/knight-black.svg";
-import { King } from "./king";
+import { HistorySquares } from "game/piece-controllers";
+import { PieceOccupied } from "game/piece-type";
+import { Piece, Position } from "./piece";
 
-export class Knight extends King {
+export class Knight extends Piece {
+  protected directions: [number, number][];
+
   constructor(isBlack = false) {
     super(isBlack);
 
@@ -20,6 +24,22 @@ export class Knight extends King {
       [-1, 2],
       [-2, 1],
     ];
+  }
+
+  public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
+    const moves: Position[] = [];
+
+    this.directions.forEach(([x, y]) => {
+      const toY = fromY + y;
+      const toX = fromX + x;
+
+      if (toY >= 8 || toY < 0 || toX >= 8 || toX < 0) return;
+      if (super.getOccupiedSquare([toY, toX], squares) === PieceOccupied.Ours) return;
+
+      moves.push([toY, toX]);
+    });
+
+    return moves;
   }
 
   public getImage(): string {

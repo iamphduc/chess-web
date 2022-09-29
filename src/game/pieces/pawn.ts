@@ -1,46 +1,58 @@
 import WPawn from "assets/pawn-white.svg";
 import BPawn from "assets/pawn-black.svg";
-import { HistorySquares } from "game/constants";
-import { PieceType, PieceOccupied } from "game/piece-type";
+import { HistorySquares } from "game/piece-controllers";
+import { PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
 
 export class Pawn extends Piece {
-  private readonly initialPositions: number[][];
-
   constructor(isBlack = false) {
     super(isBlack);
-
-    this.initialPositions = [
-      [8, 9, 10, 11, 12, 13, 14, 15],
-      [48, 49, 50, 51, 52, 53, 54, 55],
-    ];
   }
 
-  public getPossibleMoves(
-    type: PieceType,
-    [fromY, fromX]: Position,
-    squares: HistorySquares
-  ): number[] {
-    const signed = this.isBlack ? 1 : -1;
-    const toY = fromY + signed;
-    const toX = fromX;
-    const src = fromY * 8 + fromX;
-    const dest = toY * 8 + toX;
-    const moves = [];
+  public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
+    const moves: Position[] = [];
 
-    // Move forward
-    if (super.getOccupiedSquare(type, [toY, toX], squares) === PieceOccupied.None) {
-      moves.push(dest);
-      if (this.initialPositions[this.isBlack ? 0 : 1].includes(src)) {
-        moves.push(dest + signed * 8);
+    const directionBasedOnColor = this.isBlack ? 1 : -1;
+    const toY = fromY + directionBasedOnColor;
+    const toX = fromX;
+
+    // Move a square forward
+    if (super.getOccupiedSquare([toY, toX], squares) === PieceOccupied.None) {
+      moves.push([toY, toX]);
+    }
+
+    // Move 2 squares forward
+    if (fromY === 1 || fromY === 6) {
+      const to2Y = fromY + directionBasedOnColor * 2;
+      if (super.getOccupiedSquare([to2Y, toX], squares) === PieceOccupied.None) {
+        moves.push([to2Y, toX]);
       }
     }
 
-    // Capture Enemies
-    [-1, 1].forEach((direction) => {
-      if (super.getOccupiedSquare(type, [toY, toX - direction], squares) === PieceOccupied.Enemy) {
-        moves.push(dest - direction);
-      }
+    // Capture enemies
+    const capturedMoves = this.getControlledSquares([fromY, fromX]);
+    if (toX - 1 >= 0 && super.getOccupiedSquare([toY, toX - 1], squares) === PieceOccupied.Enemy) {
+      moves.push(capturedMoves[0]);
+    }
+    if (toX + 1 < 8 && super.getOccupiedSquare([toY, toX + 1], squares) === PieceOccupied.Enemy) {
+      moves.push(capturedMoves[1]);
+    }
+
+    return moves;
+  }
+
+  public getControlledSquares([fromY, fromX]: Position): Position[] {
+    const moves: Position[] = [];
+
+    const directionBasedOnColor = this.isBlack ? 1 : -1;
+    const toY = fromY + directionBasedOnColor;
+    const toX = fromX;
+
+    const directions = [-1, 1];
+    directions.forEach((direction) => {
+      const capturedX = toX + direction;
+      if (capturedX < 0 || capturedX >= 8) return;
+      moves.push([toY, capturedX]);
     });
 
     return moves;

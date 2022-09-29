@@ -24,7 +24,7 @@ export const Square = ({ y, x, pieceType, isPossibleMove, size = 52 }: Props) =>
 
   const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
-      accept: selectedPiece ? selectedPiece.type : "NONE",
+      accept: selectedPiece ? selectedPiece.pieceType : "NONE",
       canDrop: () => isPossibleMove,
       drop: () => dispatch(movePiece({ to: [y, x] })),
       collect: (monitor) => ({
@@ -40,7 +40,7 @@ export const Square = ({ y, x, pieceType, isPossibleMove, size = 52 }: Props) =>
   };
 
   const handlePieceClick = () => {
-    pieceType && dispatch(selectPiece({ type: pieceType, y, x }));
+    pieceType && dispatch(selectPiece({ pieceType, y, x }));
   };
 
   return (

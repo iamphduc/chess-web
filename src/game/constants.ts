@@ -1,9 +1,8 @@
 import { PieceType } from "game/piece-type";
-
-export type HistorySquares = (PieceType | null)[][];
+import { Square } from "./piece-controllers";
 
 // prettier-ignore
-export const initialSquares: HistorySquares = [
+const initialPiecesPosition = [
   // 1st
   [
     PieceType.BlackQueenRook,
@@ -57,3 +56,10 @@ export const initialSquares: HistorySquares = [
     PieceType.WhiteKingRook,
   ],
 ];
+
+export const initialSquares: Square[][] = initialPiecesPosition.map((row) =>
+  row.map((pieceType) => ({
+    pieceType,
+    controllers: [],
+  }))
+);

@@ -1,7 +1,6 @@
 import WBishop from "assets/bishop-white.svg";
 import BBishop from "assets/bishop-black.svg";
-import { HistorySquares } from "game/constants";
-import { PieceType } from "game/piece-type";
+import { HistorySquares } from "game/piece-controllers";
 import { Position } from "./piece";
 import { Rook } from "./rook";
 
@@ -10,47 +9,43 @@ export class Bishop extends Rook {
     super(isBlack);
   }
 
-  public getPossibleMoves(
-    type: PieceType,
-    [fromY, fromX]: Position,
-    squares: HistorySquares
-  ): number[] {
-    const moves: number[] = [];
-    let y = fromY - 1;
-    let x = fromX - 1;
+  public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
+    const moves: Position[] = [];
+    let toY = fromY - 1;
+    let toX = fromX - 1;
 
     // Top Left
-    while (y >= 0 && x >= 0) {
-      if (!super.addPossibleMove(moves, type, [y, x], squares)) break;
-      y -= 1;
-      x -= 1;
+    while (toY >= 0 && toX >= 0) {
+      if (!super.canMoveAdded(moves, [toY, toX], squares)) break;
+      toY -= 1;
+      toX -= 1;
     }
 
     // Top Right
-    y = fromY - 1;
-    x = fromX + 1;
-    while (y >= 0 && x < 8) {
-      if (!super.addPossibleMove(moves, type, [y, x], squares)) break;
-      y -= 1;
-      x += 1;
+    toY = fromY - 1;
+    toX = fromX + 1;
+    while (toY >= 0 && toX < 8) {
+      if (!super.canMoveAdded(moves, [toY, toX], squares)) break;
+      toY -= 1;
+      toX += 1;
     }
 
     // Bottom Right
-    y = fromY + 1;
-    x = fromX + 1;
-    while (y < 8 && x < 8) {
-      if (!super.addPossibleMove(moves, type, [y, x], squares)) break;
-      y += 1;
-      x += 1;
+    toY = fromY + 1;
+    toX = fromX + 1;
+    while (toY < 8 && toX < 8) {
+      if (!super.canMoveAdded(moves, [toY, toX], squares)) break;
+      toY += 1;
+      toX += 1;
     }
 
     // Bottom Left
-    y = fromY + 1;
-    x = fromX - 1;
-    while (y < 8 && x >= 0) {
-      if (!super.addPossibleMove(moves, type, [y, x], squares)) break;
-      y += 1;
-      x -= 1;
+    toY = fromY + 1;
+    toX = fromX - 1;
+    while (toY < 8 && toX >= 0) {
+      if (!super.canMoveAdded(moves, [toY, toX], squares)) break;
+      toY += 1;
+      toX -= 1;
     }
 
     return moves;

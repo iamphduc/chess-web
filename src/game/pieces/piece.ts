@@ -1,5 +1,5 @@
-import { HistorySquares } from "game/constants";
-import { PieceType, PieceOccupied } from "game/piece-type";
+import { HistorySquares } from "game/piece-controllers";
+import { PieceOccupied } from "game/piece-type";
 
 export type Position = [number, number];
 
@@ -10,28 +10,19 @@ export abstract class Piece {
     this.isBlack = isBlack;
   }
 
-  abstract getPossibleMoves(
-    type: PieceType,
-    [fromY, fromX]: Position,
-    squares: HistorySquares
-  ): number[];
+  abstract getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[];
 
   abstract getImage(): string;
 
-  protected getOccupiedSquare(
-    type: PieceType,
-    [toY, toX]: Position,
-    squares: HistorySquares
-  ): PieceOccupied {
+  protected getOccupiedSquare([toY, toX]: Position, squares: HistorySquares): PieceOccupied {
     const occupiedSquare = squares[toY][toX];
 
-    if (!occupiedSquare) {
+    if (!occupiedSquare.pieceType) {
       return PieceOccupied.None;
     }
 
-    const isSelectedPieceWhite = type.includes("WHITE");
-    const isOccupiedPieceWhite = occupiedSquare.includes("WHITE");
-    if (isSelectedPieceWhite === isOccupiedPieceWhite) {
+    const isOccupiedPieceBlack = occupiedSquare.pieceType.includes("BLACK");
+    if (this.isBlack === isOccupiedPieceBlack) {
       return PieceOccupied.Ours;
     }
 

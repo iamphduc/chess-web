@@ -14,22 +14,22 @@ const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
 export const Board = () => {
   const { history, possibleMoves } = useAppSelector((state) => state.board);
 
+  const squareSize = 52;
   const current = history[history.length - 1];
   const squares = [];
-  const squareSize = 52;
 
   for (let y = 0; y < 8; y++) {
     for (let x = 0; x < 8; x++) {
       const squareIndex = y * 8 + x;
-      const pieceType = current.squares[y][x];
-      const isPossibleMove = possibleMoves.includes(squareIndex);
+      const square = current.squares[y][x];
+      const isPossibleMove = possibleMoves.some(([toY, toX]) => toY === y && toX === x);
 
       squares.push(
         <Square
           key={squareIndex}
           y={y}
           x={x}
-          pieceType={pieceType}
+          pieceType={square.pieceType}
           isPossibleMove={isPossibleMove}
           size={squareSize}
         />

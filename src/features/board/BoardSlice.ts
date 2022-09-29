@@ -1,31 +1,26 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
-import { initialSquares, HistorySquares } from "game/constants";
+import { calculateControlledSquares, HistorySquares } from "game/piece-controllers";
 import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
 import { Position } from "game/pieces/piece";
+import { blackKing, King, whiteKing } from "game/pieces/king";
+import { initialSquares } from "game/constants";
 
 export interface SelectedPiece {
-  type: PieceType;
+  pieceType: PieceType;
   y: number;
   x: number;
-}
-
-interface Move {
-  from: Position;
-  to: Position;
-  isACheck: boolean;
-  capture?: PieceType;
-  castling?: "KING_SIDE" | "QUEEN_SIDE";
 }
 
 interface BoardState {
   history: { squares: HistorySquares }[];
   isWhiteTurn: boolean;
   selectedPiece: SelectedPiece | null;
-  possibleMoves: number[];
-  moves: Move[];
+  possibleMoves: Position[];
+  blackKingPosition: Position;
+  whiteKingPosition: Position;
 }
 
 interface MovePiecePayload {
@@ -36,7 +31,9 @@ const initialState = {
   history: [{ squares: initialSquares }],
   isWhiteTurn: true,
   selectedPiece: null,
-  possibleMoves: [-1],
+  possibleMoves: [],
+  blackKingPosition: [0, 4],
+  whiteKingPosition: [7, 4],
 } as BoardState;
 
 export const boardSlice = createSlice({
@@ -45,17 +42,36 @@ export const boardSlice = createSlice({
   reducers: {
     selectPiece: (state, action: PayloadAction<SelectedPiece>) => {
       state.selectedPiece = action.payload;
-      console.log(`Selected ${state.selectedPiece.type}`);
+      console.log(`Selected ${state.selectedPiece.pieceType}`);
 
-      const { type, y, x } = action.payload;
-      const { history } = state;
+      const { pieceType, y, x } = action.payload;
+      const { history, isWhiteTurn, whiteKingPosition, blackKingPosition } = state;
 
       const current = history[history.length - 1];
-      const possibleMoves = pieceFactory
-        .getPiece(type)
-        .getPossibleMoves(type, [y, x], current.squares);
+      const piece = pieceFactory.getPiece(pieceType);
 
-      state.possibleMoves = possibleMoves;
+      const possibleMoves = piece.getPossibleMoves([y, x], current.squares);
+
+      let validMoves: Position[] = [];
+      for (const [toY, toX] of possibleMoves) {
+        const newSquares = JSON.parse(JSON.stringify(current.squares));
+
+        movePieceToSquare(newSquares, pieceType, [y, x], [toY, toX]);
+        const calculatedSquares = calculateControlledSquares(newSquares);
+
+        let [kingY, kingX] = isWhiteTurn ? whiteKingPosition : blackKingPosition;
+        if (piece instanceof King) {
+          [kingY, kingX] = [toY, toX];
+        }
+
+        const { controllers } = calculatedSquares[kingY][kingX];
+        const enemyColor = isWhiteTurn ? "BLACK" : "WHITE";
+        if (controllers.some((pieceType: PieceType) => pieceType.includes(enemyColor))) continue;
+
+        validMoves.push([toY, toX]);
+      }
+
+      state.possibleMoves = validMoves;
     },
 
     movePiece: (state, action: PayloadAction<MovePiecePayload>) => {
@@ -66,19 +82,94 @@ export const boardSlice = createSlice({
       const {
         to: [toY, toX],
       } = action.payload;
+      const { pieceType, y: fromY, x: fromX } = selectedPiece;
 
+      // Appends new squares to history
       const current = history[history.length - 1];
       const newSquares = JSON.parse(JSON.stringify(current.squares));
-      newSquares[toY][toX] = selectedPiece.type;
-      newSquares[selectedPiece.y][selectedPiece.x] = null;
 
-      console.log(`${selectedPiece.type} moved to ${[toY, toX]}`);
+      movePieceToSquare(newSquares, pieceType, [fromY, fromX], [toY, toX]);
 
-      state.history = [...history, { squares: newSquares }];
-      state.possibleMoves = [-1];
+      // Castling Moves
+      switch (selectedPiece.pieceType) {
+        case PieceType.WhiteKing: {
+          if (toX - fromX === 2) {
+            movePieceToSquare(
+              newSquares,
+              PieceType.WhiteKingRook,
+              [fromY, fromX + 3],
+              [toY, toX - 1]
+            );
+          }
+          if (fromX - toX === 2) {
+            movePieceToSquare(
+              newSquares,
+              PieceType.WhiteQueenRook,
+              [fromY, fromX - 4],
+              [toY, toX + 1]
+            );
+          }
+          whiteKing.removePossibleCastling("BOTH");
+          state.whiteKingPosition = [toY, toX];
+          break;
+        }
+        case PieceType.WhiteKingRook: {
+          whiteKing.removePossibleCastling("KING_SIDE");
+          break;
+        }
+        case PieceType.WhiteQueenRook: {
+          whiteKing.removePossibleCastling("QUEEN_SIDE");
+          break;
+        }
+
+        case PieceType.BlackKing: {
+          if (toX - fromX === 2) {
+            movePieceToSquare(
+              newSquares,
+              PieceType.BlackKingRook,
+              [fromY, fromX + 3],
+              [toY, toX - 1]
+            );
+          }
+          if (fromX - toX === 2) {
+            movePieceToSquare(
+              newSquares,
+              PieceType.BlackQueenRook,
+              [fromY, fromX - 4],
+              [toY, toX + 1]
+            );
+          }
+          blackKing.removePossibleCastling("BOTH");
+          state.blackKingPosition = [toY, toX];
+          break;
+        }
+        case PieceType.BlackKingRook: {
+          blackKing.removePossibleCastling("KING_SIDE");
+          break;
+        }
+        case PieceType.BlackQueenRook: {
+          blackKing.removePossibleCastling("QUEEN_SIDE");
+          break;
+        }
+      }
+
+      console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
+
+      state.history = [...history, { squares: calculateControlledSquares(newSquares) }];
+      state.possibleMoves = [];
       state.isWhiteTurn = !state.isWhiteTurn;
     },
   },
 });
+
+const movePieceToSquare = (
+  squares: HistorySquares,
+  pieceType: PieceType,
+  [fromY, fromX]: Position,
+  [toY, toX]: Position
+): void => {
+  squares[toY][toX] = { pieceType, controllers: [] };
+  squares[fromY][fromX] = { pieceType: null, controllers: [] };
+};
 
 export const { selectPiece, movePiece } = boardSlice.actions;

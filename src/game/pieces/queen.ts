@@ -1,25 +1,31 @@
 import WQueen from "assets/queen-white.svg";
 import BQueen from "assets/queen-black.svg";
-import { HistorySquares } from "game/constants";
-import { PieceType } from "game/piece-type";
+import { HistorySquares } from "game/piece-controllers";
 import { Piece, Position } from "./piece";
 import { Bishop } from "./bishop";
 import { Rook } from "./rook";
 
 export class Queen extends Piece {
-  private readonly rook: Rook;
-  private readonly bishop: Bishop;
+  private readonly whiteRook: Rook;
+  private readonly blackRook: Rook;
+  private readonly whiteBishop: Bishop;
+  private readonly blackBishop: Bishop;
 
   constructor(isBlack = false) {
     super(isBlack);
 
-    this.rook = new Rook();
-    this.bishop = new Bishop();
+    this.whiteRook = new Rook();
+    this.blackRook = new Rook(true);
+    this.whiteBishop = new Bishop();
+    this.blackBishop = new Bishop(true);
   }
 
-  public getPossibleMoves(type: PieceType, from: Position, squares: HistorySquares): number[] {
-    const rookMoves = this.rook.getPossibleMoves(type, from, squares);
-    const bishopMoves = this.bishop.getPossibleMoves(type, from, squares);
+  public getPossibleMoves(from: Position, squares: HistorySquares): Position[] {
+    const rook = this.isBlack ? this.blackRook : this.whiteRook;
+    const bishop = this.isBlack ? this.blackBishop : this.whiteBishop;
+
+    const rookMoves = rook.getPossibleMoves(from, squares);
+    const bishopMoves = bishop.getPossibleMoves(from, squares);
 
     return [...rookMoves, ...bishopMoves];
   }
