@@ -191,7 +191,8 @@ export const boardSlice = createSlice({
         }
         if (Math.abs(fromX - toX) === 1) {
           const [enPassantY, enPassantX] = state.enPassantPosition;
-          if (enPassantY >= 0 && enPassantX >= 0) {
+          const directionYBasedOnColor = isWhiteTurn ? -1 : 1;
+          if (enPassantY >= 0 && enPassantX >= 0 && toY === enPassantY + directionYBasedOnColor) {
             newSquares[enPassantY][enPassantX] = { pieceType: null, isEnemyAttacked: false };
           }
         }
