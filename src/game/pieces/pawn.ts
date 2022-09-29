@@ -44,12 +44,12 @@ export class Pawn extends Piece {
   public getControlledSquares([fromY, fromX]: Position): Position[] {
     const moves: Position[] = [];
 
-    const directionBasedOnColor = this.isBlack ? 1 : -1;
-    const toY = fromY + directionBasedOnColor;
+    const directionYBasedOnColor = this.isBlack ? 1 : -1;
+    const toY = fromY + directionYBasedOnColor;
     const toX = fromX;
 
-    const directions = [-1, 1];
-    directions.forEach((direction) => {
+    const directionX = [-1, 1];
+    directionX.forEach((direction) => {
       const capturedX = toX + direction;
       if (capturedX < 0 || capturedX >= 8) return;
       moves.push([toY, capturedX]);

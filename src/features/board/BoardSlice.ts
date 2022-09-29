@@ -6,6 +6,7 @@ import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
 import { Position } from "game/pieces/piece";
 import { blackKing, King, whiteKing } from "game/pieces/king";
+import { Pawn } from "game/pieces/pawn";
 import { initialSquares } from "game/constants";
 
 export interface SelectedPiece {
@@ -22,6 +23,7 @@ interface BoardState {
   possibleMoves: Position[];
   blackKingPosition: Position;
   whiteKingPosition: Position;
+  enPassantPosition: Position;
 }
 
 interface MovePiecePayload {
@@ -36,6 +38,7 @@ const initialState = {
   possibleMoves: [],
   blackKingPosition: [0, 4],
   whiteKingPosition: [7, 4],
+  enPassantPosition: [-1, -1],
 } as BoardState;
 
 export const boardSlice = createSlice({
@@ -47,7 +50,7 @@ export const boardSlice = createSlice({
       console.log(`Selected ${state.selectedPiece.pieceType}`);
 
       const { pieceType, y, x } = action.payload;
-      const { history, isWhiteTurn, whiteKingPosition, blackKingPosition } = state;
+      const { history, isWhiteTurn } = state;
 
       const current = history[history.length - 1];
       const piece = pieceFactory.getPiece(pieceType);
@@ -61,7 +64,7 @@ export const boardSlice = createSlice({
         movePieceToSquare(newSquares, pieceType, [y, x], [toY, toX]);
         const calculatedSquares = calculateControlledSquares(newSquares);
 
-        let [kingY, kingX] = isWhiteTurn ? whiteKingPosition : blackKingPosition;
+        let [kingY, kingX] = isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
         if (piece instanceof King) {
           [kingY, kingX] = [toY, toX];
         }
@@ -73,11 +76,29 @@ export const boardSlice = createSlice({
         validMoves.push([toY, toX]);
       });
 
+      if (piece instanceof Pawn) {
+        const [toY, toX] = state.enPassantPosition;
+        const directionYBasedOnColor = isWhiteTurn ? -1 : 1;
+        const fromY = toY;
+
+        const directionX = [-1, 1];
+        directionX.forEach((direction) => {
+          const fromX = toX + direction;
+
+          console.log(y, x, fromY, fromX);
+
+          if (fromX < 0 || fromX >= 8) return;
+          if (y !== fromY || x !== fromX) return;
+
+          validMoves.push([toY + directionYBasedOnColor, toX]);
+        });
+      }
+
       state.possibleMoves = validMoves;
     },
 
     movePiece: (state, action: PayloadAction<MovePiecePayload>) => {
-      const { history, selectedPiece, isWhiteTurn, whiteKingPosition, blackKingPosition } = state;
+      const { history, selectedPiece, isWhiteTurn } = state;
 
       if (!selectedPiece) return;
 
@@ -88,7 +109,7 @@ export const boardSlice = createSlice({
 
       // Appends new squares to history
       const current = history[history.length - 1];
-      const newSquares = JSON.parse(JSON.stringify(current.squares));
+      const newSquares: HistorySquares = JSON.parse(JSON.stringify(current.squares));
 
       movePieceToSquare(newSquares, pieceType, [fromY, fromX], [toY, toX]);
 
@@ -155,13 +176,30 @@ export const boardSlice = createSlice({
         }
       }
 
-      console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
+      const piece = pieceFactory.getPiece(selectedPiece.pieceType);
+
+      // En Passant
+      if (piece instanceof Pawn) {
+        if (Math.abs(fromY - toY) === 2) {
+          // En Passant will change if we choose another Pawn
+          state.enPassantPosition = [toY, toX];
+          console.log("En Passant:", state.enPassantPosition);
+        }
+        if (Math.abs(fromX - toX) === 1) {
+          const [enPassantY, enPassantX] = state.enPassantPosition;
+          newSquares[enPassantY][enPassantX] = { pieceType: null, controllers: [] };
+        }
+      } else {
+        state.enPassantPosition = [-1, -1];
+      }
 
       const calculatedSquares = calculateControlledSquares(newSquares);
+      state.history = [...history, { squares: calculatedSquares }];
+      console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
 
-      const kingPosition = !isWhiteTurn ? whiteKingPosition : blackKingPosition;
+      // King Check
+      const kingPosition = !isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
       const enemyColor = !isWhiteTurn ? "BLACK" : "WHITE";
-
       if (isKingInCheck(calculatedSquares, kingPosition, enemyColor)) {
         console.log("CHECKED");
         state.pieceAttackedKing = selectedPiece.pieceType;
@@ -169,7 +207,6 @@ export const boardSlice = createSlice({
         state.pieceAttackedKing = null;
       }
 
-      state.history = [...history, { squares: calculatedSquares }];
       state.isWhiteTurn = !state.isWhiteTurn;
       state.possibleMoves = [];
     },
