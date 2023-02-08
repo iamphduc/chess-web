@@ -8,6 +8,7 @@ import { Position } from "game/pieces/piece";
 import { blackKing, King, whiteKing } from "game/pieces/king";
 import { Pawn } from "game/pieces/pawn";
 import { initialSquares } from "game/constants";
+import { calculateCheckmate } from "game/calculate-checkmate";
 
 export interface SelectedPiece {
   pieceType: PieceType;
@@ -46,6 +47,7 @@ export const boardSlice = createSlice({
   initialState,
   reducers: {
     selectPiece: (state, action: PayloadAction<SelectedPiece>) => {
+      // Deselect Piece
       if (state.selectedPiece && state.selectedPiece.pieceType === action.payload.pieceType) {
         console.log(`Deselected ${state.selectedPiece.pieceType}`);
         state.selectedPiece = null;
@@ -53,8 +55,8 @@ export const boardSlice = createSlice({
         return;
       }
 
+      // Select Piece
       state.selectedPiece = action.payload;
-
       console.log(`Selected ${state.selectedPiece.pieceType}`);
 
       const { pieceType, y, x } = action.payload;
@@ -63,13 +65,13 @@ export const boardSlice = createSlice({
       const current = history[history.length - 1];
       const piece = pieceFactory.getPiece(pieceType);
 
+      // Get valid moves
       const possibleMoves = piece.getPossibleMoves([y, x], current.squares);
-
       let validMoves: Position[] = [];
       possibleMoves.forEach(([toY, toX]) => {
         const newSquares = JSON.parse(JSON.stringify(current.squares));
 
-        movePieceToSquare(newSquares, pieceType, [y, x], [toY, toX]);
+        updateSquares(newSquares, pieceType, [y, x], [toY, toX]);
         const calculatedSquares = calculateSquares(newSquares);
 
         let [kingY, kingX] = isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
@@ -82,6 +84,7 @@ export const boardSlice = createSlice({
         validMoves.push([toY, toX]);
       });
 
+      // Check En Passant
       if (piece instanceof Pawn) {
         const [toY, toX] = state.enPassantPosition;
         const directionYBasedOnColor = isWhiteTurn ? -1 : 1;
@@ -90,10 +93,8 @@ export const boardSlice = createSlice({
         const directionX = [-1, 1];
         directionX.forEach((direction) => {
           const fromX = toX + direction;
-
           if (fromX < 0 || fromX >= 8) return;
           if (y !== fromY || x !== fromX) return;
-
           validMoves.push([toY + directionYBasedOnColor, toX]);
         });
       }
@@ -115,26 +116,18 @@ export const boardSlice = createSlice({
       const current = history[history.length - 1];
       const newSquares: HistorySquares = JSON.parse(JSON.stringify(current.squares));
 
-      movePieceToSquare(newSquares, pieceType, [fromY, fromX], [toY, toX]);
+      updateSquares(newSquares, pieceType, [fromY, fromX], [toY, toX]);
 
       // Castling Moves
       switch (selectedPiece.pieceType) {
         case PieceType.WhiteKing: {
+          // White King side castling
           if (toX - fromX === 2) {
-            movePieceToSquare(
-              newSquares,
-              PieceType.WhiteKingRook,
-              [fromY, fromX + 3],
-              [toY, toX - 1]
-            );
+            updateSquares(newSquares, PieceType.WhiteKingRook, [fromY, fromX + 3], [toY, toX - 1]);
           }
+          // White Queen side castling
           if (fromX - toX === 2) {
-            movePieceToSquare(
-              newSquares,
-              PieceType.WhiteQueenRook,
-              [fromY, fromX - 4],
-              [toY, toX + 1]
-            );
+            updateSquares(newSquares, PieceType.WhiteQueenRook, [fromY, fromX - 4], [toY, toX + 1]);
           }
           whiteKing.removePossibleCastling("BOTH");
           state.whiteKingPosition = [toY, toX];
@@ -150,21 +143,13 @@ export const boardSlice = createSlice({
         }
 
         case PieceType.BlackKing: {
+          // Black King side castling
           if (toX - fromX === 2) {
-            movePieceToSquare(
-              newSquares,
-              PieceType.BlackKingRook,
-              [fromY, fromX + 3],
-              [toY, toX - 1]
-            );
+            updateSquares(newSquares, PieceType.BlackKingRook, [fromY, fromX + 3], [toY, toX - 1]);
           }
+          // Black Queen side castling
           if (fromX - toX === 2) {
-            movePieceToSquare(
-              newSquares,
-              PieceType.BlackQueenRook,
-              [fromY, fromX - 4],
-              [toY, toX + 1]
-            );
+            updateSquares(newSquares, PieceType.BlackQueenRook, [fromY, fromX - 4], [toY, toX + 1]);
           }
           blackKing.removePossibleCastling("BOTH");
           state.blackKingPosition = [toY, toX];
@@ -204,12 +189,13 @@ export const boardSlice = createSlice({
       state.history = [...history, { squares: calculatedSquares }];
       console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
 
-      // King Check
+      // Check
       const [kingY, kingX] = !isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
-
       if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
         console.log("CHECKED");
         state.pieceAttackedKing = selectedPiece.pieceType;
+        const isCheckmate = calculateCheckmate(calculatedSquares, !isWhiteTurn, [kingY, kingX]);
+        console.log("CHECKMATE:", isCheckmate);
       } else {
         state.pieceAttackedKing = null;
       }
@@ -220,7 +206,7 @@ export const boardSlice = createSlice({
   },
 });
 
-const movePieceToSquare = (
+export const updateSquares = (
   squares: HistorySquares,
   pieceType: PieceType,
   [fromY, fromX]: Position,

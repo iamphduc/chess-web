@@ -11,5 +11,5 @@
 }
 
 .piece--check {
-  filter: drop-shadow(1px 1px 4px red);
+  filter: drop-shadow(0px 0px 8px red);
 }
