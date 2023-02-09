@@ -1,12 +1,13 @@
 import WRook from "assets/rook-white.svg";
 import BRook from "assets/rook-black.svg";
-import { HistorySquares } from "game/calculate-squares";
+import { HistorySquares } from "game/calculate-attack";
 import { PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
 
 export class Rook extends Piece {
   constructor(isBlack = false) {
     super(isBlack);
+    this.point = 5;
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
@@ -50,6 +51,10 @@ export class Rook extends Piece {
 
   public getImage(): string {
     return this.isBlack ? BRook : WRook;
+  }
+
+  public getWeight(): number {
+    return 5;
   }
 }
 

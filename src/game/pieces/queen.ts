@@ -1,6 +1,6 @@
 import WQueen from "assets/queen-white.svg";
 import BQueen from "assets/queen-black.svg";
-import { HistorySquares } from "game/calculate-squares";
+import { HistorySquares } from "game/calculate-attack";
 import { Piece, Position } from "./piece";
 import { Bishop } from "./bishop";
 import { Rook } from "./rook";
@@ -13,7 +13,7 @@ export class Queen extends Piece {
 
   constructor(isBlack = false) {
     super(isBlack);
-
+    this.point = 9;
     this.whiteRook = new Rook();
     this.blackRook = new Rook(true);
     this.whiteBishop = new Bishop();
@@ -32,6 +32,10 @@ export class Queen extends Piece {
 
   public getImage(): string {
     return this.isBlack ? BQueen : WQueen;
+  }
+
+  public getWeight(): number {
+    return 9;
   }
 }
 

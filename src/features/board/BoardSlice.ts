@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
-import { calculateSquares, HistorySquares } from "game/calculate-squares";
+import { calculateAttack, HistorySquares } from "game/calculate-attack";
 import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
 import { Position } from "game/pieces/piece";
@@ -25,6 +25,8 @@ interface BoardState {
   blackKingPosition: Position;
   whiteKingPosition: Position;
   enPassantPosition: Position;
+  whiteFallenPieces: { pieceType: PieceType; weight: number }[];
+  blackFallenPieces: { pieceType: PieceType; weight: number }[];
 }
 
 interface MovePiecePayload {
@@ -40,6 +42,8 @@ const initialState = {
   blackKingPosition: [0, 4],
   whiteKingPosition: [7, 4],
   enPassantPosition: [-1, -1],
+  whiteFallenPieces: [],
+  blackFallenPieces: [],
 } as BoardState;
 
 export const boardSlice = createSlice({
@@ -72,7 +76,7 @@ export const boardSlice = createSlice({
         const newSquares = JSON.parse(JSON.stringify(current.squares));
 
         updateSquares(newSquares, pieceType, [y, x], [toY, toX]);
-        const calculatedSquares = calculateSquares(newSquares);
+        const calculatedSquares = calculateAttack(newSquares, !isWhiteTurn);
 
         let [kingY, kingX] = isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
         if (piece instanceof King) {
@@ -103,7 +107,7 @@ export const boardSlice = createSlice({
     },
 
     movePiece: (state, action: PayloadAction<MovePiecePayload>) => {
-      const { history, selectedPiece, isWhiteTurn } = state;
+      const { history, selectedPiece, isWhiteTurn, whiteFallenPieces, blackFallenPieces } = state;
 
       if (!selectedPiece) return;
 
@@ -112,11 +116,17 @@ export const boardSlice = createSlice({
       } = action.payload;
       const { pieceType, y: fromY, x: fromX } = selectedPiece;
 
-      // Appends new squares to history
       const current = history[history.length - 1];
       const newSquares: HistorySquares = JSON.parse(JSON.stringify(current.squares));
 
-      updateSquares(newSquares, pieceType, [fromY, fromX], [toY, toX]);
+      const capturedPiece = updateSquares(newSquares, pieceType, [fromY, fromX], [toY, toX]);
+      if (capturedPiece) {
+        if (isWhiteTurn) {
+          addFallenPiece(blackFallenPieces, capturedPiece);
+        } else {
+          addFallenPiece(whiteFallenPieces, capturedPiece);
+        }
+      }
 
       // Castling Moves
       switch (selectedPiece.pieceType) {
@@ -170,7 +180,7 @@ export const boardSlice = createSlice({
       // En Passant
       if (piece instanceof Pawn) {
         if (Math.abs(fromY - toY) === 2) {
-          // En Passant will change if we choose another Pawn
+          // En Passant position is updated if we choose another Pawn
           state.enPassantPosition = [toY, toX];
           console.log("En Passant:", state.enPassantPosition);
         }
@@ -178,6 +188,14 @@ export const boardSlice = createSlice({
           const [enPassantY, enPassantX] = state.enPassantPosition;
           const directionYBasedOnColor = isWhiteTurn ? -1 : 1;
           if (enPassantY >= 0 && enPassantX >= 0 && toY === enPassantY + directionYBasedOnColor) {
+            const capturedEnPassant = newSquares[enPassantY][enPassantX].pieceType;
+            if (capturedEnPassant) {
+              if (isWhiteTurn) {
+                addFallenPiece(blackFallenPieces, capturedEnPassant);
+              } else {
+                addFallenPiece(whiteFallenPieces, capturedEnPassant);
+              }
+            }
             newSquares[enPassantY][enPassantX] = { pieceType: null, isEnemyAttacked: false };
           }
         }
@@ -185,7 +203,7 @@ export const boardSlice = createSlice({
         state.enPassantPosition = [-1, -1];
       }
 
-      const calculatedSquares = calculateSquares(newSquares);
+      const calculatedSquares = calculateAttack(newSquares, isWhiteTurn);
       state.history = [...history, { squares: calculatedSquares }];
       console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
 
@@ -211,9 +229,21 @@ export const updateSquares = (
   pieceType: PieceType,
   [fromY, fromX]: Position,
   [toY, toX]: Position
-): void => {
+): PieceType | null => {
+  const { pieceType: currentPiece } = squares[toY][toX];
   squares[toY][toX] = { pieceType, isEnemyAttacked: false };
   squares[fromY][fromX] = { pieceType: null, isEnemyAttacked: false };
+  return currentPiece;
+};
+
+const addFallenPiece = (
+  fallenPieces: { pieceType: PieceType; weight: number }[],
+  pieceType: PieceType
+): void => {
+  const piece = pieceFactory.getPiece(pieceType);
+  const weight = piece.getWeight();
+  fallenPieces.push({ pieceType, weight });
+  fallenPieces.sort((pieceA, pieceB) => pieceB.weight - pieceA.weight);
 };
 
 export const { selectPiece, movePiece } = boardSlice.actions;

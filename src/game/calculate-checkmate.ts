@@ -1,5 +1,5 @@
 import { updateSquares } from "features/board/BoardSlice";
-import { calculateSquares, HistorySquares } from "./calculate-squares";
+import { calculateAttack, HistorySquares } from "./calculate-attack";
 import { pieceFactory } from "./piece-factory";
 import { King } from "./pieces/king";
 import { Position } from "./pieces/piece";
@@ -27,7 +27,7 @@ export const calculateCheckmate = (
         const newSquares = JSON.parse(JSON.stringify(squares));
 
         updateSquares(newSquares, pieceType, [fromY, fromX], [toY, toX]);
-        const calculatedSquares = calculateSquares(newSquares);
+        const calculatedSquares = calculateAttack(newSquares, isWhiteTurn);
 
         if (!calculatedSquares[kingY][kingX].isEnemyAttacked) {
           return false;

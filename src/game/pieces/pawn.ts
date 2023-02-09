@@ -1,16 +1,22 @@
 import WPawn from "assets/pawn-white.svg";
 import BPawn from "assets/pawn-black.svg";
-import { HistorySquares } from "game/calculate-squares";
+import { HistorySquares } from "game/calculate-attack";
 import { PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
 
 export class Pawn extends Piece {
   constructor(isBlack = false) {
     super(isBlack);
+    this.point = 1;
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
     const moves: Position[] = [];
+
+    if ((fromY === 0 && !this.isBlack) || (fromY === 7 && this.isBlack)) {
+      // TODO: Promotion
+      return [];
+    }
 
     const directionBasedOnColor = this.isBlack ? 1 : -1;
     const toY = fromY + directionBasedOnColor;
@@ -22,9 +28,12 @@ export class Pawn extends Piece {
     }
 
     // Move 2 squares forward
-    if (fromY === 1 || fromY === 6) {
+    if ((fromY === 1 && this.isBlack) || (fromY === 6 && !this.isBlack)) {
       const to2Y = fromY + directionBasedOnColor * 2;
-      if (super.getOccupiedSquare([to2Y, toX], squares) === PieceOccupied.None) {
+      if (
+        super.getOccupiedSquare([toY, toX], squares) === PieceOccupied.None &&
+        super.getOccupiedSquare([to2Y, toX], squares) === PieceOccupied.None
+      ) {
         moves.push([to2Y, toX]);
       }
     }
@@ -60,6 +69,10 @@ export class Pawn extends Piece {
 
   public getImage(): string {
     return this.isBlack ? BPawn : WPawn;
+  }
+
+  public getWeight(): number {
+    return 1;
   }
 }
 

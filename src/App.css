@@ -4,6 +4,9 @@
   padding-left: 15px;
   margin-right: auto;
   margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 @media (min-width: 576px) {
   .app {
@@ -18,6 +21,7 @@
 @media (min-width: 992px) {
   .app {
     width: 960px;
+    flex-direction: row;
   }
 }
 @media (min-width: 1200px) {

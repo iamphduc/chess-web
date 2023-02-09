@@ -1,0 +1,26 @@
+.board-sidebar {
+  background-color: var(--dark-surface);
+  color: black;
+  padding: 10px;
+  width: 416px;
+  height: fit-content;
+  min-height: 80px;
+  margin: 10px 0px;
+  border-radius: 6px;
+}
+
+.fallen-pieces {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 5px 0px;
+  height: fit-content;
+  min-height: 30px;
+}
+
+.weight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 2px 0px 2px;
+  color: var(--dark-text);
+}

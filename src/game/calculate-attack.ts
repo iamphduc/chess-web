@@ -10,8 +10,8 @@ export interface Square {
   isEnemyAttacked: boolean;
 }
 
-export const calculateSquares = (squares: HistorySquares) => {
-  const calculatedSquares: Square[][] = [...new Array(8)].map(() =>
+export const calculateAttack = (squares: HistorySquares, isWhiteTurn: boolean) => {
+  const attackSquares: Square[][] = [...new Array(8)].map(() =>
     [...new Array(8)].map(() => ({
       pieceType: null,
       isEnemyAttacked: false,
@@ -22,9 +22,11 @@ export const calculateSquares = (squares: HistorySquares) => {
     initalRow.forEach(({ pieceType }: Square, fromX: number) => {
       if (!pieceType) return;
 
-      calculatedSquares[fromY][fromX].pieceType = pieceType;
+      attackSquares[fromY][fromX].pieceType = pieceType;
 
       const piece = pieceFactory.getPiece(pieceType);
+      const isWhite = piece.isWhitePiece();
+      if (isWhiteTurn !== isWhite) return;
 
       let attackedSquares: Position[] = [];
       if (piece instanceof Pawn) {
@@ -34,13 +36,12 @@ export const calculateSquares = (squares: HistorySquares) => {
       }
 
       for (const [toY, toX] of attackedSquares) {
-        if (toY < 0 || toY >= 8 || toX < 0 || toX >= 8) {
-          throw new Error(`Invalid attacked squares: ${[toY, toX]}`);
+        if (toY >= 0 && toY < 8 && toX >= 0 && toY < 8) {
+          attackSquares[toY][toX].isEnemyAttacked = true;
         }
-        calculatedSquares[toY][toX].isEnemyAttacked = true;
       }
     });
   });
 
-  return calculatedSquares;
+  return attackSquares;
 };

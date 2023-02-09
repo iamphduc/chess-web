@@ -1,6 +1,6 @@
 import WKing from "assets/king-white.svg";
 import BKing from "assets/king-black.svg";
-import { HistorySquares } from "game/calculate-squares";
+import { HistorySquares } from "game/calculate-attack";
 import { PieceType } from "game/piece-type";
 import { Position } from "./piece";
 import { Knight } from "./knight";
@@ -11,7 +11,6 @@ export class King extends Knight {
 
   constructor(isBlack = false) {
     super(isBlack);
-
     this.directions = [
       // Above row
       [-1, -1],
@@ -76,6 +75,10 @@ export class King extends Knight {
 
   public getImage(): string {
     return this.isBlack ? BKing : WKing;
+  }
+
+  public getWeight(): number {
+    return 0;
   }
 }
 

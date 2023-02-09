@@ -1,12 +1,13 @@
 import WBishop from "assets/bishop-white.svg";
 import BBishop from "assets/bishop-black.svg";
-import { HistorySquares } from "game/calculate-squares";
+import { HistorySquares } from "game/calculate-attack";
 import { Position } from "./piece";
 import { Rook } from "./rook";
 
 export class Bishop extends Rook {
   constructor(isBlack = false) {
     super(isBlack);
+    this.point = 3;
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
@@ -53,6 +54,10 @@ export class Bishop extends Rook {
 
   public getImage(): string {
     return this.isBlack ? BBishop : WBishop;
+  }
+
+  public getWeight(): number {
+    return 3.5;
   }
 }
 

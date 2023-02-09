@@ -1,6 +1,6 @@
 import WKnight from "assets/knight-white.svg";
 import BKnight from "assets/knight-black.svg";
-import { HistorySquares } from "game/calculate-squares";
+import { HistorySquares } from "game/calculate-attack";
 import { PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
 
@@ -9,7 +9,7 @@ export class Knight extends Piece {
 
   constructor(isBlack = false) {
     super(isBlack);
-
+    this.point = 3;
     this.directions = [
       // Top - Left
       [-2, -1],
@@ -44,6 +44,10 @@ export class Knight extends Piece {
 
   public getImage(): string {
     return this.isBlack ? BKnight : WKnight;
+  }
+
+  public getWeight(): number {
+    return 3;
   }
 }
 

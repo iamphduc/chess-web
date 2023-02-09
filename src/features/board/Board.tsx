@@ -6,6 +6,7 @@ import { PlayerInfo, players } from "game/players";
 import { useAppSelector } from "app/hooks";
 import { Square } from "./components/Square";
 import { Player } from "./components/Player";
+import { BoardSidebar } from "./components/BoardSidebar";
 
 const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
   <Player name={name} title={title} avatar={avatar} isWhite={isWhite} />
@@ -38,12 +39,15 @@ export const Board = () => {
   }
 
   return (
-    <div className="board" style={{ width: squareSize * 8 }}>
-      {renderPlayer(players[1])}
-      <div className="squares">
-        <AnimatePresence>{squares}</AnimatePresence>
+    <>
+      <div className="board" style={{ width: squareSize * 8 }}>
+        {renderPlayer(players[1])}
+        <div className="squares">
+          <AnimatePresence>{squares}</AnimatePresence>
+        </div>
+        {renderPlayer(players[0])}
       </div>
-      {renderPlayer(players[0])}
-    </div>
+      <BoardSidebar />
+    </>
   );
 };

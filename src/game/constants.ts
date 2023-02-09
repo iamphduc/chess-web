@@ -1,5 +1,5 @@
 import { PieceType } from "game/piece-type";
-import { Square } from "./calculate-squares";
+import { Square } from "./calculate-attack";
 
 // prettier-ignore
 const initialPiecesPosition = [
