@@ -27,6 +27,7 @@ interface BoardState {
   enPassantPosition: Position;
   whiteFallenPieces: { pieceType: PieceType; weight: number }[];
   blackFallenPieces: { pieceType: PieceType; weight: number }[];
+  lastMove: Position;
 }
 
 interface MovePiecePayload {
@@ -44,6 +45,7 @@ const initialState = {
   enPassantPosition: [-1, -1],
   whiteFallenPieces: [],
   blackFallenPieces: [],
+  lastMove: [-1, -1],
 } as BoardState;
 
 export const boardSlice = createSlice({
@@ -119,6 +121,7 @@ export const boardSlice = createSlice({
       const current = history[history.length - 1];
       const newSquares: HistorySquares = JSON.parse(JSON.stringify(current.squares));
 
+      // Update fallen pieces
       const capturedPiece = updateSquares(newSquares, pieceType, [fromY, fromX], [toY, toX]);
       if (capturedPiece) {
         if (isWhiteTurn) {
@@ -128,7 +131,7 @@ export const boardSlice = createSlice({
         }
       }
 
-      // Castling Moves
+      // Castling moves
       switch (selectedPiece.pieceType) {
         case PieceType.WhiteKing: {
           // White King side castling
@@ -205,6 +208,7 @@ export const boardSlice = createSlice({
 
       const calculatedSquares = calculateAttack(newSquares, isWhiteTurn);
       state.history = [...history, { squares: calculatedSquares }];
+      state.lastMove = [fromY, fromX];
       console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
 
       // Check

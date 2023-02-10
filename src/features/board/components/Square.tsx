@@ -17,7 +17,7 @@ interface Props {
 }
 
 export const Square = ({ y, x, pieceType, isPossibleMove, size = 52 }: Props) => {
-  const { selectedPiece } = useAppSelector((state) => state.board);
+  const { selectedPiece, lastMove } = useAppSelector((state) => state.board);
   const dispatch = useAppDispatch();
 
   const isDark = (y + x) % 2 === 1;
@@ -53,7 +53,13 @@ export const Square = ({ y, x, pieceType, isPossibleMove, size = 52 }: Props) =>
 
       {isOver && !canDrop && <Overlay type={OverlayType.Illegal} />}
       {isOver && canDrop && <Overlay type={OverlayType.Legal} />}
-      {isPossibleMove && <Overlay type={OverlayType.Possible} handleClick={handlePossibleClick} />}
+      {isPossibleMove && !pieceType && (
+        <Overlay type={OverlayType.Possible} handleClick={handlePossibleClick} />
+      )}
+      {isPossibleMove && pieceType && (
+        <Overlay type={OverlayType.Enemy} handleClick={handlePossibleClick} />
+      )}
+      {lastMove[0] === y && lastMove[1] === x && <Overlay type={OverlayType.Last} />}
     </div>
   );
 };

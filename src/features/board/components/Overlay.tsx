@@ -6,6 +6,8 @@ export enum OverlayType {
   Illegal = "ILLEGAL",
   Legal = "LEGAL",
   Possible = "POSSIBLE",
+  Last = "LAST",
+  Enemy = "Enemy",
 }
 
 interface Props {
@@ -18,6 +20,9 @@ export const Overlay = ({ type, handleClick }: Props) => {
     <div
       className={`overlay overlay--${type.toLowerCase()}`}
       onClick={() => handleClick && handleClick()}
-    />
+    >
+      {type === OverlayType.Possible && <div className="overlay__possible" />}
+      {type === OverlayType.Enemy && <div className="overlay__enemy" />}
+    </div>
   );
 };

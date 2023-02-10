@@ -5,8 +5,13 @@
   width: 416px;
   height: fit-content;
   min-height: 80px;
-  margin: 10px 0px;
+  margin: 8px 0px;
   border-radius: 6px;
+}
+
+.board-sidebar__title {
+  margin: 0px;
+  color: var(--dark-title);
 }
 
 .fallen-pieces {

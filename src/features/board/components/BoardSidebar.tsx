@@ -12,6 +12,7 @@ export const BoardSidebar = () => {
 
   return (
     <div className="board-sidebar">
+      <h3 className="board-sidebar__title">Fallen pieces</h3>
       <div className="fallen-pieces fallen-pieces--white">
         {whiteFallenPieces.map(({ pieceType }, i) => (
           <FallenPiece key={i} pieceType={pieceType} />
