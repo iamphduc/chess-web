@@ -5,16 +5,16 @@ export type Position = [number, number];
 
 export abstract class Piece {
   protected readonly isBlack: boolean;
-  protected point: number;
+  protected image: string;
+  protected weight: number;
 
   constructor(isBlack: boolean) {
     this.isBlack = isBlack;
-    this.point = 0;
+    this.image = "";
+    this.weight = 0;
   }
 
   abstract getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[];
-  abstract getImage(): string;
-  abstract getWeight(): number;
 
   protected getOccupiedSquare([toY, toX]: Position, squares: HistorySquares): PieceOccupied {
     if (toY < 0 || toY >= 8 || toX < 0 || toY >= 8) {
@@ -37,5 +37,13 @@ export abstract class Piece {
 
   public isWhitePiece(): boolean {
     return !this.isBlack;
+  }
+
+  public getImage(): string {
+    return this.image;
+  }
+
+  public getWeight(): number {
+    return this.weight;
   }
 }

@@ -11,6 +11,7 @@ export class King extends Knight {
 
   constructor(isBlack = false) {
     super(isBlack);
+    this.image = this.isBlack ? BKing : WKing;
     this.directions = [
       // Above row
       [-1, -1],
@@ -71,14 +72,6 @@ export class King extends Knight {
     if (castling === "KING_SIDE" || castling === "BOTH") {
       this.isKingSideCastlingPossible = false;
     }
-  }
-
-  public getImage(): string {
-    return this.isBlack ? BKing : WKing;
-  }
-
-  public getWeight(): number {
-    return 0;
   }
 }
 

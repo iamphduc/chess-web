@@ -7,7 +7,8 @@ import { Piece, Position } from "./piece";
 export class Pawn extends Piece {
   constructor(isBlack = false) {
     super(isBlack);
-    this.point = 1;
+    this.image = isBlack ? BPawn : WPawn;
+    this.weight = 1;
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
@@ -65,14 +66,6 @@ export class Pawn extends Piece {
     });
 
     return moves;
-  }
-
-  public getImage(): string {
-    return this.isBlack ? BPawn : WPawn;
-  }
-
-  public getWeight(): number {
-    return 1;
   }
 }
 

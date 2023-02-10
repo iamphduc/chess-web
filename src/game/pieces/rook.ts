@@ -7,7 +7,8 @@ import { Piece, Position } from "./piece";
 export class Rook extends Piece {
   constructor(isBlack = false) {
     super(isBlack);
-    this.point = 5;
+    this.image = this.isBlack ? BRook : WRook;
+    this.weight = 5;
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
@@ -47,14 +48,6 @@ export class Rook extends Piece {
     }
     moves.push([y, x]);
     return true;
-  }
-
-  public getImage(): string {
-    return this.isBlack ? BRook : WRook;
-  }
-
-  public getWeight(): number {
-    return 5;
   }
 }
 

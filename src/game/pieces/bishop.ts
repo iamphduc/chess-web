@@ -7,7 +7,8 @@ import { Rook } from "./rook";
 export class Bishop extends Rook {
   constructor(isBlack = false) {
     super(isBlack);
-    this.point = 3;
+    this.image = this.isBlack ? BBishop : WBishop;
+    this.weight = 3;
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
@@ -50,14 +51,6 @@ export class Bishop extends Rook {
     }
 
     return moves;
-  }
-
-  public getImage(): string {
-    return this.isBlack ? BBishop : WBishop;
-  }
-
-  public getWeight(): number {
-    return 3.5;
   }
 }
 

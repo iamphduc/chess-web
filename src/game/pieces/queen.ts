@@ -13,7 +13,8 @@ export class Queen extends Piece {
 
   constructor(isBlack = false) {
     super(isBlack);
-    this.point = 9;
+    this.image = this.isBlack ? BQueen : WQueen;
+    this.weight = 9;
     this.whiteRook = new Rook();
     this.blackRook = new Rook(true);
     this.whiteBishop = new Bishop();
@@ -28,14 +29,6 @@ export class Queen extends Piece {
     const bishopMoves = bishop.getPossibleMoves(from, squares);
 
     return [...rookMoves, ...bishopMoves];
-  }
-
-  public getImage(): string {
-    return this.isBlack ? BQueen : WQueen;
-  }
-
-  public getWeight(): number {
-    return 9;
   }
 }
 

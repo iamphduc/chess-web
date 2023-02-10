@@ -9,7 +9,8 @@ export class Knight extends Piece {
 
   constructor(isBlack = false) {
     super(isBlack);
-    this.point = 3;
+    this.image = this.isBlack ? BKnight : WKnight;
+    this.weight = 3;
     this.directions = [
       // Top - Left
       [-2, -1],
@@ -40,14 +41,6 @@ export class Knight extends Piece {
     });
 
     return moves;
-  }
-
-  public getImage(): string {
-    return this.isBlack ? BKnight : WKnight;
-  }
-
-  public getWeight(): number {
-    return 3;
   }
 }
 
