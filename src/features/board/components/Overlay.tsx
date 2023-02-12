@@ -6,7 +6,8 @@ export enum OverlayType {
   Illegal = "ILLEGAL",
   Legal = "LEGAL",
   Possible = "POSSIBLE",
-  Last = "LAST",
+  Previous = "PREVIOUS",
+  Current = "CURRENT",
   Enemy = "Enemy",
 }
 

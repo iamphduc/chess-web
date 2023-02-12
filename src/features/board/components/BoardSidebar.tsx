@@ -14,14 +14,14 @@ export const BoardSidebar = () => {
     <div className="board-sidebar">
       <h3 className="board-sidebar__title">Fallen pieces</h3>
       <div className="fallen-pieces fallen-pieces--white">
-        {whiteFallenPieces.map(({ pieceType }, i) => (
-          <FallenPiece key={i} pieceType={pieceType} />
+        {whiteFallenPieces.map(({ pieceType }) => (
+          <FallenPiece key={pieceType} pieceType={pieceType} />
         ))}
         <div className="weight">{diff > 0 ? "+" + diff : ""}</div>
       </div>
       <div className="fallen-pieces fallen-pieces--black">
-        {blackFallenPieces.map(({ pieceType }, i) => (
-          <FallenPiece key={i} pieceType={pieceType} />
+        {blackFallenPieces.map(({ pieceType }) => (
+          <FallenPiece key={pieceType} pieceType={pieceType} />
         ))}
         <div className="weight">{diff < 0 ? "+" + Math.abs(diff) : ""}</div>
       </div>

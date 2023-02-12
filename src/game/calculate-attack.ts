@@ -30,7 +30,7 @@ export const calculateAttack = (squares: HistorySquares, isWhiteTurn: boolean) =
 
       let attackedSquares: Position[] = [];
       if (piece instanceof Pawn) {
-        attackedSquares = piece.getAttackedSquares([fromY, fromX]);
+        attackedSquares = piece.getAttackedSquares([fromY, fromX], squares);
       } else {
         attackedSquares = piece.getPossibleMoves([fromY, fromX], squares);
       }

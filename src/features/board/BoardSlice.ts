@@ -7,31 +7,40 @@ import { pieceFactory } from "game/piece-factory";
 import { Position } from "game/pieces/piece";
 import { blackKing, King, whiteKing } from "game/pieces/king";
 import { Pawn } from "game/pieces/pawn";
-import { initialSquares } from "game/constants";
+import { initialSquares, piecePromotedBoard } from "game/constants";
 import { calculateCheckmate } from "game/calculate-checkmate";
+import { PiecePromoted } from "./components/Promotion";
 
-export interface SelectedPiece {
+interface PieceSelection {
   pieceType: PieceType;
   y: number;
   x: number;
+}
+
+interface PawnPromotion {
+  y: number;
+  x: number;
+  piecePromoted: PiecePromoted;
+}
+
+interface PieceMove {
+  to: Position;
 }
 
 interface BoardState {
   history: { squares: HistorySquares }[];
   isWhiteTurn: boolean;
   pieceAttackedKing: PieceType | null;
-  selectedPiece: SelectedPiece | null;
+  selectedPiece: PieceSelection | null;
   possibleMoves: Position[];
   blackKingPosition: Position;
   whiteKingPosition: Position;
   enPassantPosition: Position;
   whiteFallenPieces: { pieceType: PieceType; weight: number }[];
   blackFallenPieces: { pieceType: PieceType; weight: number }[];
-  lastMove: Position;
-}
-
-interface MovePiecePayload {
-  to: Position;
+  lastMove: [Position, Position];
+  promotionPosition: Position;
+  piecePromotedCount: number[];
 }
 
 const initialState = {
@@ -45,14 +54,19 @@ const initialState = {
   enPassantPosition: [-1, -1],
   whiteFallenPieces: [],
   blackFallenPieces: [],
-  lastMove: [-1, -1],
+  lastMove: [
+    [-1, -1],
+    [-1, -1],
+  ],
+  promotionPosition: [-1, -1],
+  piecePromotedCount: [0, 0, 0, 0, 0, 0, 0, 0], // [WQueen, WRook, WBishop, WKnight, BQueen, ...]
 } as BoardState;
 
 export const boardSlice = createSlice({
   name: "board",
   initialState,
   reducers: {
-    selectPiece: (state, action: PayloadAction<SelectedPiece>) => {
+    selectPiece: (state, action: PayloadAction<PieceSelection>) => {
       // Deselect Piece
       if (state.selectedPiece && state.selectedPiece.pieceType === action.payload.pieceType) {
         console.log(`Deselected ${state.selectedPiece.pieceType}`);
@@ -74,6 +88,7 @@ export const boardSlice = createSlice({
       // Get valid moves
       const possibleMoves = piece.getPossibleMoves([y, x], current.squares);
       let validMoves: Position[] = [];
+      console.log(possibleMoves);
       possibleMoves.forEach(([toY, toX]) => {
         const newSquares = JSON.parse(JSON.stringify(current.squares));
 
@@ -108,7 +123,7 @@ export const boardSlice = createSlice({
       state.possibleMoves = validMoves;
     },
 
-    movePiece: (state, action: PayloadAction<MovePiecePayload>) => {
+    movePiece: (state, action: PayloadAction<PieceMove>) => {
       const { history, selectedPiece, isWhiteTurn, whiteFallenPieces, blackFallenPieces } = state;
 
       if (!selectedPiece) return;
@@ -182,11 +197,11 @@ export const boardSlice = createSlice({
 
       // En Passant
       if (piece instanceof Pawn) {
-        if (Math.abs(fromY - toY) === 2) {
-          // En Passant position is updated if we choose another Pawn
-          state.enPassantPosition = [toY, toX];
-          console.log("En Passant:", state.enPassantPosition);
+        // Pawn promotion
+        if (toY === 0 || toY === 7) {
+          state.promotionPosition = [toY, toX];
         }
+        // En Passant capture
         if (Math.abs(fromX - toX) === 1) {
           const [enPassantY, enPassantX] = state.enPassantPosition;
           const directionYBasedOnColor = isWhiteTurn ? -1 : 1;
@@ -202,14 +217,28 @@ export const boardSlice = createSlice({
             newSquares[enPassantY][enPassantX] = { pieceType: null, isEnemyAttacked: false };
           }
         }
+        // Pawn moves 2 rows forward
+        if (Math.abs(fromY - toY) === 2) {
+          // En Passant position is updated if we move another Pawn
+          state.enPassantPosition = [toY, toX];
+          console.log("En Passant:", state.enPassantPosition);
+        } else {
+          state.enPassantPosition = [-1, -1];
+        }
       } else {
         state.enPassantPosition = [-1, -1];
       }
 
+      // Update history
       const calculatedSquares = calculateAttack(newSquares, isWhiteTurn);
       state.history = [...history, { squares: calculatedSquares }];
-      state.lastMove = [fromY, fromX];
       console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
+
+      // Update last move
+      state.lastMove = [
+        [fromY, fromX],
+        [toY, toX],
+      ];
 
       // Check
       const [kingY, kingX] = !isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
@@ -222,8 +251,63 @@ export const boardSlice = createSlice({
         state.pieceAttackedKing = null;
       }
 
-      state.isWhiteTurn = !state.isWhiteTurn;
+      if (state.promotionPosition[0] === -1) {
+        state.isWhiteTurn = !state.isWhiteTurn;
+      }
       state.possibleMoves = [];
+    },
+
+    promotePawn: (state, action: PayloadAction<PawnPromotion>) => {
+      const { history, isWhiteTurn, piecePromotedCount } = state;
+      const { y, x, piecePromoted } = action.payload;
+
+      const current = history[history.length - 1];
+      const selectedPiece: PieceSelection = { pieceType: PieceType.WhiteQueenPromoted1, y, x };
+
+      let piecePromotedIdx = 0;
+      switch (piecePromoted) {
+        case PiecePromoted.Queen: {
+          piecePromotedIdx = isWhiteTurn ? 0 : 4;
+          break;
+        }
+        case PiecePromoted.Rook: {
+          piecePromotedIdx = isWhiteTurn ? 1 : 5;
+          break;
+        }
+        case PiecePromoted.Bishop: {
+          piecePromotedIdx = isWhiteTurn ? 2 : 6;
+          break;
+        }
+        case PiecePromoted.Knight: {
+          piecePromotedIdx = isWhiteTurn ? 3 : 7;
+          break;
+        }
+      }
+      // Get the promoted piece from board
+      const chosenPiece = piecePromotedBoard[piecePromotedIdx];
+      const nthPiece = piecePromotedCount[piecePromotedIdx];
+      current.squares[y][x].pieceType = chosenPiece[nthPiece];
+      selectedPiece.pieceType = chosenPiece[nthPiece];
+      state.piecePromotedCount[piecePromotedIdx] += 1;
+
+      // Update history
+      const calculatedSquares = calculateAttack(current.squares, isWhiteTurn);
+      state.history[history.length - 1] = { squares: calculatedSquares };
+
+      // Check
+      const [kingY, kingX] = !isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
+      console.log("King", [kingY, kingX], calculatedSquares);
+      if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
+        console.log("CHECKED");
+        state.pieceAttackedKing = selectedPiece.pieceType;
+        const isCheckmate = calculateCheckmate(calculatedSquares, !isWhiteTurn, [kingY, kingX]);
+        console.log("CHECKMATE:", isCheckmate);
+      } else {
+        state.pieceAttackedKing = null;
+      }
+
+      state.promotionPosition = [-1, -1];
+      state.isWhiteTurn = !state.isWhiteTurn;
     },
   },
 });
@@ -250,4 +334,4 @@ const addFallenPiece = (
   fallenPieces.sort((pieceA, pieceB) => pieceB.weight - pieceA.weight);
 };
 
-export const { selectPiece, movePiece } = boardSlice.actions;
+export const { selectPiece, movePiece, promotePawn } = boardSlice.actions;

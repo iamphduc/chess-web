@@ -2,6 +2,7 @@ import React from "react";
 import { useDrop } from "react-dnd";
 
 import "./Square.css";
+import { CELL_SIZE } from "game/constants";
 import { PieceType } from "game/piece-type";
 import { useAppSelector, useAppDispatch } from "app/hooks";
 import { movePiece, selectPiece } from "../BoardSlice";
@@ -16,10 +17,11 @@ interface Props {
   isPossibleMove: boolean;
 }
 
-export const Square = ({ y, x, pieceType, isPossibleMove, size = 52 }: Props) => {
+export const Square = ({ y, x, pieceType, isPossibleMove, size = CELL_SIZE }: Props) => {
   const { selectedPiece, lastMove } = useAppSelector((state) => state.board);
   const dispatch = useAppDispatch();
 
+  const [previousSquare, currentSquare] = lastMove;
   const isDark = (y + x) % 2 === 1;
 
   const [{ isOver, canDrop }, drop] = useDrop(
@@ -59,7 +61,10 @@ export const Square = ({ y, x, pieceType, isPossibleMove, size = 52 }: Props) =>
       {isPossibleMove && pieceType && (
         <Overlay type={OverlayType.Enemy} handleClick={handlePossibleClick} />
       )}
-      {lastMove[0] === y && lastMove[1] === x && <Overlay type={OverlayType.Last} />}
+      {previousSquare[0] === y && previousSquare[1] === x && (
+        <Overlay type={OverlayType.Previous} />
+      )}
+      {currentSquare[0] === y && currentSquare[1] === x && <Overlay type={OverlayType.Current} />}
     </div>
   );
 };

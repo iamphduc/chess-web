@@ -63,3 +63,59 @@ export const initialSquares: Square[][] = initialPiecesPosition.map((row) =>
     isEnemyAttacked: false,
   }))
 );
+
+export const piecePromotedBoard = [
+  // White side
+  [
+    PieceType.WhiteQueenPromoted1,
+    PieceType.WhiteQueenPromoted2,
+    PieceType.WhiteQueenPromoted3,
+    PieceType.WhiteQueenPromoted4,
+  ],
+  [
+    PieceType.WhiteRookPromoted1,
+    PieceType.WhiteRookPromoted2,
+    PieceType.WhiteRookPromoted3,
+    PieceType.WhiteRookPromoted4,
+  ],
+  [
+    PieceType.WhiteBishopPromoted1,
+    PieceType.WhiteBishopPromoted2,
+    PieceType.WhiteBishopPromoted3,
+    PieceType.WhiteBishopPromoted4,
+  ],
+  [
+    PieceType.WhiteKnightPromoted1,
+    PieceType.WhiteKnightPromoted2,
+    PieceType.WhiteKnightPromoted3,
+    PieceType.WhiteKnightPromoted4,
+  ],
+
+  // Black side
+  [
+    PieceType.BlackQueenPromoted1,
+    PieceType.BlackQueenPromoted2,
+    PieceType.BlackQueenPromoted3,
+    PieceType.BlackQueenPromoted4,
+  ],
+  [
+    PieceType.BlackRookPromoted1,
+    PieceType.BlackRookPromoted2,
+    PieceType.BlackRookPromoted3,
+    PieceType.BlackRookPromoted4,
+  ],
+  [
+    PieceType.BlackBishopPromoted1,
+    PieceType.BlackBishopPromoted2,
+    PieceType.BlackBishopPromoted3,
+    PieceType.BlackBishopPromoted4,
+  ],
+  [
+    PieceType.BlackKnightPromoted1,
+    PieceType.BlackKnightPromoted2,
+    PieceType.BlackKnightPromoted3,
+    PieceType.BlackKnightPromoted4,
+  ],
+];
+
+export const CELL_SIZE = 52;

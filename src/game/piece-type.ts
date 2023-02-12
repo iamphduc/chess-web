@@ -1,4 +1,5 @@
 export enum PieceType {
+  // WHITE SIDE
   WhiteQueenRook = "WHITE_QUEEN_ROOK",
   WhiteQueenKnight = "WHITE_QUEEN_KNIGHT",
   WhiteQueenBishop = "WHITE_QUEEN_BISHOP",
@@ -16,6 +17,27 @@ export enum PieceType {
   WhitePawnG = "WHITE_PAWN_G",
   WhitePawnH = "WHITE_PAWN_H",
 
+  WhiteKnightPromoted1 = "WHITE_KNIGHT_PROMOTED_1",
+  WhiteKnightPromoted2 = "WHITE_KNIGHT_PROMOTED_2",
+  WhiteKnightPromoted3 = "WHITE_KNIGHT_PROMOTED_3",
+  WhiteKnightPromoted4 = "WHITE_KNIGHT_PROMOTED_4",
+
+  WhiteBishopPromoted1 = "WHITE_BISHOP_PROMOTED_1",
+  WhiteBishopPromoted2 = "WHITE_BISHOP_PROMOTED_2",
+  WhiteBishopPromoted3 = "WHITE_BISHOP_PROMOTED_3",
+  WhiteBishopPromoted4 = "WHITE_BISHOP_PROMOTED_4",
+
+  WhiteRookPromoted1 = "WHITE_ROOK_PROMOTED_1",
+  WhiteRookPromoted2 = "WHITE_ROOK_PROMOTED_2",
+  WhiteRookPromoted3 = "WHITE_ROOK_PROMOTED_3",
+  WhiteRookPromoted4 = "WHITE_ROOK_PROMOTED_4",
+
+  WhiteQueenPromoted1 = "WHITE_QUEEN_PROMOTED_1",
+  WhiteQueenPromoted2 = "WHITE_QUEEN_PROMOTED_2",
+  WhiteQueenPromoted3 = "WHITE_QUEEN_PROMOTED_3",
+  WhiteQueenPromoted4 = "WHITE_QUEEN_PROMOTED_4",
+
+  // BLACK SIDE
   BlackQueenRook = "BLACK_QUEEN_ROOK",
   BlackQueenKnight = "BLACK_QUEEN_KNIGHT",
   BlackQueenBishop = "BLACK_QUEEN_BISHOP",
@@ -32,6 +54,26 @@ export enum PieceType {
   BlackPawnF = "BLACK_PAWN_F",
   BlackPawnG = "BLACK_PAWN_G",
   BlackPawnH = "BLACK_PAWN_H",
+
+  BlackKnightPromoted1 = "BLACK_KNIGHT_PROMOTED_1",
+  BlackKnightPromoted2 = "BLACK_KNIGHT_PROMOTED_2",
+  BlackKnightPromoted3 = "BLACK_KNIGHT_PROMOTED_3",
+  BlackKnightPromoted4 = "BLACK_KNIGHT_PROMOTED_4",
+
+  BlackBishopPromoted1 = "BLACK_BISHOP_PROMOTED_1",
+  BlackBishopPromoted2 = "BLACK_BISHOP_PROMOTED_2",
+  BlackBishopPromoted3 = "BLACK_BISHOP_PROMOTED_3",
+  BlackBishopPromoted4 = "BLACK_BISHOP_PROMOTED_4",
+
+  BlackRookPromoted1 = "BLACK_ROOK_PROMOTED_1",
+  BlackRookPromoted2 = "BLACK_ROOK_PROMOTED_2",
+  BlackRookPromoted3 = "BLACK_ROOK_PROMOTED_3",
+  BlackRookPromoted4 = "BLACK_ROOK_PROMOTED_4",
+
+  BlackQueenPromoted1 = "BLACK_QUEEN_PROMOTED_1",
+  BlackQueenPromoted2 = "BLACK_QUEEN_PROMOTED_2",
+  BlackQueenPromoted3 = "BLACK_QUEEN_PROMOTED_3",
+  BlackQueenPromoted4 = "BLACK_QUEEN_PROMOTED_4",
 }
 
 export enum PieceOccupied {

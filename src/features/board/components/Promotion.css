@@ -1,0 +1,21 @@
+.promotion {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+  padding: 4px;
+  z-index: 100;
+}
+
+.promotion__piece {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  background-position: center;
+  background-size: contain;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 0px 2px;
+}
+.promotion__piece:hover {
+  background-color: rgba(256, 256, 256, 0.6);
+}

@@ -1,4 +1,5 @@
 .squares {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
+  position: relative;
 }
