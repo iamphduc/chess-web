@@ -1,29 +1,29 @@
 {
   "files": {
-    "main.css": "/iamphduc/chess-web/static/css/main.c7bd333b.css",
-    "main.js": "/iamphduc/chess-web/static/js/main.13706fbe.js",
-    "static/js/787.f7f91304.chunk.js": "/iamphduc/chess-web/static/js/787.f7f91304.chunk.js",
-    "static/media/le-quang-liem.png": "/iamphduc/chess-web/static/media/le-quang-liem.6d1ea7f5e9556cf498ea.png",
-    "static/media/chess-player.png": "/iamphduc/chess-web/static/media/chess-player.093dac65f5cf15c198e0.png",
-    "static/media/rook-black.svg": "/iamphduc/chess-web/static/media/rook-black.fdc575582c2cbe2ec82093702945226f.svg",
-    "static/media/knight-black.svg": "/iamphduc/chess-web/static/media/knight-black.7930be9e07b51bc0e069b1d77e31261a.svg",
-    "static/media/king-black.svg": "/iamphduc/chess-web/static/media/king-black.6c8cc8fabe5215cc854dec67ee7781fd.svg",
-    "static/media/queen-black.svg": "/iamphduc/chess-web/static/media/queen-black.cf388bf415c0d33ec16f23593b8d0d91.svg",
-    "static/media/king-white.svg": "/iamphduc/chess-web/static/media/king-white.3f959aab36df6290a8e0f17c7d242c19.svg",
-    "static/media/knight-white.svg": "/iamphduc/chess-web/static/media/knight-white.d47944d2cee4f8c707d1907706c142fa.svg",
-    "static/media/bishop-black.svg": "/iamphduc/chess-web/static/media/bishop-black.04932f63ef10dcdee115b649286230f5.svg",
-    "static/media/bishop-white.svg": "/iamphduc/chess-web/static/media/bishop-white.aa411d5809c6380713b4312d55aafc53.svg",
-    "static/media/rook-white.svg": "/iamphduc/chess-web/static/media/rook-white.9e48b84f189eea24339f8a679e7a664f.svg",
-    "static/media/queen-white.svg": "/iamphduc/chess-web/static/media/queen-white.7a1aecff0f22ff68c43f9b7f8a81d0b4.svg",
-    "static/media/pawn-black.svg": "/iamphduc/chess-web/static/media/pawn-black.be5d44ca5ee868885d216188996e3a00.svg",
-    "static/media/pawn-white.svg": "/iamphduc/chess-web/static/media/pawn-white.50273cc6d86861932d0a01c38274009a.svg",
-    "index.html": "/iamphduc/chess-web/index.html",
-    "main.c7bd333b.css.map": "/iamphduc/chess-web/static/css/main.c7bd333b.css.map",
-    "main.13706fbe.js.map": "/iamphduc/chess-web/static/js/main.13706fbe.js.map",
-    "787.f7f91304.chunk.js.map": "/iamphduc/chess-web/static/js/787.f7f91304.chunk.js.map"
+    "main.css": "./static/css/main.c7bd333b.css",
+    "main.js": "./static/js/main.a680c027.js",
+    "static/js/787.f7f91304.chunk.js": "./static/js/787.f7f91304.chunk.js",
+    "static/media/le-quang-liem.png": "./static/media/le-quang-liem.6d1ea7f5e9556cf498ea.png",
+    "static/media/chess-player.png": "./static/media/chess-player.093dac65f5cf15c198e0.png",
+    "static/media/rook-black.svg": "./static/media/rook-black.fdc575582c2cbe2ec82093702945226f.svg",
+    "static/media/knight-black.svg": "./static/media/knight-black.7930be9e07b51bc0e069b1d77e31261a.svg",
+    "static/media/king-black.svg": "./static/media/king-black.6c8cc8fabe5215cc854dec67ee7781fd.svg",
+    "static/media/queen-black.svg": "./static/media/queen-black.cf388bf415c0d33ec16f23593b8d0d91.svg",
+    "static/media/king-white.svg": "./static/media/king-white.3f959aab36df6290a8e0f17c7d242c19.svg",
+    "static/media/knight-white.svg": "./static/media/knight-white.d47944d2cee4f8c707d1907706c142fa.svg",
+    "static/media/bishop-black.svg": "./static/media/bishop-black.04932f63ef10dcdee115b649286230f5.svg",
+    "static/media/bishop-white.svg": "./static/media/bishop-white.aa411d5809c6380713b4312d55aafc53.svg",
+    "static/media/rook-white.svg": "./static/media/rook-white.9e48b84f189eea24339f8a679e7a664f.svg",
+    "static/media/queen-white.svg": "./static/media/queen-white.7a1aecff0f22ff68c43f9b7f8a81d0b4.svg",
+    "static/media/pawn-black.svg": "./static/media/pawn-black.be5d44ca5ee868885d216188996e3a00.svg",
+    "static/media/pawn-white.svg": "./static/media/pawn-white.50273cc6d86861932d0a01c38274009a.svg",
+    "index.html": "./index.html",
+    "main.c7bd333b.css.map": "./static/css/main.c7bd333b.css.map",
+    "main.a680c027.js.map": "./static/js/main.a680c027.js.map",
+    "787.f7f91304.chunk.js.map": "./static/js/787.f7f91304.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.c7bd333b.css",
-    "static/js/main.13706fbe.js"
+    "static/js/main.a680c027.js"
   ]
 }
