@@ -94,19 +94,21 @@ export const boardSlice = createSlice({
       const possibleMoves = piece.getPossibleMoves([y, x], current.squares);
       let validMoves: Position[] = [];
       possibleMoves.forEach(([toY, toX]) => {
-        const newSquares = JSON.parse(JSON.stringify(current.squares));
+        if (toY >= 0 && toY < 8 && toX >= 0 && toY < 8) {
+          const newSquares = JSON.parse(JSON.stringify(current.squares));
 
-        updateSquares(newSquares, pieceType, [y, x], [toY, toX]);
-        const calculatedSquares = calculateAttack(newSquares, !isWhiteTurn);
+          updateSquares(newSquares, pieceType, [y, x], [toY, toX]);
+          const calculatedSquares = calculateAttack(newSquares, !isWhiteTurn);
 
-        let [kingY, kingX] = isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
-        if (piece instanceof King) {
-          [kingY, kingX] = [toY, toX];
+          let [kingY, kingX] = isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
+          if (piece instanceof King) {
+            [kingY, kingX] = [toY, toX];
+          }
+
+          if (calculatedSquares[kingY][kingX].isEnemyAttacked) return;
+
+          validMoves.push([toY, toX]);
         }
-
-        if (calculatedSquares[kingY][kingX].isEnemyAttacked) return;
-
-        validMoves.push([toY, toX]);
       });
 
       // Check En Passant

@@ -25,8 +25,7 @@ export const calculateAttack = (squares: HistorySquares, isWhiteTurn: boolean) =
       attackSquares[fromY][fromX].pieceType = pieceType;
 
       const piece = pieceFactory.getPiece(pieceType);
-      const isWhite = piece.isWhitePiece();
-      if (isWhiteTurn !== isWhite) return;
+      if (isWhiteTurn !== piece.isWhitePiece()) return;
 
       let attackedSquares: Position[] = [];
       if (piece instanceof Pawn) {

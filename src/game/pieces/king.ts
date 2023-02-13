@@ -44,7 +44,8 @@ export class King extends Knight {
       squares[fromY][fromX - 2].pieceType === null &&
       squares[fromY][fromX - 3].pieceType === null &&
       squares[fromY][fromX - 4].pieceType ===
-        (this.isBlack ? PieceType.BlackQueenRook : PieceType.WhiteQueenRook)
+        (this.isBlack ? PieceType.BlackQueenRook : PieceType.WhiteQueenRook) &&
+      !squares[fromY][fromX].isEnemyAttacked
     ) {
       if (!squares[fromY][fromX - 1].isEnemyAttacked) {
         moves.push([fromY, fromX - 2]);
@@ -56,7 +57,8 @@ export class King extends Knight {
       squares[fromY][fromX + 1].pieceType === null &&
       squares[fromY][fromX + 2].pieceType === null &&
       squares[fromY][fromX + 3].pieceType ===
-        (this.isBlack ? PieceType.BlackKingRook : PieceType.WhiteKingRook)
+        (this.isBlack ? PieceType.BlackKingRook : PieceType.WhiteKingRook) &&
+      !squares[fromY][fromX].isEnemyAttacked
     ) {
       if (!squares[fromY][fromX + 1].isEnemyAttacked) {
         moves.push([fromY, fromX + 2]);

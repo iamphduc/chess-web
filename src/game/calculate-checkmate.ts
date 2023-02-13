@@ -9,28 +9,29 @@ export const calculateCheckmate = (
   isWhiteTurn: boolean,
   [kingY, kingX]: Position
 ): boolean => {
-  for (let fromY = 0; fromY < 8; fromY++) {
-    for (let fromX = 0; fromX < 8; fromX++) {
-      const { pieceType } = squares[fromY][fromX];
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      const { pieceType } = squares[y][x];
       if (!pieceType) continue;
 
       const piece = pieceFactory.getPiece(pieceType);
       if (isWhiteTurn !== piece.isWhitePiece()) continue;
 
-      // Cannot castling while in a check
-      if (piece instanceof King) {
-        piece.removePossibleCastling("BOTH");
-      }
-
-      const possibleMoves = piece.getPossibleMoves([fromY, fromX], squares);
+      const possibleMoves = piece.getPossibleMoves([y, x], squares);
       for (const [toY, toX] of possibleMoves) {
-        const newSquares = JSON.parse(JSON.stringify(squares));
+        if (toY >= 0 && toY < 8 && toX >= 0 && toY < 8) {
+          const newSquares = JSON.parse(JSON.stringify(squares));
 
-        updateSquares(newSquares, pieceType, [fromY, fromX], [toY, toX]);
-        const calculatedSquares = calculateAttack(newSquares, isWhiteTurn);
+          updateSquares(newSquares, pieceType, [y, x], [toY, toX]);
+          const calculatedSquares = calculateAttack(newSquares, !isWhiteTurn);
 
-        if (!calculatedSquares[kingY][kingX].isEnemyAttacked) {
-          return false;
+          if (piece instanceof King) {
+            [kingY, kingX] = [toY, toX];
+          }
+
+          if (!calculatedSquares[kingY][kingX].isEnemyAttacked) {
+            return false;
+          }
         }
       }
     }
