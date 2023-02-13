@@ -1,15 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
+import { initialSquares, piecePromotedBoard } from "../../constants";
 import { calculateAttack, HistorySquares } from "game/calculate-attack";
 import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
-import { Position } from "game/pieces/piece";
+import { Piece, Position } from "game/pieces/piece";
 import { blackKing, King, whiteKing } from "game/pieces/king";
 import { Pawn } from "game/pieces/pawn";
-import { initialSquares, piecePromotedBoard } from "game/constants";
 import { calculateCheckmate } from "game/calculate-checkmate";
 import { PiecePromoted } from "./components/Promotion";
+import { SpecialCase } from "./components/Notation";
 
 interface PieceSelection {
   pieceType: PieceType;
@@ -41,6 +42,8 @@ interface BoardState {
   lastMove: [Position, Position];
   promotionPosition: Position;
   piecePromotedCount: number[];
+  whiteNotation: { abbreviation: string; position: Position; specialCase: SpecialCase }[];
+  blackNotation: { abbreviation: string; position: Position; specialCase: SpecialCase }[];
 }
 
 const initialState = {
@@ -60,6 +63,8 @@ const initialState = {
   ],
   promotionPosition: [-1, -1],
   piecePromotedCount: [0, 0, 0, 0, 0, 0, 0, 0], // [WQueen, WRook, WBishop, WKnight, BQueen, ...]
+  whiteNotation: [],
+  blackNotation: [],
 } as BoardState;
 
 export const boardSlice = createSlice({
@@ -88,7 +93,6 @@ export const boardSlice = createSlice({
       // Get valid moves
       const possibleMoves = piece.getPossibleMoves([y, x], current.squares);
       let validMoves: Position[] = [];
-      console.log(possibleMoves);
       possibleMoves.forEach(([toY, toX]) => {
         const newSquares = JSON.parse(JSON.stringify(current.squares));
 
@@ -135,6 +139,29 @@ export const boardSlice = createSlice({
 
       const current = history[history.length - 1];
       const newSquares: HistorySquares = JSON.parse(JSON.stringify(current.squares));
+      const piece = pieceFactory.getPiece(selectedPiece.pieceType);
+
+      // Update last move
+      state.lastMove = [
+        [fromY, fromX],
+        [toY, toX],
+      ];
+
+      // Update Notation
+      const destination: Position = [toY, toX];
+      const addedNotation = {
+        abbreviation: piece.getAbbreviation(),
+        position: destination,
+        specialCase: SpecialCase.None,
+      };
+      let notation = null;
+      if (isWhiteTurn) {
+        state.whiteNotation.push(addedNotation);
+        notation = state.whiteNotation;
+      } else {
+        state.blackNotation.push(addedNotation);
+        notation = state.blackNotation;
+      }
 
       // Update fallen pieces
       const capturedPiece = updateSquares(newSquares, pieceType, [fromY, fromX], [toY, toX]);
@@ -144,6 +171,10 @@ export const boardSlice = createSlice({
         } else {
           addFallenPiece(whiteFallenPieces, capturedPiece);
         }
+        notation[notation.length - 1].specialCase = SpecialCase.Capture;
+        if (piece instanceof Pawn) {
+          notation[notation.length - 1].abbreviation = String.fromCharCode(fromX + 97);
+        }
       }
 
       // Castling moves
@@ -152,10 +183,12 @@ export const boardSlice = createSlice({
           // White King side castling
           if (toX - fromX === 2) {
             updateSquares(newSquares, PieceType.WhiteKingRook, [fromY, fromX + 3], [toY, toX - 1]);
+            notation[notation.length - 1].specialCase = SpecialCase.KingSideCastling;
           }
           // White Queen side castling
           if (fromX - toX === 2) {
             updateSquares(newSquares, PieceType.WhiteQueenRook, [fromY, fromX - 4], [toY, toX + 1]);
+            notation[notation.length - 1].specialCase = SpecialCase.QueenSideCastling;
           }
           whiteKing.removePossibleCastling("BOTH");
           state.whiteKingPosition = [toY, toX];
@@ -174,10 +207,12 @@ export const boardSlice = createSlice({
           // Black King side castling
           if (toX - fromX === 2) {
             updateSquares(newSquares, PieceType.BlackKingRook, [fromY, fromX + 3], [toY, toX - 1]);
+            notation[notation.length - 1].specialCase = SpecialCase.KingSideCastling;
           }
           // Black Queen side castling
           if (fromX - toX === 2) {
             updateSquares(newSquares, PieceType.BlackQueenRook, [fromY, fromX - 4], [toY, toX + 1]);
+            notation[notation.length - 1].specialCase = SpecialCase.QueenSideCastling;
           }
           blackKing.removePossibleCastling("BOTH");
           state.blackKingPosition = [toY, toX];
@@ -192,8 +227,6 @@ export const boardSlice = createSlice({
           break;
         }
       }
-
-      const piece = pieceFactory.getPiece(selectedPiece.pieceType);
 
       // En Passant
       if (piece instanceof Pawn) {
@@ -213,6 +246,11 @@ export const boardSlice = createSlice({
               } else {
                 addFallenPiece(whiteFallenPieces, capturedEnPassant);
               }
+              notation[notation.length - 1] = {
+                abbreviation: String.fromCharCode(fromX + 97),
+                position: state.enPassantPosition,
+                specialCase: SpecialCase.Capture,
+              };
             }
             newSquares[enPassantY][enPassantX] = { pieceType: null, isEnemyAttacked: false };
           }
@@ -234,19 +272,18 @@ export const boardSlice = createSlice({
       state.history = [...history, { squares: calculatedSquares }];
       console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
 
-      // Update last move
-      state.lastMove = [
-        [fromY, fromX],
-        [toY, toX],
-      ];
-
       // Check
       const [kingY, kingX] = !isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
       if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
         console.log("CHECKED");
         state.pieceAttackedKing = selectedPiece.pieceType;
+
         const isCheckmate = calculateCheckmate(calculatedSquares, !isWhiteTurn, [kingY, kingX]);
         console.log("CHECKMATE:", isCheckmate);
+
+        notation[notation.length - 1].specialCase = isCheckmate
+          ? SpecialCase.Checkmate
+          : SpecialCase.Check;
       } else {
         state.pieceAttackedKing = null;
       }
@@ -254,6 +291,13 @@ export const boardSlice = createSlice({
       if (state.promotionPosition[0] === -1) {
         state.isWhiteTurn = !state.isWhiteTurn;
       }
+      notation[notation.length - 1].abbreviation += checkIfPieceMoveSameSquare(
+        current.squares,
+        piece,
+        [fromY, fromX],
+        [toY, toX],
+        isWhiteTurn
+      );
       state.possibleMoves = [];
     },
 
@@ -296,7 +340,6 @@ export const boardSlice = createSlice({
 
       // Check
       const [kingY, kingX] = !isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
-      console.log("King", [kingY, kingX], calculatedSquares);
       if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
         console.log("CHECKED");
         state.pieceAttackedKing = selectedPiece.pieceType;
@@ -332,6 +375,38 @@ const addFallenPiece = (
   const weight = piece.getWeight();
   fallenPieces.push({ pieceType, weight });
   fallenPieces.sort((pieceA, pieceB) => pieceB.weight - pieceA.weight);
+};
+
+const checkIfPieceMoveSameSquare = (
+  squares: HistorySquares,
+  pieceToCheck: Piece,
+  [fromY, fromX]: Position,
+  [toY, toX]: Position,
+  isWhiteTurn: boolean
+): string => {
+  for (let y = 0; y < 8; y += 1) {
+    for (let x = 0; x < 8; x += 1) {
+      const pieceType = squares[y][x].pieceType;
+      if (pieceType) {
+        const piece = pieceFactory.getPiece(pieceType);
+
+        if (
+          pieceToCheck.constructor.name === piece.constructor.name &&
+          piece.isWhitePiece() === isWhiteTurn &&
+          (y !== fromY || x !== fromX)
+        ) {
+          const possibleMoves = piece.getPossibleMoves([y, x], squares);
+          for (const moves of possibleMoves) {
+            if (moves[0] === toY && moves[1] === toX) {
+              if (fromX === x) return 8 - fromY + "";
+              return String.fromCharCode(fromX + 97);
+            }
+          }
+        }
+      }
+    }
+  }
+  return "";
 };
 
 export const { selectPiece, movePiece, promotePawn } = boardSlice.actions;

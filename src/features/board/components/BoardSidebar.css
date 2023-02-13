@@ -10,22 +10,6 @@
 }
 
 .board-sidebar__title {
-  margin: 0px;
+  margin: 0px 0px 10px 0px;
   color: var(--dark-title);
-}
-
-.fallen-pieces {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 5px 0px;
-  height: fit-content;
-  min-height: 30px;
-}
-
-.weight {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 2px 0px 2px;
-  color: var(--dark-text);
 }

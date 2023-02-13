@@ -15,6 +15,7 @@ export class Queen extends Piece {
     super(isBlack);
     this.image = this.isBlack ? BQueen : WQueen;
     this.weight = 9;
+    this.abbreviation = "Q";
     this.whiteRook = new Rook();
     this.blackRook = new Rook(true);
     this.whiteBishop = new Bishop();

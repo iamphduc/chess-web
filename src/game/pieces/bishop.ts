@@ -9,6 +9,7 @@ export class Bishop extends Rook {
     super(isBlack);
     this.image = this.isBlack ? BBishop : WBishop;
     this.weight = 3;
+    this.abbreviation = "B";
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {

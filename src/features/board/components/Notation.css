@@ -1,0 +1,46 @@
+.notation {
+  color: var(--dark-text);
+  overflow-y: auto;
+  max-height: 330px;
+}
+/* Width */
+.notation::-webkit-scrollbar {
+  width: 5px;
+}
+/* Track */
+.notation::-webkit-scrollbar-track {
+  background: var(--dark-surface);
+}
+/* Handle */
+.notation::-webkit-scrollbar-thumb {
+  background: #888;
+}
+/* Handle on hover */
+.notation::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.notation table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.notation tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.notation td {
+  width: fit-content;
+  padding: 5px 20px 5px 5px;
+}
+.notation td:last-child {
+  width: 100%;
+}
+.notation td:nth-child(2),
+.notation td:nth-child(3) {
+  min-width: 80px;
+}
+
+.notation__last {
+  background-color: rgba(255, 255, 255, 0.2);
+}

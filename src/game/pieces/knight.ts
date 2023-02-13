@@ -25,6 +25,7 @@ export class Knight extends Piece {
       [-1, 2],
       [-2, 1],
     ];
+    this.abbreviation = "N";
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {

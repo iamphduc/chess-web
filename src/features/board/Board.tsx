@@ -2,12 +2,15 @@ import React from "react";
 import { AnimatePresence } from "framer-motion";
 
 import "./Board.css";
+import { SQUARE_SIZE } from "../../constants";
 import { PlayerInfo, players } from "game/players";
 import { useAppSelector } from "app/hooks";
 import { Square } from "./components/Square";
 import { Player } from "./components/Player";
 import { BoardSidebar } from "./components/BoardSidebar";
 import { Promotion } from "./components/Promotion";
+import { FallenPieces } from "./components/FallenPieces";
+import { Notation } from "./components/Notation";
 
 const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
   <Player name={name} title={title} avatar={avatar} isWhite={isWhite} />
@@ -16,7 +19,6 @@ const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
 export const Board = () => {
   const { history, possibleMoves, promotionPosition } = useAppSelector((state) => state.board);
 
-  const squareSize = 52;
   const current = history[history.length - 1];
   const squares = [];
 
@@ -33,7 +35,6 @@ export const Board = () => {
           x={x}
           pieceType={square.pieceType}
           isPossibleMove={isPossibleMove}
-          size={squareSize}
         />
       );
     }
@@ -41,7 +42,7 @@ export const Board = () => {
 
   return (
     <>
-      <div className="board" style={{ width: squareSize * 8 }}>
+      <div className="board" style={{ width: SQUARE_SIZE * 8 }}>
         {renderPlayer(players[1])}
         <div className="squares">
           <AnimatePresence>{squares}</AnimatePresence>
@@ -49,7 +50,16 @@ export const Board = () => {
         </div>
         {renderPlayer(players[0])}
       </div>
-      <BoardSidebar />
+
+      <div className="sidebar">
+        <BoardSidebar title="Fallen Pieces">
+          <FallenPieces />
+        </BoardSidebar>
+
+        <BoardSidebar title="Notation">
+          <Notation />
+        </BoardSidebar>
+      </div>
     </>
   );
 };

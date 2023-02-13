@@ -9,6 +9,7 @@ export class Rook extends Piece {
     super(isBlack);
     this.image = this.isBlack ? BRook : WRook;
     this.weight = 5;
+    this.abbreviation = "R";
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {

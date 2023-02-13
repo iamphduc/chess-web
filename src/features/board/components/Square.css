@@ -10,3 +10,21 @@
 .square--light {
   background-color: rgb(234, 240, 206);
 }
+
+.square__letter {
+  font-size: 14px;
+  font-weight: bold;
+  position: absolute;
+  color: rgb(187, 190, 100);
+  top: 0px;
+  left: 2px;
+}
+.square__letter--dark {
+  color: rgb(234, 240, 206);
+}
+.square__letter--alpha {
+  top: unset;
+  left: unset;
+  bottom: 0px;
+  right: 2px;
+}

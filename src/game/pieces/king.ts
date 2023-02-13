@@ -25,6 +25,7 @@ export class King extends Knight {
       [0, 1],
       [1, 1],
     ];
+    this.abbreviation = "K";
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {

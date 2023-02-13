@@ -1,5 +1,5 @@
 import { PieceType } from "game/piece-type";
-import { Square } from "./calculate-attack";
+import { Square } from "./game/calculate-attack";
 
 // prettier-ignore
 const initialPiecesPosition = [
@@ -118,4 +118,4 @@ export const piecePromotedBoard = [
   ],
 ];
 
-export const CELL_SIZE = 52;
+export const SQUARE_SIZE = 52;

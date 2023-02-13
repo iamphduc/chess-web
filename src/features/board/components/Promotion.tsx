@@ -1,6 +1,7 @@
 import React from "react";
 
 import "./Promotion.css";
+import { SQUARE_SIZE } from "../../../constants";
 import WQueen from "assets/queen-white.svg";
 import BQueen from "assets/queen-black.svg";
 import WRook from "assets/rook-white.svg";
@@ -10,7 +11,6 @@ import BBishop from "assets/bishop-black.svg";
 import WKnight from "assets/knight-white.svg";
 import BKnight from "assets/knight-black.svg";
 import { useAppDispatch } from "app/hooks";
-import { CELL_SIZE } from "game/constants";
 import { Position } from "game/pieces/piece";
 import { promotePawn } from "../BoardSlice";
 
@@ -41,10 +41,10 @@ export const Promotion = ({ position }: Props) => {
     <div
       className={`promotion`}
       style={{
-        left: x <= 3 ? CELL_SIZE * x - CELL_SIZE / 2 : "unset",
-        right: x > 3 ? CELL_SIZE * (7 - x) - CELL_SIZE / 2 : "unset",
-        top: y === 0 ? CELL_SIZE : "unset",
-        bottom: y === 7 ? CELL_SIZE : "unset",
+        left: x <= 3 ? SQUARE_SIZE * x - SQUARE_SIZE / 2 : "unset",
+        right: x > 3 ? SQUARE_SIZE * (7 - x) - SQUARE_SIZE / 2 : "unset",
+        top: y === 0 ? SQUARE_SIZE : "unset",
+        bottom: y === 7 ? SQUARE_SIZE : "unset",
       }}
     >
       <div
