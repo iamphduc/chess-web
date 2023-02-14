@@ -50,22 +50,22 @@ export const Promotion = ({ position }: Props) => {
       <div
         style={{ backgroundImage: `url(${queenImage})` }}
         className="promotion__piece"
-        onClick={() => dispatch(promotePawn({ y, x, piecePromoted: PiecePromoted.Queen }))}
+        onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Queen }))}
       />
       <div
         style={{ backgroundImage: `url(${rookImage})` }}
         className="promotion__piece"
-        onClick={() => dispatch(promotePawn({ y, x, piecePromoted: PiecePromoted.Rook }))}
+        onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Rook }))}
       />
       <div
         style={{ backgroundImage: `url(${bishopImage})` }}
         className="promotion__piece"
-        onClick={() => dispatch(promotePawn({ y, x, piecePromoted: PiecePromoted.Bishop }))}
+        onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Bishop }))}
       />
       <div
         style={{ backgroundImage: `url(${knightImage})` }}
         className="promotion__piece"
-        onClick={() => dispatch(promotePawn({ y, x, piecePromoted: PiecePromoted.Knight }))}
+        onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Knight }))}
       />
     </div>
   );

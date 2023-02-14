@@ -1,9 +1,9 @@
 import WKing from "assets/king-white.svg";
 import BKing from "assets/king-black.svg";
-import { HistorySquares } from "game/calculate-attack";
 import { PieceType } from "game/piece-type";
 import { Position } from "./piece";
 import { Knight } from "./knight";
+import { HistorySquares } from "game/piece-moves";
 
 export class King extends Knight {
   private isQueenSideCastlingPossible = true;

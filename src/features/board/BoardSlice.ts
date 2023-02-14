@@ -1,14 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
-import { initialSquares, piecePromotedBoard } from "../../constants";
-import { calculateAttack, HistorySquares } from "game/calculate-attack";
+import { initialSquares } from "../../constants";
 import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
+import { HistorySquares, pieceMoves } from "game/piece-moves";
 import { Piece, Position } from "game/pieces/piece";
 import { blackKing, King, whiteKing } from "game/pieces/king";
-import { Pawn } from "game/pieces/pawn";
-import { calculateCheckmate } from "game/calculate-checkmate";
+import { blackPawn, Pawn, whitePawn } from "game/pieces/pawn";
 import { PiecePromoted } from "./components/Promotion";
 import { SpecialCase } from "./components/Notation";
 
@@ -19,8 +18,6 @@ interface PieceSelection {
 }
 
 interface PawnPromotion {
-  y: number;
-  x: number;
   piecePromoted: PiecePromoted;
 }
 
@@ -34,14 +31,11 @@ interface BoardState {
   pieceAttackedKing: PieceType | null;
   selectedPiece: PieceSelection | null;
   possibleMoves: Position[];
-  blackKingPosition: Position;
-  whiteKingPosition: Position;
-  enPassantPosition: Position;
+
   whiteFallenPieces: { pieceType: PieceType; weight: number }[];
   blackFallenPieces: { pieceType: PieceType; weight: number }[];
   lastMove: [Position, Position];
   promotionPosition: Position;
-  piecePromotedCount: number[];
   whiteNotation: { abbreviation: string; position: Position; specialCase: SpecialCase }[];
   blackNotation: { abbreviation: string; position: Position; specialCase: SpecialCase }[];
 }
@@ -52,9 +46,7 @@ const initialState = {
   pieceAttackedKing: null,
   selectedPiece: null,
   possibleMoves: [],
-  blackKingPosition: [0, 4],
-  whiteKingPosition: [7, 4],
-  enPassantPosition: [-1, -1],
+
   whiteFallenPieces: [],
   blackFallenPieces: [],
   lastMove: [
@@ -62,7 +54,6 @@ const initialState = {
     [-1, -1],
   ],
   promotionPosition: [-1, -1],
-  piecePromotedCount: [0, 0, 0, 0, 0, 0, 0, 0], // [WQueen, WRook, WBishop, WKnight, BQueen, ...]
   whiteNotation: [],
   blackNotation: [],
 } as BoardState;
@@ -97,10 +88,10 @@ export const boardSlice = createSlice({
         if (toY >= 0 && toY < 8 && toX >= 0 && toY < 8) {
           const newSquares = JSON.parse(JSON.stringify(current.squares));
 
-          updateSquares(newSquares, pieceType, [y, x], [toY, toX]);
-          const calculatedSquares = calculateAttack(newSquares, !isWhiteTurn);
+          pieceMoves.updatePiecePosition(newSquares, pieceType, [y, x], [toY, toX]);
+          const calculatedSquares = pieceMoves.calculateEnemyAttack(newSquares, !isWhiteTurn);
 
-          let [kingY, kingX] = isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
+          let [kingY, kingX] = pieceMoves.getKingPosition(isWhiteTurn);
           if (piece instanceof King) {
             [kingY, kingX] = [toY, toX];
           }
@@ -110,21 +101,6 @@ export const boardSlice = createSlice({
           validMoves.push([toY, toX]);
         }
       });
-
-      // Check En Passant
-      if (piece instanceof Pawn) {
-        const [toY, toX] = state.enPassantPosition;
-        const directionYBasedOnColor = isWhiteTurn ? -1 : 1;
-        const fromY = toY;
-
-        const directionX = [-1, 1];
-        directionX.forEach((direction) => {
-          const fromX = toX + direction;
-          if (fromX < 0 || fromX >= 8) return;
-          if (y !== fromY || x !== fromX) return;
-          validMoves.push([toY + directionYBasedOnColor, toX]);
-        });
-      }
 
       state.possibleMoves = validMoves;
     },
@@ -150,23 +126,16 @@ export const boardSlice = createSlice({
       ];
 
       // Update Notation
-      const destination: Position = [toY, toX];
-      const addedNotation = {
+      const notation = isWhiteTurn ? state.whiteNotation : state.blackNotation;
+      notation.push({
         abbreviation: piece.getAbbreviation(),
-        position: destination,
+        position: [toY, toX],
         specialCase: SpecialCase.None,
-      };
-      let notation = null;
-      if (isWhiteTurn) {
-        state.whiteNotation.push(addedNotation);
-        notation = state.whiteNotation;
-      } else {
-        state.blackNotation.push(addedNotation);
-        notation = state.blackNotation;
-      }
+      });
 
       // Update fallen pieces
-      const capturedPiece = updateSquares(newSquares, pieceType, [fromY, fromX], [toY, toX]);
+      const capturedPiece = newSquares[toY][toX].pieceType;
+      pieceMoves.updatePiecePosition(newSquares, pieceType, [fromY, fromX], [toY, toX]);
       if (capturedPiece) {
         if (isWhiteTurn) {
           addFallenPiece(blackFallenPieces, capturedPiece);
@@ -184,16 +153,26 @@ export const boardSlice = createSlice({
         case PieceType.WhiteKing: {
           // White King side castling
           if (toX - fromX === 2) {
-            updateSquares(newSquares, PieceType.WhiteKingRook, [fromY, fromX + 3], [toY, toX - 1]);
+            pieceMoves.updatePiecePosition(
+              newSquares,
+              PieceType.WhiteKingRook,
+              [fromY, fromX + 3],
+              [toY, toX - 1]
+            );
             notation[notation.length - 1].specialCase = SpecialCase.KingSideCastling;
           }
           // White Queen side castling
           if (fromX - toX === 2) {
-            updateSquares(newSquares, PieceType.WhiteQueenRook, [fromY, fromX - 4], [toY, toX + 1]);
+            pieceMoves.updatePiecePosition(
+              newSquares,
+              PieceType.WhiteQueenRook,
+              [fromY, fromX - 4],
+              [toY, toX + 1]
+            );
             notation[notation.length - 1].specialCase = SpecialCase.QueenSideCastling;
           }
           whiteKing.removePossibleCastling("BOTH");
-          state.whiteKingPosition = [toY, toX];
+          pieceMoves.setWhiteKingPosition([toY, toX]);
           break;
         }
         case PieceType.WhiteKingRook: {
@@ -208,16 +187,26 @@ export const boardSlice = createSlice({
         case PieceType.BlackKing: {
           // Black King side castling
           if (toX - fromX === 2) {
-            updateSquares(newSquares, PieceType.BlackKingRook, [fromY, fromX + 3], [toY, toX - 1]);
+            pieceMoves.updatePiecePosition(
+              newSquares,
+              PieceType.BlackKingRook,
+              [fromY, fromX + 3],
+              [toY, toX - 1]
+            );
             notation[notation.length - 1].specialCase = SpecialCase.KingSideCastling;
           }
           // Black Queen side castling
           if (fromX - toX === 2) {
-            updateSquares(newSquares, PieceType.BlackQueenRook, [fromY, fromX - 4], [toY, toX + 1]);
+            pieceMoves.updatePiecePosition(
+              newSquares,
+              PieceType.BlackQueenRook,
+              [fromY, fromX - 4],
+              [toY, toX + 1]
+            );
             notation[notation.length - 1].specialCase = SpecialCase.QueenSideCastling;
           }
           blackKing.removePossibleCastling("BOTH");
-          state.blackKingPosition = [toY, toX];
+          pieceMoves.setBlackKingPosition([toY, toX]);
           break;
         }
         case PieceType.BlackKingRook: {
@@ -236,12 +225,16 @@ export const boardSlice = createSlice({
         if (toY === 0 || toY === 7) {
           state.promotionPosition = [toY, toX];
         }
-        // En Passant capture
+
+        // Pawn en passant
         if (Math.abs(fromX - toX) === 1) {
-          const [enPassantY, enPassantX] = state.enPassantPosition;
-          const directionYBasedOnColor = isWhiteTurn ? -1 : 1;
-          if (enPassantY >= 0 && enPassantX >= 0 && toY === enPassantY + directionYBasedOnColor) {
-            const capturedEnPassant = newSquares[enPassantY][enPassantX].pieceType;
+          const oursPawn = isWhiteTurn ? whitePawn : blackPawn;
+          const [enPassantY, enPassantX] = oursPawn.getEnPassantPosition();
+
+          if (enPassantY !== -1 && enPassantX !== -1 && toY === enPassantY) {
+            const directionYBasedOnColor = !isWhiteTurn ? 1 : -1;
+            const capturedEnPassant =
+              newSquares[enPassantY - directionYBasedOnColor][enPassantX].pieceType;
             if (capturedEnPassant) {
               if (isWhiteTurn) {
                 addFallenPiece(blackFallenPieces, capturedEnPassant);
@@ -250,37 +243,41 @@ export const boardSlice = createSlice({
               }
               notation[notation.length - 1] = {
                 abbreviation: String.fromCharCode(fromX + 97),
-                position: state.enPassantPosition,
+                position: [enPassantY, enPassantX],
                 specialCase: SpecialCase.Capture,
               };
+              newSquares[enPassantY - directionYBasedOnColor][enPassantX] = {
+                pieceType: null,
+                isEnemyAttacked: false,
+              };
             }
-            newSquares[enPassantY][enPassantX] = { pieceType: null, isEnemyAttacked: false };
           }
         }
+
         // Pawn moves 2 rows forward
+        const enemyPawn = isWhiteTurn ? blackPawn : whitePawn;
         if (Math.abs(fromY - toY) === 2) {
-          // En Passant position is updated if we move another Pawn
-          state.enPassantPosition = [toY, toX];
-          console.log("En Passant:", state.enPassantPosition);
+          enemyPawn.setEnPassantPosition([toY, toX]);
         } else {
-          state.enPassantPosition = [-1, -1];
+          enemyPawn.setEnPassantPosition([-1, -1]);
         }
       } else {
-        state.enPassantPosition = [-1, -1];
+        whitePawn.setEnPassantPosition([-1, -1]);
+        blackPawn.setEnPassantPosition([-1, -1]);
       }
 
       // Update history
-      const calculatedSquares = calculateAttack(newSquares, isWhiteTurn);
+      const calculatedSquares = pieceMoves.calculateEnemyAttack(newSquares, isWhiteTurn);
       state.history = [...history, { squares: calculatedSquares }];
       console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
 
       // Check
-      const [kingY, kingX] = !isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
+      const [kingY, kingX] = pieceMoves.getKingPosition(!isWhiteTurn);
       if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
         console.log("CHECKED");
         state.pieceAttackedKing = selectedPiece.pieceType;
 
-        const isCheckmate = calculateCheckmate(calculatedSquares, !isWhiteTurn, [kingY, kingX]);
+        const isCheckmate = pieceMoves.isCheckmate(calculatedSquares, !isWhiteTurn);
         console.log("CHECKMATE:", isCheckmate);
 
         notation[notation.length - 1].specialCase = isCheckmate
@@ -290,7 +287,7 @@ export const boardSlice = createSlice({
         state.pieceAttackedKing = null;
       }
 
-      if (state.promotionPosition[0] === -1) {
+      if (state.promotionPosition[0] === -1 && state.promotionPosition[1] === -1) {
         state.isWhiteTurn = !state.isWhiteTurn;
       }
       notation[notation.length - 1].abbreviation += checkIfPieceMoveSameSquare(
@@ -304,48 +301,28 @@ export const boardSlice = createSlice({
     },
 
     promotePawn: (state, action: PayloadAction<PawnPromotion>) => {
-      const { history, isWhiteTurn, piecePromotedCount } = state;
-      const { y, x, piecePromoted } = action.payload;
+      const { history, isWhiteTurn, promotionPosition } = state;
+      const { piecePromoted } = action.payload;
 
       const current = history[history.length - 1];
-      const selectedPiece: PieceSelection = { pieceType: PieceType.WhiteQueenPromoted1, y, x };
 
-      let piecePromotedIdx = 0;
-      switch (piecePromoted) {
-        case PiecePromoted.Queen: {
-          piecePromotedIdx = isWhiteTurn ? 0 : 4;
-          break;
-        }
-        case PiecePromoted.Rook: {
-          piecePromotedIdx = isWhiteTurn ? 1 : 5;
-          break;
-        }
-        case PiecePromoted.Bishop: {
-          piecePromotedIdx = isWhiteTurn ? 2 : 6;
-          break;
-        }
-        case PiecePromoted.Knight: {
-          piecePromotedIdx = isWhiteTurn ? 3 : 7;
-          break;
-        }
-      }
-      // Get the promoted piece from board
-      const chosenPiece = piecePromotedBoard[piecePromotedIdx];
-      const nthPiece = piecePromotedCount[piecePromotedIdx];
-      current.squares[y][x].pieceType = chosenPiece[nthPiece];
-      selectedPiece.pieceType = chosenPiece[nthPiece];
-      state.piecePromotedCount[piecePromotedIdx] += 1;
+      const pieceAfter = pieceMoves.promotePawn(
+        current.squares,
+        piecePromoted,
+        promotionPosition,
+        isWhiteTurn
+      );
 
       // Update history
-      const calculatedSquares = calculateAttack(current.squares, isWhiteTurn);
+      const calculatedSquares = pieceMoves.calculateEnemyAttack(current.squares, isWhiteTurn);
       state.history[history.length - 1] = { squares: calculatedSquares };
 
       // Check
-      const [kingY, kingX] = !isWhiteTurn ? state.whiteKingPosition : state.blackKingPosition;
+      const [kingY, kingX] = pieceMoves.getKingPosition(!isWhiteTurn);
       if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
         console.log("CHECKED");
-        state.pieceAttackedKing = selectedPiece.pieceType;
-        const isCheckmate = calculateCheckmate(calculatedSquares, !isWhiteTurn, [kingY, kingX]);
+        state.pieceAttackedKing = pieceAfter;
+        const isCheckmate = pieceMoves.isCheckmate(calculatedSquares, !isWhiteTurn);
         console.log("CHECKMATE:", isCheckmate);
       } else {
         state.pieceAttackedKing = null;
@@ -356,18 +333,6 @@ export const boardSlice = createSlice({
     },
   },
 });
-
-export const updateSquares = (
-  squares: HistorySquares,
-  pieceType: PieceType,
-  [fromY, fromX]: Position,
-  [toY, toX]: Position
-): PieceType | null => {
-  const { pieceType: currentPiece } = squares[toY][toX];
-  squares[toY][toX] = { pieceType, isEnemyAttacked: false };
-  squares[fromY][fromX] = { pieceType: null, isEnemyAttacked: false };
-  return currentPiece;
-};
 
 const addFallenPiece = (
   fallenPieces: { pieceType: PieceType; weight: number }[],
@@ -386,15 +351,17 @@ const checkIfPieceMoveSameSquare = (
   [toY, toX]: Position,
   isWhiteTurn: boolean
 ): string => {
-  for (let y = 0; y < 8; y += 1) {
-    for (let x = 0; x < 8; x += 1) {
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
       const pieceType = squares[y][x].pieceType;
       if (pieceType) {
         const piece = pieceFactory.getPiece(pieceType);
-
         if (
+          // Same type
           pieceToCheck.constructor.name === piece.constructor.name &&
+          // Same color
           piece.isWhitePiece() === isWhiteTurn &&
+          // Different postion
           (y !== fromY || x !== fromX)
         ) {
           const possibleMoves = piece.getPossibleMoves([y, x], squares);

@@ -1,6 +1,6 @@
 import WBishop from "assets/bishop-white.svg";
 import BBishop from "assets/bishop-black.svg";
-import { HistorySquares } from "game/calculate-attack";
+import { HistorySquares } from "game/piece-moves";
 import { Position } from "./piece";
 import { Rook } from "./rook";
 

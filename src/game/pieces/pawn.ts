@@ -1,14 +1,17 @@
 import WPawn from "assets/pawn-white.svg";
 import BPawn from "assets/pawn-black.svg";
-import { HistorySquares } from "game/calculate-attack";
 import { PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
+import { HistorySquares } from "game/piece-moves";
 
 export class Pawn extends Piece {
+  private enPassantPosition: Position;
+
   constructor(isBlack = false) {
     super(isBlack);
     this.image = isBlack ? BPawn : WPawn;
     this.weight = 1;
+    this.enPassantPosition = [-1, -1];
   }
 
   public getPossibleMoves([fromY, fromX]: Position, squares: HistorySquares): Position[] {
@@ -71,7 +74,28 @@ export class Pawn extends Piece {
       }
     });
 
+    const [enPassantY, enPassantX] = this.enPassantPosition;
+    if (enPassantY !== -1 && enPassantX !== -1) {
+      if (Math.abs(fromX - enPassantX) === 1 && fromY === enPassantY - directionYBasedOnColor) {
+        moves.push(this.enPassantPosition);
+      }
+    }
+
     return moves;
+  }
+
+  public setEnPassantPosition(position: Position): void {
+    const [y, x] = position;
+    if (y === -1 && x === -1) {
+      this.enPassantPosition = [-1, -1];
+    } else {
+      const directionYBasedOnColor = this.isBlack ? 1 : -1;
+      this.enPassantPosition = [y + directionYBasedOnColor, x];
+    }
+  }
+
+  public getEnPassantPosition(): Position {
+    return this.enPassantPosition;
   }
 }
 

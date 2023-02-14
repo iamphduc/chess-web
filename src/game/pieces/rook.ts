@@ -1,6 +1,6 @@
 import WRook from "assets/rook-white.svg";
 import BRook from "assets/rook-black.svg";
-import { HistorySquares } from "game/calculate-attack";
+import { HistorySquares } from "game/piece-moves";
 import { PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
 

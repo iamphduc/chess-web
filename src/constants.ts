@@ -1,8 +1,7 @@
+import { Square } from "game/piece-moves";
 import { PieceType } from "game/piece-type";
-import { Square } from "./game/calculate-attack";
 
-// prettier-ignore
-const initialPiecesPosition = [
+export const initialSquares: Square[][] = [
   // 1st
   [
     PieceType.BlackQueenRook,
@@ -55,16 +54,14 @@ const initialPiecesPosition = [
     PieceType.WhiteKingKnight,
     PieceType.WhiteKingRook,
   ],
-];
-
-export const initialSquares: Square[][] = initialPiecesPosition.map((row) =>
+].map((row) =>
   row.map((pieceType) => ({
     pieceType,
     isEnemyAttacked: false,
   }))
 );
 
-export const piecePromotedBoard = [
+export const PromotionBoard = [
   // White side
   [
     PieceType.WhiteQueenPromoted1,

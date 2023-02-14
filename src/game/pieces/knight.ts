@@ -1,8 +1,8 @@
 import WKnight from "assets/knight-white.svg";
 import BKnight from "assets/knight-black.svg";
-import { HistorySquares } from "game/calculate-attack";
 import { PieceOccupied } from "game/piece-type";
 import { Piece, Position } from "./piece";
+import { HistorySquares } from "game/piece-moves";
 
 export class Knight extends Piece {
   protected directions: [number, number][];
