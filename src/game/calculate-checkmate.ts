@@ -17,6 +17,8 @@ export const calculateCheckmate = (
       const piece = pieceFactory.getPiece(pieceType);
       if (isWhiteTurn !== piece.isWhitePiece()) continue;
 
+      let currentKingY = kingY;
+      let currentKingX = kingX;
       const possibleMoves = piece.getPossibleMoves([y, x], squares);
       for (const [toY, toX] of possibleMoves) {
         if (toY >= 0 && toY < 8 && toX >= 0 && toY < 8) {
@@ -26,10 +28,10 @@ export const calculateCheckmate = (
           const calculatedSquares = calculateAttack(newSquares, !isWhiteTurn);
 
           if (piece instanceof King) {
-            [kingY, kingX] = [toY, toX];
+            [currentKingY, currentKingX] = [toY, toX];
           }
 
-          if (!calculatedSquares[kingY][kingX].isEnemyAttacked) {
+          if (!calculatedSquares[currentKingY][currentKingX].isEnemyAttacked) {
             return false;
           }
         }
