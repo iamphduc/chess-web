@@ -72,7 +72,7 @@ export const Square = ({ y, x, pieceType, isPossibleMove, size = SQUARE_SIZE }: 
             isDark ? "dark" : "light"
           }`}
         >
-          {String.fromCharCode(x + 65)}
+          {String.fromCharCode(x + 97)}
         </span>
       )}
       {x === 0 && (
