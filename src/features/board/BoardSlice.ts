@@ -131,7 +131,6 @@ export const boardSlice = createSlice({
       let newNotation: MoveNotation = {
         abbreviation: piece.getAbbreviation() + abbreviationSuffix,
         position: [toY, toX],
-        specialCase: SpecialCase.None,
       };
 
       // Update fallen pieces
@@ -139,12 +138,11 @@ export const boardSlice = createSlice({
       pieceMoves.updatePiecePosition(newSquares, pieceType, [fromY, fromX], [toY, toX]);
       if (capturedPiece) {
         pieceNotation.addFallenPiece(fallenPieces, capturedPiece);
-        newNotation.specialCase = SpecialCase.Capture;
-
         // Write the name of the file (row) when pawn captures a piece
         if (piece instanceof Pawn) {
           newNotation.abbreviation = String.fromCharCode(fromX + 97);
         }
+        newNotation.abbreviation += SpecialCase.Capture;
       }
 
       // Castling moves
@@ -158,7 +156,7 @@ export const boardSlice = createSlice({
               [fromY, fromX + 3],
               [toY, toX - 1]
             );
-            newNotation.specialCase = SpecialCase.KingSideCastling;
+            newNotation.abbreviation = SpecialCase.KingSideCastling;
           }
           // White Queen side castling
           if (fromX - toX === 2) {
@@ -168,7 +166,7 @@ export const boardSlice = createSlice({
               [fromY, fromX - 4],
               [toY, toX + 1]
             );
-            newNotation.specialCase = SpecialCase.QueenSideCastling;
+            newNotation.abbreviation = SpecialCase.QueenSideCastling;
           }
           whiteKing.removePossibleCastling("BOTH");
           pieceMoves.setWhiteKingPosition([toY, toX]);
@@ -192,7 +190,7 @@ export const boardSlice = createSlice({
               [fromY, fromX + 3],
               [toY, toX - 1]
             );
-            newNotation.specialCase = SpecialCase.KingSideCastling;
+            newNotation.abbreviation = SpecialCase.KingSideCastling;
           }
           // Black Queen side castling
           if (fromX - toX === 2) {
@@ -202,7 +200,7 @@ export const boardSlice = createSlice({
               [fromY, fromX - 4],
               [toY, toX + 1]
             );
-            newNotation.specialCase = SpecialCase.QueenSideCastling;
+            newNotation.abbreviation = SpecialCase.QueenSideCastling;
           }
           blackKing.removePossibleCastling("BOTH");
           pieceMoves.setBlackKingPosition([toY, toX]);
@@ -242,9 +240,8 @@ export const boardSlice = createSlice({
 
               pieceNotation.addFallenPiece(fallenPieces, capturedEnPassant);
               newNotation = {
-                abbreviation: String.fromCharCode(fromX + 97),
+                abbreviation: String.fromCharCode(fromX + 97) + SpecialCase.Capture,
                 position: [enPassantY, enPassantX],
-                specialCase: SpecialCase.Capture,
               };
             }
           }
@@ -270,13 +267,9 @@ export const boardSlice = createSlice({
       // Check
       const [kingY, kingX] = pieceMoves.getKingPosition(!isWhiteTurn);
       if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
-        console.log("CHECKED");
         state.pieceAttackedKing = selectedPiece.pieceType;
-
         const isCheckmate = pieceMoves.isCheckmate(calculatedSquares, !isWhiteTurn);
-        console.log("CHECKMATE:", isCheckmate);
-
-        newNotation.specialCase = isCheckmate ? SpecialCase.Checkmate : SpecialCase.Check;
+        newNotation.abbreviation += isCheckmate ? SpecialCase.Checkmate : SpecialCase.Check;
       } else {
         state.pieceAttackedKing = null;
       }
@@ -300,25 +293,28 @@ export const boardSlice = createSlice({
         promotionPosition,
         isWhiteTurn
       );
-      const piece = pieceFactory.getPiece(pieceAfter);
 
       // Update history
       const calculatedSquares = pieceMoves.calculateEnemyAttack(current.squares, isWhiteTurn);
       state.history[history.length - 1] = { squares: calculatedSquares };
 
+      // Update notation
+      const piece = pieceFactory.getPiece(pieceAfter);
+      let lastestNotation = state.notation[state.notation.length - 1];
+      lastestNotation += "=" + piece.getAbbreviation();
+
       // Check
       const [kingY, kingX] = pieceMoves.getKingPosition(!isWhiteTurn);
       if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
-        console.log("CHECKED");
         state.pieceAttackedKing = pieceAfter;
         const isCheckmate = pieceMoves.isCheckmate(calculatedSquares, !isWhiteTurn);
-        console.log("CHECKMATE:", isCheckmate);
+        lastestNotation += isCheckmate ? SpecialCase.Checkmate : SpecialCase.Check;
       } else {
         state.pieceAttackedKing = null;
       }
 
       state.promotionPosition = [-1, -1];
-      state.notation[state.notation.length - 1] += "=" + piece.getAbbreviation();
+      state.notation[state.notation.length - 1] = lastestNotation;
       state.isWhiteTurn = !state.isWhiteTurn;
     },
   },

@@ -21,7 +21,6 @@ export interface FallenPiece {
 export interface MoveNotation {
   abbreviation: string;
   position: Position;
-  specialCase: SpecialCase;
 }
 
 export class PieceNotation {
@@ -86,24 +85,14 @@ export class PieceNotation {
     const {
       abbreviation,
       position: [y, x],
-      specialCase,
     } = moveNotation;
-
-    const position = String.fromCharCode(x + 97) + (8 - y);
-
-    switch (specialCase) {
-      case SpecialCase.QueenSideCastling:
-      case SpecialCase.KingSideCastling:
-        return specialCase;
-
-      case SpecialCase.None:
-      case SpecialCase.Check:
-      case SpecialCase.Checkmate:
-        return abbreviation + position + specialCase;
-
-      default:
-        return abbreviation + specialCase + position;
+    if (
+      abbreviation === SpecialCase.KingSideCastling ||
+      abbreviation === SpecialCase.QueenSideCastling
+    ) {
+      return abbreviation;
     }
+    return abbreviation + String.fromCharCode(x + 97) + (8 - y);
   }
 }
 
