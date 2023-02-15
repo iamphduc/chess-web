@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "./static/css/main.c7bd333b.css",
-    "main.js": "./static/js/main.a680c027.js",
+    "main.css": "./static/css/main.3be75796.css",
+    "main.js": "./static/js/main.d2f0fbda.js",
     "static/js/787.f7f91304.chunk.js": "./static/js/787.f7f91304.chunk.js",
     "static/media/le-quang-liem.png": "./static/media/le-quang-liem.6d1ea7f5e9556cf498ea.png",
     "static/media/chess-player.png": "./static/media/chess-player.093dac65f5cf15c198e0.png",
@@ -18,12 +18,12 @@
     "static/media/pawn-black.svg": "./static/media/pawn-black.be5d44ca5ee868885d216188996e3a00.svg",
     "static/media/pawn-white.svg": "./static/media/pawn-white.50273cc6d86861932d0a01c38274009a.svg",
     "index.html": "./index.html",
-    "main.c7bd333b.css.map": "./static/css/main.c7bd333b.css.map",
-    "main.a680c027.js.map": "./static/js/main.a680c027.js.map",
+    "main.3be75796.css.map": "./static/css/main.3be75796.css.map",
+    "main.d2f0fbda.js.map": "./static/js/main.d2f0fbda.js.map",
     "787.f7f91304.chunk.js.map": "./static/js/787.f7f91304.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.c7bd333b.css",
-    "static/js/main.a680c027.js"
+    "static/css/main.3be75796.css",
+    "static/js/main.d2f0fbda.js"
   ]
 }
