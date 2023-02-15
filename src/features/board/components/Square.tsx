@@ -55,15 +55,16 @@ export const Square = ({ y, x, pieceType, isPossibleMove, size = SQUARE_SIZE }: 
 
       {isOver && !canDrop && <Overlay type={OverlayType.Illegal} />}
       {isOver && canDrop && <Overlay type={OverlayType.Legal} />}
+      {previousSquare[0] === y && previousSquare[1] === x && (
+        <Overlay type={OverlayType.Previous} />
+      )}
       {isPossibleMove && !pieceType && (
         <Overlay type={OverlayType.Possible} handleClick={handlePossibleClick} />
       )}
       {isPossibleMove && pieceType && (
         <Overlay type={OverlayType.Enemy} handleClick={handlePossibleClick} />
       )}
-      {previousSquare[0] === y && previousSquare[1] === x && (
-        <Overlay type={OverlayType.Previous} />
-      )}
+
       {currentSquare[0] === y && currentSquare[1] === x && <Overlay type={OverlayType.Current} />}
 
       {y === 7 && (
