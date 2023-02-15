@@ -10,3 +10,6 @@ This project was inspired by [chess.com](https://www.chess.com/)
 - [x] Castling
 - [x] En Passant
 - [ ] ...
+
+## Demo
+[https://iamphduc.github.io/chess-web](https://iamphduc.github.io/chess-web/)
