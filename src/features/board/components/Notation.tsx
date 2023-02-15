@@ -1,63 +1,48 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 import "./Notation.css";
 import { useAppSelector } from "app/hooks";
-import { Position } from "game/pieces/piece";
-
-export enum SpecialCase {
-  None = "",
-  Capture = "x",
-  QueenSideCastling = "0-0-0",
-  KingSideCastling = "0-0",
-  Check = "+",
-  Checkmate = "#",
-}
-
-const convertToAN = (abbreviation: string, [y, x]: Position, specialCase: SpecialCase) => {
-  const position = String.fromCharCode(x + 97) + (8 - y);
-  switch (specialCase) {
-    case SpecialCase.QueenSideCastling:
-    case SpecialCase.KingSideCastling:
-      return specialCase;
-    case SpecialCase.None:
-    case SpecialCase.Check:
-    case SpecialCase.Checkmate:
-      return abbreviation + position + specialCase;
-    default:
-      return abbreviation + specialCase + position;
-  }
-};
 
 export const Notation = () => {
-  const { whiteNotation, blackNotation } = useAppSelector((state) => state.board);
-  const isWhiteLast = whiteNotation.length > blackNotation.length;
+  const notationRef = useRef<null | HTMLDivElement>(null);
+
+  const { notation } = useAppSelector((state) => state.board);
+  const isWhiteLast = notation.length & 1;
+
+  const notationRow = [];
+  for (let i = 0; i < notation.length; i += 2) {
+    const whiteMove = notation[i];
+    const blackMove = notation[i + 1];
+    notationRow.push(
+      <tr key={i}>
+        <td>{i + 1}.</td>
+        <td className={isWhiteLast && i === notation.length - 1 ? "notation__last" : ""}>
+          {whiteMove}
+        </td>
+        <td className={!isWhiteLast && i + 1 === notation.length - 1 ? "notation__last" : ""}>
+          {blackMove}
+        </td>
+        <td></td>
+      </tr>
+    );
+  }
+
+  useEffect(() => {
+    if (notationRef.current) {
+      notationRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+        inline: "nearest",
+      });
+    }
+  }, [notation]);
 
   return (
     <div className="notation">
       <table>
-        <tbody>
-          {whiteNotation.map((move, i) => (
-            <tr key={i}>
-              <td>{i + 1}.</td>
-              <td className={isWhiteLast && i === whiteNotation.length - 1 ? "notation__last" : ""}>
-                {convertToAN(move.abbreviation, move.position, move.specialCase)}
-              </td>
-              <td
-                className={!isWhiteLast && i === blackNotation.length - 1 ? "notation__last" : ""}
-              >
-                {blackNotation[i]
-                  ? convertToAN(
-                      blackNotation[i].abbreviation,
-                      blackNotation[i].position,
-                      blackNotation[i].specialCase
-                    )
-                  : ""}
-              </td>
-              <td></td>
-            </tr>
-          ))}
-        </tbody>
+        <tbody>{notationRow}</tbody>
       </table>
+      <div className="notation__bottom" ref={notationRef}></div>
     </div>
   );
 };

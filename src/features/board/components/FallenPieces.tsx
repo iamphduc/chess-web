@@ -1,28 +1,38 @@
-import React from "react";
+import React, { ReactElement } from "react";
 
 import "./FallenPieces.css";
 import { useAppSelector } from "app/hooks";
 import { FallenPiece } from "./FallenPiece";
 
 export const FallenPieces = () => {
-  const { whiteFallenPieces, blackFallenPieces } = useAppSelector((state) => state.board);
-  const whiteWeight = whiteFallenPieces.reduce((acc, curr) => acc + Math.floor(curr.weight), 0);
-  const blackWeight = blackFallenPieces.reduce((acc, curr) => acc + Math.floor(curr.weight), 0);
-  const diff = whiteWeight - blackWeight;
+  const { fallenPieces } = useAppSelector((state) => state.board);
+
+  const whiteFallenPieces: ReactElement[] = [];
+  const blackFallenPieces: ReactElement[] = [];
+  let whiteWeight = 0;
+  let blackWeight = 0;
+
+  fallenPieces.forEach(({ pieceType, weight, isWhite }) => {
+    if (isWhite) {
+      whiteFallenPieces.push(<FallenPiece key={pieceType} pieceType={pieceType} />);
+      whiteWeight += Math.floor(weight);
+    } else {
+      blackFallenPieces.push(<FallenPiece key={pieceType} pieceType={pieceType} />);
+      blackWeight += Math.floor(weight);
+    }
+  });
+
+  const weightDiff = whiteWeight - blackWeight;
 
   return (
     <>
       <div className="fallen-pieces fallen-pieces--white">
-        {whiteFallenPieces.map(({ pieceType }) => (
-          <FallenPiece key={pieceType} pieceType={pieceType} />
-        ))}
-        <div className="weight">{diff > 0 ? "+" + diff : ""}</div>
+        {whiteFallenPieces}
+        <div className="weight">{weightDiff > 0 ? "+" + weightDiff : ""}</div>
       </div>
       <div className="fallen-pieces fallen-pieces--black">
-        {blackFallenPieces.map(({ pieceType }) => (
-          <FallenPiece key={pieceType} pieceType={pieceType} />
-        ))}
-        <div className="weight">{diff < 0 ? "+" + Math.abs(diff) : ""}</div>
+        {blackFallenPieces}
+        <div className="weight">{weightDiff < 0 ? "+" + Math.abs(weightDiff) : ""}</div>
       </div>
     </>
   );

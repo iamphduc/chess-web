@@ -8,7 +8,7 @@ export class Bishop extends Rook {
   constructor(isBlack = false) {
     super(isBlack);
     this.image = this.isBlack ? BBishop : WBishop;
-    this.weight = 3;
+    this.weight = 3.5;
     this.abbreviation = "B";
   }
 

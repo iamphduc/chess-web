@@ -5,11 +5,11 @@ import { initialSquares } from "../../constants";
 import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
 import { HistorySquares, pieceMoves } from "game/piece-moves";
-import { Piece, Position } from "game/pieces/piece";
+import { FallenPiece, MoveNotation, pieceNotation, SpecialCase } from "game/piece-notation";
+import { Position } from "game/pieces/piece";
 import { blackKing, King, whiteKing } from "game/pieces/king";
 import { blackPawn, Pawn, whitePawn } from "game/pieces/pawn";
 import { PiecePromoted } from "./components/Promotion";
-import { SpecialCase } from "./components/Notation";
 
 interface PieceSelection {
   pieceType: PieceType;
@@ -31,13 +31,11 @@ interface BoardState {
   pieceAttackedKing: PieceType | null;
   selectedPiece: PieceSelection | null;
   possibleMoves: Position[];
-
-  whiteFallenPieces: { pieceType: PieceType; weight: number }[];
-  blackFallenPieces: { pieceType: PieceType; weight: number }[];
-  lastMove: [Position, Position];
   promotionPosition: Position;
-  whiteNotation: { abbreviation: string; position: Position; specialCase: SpecialCase }[];
-  blackNotation: { abbreviation: string; position: Position; specialCase: SpecialCase }[];
+  lastMove: [Position, Position];
+
+  fallenPieces: FallenPiece[];
+  notation: string[];
 }
 
 const initialState = {
@@ -46,16 +44,14 @@ const initialState = {
   pieceAttackedKing: null,
   selectedPiece: null,
   possibleMoves: [],
-
-  whiteFallenPieces: [],
-  blackFallenPieces: [],
+  promotionPosition: [-1, -1],
   lastMove: [
     [-1, -1],
     [-1, -1],
   ],
-  promotionPosition: [-1, -1],
-  whiteNotation: [],
-  blackNotation: [],
+
+  fallenPieces: [],
+  notation: [],
 } as BoardState;
 
 export const boardSlice = createSlice({
@@ -106,7 +102,7 @@ export const boardSlice = createSlice({
     },
 
     movePiece: (state, action: PayloadAction<PieceMove>) => {
-      const { history, selectedPiece, isWhiteTurn, whiteFallenPieces, blackFallenPieces } = state;
+      const { history, selectedPiece, isWhiteTurn, fallenPieces } = state;
 
       if (!selectedPiece) return;
 
@@ -125,26 +121,29 @@ export const boardSlice = createSlice({
         [toY, toX],
       ];
 
-      // Update Notation
-      const notation = isWhiteTurn ? state.whiteNotation : state.blackNotation;
-      notation.push({
-        abbreviation: piece.getAbbreviation(),
+      // Move Notation
+      const abbreviationSuffix = pieceNotation.getSuffixAbbreviation(
+        newSquares,
+        piece,
+        [fromY, fromX],
+        [toY, toX]
+      );
+      let newNotation: MoveNotation = {
+        abbreviation: piece.getAbbreviation() + abbreviationSuffix,
         position: [toY, toX],
         specialCase: SpecialCase.None,
-      });
+      };
 
       // Update fallen pieces
       const capturedPiece = newSquares[toY][toX].pieceType;
       pieceMoves.updatePiecePosition(newSquares, pieceType, [fromY, fromX], [toY, toX]);
       if (capturedPiece) {
-        if (isWhiteTurn) {
-          addFallenPiece(blackFallenPieces, capturedPiece);
-        } else {
-          addFallenPiece(whiteFallenPieces, capturedPiece);
-        }
-        notation[notation.length - 1].specialCase = SpecialCase.Capture;
+        pieceNotation.addFallenPiece(fallenPieces, capturedPiece);
+        newNotation.specialCase = SpecialCase.Capture;
+
+        // Write the name of the file (row) when pawn captures a piece
         if (piece instanceof Pawn) {
-          notation[notation.length - 1].abbreviation = String.fromCharCode(fromX + 97);
+          newNotation.abbreviation = String.fromCharCode(fromX + 97);
         }
       }
 
@@ -159,7 +158,7 @@ export const boardSlice = createSlice({
               [fromY, fromX + 3],
               [toY, toX - 1]
             );
-            notation[notation.length - 1].specialCase = SpecialCase.KingSideCastling;
+            newNotation.specialCase = SpecialCase.KingSideCastling;
           }
           // White Queen side castling
           if (fromX - toX === 2) {
@@ -169,7 +168,7 @@ export const boardSlice = createSlice({
               [fromY, fromX - 4],
               [toY, toX + 1]
             );
-            notation[notation.length - 1].specialCase = SpecialCase.QueenSideCastling;
+            newNotation.specialCase = SpecialCase.QueenSideCastling;
           }
           whiteKing.removePossibleCastling("BOTH");
           pieceMoves.setWhiteKingPosition([toY, toX]);
@@ -193,7 +192,7 @@ export const boardSlice = createSlice({
               [fromY, fromX + 3],
               [toY, toX - 1]
             );
-            notation[notation.length - 1].specialCase = SpecialCase.KingSideCastling;
+            newNotation.specialCase = SpecialCase.KingSideCastling;
           }
           // Black Queen side castling
           if (fromX - toX === 2) {
@@ -203,7 +202,7 @@ export const boardSlice = createSlice({
               [fromY, fromX - 4],
               [toY, toX + 1]
             );
-            notation[notation.length - 1].specialCase = SpecialCase.QueenSideCastling;
+            newNotation.specialCase = SpecialCase.QueenSideCastling;
           }
           blackKing.removePossibleCastling("BOTH");
           pieceMoves.setBlackKingPosition([toY, toX]);
@@ -236,19 +235,16 @@ export const boardSlice = createSlice({
             const capturedEnPassant =
               newSquares[enPassantY - directionYBasedOnColor][enPassantX].pieceType;
             if (capturedEnPassant) {
-              if (isWhiteTurn) {
-                addFallenPiece(blackFallenPieces, capturedEnPassant);
-              } else {
-                addFallenPiece(whiteFallenPieces, capturedEnPassant);
-              }
-              notation[notation.length - 1] = {
-                abbreviation: String.fromCharCode(fromX + 97),
-                position: [enPassantY, enPassantX],
-                specialCase: SpecialCase.Capture,
-              };
               newSquares[enPassantY - directionYBasedOnColor][enPassantX] = {
                 pieceType: null,
                 isEnemyAttacked: false,
+              };
+
+              pieceNotation.addFallenPiece(fallenPieces, capturedEnPassant);
+              newNotation = {
+                abbreviation: String.fromCharCode(fromX + 97),
+                position: [enPassantY, enPassantX],
+                specialCase: SpecialCase.Capture,
               };
             }
           }
@@ -280,9 +276,7 @@ export const boardSlice = createSlice({
         const isCheckmate = pieceMoves.isCheckmate(calculatedSquares, !isWhiteTurn);
         console.log("CHECKMATE:", isCheckmate);
 
-        notation[notation.length - 1].specialCase = isCheckmate
-          ? SpecialCase.Checkmate
-          : SpecialCase.Check;
+        newNotation.specialCase = isCheckmate ? SpecialCase.Checkmate : SpecialCase.Check;
       } else {
         state.pieceAttackedKing = null;
       }
@@ -290,13 +284,7 @@ export const boardSlice = createSlice({
       if (state.promotionPosition[0] === -1 && state.promotionPosition[1] === -1) {
         state.isWhiteTurn = !state.isWhiteTurn;
       }
-      notation[notation.length - 1].abbreviation += checkIfPieceMoveSameSquare(
-        current.squares,
-        piece,
-        [fromY, fromX],
-        [toY, toX],
-        isWhiteTurn
-      );
+      state.notation = [...state.notation, pieceNotation.toAlgebraicNotationString(newNotation)];
       state.possibleMoves = [];
     },
 
@@ -312,6 +300,7 @@ export const boardSlice = createSlice({
         promotionPosition,
         isWhiteTurn
       );
+      const piece = pieceFactory.getPiece(pieceAfter);
 
       // Update history
       const calculatedSquares = pieceMoves.calculateEnemyAttack(current.squares, isWhiteTurn);
@@ -329,53 +318,10 @@ export const boardSlice = createSlice({
       }
 
       state.promotionPosition = [-1, -1];
+      state.notation[state.notation.length - 1] += "=" + piece.getAbbreviation();
       state.isWhiteTurn = !state.isWhiteTurn;
     },
   },
 });
-
-const addFallenPiece = (
-  fallenPieces: { pieceType: PieceType; weight: number }[],
-  pieceType: PieceType
-): void => {
-  const piece = pieceFactory.getPiece(pieceType);
-  const weight = piece.getWeight();
-  fallenPieces.push({ pieceType, weight });
-  fallenPieces.sort((pieceA, pieceB) => pieceB.weight - pieceA.weight);
-};
-
-const checkIfPieceMoveSameSquare = (
-  squares: HistorySquares,
-  pieceToCheck: Piece,
-  [fromY, fromX]: Position,
-  [toY, toX]: Position,
-  isWhiteTurn: boolean
-): string => {
-  for (let y = 0; y < 8; y++) {
-    for (let x = 0; x < 8; x++) {
-      const pieceType = squares[y][x].pieceType;
-      if (pieceType) {
-        const piece = pieceFactory.getPiece(pieceType);
-        if (
-          // Same type
-          pieceToCheck.constructor.name === piece.constructor.name &&
-          // Same color
-          piece.isWhitePiece() === isWhiteTurn &&
-          // Different postion
-          (y !== fromY || x !== fromX)
-        ) {
-          const possibleMoves = piece.getPossibleMoves([y, x], squares);
-          for (const moves of possibleMoves) {
-            if (moves[0] === toY && moves[1] === toX) {
-              if (fromX === x) return 8 - fromY + "";
-              return String.fromCharCode(fromX + 97);
-            }
-          }
-        }
-      }
-    }
-  }
-  return "";
-};
 
 export const { selectPiece, movePiece, promotePawn } = boardSlice.actions;
