@@ -10,12 +10,12 @@ export const Notation = () => {
   const isWhiteLast = notation.length & 1;
 
   const notationRow = [];
-  for (let i = 0; i < notation.length; i += 2) {
+  for (let i = 0, count = 1; i < notation.length; i += 2, count += 1) {
     const whiteMove = notation[i];
     const blackMove = notation[i + 1];
     notationRow.push(
       <tr key={i}>
-        <td>{i + 1}.</td>
+        <td>{count}.</td>
         <td className={isWhiteLast && i === notation.length - 1 ? "notation__last" : ""}>
           {whiteMove}
         </td>

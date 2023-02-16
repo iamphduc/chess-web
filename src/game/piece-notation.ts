@@ -1,6 +1,7 @@
 import { pieceFactory } from "./piece-factory";
 import { HistorySquares } from "./piece-moves";
 import { PieceType } from "./piece-type";
+import { Pawn } from "./pieces/pawn";
 import { Piece, Position } from "./pieces/piece";
 
 export enum SpecialCase {
@@ -58,6 +59,8 @@ export class PieceNotation {
           if (
             // Same type
             pieceToCheck.constructor.name === piece.constructor.name &&
+            // Not a Pawn
+            piece instanceof Pawn &&
             // Same color
             piece.isWhitePiece() === isWhite &&
             // Different position

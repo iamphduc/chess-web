@@ -10,6 +10,7 @@ import { Position } from "game/pieces/piece";
 import { blackKing, King, whiteKing } from "game/pieces/king";
 import { blackPawn, Pawn, whitePawn } from "game/pieces/pawn";
 import { PiecePromoted } from "./components/Promotion";
+import { GameOverType } from "./components/GameOver";
 
 interface PieceSelection {
   pieceType: PieceType;
@@ -36,6 +37,9 @@ interface BoardState {
 
   fallenPieces: FallenPiece[];
   notation: string[];
+
+  gameOver: GameOverType;
+  isPlaying: boolean;
 }
 
 const initialState = {
@@ -52,6 +56,9 @@ const initialState = {
 
   fallenPieces: [],
   notation: [],
+
+  gameOver: GameOverType.Continue,
+  isPlaying: false,
 } as BoardState;
 
 export const boardSlice = createSlice({
@@ -264,20 +271,36 @@ export const boardSlice = createSlice({
       state.history = [...history, { squares: calculatedSquares }];
       console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
 
+      let newNotationString = pieceNotation.toAlgebraicNotationString(newNotation);
+
+      // Stalemate
+      const isStalemate = pieceMoves.isStalemate(calculatedSquares, isWhiteTurn);
+      if (isStalemate) {
+        state.gameOver = GameOverType.Draw;
+      }
+
       // Check
       const [kingY, kingX] = pieceMoves.getKingPosition(!isWhiteTurn);
       if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
         state.pieceAttackedKing = selectedPiece.pieceType;
-        const isCheckmate = pieceMoves.isCheckmate(calculatedSquares, !isWhiteTurn);
-        newNotation.abbreviation += isCheckmate ? SpecialCase.Checkmate : SpecialCase.Check;
+        if (isStalemate) {
+          newNotationString += SpecialCase.Checkmate;
+          state.gameOver = GameOverType.Win;
+        } else {
+          newNotationString += SpecialCase.Check;
+        }
       } else {
         state.pieceAttackedKing = null;
       }
 
-      if (state.promotionPosition[0] === -1 && state.promotionPosition[1] === -1) {
+      if (
+        state.promotionPosition[0] === -1 &&
+        state.promotionPosition[1] === -1 &&
+        state.gameOver === GameOverType.Continue
+      ) {
         state.isWhiteTurn = !state.isWhiteTurn;
       }
-      state.notation = [...state.notation, pieceNotation.toAlgebraicNotationString(newNotation)];
+      state.notation = [...state.notation, newNotationString];
       state.possibleMoves = [];
     },
 
@@ -303,12 +326,14 @@ export const boardSlice = createSlice({
       let lastestNotation = state.notation[state.notation.length - 1];
       lastestNotation += "=" + piece.getAbbreviation();
 
+      // Stalemate
+      const isStalemate = pieceMoves.isStalemate(calculatedSquares, isWhiteTurn);
+
       // Check
       const [kingY, kingX] = pieceMoves.getKingPosition(!isWhiteTurn);
       if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
         state.pieceAttackedKing = pieceAfter;
-        const isCheckmate = pieceMoves.isCheckmate(calculatedSquares, !isWhiteTurn);
-        lastestNotation += isCheckmate ? SpecialCase.Checkmate : SpecialCase.Check;
+        lastestNotation += isStalemate ? SpecialCase.Checkmate : SpecialCase.Check;
       } else {
         state.pieceAttackedKing = null;
       }
@@ -317,7 +342,21 @@ export const boardSlice = createSlice({
       state.notation[state.notation.length - 1] = lastestNotation;
       state.isWhiteTurn = !state.isWhiteTurn;
     },
+
+    start: (state) => {
+      state.isPlaying = true;
+    },
+
+    stop: (state) => {
+      state.isPlaying = false;
+      state.gameOver = GameOverType.Win;
+      state.isWhiteTurn = !state.isWhiteTurn;
+    },
+
+    reset: () => {
+      return initialState;
+    },
   },
 });
 
-export const { selectPiece, movePiece, promotePawn } = boardSlice.actions;
+export const { selectPiece, movePiece, promotePawn, start, stop, reset } = boardSlice.actions;

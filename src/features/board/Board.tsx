@@ -11,6 +11,8 @@ import { BoardSidebar } from "./components/BoardSidebar";
 import { Promotion } from "./components/Promotion";
 import { FallenPieces } from "./components/FallenPieces";
 import { Notation } from "./components/Notation";
+import { GameOver } from "./components/GameOver";
+import { Button, ButtonType } from "./components/Button";
 
 const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
   <Player name={name} title={title} avatar={avatar} isWhite={isWhite} />
@@ -47,11 +49,19 @@ export const Board = () => {
         <div className="squares">
           <AnimatePresence>{squares}</AnimatePresence>
           {promotionPosition[0] !== -1 && <Promotion position={promotionPosition} />}
+          <GameOver />
         </div>
         {renderPlayer(players[0])}
       </div>
 
       <div className="sidebar">
+        <BoardSidebar title="">
+          <div className="buttons">
+            <Button type={ButtonType.Play} />
+            <Button type={ButtonType.Reset} />
+          </div>
+        </BoardSidebar>
+
         <BoardSidebar title="Fallen Pieces">
           <FallenPieces />
         </BoardSidebar>

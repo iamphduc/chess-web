@@ -1,5 +1,14 @@
+.board {
+  position: relative;
+}
+
 .squares {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   position: relative;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
 }

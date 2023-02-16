@@ -1,0 +1,23 @@
+.button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  border-radius: 6px;
+  font-weight: bold;
+  color: #fff;
+  background-color: var(--dark-surface);
+  cursor: pointer;
+}
+.button:hover {
+  filter: brightness(0.8);
+}
+.button--play {
+  background-color: #059862;
+}
+.button--reset {
+  background-color: #d9534f;
+}
+.button--undo {
+  border-radius: 0px;
+}

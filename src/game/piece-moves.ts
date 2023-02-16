@@ -76,12 +76,13 @@ export class PieceMoves {
     return dummySquares;
   }
 
-  public isCheckmate(squares: HistorySquares, isWhiteTurn: boolean): boolean {
+  public isStalemate(squares: HistorySquares, isWhiteTurn: boolean): boolean {
     // Complexity:
     // - Time: O(64 * N), N is the number of moves that ours pieces can make
     // - Space: O(1)
 
-    const kingPosition = isWhiteTurn ? this.whiteKingPosition : this.blackKingPosition;
+    const isOpponentTurn = !isWhiteTurn;
+    const kingPosition = isOpponentTurn ? this.whiteKingPosition : this.blackKingPosition;
 
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 8; x++) {
@@ -89,7 +90,7 @@ export class PieceMoves {
         if (!pieceType) continue;
 
         const piece = pieceFactory.getPiece(pieceType);
-        if (isWhiteTurn !== piece.isWhitePiece()) continue;
+        if (isOpponentTurn !== piece.isWhitePiece()) continue;
 
         let [currentKingY, currentKingX] = kingPosition;
         const possibleMoves = piece.getPossibleMoves([y, x], squares);
@@ -98,7 +99,7 @@ export class PieceMoves {
             const newSquares = JSON.parse(JSON.stringify(squares));
 
             this.updatePiecePosition(newSquares, pieceType, [y, x], [toY, toX]);
-            const calculatedSquares = this.calculateEnemyAttack(newSquares, !isWhiteTurn);
+            const calculatedSquares = this.calculateEnemyAttack(newSquares, isWhiteTurn);
 
             if (piece instanceof King) {
               [currentKingY, currentKingX] = [toY, toX];
@@ -108,29 +109,6 @@ export class PieceMoves {
               return false;
             }
           }
-        }
-      }
-    }
-
-    return true;
-  }
-
-  public isStalemate(squares: HistorySquares, isWhiteTurn: boolean): boolean {
-    // Complexity:
-    // - Time: O(64 * N), N is the largest number of moves that one piece can make
-    // - Space: O(1)
-
-    for (let y = 0; y < 8; y++) {
-      for (let x = 0; x < 8; x++) {
-        const { pieceType } = squares[y][x];
-        if (!pieceType) continue;
-
-        const piece = pieceFactory.getPiece(pieceType);
-        if (isWhiteTurn !== piece.isWhitePiece()) continue;
-
-        const possibleMoves = piece.getPossibleMoves([y, x], squares);
-        if (possibleMoves.length) {
-          return false;
         }
       }
     }
