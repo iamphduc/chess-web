@@ -10,13 +10,8 @@ import WBishop from "assets/bishop-white.svg";
 import BBishop from "assets/bishop-black.svg";
 import WKnight from "assets/knight-white.svg";
 import BKnight from "assets/knight-black.svg";
-import { useAppDispatch } from "app/hooks";
-import { Position } from "game/pieces/piece";
+import { useAppDispatch, useAppSelector } from "app/hooks";
 import { promotePawn } from "../BoardSlice";
-
-interface Props {
-  position: Position;
-}
 
 export enum PiecePromoted {
   Queen = "QUEEN",
@@ -25,9 +20,11 @@ export enum PiecePromoted {
   Knight = "KNIGHT",
 }
 
-export const Promotion = ({ position }: Props) => {
+export const Promotion = () => {
+  const {
+    promotionPosition: [y, x],
+  } = useAppSelector((state) => state.board);
   const dispatch = useAppDispatch();
-  const [y, x] = position;
 
   // If pawn reach the 0th row, then it is white side
   const isWhite = y === 0;
@@ -37,7 +34,7 @@ export const Promotion = ({ position }: Props) => {
   const bishopImage = isWhite ? WBishop : BBishop;
   const knightImage = isWhite ? WKnight : BKnight;
 
-  return (
+  return y !== -1 && x !== -1 ? (
     <div
       className={`promotion`}
       style={{
@@ -68,5 +65,7 @@ export const Promotion = ({ position }: Props) => {
         onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Knight }))}
       />
     </div>
+  ) : (
+    <></>
   );
 };

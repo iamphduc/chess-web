@@ -13,10 +13,7 @@
 .overlay--legal {
   background-color: #28a745;
 }
-.overlay--previous {
-  background-color: #ffc107;
-}
-.overlay--current {
+.overlay--last_move {
   background-color: #ffc107;
   z-index: 0;
 }

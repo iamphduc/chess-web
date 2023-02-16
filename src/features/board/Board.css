@@ -1,5 +1,6 @@
 .board {
   position: relative;
+  user-select: none;
 }
 
 .squares {

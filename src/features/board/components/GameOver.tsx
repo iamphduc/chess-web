@@ -10,7 +10,9 @@ export enum GameOverType {
 }
 
 export const GameOver = () => {
-  const { isWhiteTurn, gameOver } = useAppSelector((state) => state.board);
+  const { history, gameOver } = useAppSelector((state) => state.board);
+
+  const isWhiteTurn = history.length % 2 === 1;
 
   return gameOver === GameOverType.Continue ? (
     <></>

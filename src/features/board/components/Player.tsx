@@ -25,11 +25,12 @@ const toTime = (time: number): string => {
 };
 
 export const Player = ({ name, title, avatar, isWhite }: Props) => {
-  const { isWhiteTurn, isPlaying, gameOver } = useAppSelector((state) => state.board);
+  const { history, isPlaying, gameOver } = useAppSelector((state) => state.board);
   const dispatch = useAppDispatch();
 
   const [remainTime, setRemainTime] = useState(TIMER);
 
+  const isWhiteTurn = history.length % 2 === 1;
   const isActive = isWhite === isWhiteTurn;
   const avatarSrc = avatar ? require(`assets/${avatar}`) : AvatarDefault;
 

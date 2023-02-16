@@ -28,7 +28,6 @@ interface PieceMove {
 
 interface BoardState {
   history: { squares: HistorySquares }[];
-  isWhiteTurn: boolean;
   pieceAttackedKing: PieceType | null;
   selectedPiece: PieceSelection | null;
   possibleMoves: Position[];
@@ -44,7 +43,6 @@ interface BoardState {
 
 const initialState = {
   history: [{ squares: initialSquares }],
-  isWhiteTurn: true,
   pieceAttackedKing: null,
   selectedPiece: null,
   possibleMoves: [],
@@ -79,9 +77,10 @@ export const boardSlice = createSlice({
       console.log(`Selected ${state.selectedPiece.pieceType}`);
 
       const { pieceType, y, x } = action.payload;
-      const { history, isWhiteTurn } = state;
+      const { history } = state;
 
       const current = history[history.length - 1];
+      const isWhiteTurn = history.length % 2 === 1;
       const piece = pieceFactory.getPiece(pieceType);
 
       // Get valid moves
@@ -109,7 +108,7 @@ export const boardSlice = createSlice({
     },
 
     movePiece: (state, action: PayloadAction<PieceMove>) => {
-      const { history, selectedPiece, isWhiteTurn, fallenPieces } = state;
+      const { history, selectedPiece, fallenPieces } = state;
 
       if (!selectedPiece) return;
 
@@ -119,6 +118,7 @@ export const boardSlice = createSlice({
       const { pieceType, y: fromY, x: fromX } = selectedPiece;
 
       const current = history[history.length - 1];
+      const isWhiteTurn = history.length % 2 === 1;
       const newSquares: HistorySquares = JSON.parse(JSON.stringify(current.squares));
       const piece = pieceFactory.getPiece(selectedPiece.pieceType);
 
@@ -293,22 +293,16 @@ export const boardSlice = createSlice({
         state.pieceAttackedKing = null;
       }
 
-      if (
-        state.promotionPosition[0] === -1 &&
-        state.promotionPosition[1] === -1 &&
-        state.gameOver === GameOverType.Continue
-      ) {
-        state.isWhiteTurn = !state.isWhiteTurn;
-      }
       state.notation = [...state.notation, newNotationString];
       state.possibleMoves = [];
     },
 
     promotePawn: (state, action: PayloadAction<PawnPromotion>) => {
-      const { history, isWhiteTurn, promotionPosition } = state;
+      const { history, promotionPosition } = state;
       const { piecePromoted } = action.payload;
 
       const current = history[history.length - 1];
+      const isWhiteTurn = history.length % 2 === 1;
 
       const pieceAfter = pieceMoves.promotePawn(
         current.squares,
@@ -340,7 +334,6 @@ export const boardSlice = createSlice({
 
       state.promotionPosition = [-1, -1];
       state.notation[state.notation.length - 1] = lastestNotation;
-      state.isWhiteTurn = !state.isWhiteTurn;
     },
 
     start: (state) => {
@@ -350,7 +343,6 @@ export const boardSlice = createSlice({
     stop: (state) => {
       state.isPlaying = false;
       state.gameOver = GameOverType.Win;
-      state.isWhiteTurn = !state.isWhiteTurn;
     },
 
     reset: () => {
