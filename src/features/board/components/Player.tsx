@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BsClockHistory } from "react-icons/bs";
 
 import "./Player.css";
-import { TIMER } from "../../../constants";
+import { DEFAULT_TIME } from "../../../constants";
 import AvatarDefault from "assets/chess-player.png";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import { stop } from "../BoardSlice";
@@ -28,11 +28,17 @@ export const Player = ({ name, title, avatar, isWhite }: Props) => {
   const { history, isPlaying, gameOver } = useAppSelector((state) => state.board);
   const dispatch = useAppDispatch();
 
-  const [remainTime, setRemainTime] = useState(TIMER);
+  const [remainTime, setRemainTime] = useState(DEFAULT_TIME);
 
   const isWhiteTurn = history.length % 2 === 1;
   const isActive = isWhite === isWhiteTurn;
   const avatarSrc = avatar ? require(`assets/${avatar}`) : AvatarDefault;
+
+  useEffect(() => {
+    if (!isPlaying) {
+      setRemainTime(DEFAULT_TIME);
+    }
+  }, [isPlaying]);
 
   useEffect(() => {
     const interval = 1; // seconds

@@ -116,4 +116,4 @@ export const PromotionBoard = [
 ];
 
 export const SQUARE_SIZE = 52;
-export const TIMER = 600;
+export const DEFAULT_TIME = 600;
