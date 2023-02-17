@@ -303,16 +303,17 @@ export const boardSlice = createSlice({
 
       const current = history[history.length - 1];
       const isWhiteTurn = history.length % 2 === 1;
+      const reversedTurn = !isWhiteTurn; // Turn has been changed after moving piece so reverse it
 
       const pieceAfter = pieceMoves.promotePawn(
         current.squares,
         piecePromoted,
         promotionPosition,
-        isWhiteTurn
+        reversedTurn
       );
 
       // Update history
-      const calculatedSquares = pieceMoves.calculateEnemyAttack(current.squares, isWhiteTurn);
+      const calculatedSquares = pieceMoves.calculateEnemyAttack(current.squares, reversedTurn);
       state.history[history.length - 1] = { squares: calculatedSquares };
 
       // Update notation
@@ -321,13 +322,18 @@ export const boardSlice = createSlice({
       lastestNotation += "=" + piece.getAbbreviation();
 
       // Stalemate
-      const isStalemate = pieceMoves.isStalemate(calculatedSquares, isWhiteTurn);
+      const isStalemate = pieceMoves.isStalemate(calculatedSquares, reversedTurn);
 
       // Check
-      const [kingY, kingX] = pieceMoves.getKingPosition(!isWhiteTurn);
+      const [kingY, kingX] = pieceMoves.getKingPosition(!reversedTurn);
       if (calculatedSquares[kingY][kingX].isEnemyAttacked) {
         state.pieceAttackedKing = pieceAfter;
-        lastestNotation += isStalemate ? SpecialCase.Checkmate : SpecialCase.Check;
+        if (isStalemate) {
+          lastestNotation += isStalemate ? SpecialCase.Checkmate : SpecialCase.Check;
+          state.gameOver = GameOverType.Win;
+        } else {
+          lastestNotation += isStalemate ? SpecialCase.Checkmate : SpecialCase.Check;
+        }
       } else {
         state.pieceAttackedKing = null;
       }

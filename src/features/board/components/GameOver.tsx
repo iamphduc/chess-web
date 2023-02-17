@@ -18,7 +18,7 @@ export const GameOver = () => {
     <></>
   ) : (
     <div className="game-over">
-      {gameOver === GameOverType.Win && <div>{`${isWhiteTurn ? "White" : "Black"} Win!`}</div>}
+      {gameOver === GameOverType.Win && <div>{`${!isWhiteTurn ? "White" : "Black"} Win!`}</div>}
       {gameOver === GameOverType.Draw && <div>Draw!</div>}
     </div>
   );
