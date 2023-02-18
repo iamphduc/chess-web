@@ -8,8 +8,6 @@
 
 .promotion__piece {
   display: inline-block;
-  width: 34px;
-  height: 34px;
   background-position: center;
   background-size: contain;
   border-radius: 6px;

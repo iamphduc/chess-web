@@ -2,7 +2,7 @@
   background-color: var(--dark-surface);
   color: black;
   padding: 10px;
-  width: 416px;
+  width: calc(13px * 24);
   height: fit-content;
   min-height: 80px;
   margin: 8px 0px;
@@ -12,4 +12,15 @@
 .board-sidebar__title {
   margin: 0px 0px 10px 0px;
   color: var(--dark-title);
+}
+
+@media only screen and (min-width: 768px) {
+  .board-sidebar {
+    width: calc(13px * 32);
+  }
+}
+@media only screen and (min-width: 1200px) {
+  .board-sidebar {
+    width: calc(13px * 36);
+  }
 }

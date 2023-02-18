@@ -1,7 +1,6 @@
 import React from "react";
 
 import "./Promotion.css";
-import { SQUARE_SIZE } from "../../../constants";
 import WQueen from "assets/queen-white.svg";
 import BQueen from "assets/queen-black.svg";
 import WRook from "assets/rook-white.svg";
@@ -20,7 +19,11 @@ export enum PiecePromoted {
   Knight = "KNIGHT",
 }
 
-export const Promotion = () => {
+interface Props {
+  squareSize: number;
+}
+
+export const Promotion = ({ squareSize }: Props) => {
   const {
     promotionPosition: [y, x],
   } = useAppSelector((state) => state.board);
@@ -33,34 +36,35 @@ export const Promotion = () => {
   const rookImage = isWhite ? WRook : BRook;
   const bishopImage = isWhite ? WBishop : BBishop;
   const knightImage = isWhite ? WKnight : BKnight;
+  const promotionPieceSize = { width: squareSize * 0.6, height: squareSize * 0.6 };
 
   return y !== -1 && x !== -1 ? (
     <div
       className={`promotion`}
       style={{
-        left: x <= 3 ? SQUARE_SIZE * x - SQUARE_SIZE / 2 : "unset",
-        right: x > 3 ? SQUARE_SIZE * (7 - x) - SQUARE_SIZE / 2 : "unset",
-        top: y === 0 ? SQUARE_SIZE : "unset",
-        bottom: y === 7 ? SQUARE_SIZE : "unset",
+        left: x <= 3 ? squareSize * x - squareSize / 2 : "unset",
+        right: x > 3 ? squareSize * (7 - x) - squareSize / 2 : "unset",
+        top: y === 0 ? squareSize : "unset",
+        bottom: y === 7 ? squareSize : "unset",
       }}
     >
       <div
-        style={{ backgroundImage: `url(${queenImage})` }}
+        style={{ backgroundImage: `url(${queenImage})`, ...promotionPieceSize }}
         className="promotion__piece"
         onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Queen }))}
       />
       <div
-        style={{ backgroundImage: `url(${rookImage})` }}
+        style={{ backgroundImage: `url(${rookImage})`, ...promotionPieceSize }}
         className="promotion__piece"
         onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Rook }))}
       />
       <div
-        style={{ backgroundImage: `url(${bishopImage})` }}
+        style={{ backgroundImage: `url(${bishopImage})`, ...promotionPieceSize }}
         className="promotion__piece"
         onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Bishop }))}
       />
       <div
-        style={{ backgroundImage: `url(${knightImage})` }}
+        style={{ backgroundImage: `url(${knightImage})`, ...promotionPieceSize }}
         className="promotion__piece"
         onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Knight }))}
       />

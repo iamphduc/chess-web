@@ -32,7 +32,7 @@ interface BoardState {
   selectedPiece: PieceSelection | null;
   possibleMoves: Position[];
   promotionPosition: Position;
-  lastMove: [Position, Position];
+  lastMoves: [Position, Position][];
 
   fallenPieces: FallenPiece[];
   notation: string[];
@@ -47,10 +47,12 @@ const initialState = {
   selectedPiece: null,
   possibleMoves: [],
   promotionPosition: [-1, -1],
-  lastMove: [
-    [-1, -1],
-    [-1, -1],
-  ],
+  lastMoves: [
+    [
+      [-1, -1],
+      [-1, -1],
+    ],
+  ], // Fallback for case En Passent
 
   fallenPieces: [],
   notation: [],
@@ -123,9 +125,12 @@ export const boardSlice = createSlice({
       const piece = pieceFactory.getPiece(selectedPiece.pieceType);
 
       // Update last move
-      state.lastMove = [
-        [fromY, fromX],
-        [toY, toX],
+      state.lastMoves = [
+        ...state.lastMoves,
+        [
+          [fromY, fromX],
+          [toY, toX],
+        ],
       ];
 
       // Move Notation

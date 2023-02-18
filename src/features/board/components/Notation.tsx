@@ -2,11 +2,14 @@ import React, { useEffect, useRef } from "react";
 
 import "./Notation.css";
 import { useAppSelector } from "app/hooks";
+import { useMediaQuery } from "hooks/useMediaQuery";
 
 export const Notation = () => {
   const notationRef = useRef<null | HTMLDivElement>(null);
 
   const { notation } = useAppSelector((state) => state.board);
+  const isLargeScreen = useMediaQuery("only screen and (min-width: 1200px)");
+
   const isWhiteLast = notation.length & 1;
 
   const notationRow = [];
@@ -28,14 +31,14 @@ export const Notation = () => {
   }
 
   useEffect(() => {
-    if (notationRef.current) {
+    if (notationRef.current && isLargeScreen) {
       notationRef.current.scrollIntoView({
         behavior: "smooth",
         block: "end",
         inline: "nearest",
       });
     }
-  }, [notation]);
+  }, [notation, isLargeScreen]);
 
   return (
     <div className="notation">

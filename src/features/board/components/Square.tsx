@@ -2,7 +2,6 @@ import React, { memo } from "react";
 import { useDrop } from "react-dnd";
 
 import "./Square.css";
-import { SQUARE_SIZE } from "../../../constants";
 import { PieceType } from "game/piece-type";
 import { useAppDispatch } from "app/hooks";
 import { movePiece, selectPiece } from "../BoardSlice";
@@ -31,7 +30,7 @@ export const Square = memo(
     isWhiteTurn,
     isPieceAttackedKing,
     isInCheck,
-    size = SQUARE_SIZE,
+    size,
   }: Props) => {
     const dispatch = useAppDispatch();
 
