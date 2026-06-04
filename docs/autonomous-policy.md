@@ -13,6 +13,8 @@ A PR is **mechanically mergeable** only if **all** hold:
 
 **Precondition.** The merge target's branch protection must **not** require a human approving review. If approval is required `mergeStateStatus` stays `BLOCKED` and every PR halts at gate 4 until the rule is relaxed or an approval is supplied.
 
+**Repo note (chess-web).** `main`'s branch protection requires a review the orchestrator cannot supply (`mergeStateStatus: BLOCKED`, `reviewDecision: REVIEW_REQUIRED`), and the human directed PR-based landing (no direct pushes). `--admin` *can* bypass the review gate, but this is **not** a standing auto-bypass: a fresh session must obtain the human's explicit authorization before admin-merging (default to halting at gate 4 and asking). For a hands-off run, relax the branch-protection rule so plain `--merge` satisfies the precondition. See `docs/decisions.md` → "main requires review; admin-merge is human-authorized per session".
+
 **Escalation valve.** Even when mechanically mergeable, **withhold the merge and halt for human review (gate 8)** if the PR carries a risk signal:
 
 - the slice's engineer summary reported `Confidence: low`, or
