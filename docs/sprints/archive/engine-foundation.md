@@ -1,34 +1,34 @@
 # Sprint: Engine Foundation
 
-_From plan: docs/plans/pure-engine-refactor.md · Slug: engine-foundation · Status: active · Generated: 2026-06-04_
-
-<!-- autopilot-run: started=2026-06-04T09:17:01Z sprints=0 waves=0 -->
+_From plan: docs/plans/pure-engine-refactor.md · Slug: engine-foundation · Status: archived · Generated: 2026-06-04_
 
 ## Status board
 
 | Wave | Slice | Title | Difficulty | Agent | Branch | PR | Status | Depends on |
 |------|-------|-------|------------|-------|--------|----|--------|------------|
-| 1 | harness | Stand up the Jest test harness (setupTests + green smoke test) | 2 | engineer-junior | engine-foundation-harness | — | pending | — |
-| 1 | gamestate | Define the immutable `GameState` value/type and initial-state factory | 3 | engineer-senior | engine-foundation-gamestate | — | pending | — |
-| 2 | tracer | Tracer-bullet `legalMoves` + `applyMove` for one quiet move, end-to-end | 3 | engineer-senior | engine-foundation-tracer | — | pending | gamestate |
+| 1 | harness | Stand up the Vitest test harness (vitest + config + green smoke test) | 2 | engineer-junior | engine-foundation-harness | #3 merged | done | — |
+| 2 | gamestate | Define the immutable `GameState` value/type and initial-state factory | 3 | engineer-senior | engine-foundation-gamestate | #4 merged | done | harness |
+| 3 | tracer | Tracer-bullet `legalMoves` + `applyMove` for one quiet move, end-to-end | 3 | engineer-senior | engine-foundation-tracer | #5 merged | done | gamestate |
+
+> Re-sliced 2026-06-04: test runner switched from CRA/Jest to **Vitest** (see `docs/decisions.md` → "Vitest for the engine test suite, over CRA's Jest"). Because `vitest` is not installed until `harness` merges, `gamestate` and `tracer` now depend on `harness`, making the sprint 3 sequential waves.
 
 Wave membership lives in the **Wave** column; slices sharing a wave run in parallel and must own disjoint file sets.
 
 ## Per-slice detail
 
-### harness: Stand up the Jest test harness (setupTests + green smoke test)
-- **Difficulty justification:** Mechanical wiring of already-installed tooling (`react-scripts test`, jest-dom); the only subtlety is making CRA's test runner discover the suite and confirming it exits green with non-zero tests.
-- **Scope:** Create `src/setupTests.ts` importing `@testing-library/jest-dom` (the file CRA auto-loads but which does not yet exist). Add one trivial sanity test under the new engine test area (`src/game/engine/__tests__/harness.test.ts`) — e.g. asserting a constant — purely to prove the runner discovers and executes a test green. Do NOT touch any production source, the old engine, or the `GameState` type; do NOT author chess-rule tests here. The deliverable is "a developer can run `CI=true npm test` and see ≥1 passing test, 0 failing."
-- **Files owned:** `src/setupTests.ts`, `src/game/engine/__tests__/harness.test.ts`
-- **Success criteria:** `CI=true npm test` (or `react-scripts test --watchAll=false`) runs, discovers the suite, reports at least 1 passing test and 0 failures; `tsc --noEmit` stays clean; no production files changed.
+### harness: Stand up the Vitest test harness (vitest + config + green smoke test)
+- **Difficulty justification:** Mechanical tooling wiring — add Vitest, a minimal node-environment config, and a `test` script, then confirm it discovers and runs a test green. The only subtlety is pinning a Vitest version compatible with the project's Node and not disturbing the CRA app build.
+- **Scope:** Add `vitest` as a dev dependency, a minimal `vitest.config.ts` (`test.environment: 'node'`; `globals` optional — prefer explicit `import { describe, it, expect } from 'vitest'`), and a `"test": "vitest run"` script in `package.json`. Add one trivial sanity test under the new engine test area (`src/game/engine/__tests__/harness.test.ts`) — e.g. asserting a constant — purely to prove the runner discovers and executes a test green. Do NOT remove or rewire CRA/`react-scripts` (the app build/dev server stays on it); do NOT touch any production source, the old engine, or the `GameState` type; do NOT author chess-rule tests here. The deliverable is "a developer can run `npm test` (→ `vitest run`) and see ≥1 passing test, 0 failing."
+- **Files owned:** `package.json`, `package-lock.json`, `vitest.config.ts`, `src/game/engine/__tests__/harness.test.ts`
+- **Success criteria:** `npm test` (`vitest run`) runs, discovers the suite, reports at least 1 passing test and 0 failures; `npx tsc --noEmit` stays clean; `npm run build` (CRA) still succeeds; no production source changed.
 - **Depends on:** —
 
 ### gamestate: Define the immutable `GameState` value/type and initial-state factory
 - **Difficulty justification:** Architecture-defining — this type is the seam the entire plan threads through (`legalMoves`/`applyMove`, future Redux history, hashable positions). Must be presentation-free (no `isEnemyAttacked`) and carry `castling`, `enPassant`, `promotionCount` per the decision record, getting the shape right matters more than the line count.
 - **Scope:** Create the new engine module directory `src/game/engine/`. Define the immutable `GameState` type `{ squares, turn, castling, enPassant, promotionCount }`: `squares` is an 8×8 grid of `PieceType | null` (reuse the existing `game/piece-type` enum — do NOT redesign piece identity; the `{ kind, color }` redesign is explicitly quarantined); `turn` is the side to move; `castling` carries both sides' king/queen-side rights; `enPassant` is the optional target square (or null); `promotionCount` quarantines the promotion-id counter (the per-type counter array, mirroring the old `promotionBoardCount` shape). Provide a pure `initialGameState()` factory producing the standard start position (white to move, full castling rights, no en-passant target, zeroed promotion counts) — author this fresh; you may read `src/constants.ts` `initialSquares` as a reference for piece placement but the engine grid must NOT carry the `isEnemyAttacked` presentation flag. Write TDD tests pinning the factory's shape and that it returns a fresh value each call (no shared mutable reference). Do NOT implement move generation or `applyMove` here. Do NOT modify the old engine, `constants.ts`, or `BoardSlice`.
 - **Files owned:** `src/game/engine/game-state.ts`, `src/game/engine/__tests__/game-state.test.ts`
-- **Success criteria:** `GameState` type exported and compiles under `strict`; `initialGameState()` returns the documented start position; its tests are green; two calls return independent (non-aliased) objects; `tsc --noEmit` and `npm run build` clean; no old-engine file touched.
-- **Depends on:** —
+- **Success criteria:** `GameState` type exported and compiles under `strict`; `initialGameState()` returns the documented start position; its tests are green via `npm test` (`vitest run`); two calls return independent (non-aliased) objects; `tsc --noEmit` and `npm run build` clean; no old-engine file touched.
+- **Depends on:** harness (vitest must be installed to run the tests)
 
 ### tracer: Tracer-bullet `legalMoves` + `applyMove` for one quiet move, end-to-end
 - **Difficulty justification:** Establishes the engine's core function signatures and the immutability contract end-to-end; deliberately narrow (one quiet move) but it sets the API shape every later sprint builds on, so the call boundary and return types must be chosen carefully.
@@ -55,8 +55,8 @@ Wave membership lives in the **Wave** column; slices sharing a wave run in paral
 
 Appended by the orchestrator after the last wave completes, immediately before archive.
 
-- **Slices shipped:** <slice-code list>
-- **Runtime smoke:** <PR URL | clean> · bugs found+fixed: <N> (runtime regressions static checks missed) · deferred: <M>
-- **Reviewer:** <PR URL | clean> · severe findings: <N> (count of `SEVERE:` PENDING entries emitted)
-- **Queue entries:** resolved <N>, deferred <M> — link the deferred ones inline
-- **Approximate token cost:** <number or rough range>
+- **Slices shipped:** harness (#3), gamestate (#4), tracer (#5) — all merged to `main` via merge commits (admin-merge; `main` branch protection requires a review the orchestrator can't supply).
+- **Runtime smoke:** clean (no smoke PR) · bugs found+fixed: 0 · deferred: 0 — no runtime surface introduced (engine is additive, not wired into `BoardSlice`; strangler-fig keeps the live app on the old engine). Verified by integrated `npm test` (19 passed) + `npm run build` (compiled, 113 kB) on merged `main`. The `## Smoke recipe` stub remains unfilled — harmless this sprint, but will block from `cutover-cleanup` onward.
+- **Reviewer:** clean (no PR) · severe findings: 0 — four lenses clean; immutable `GameState`/factory and `applyMove` verified mutation-free, white-pawn `legalMoves` correct, tests non-tautological.
+- **Queue entries:** resolved 2 (sprint-draft ack; preflight push→PR), deferred 8 — all PENDING: `GameState` field-shape defaults · vitest tsconfig-alias resolution gap · per-worktree `npm install --legacy-peer-deps` · `@types/node@^16` peer pin · tracer scope-deferrals (full move-gen, special bookkeeping) · worktree teardown needs `--force` (untracked node_modules) · intermittent corrupt first install (npm optional-dep bug) · `castling.black` non-aliasing test nit.
+- **Approximate token cost:** ~5 engineer/reviewer subagents + orchestration; rough order ~250–350k tokens across the sprint.

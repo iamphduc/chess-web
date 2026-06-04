@@ -2,6 +2,8 @@
 
 _Generated: 2026-06-04 · Status: active · Grilled-with: grill-me_
 
+<!-- autopilot-run: started=2026-06-04T09:17:01Z sprints=1 waves=3 -->
+
 ## Goal
 Replace the leaking mutable-singleton chess engine with a pure, testable engine built around an immutable `GameState` value, and grow a trustworthy hand-authored test suite that encodes correct chess. Built test-first, strangler-fig style, so the live app keeps working at every commit until a single late cutover.
 
@@ -38,7 +40,7 @@ The current rules live in module-level singletons (`whiteKing`, `whitePawn`, `pi
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| engine-foundation | Establish the `GameState` value and a tracer-bullet vertical slice (`legalMoves` + `applyMove` for one quiet move) proving the engine seam end-to-end; stand up the test harness | planned | — |
+| engine-foundation | Establish the `GameState` value and a tracer-bullet vertical slice (`legalMoves` + `applyMove` for one quiet move) proving the engine seam end-to-end; stand up the test harness | done | — |
 | move-generation | Stateless move generation for all pieces (sliding, knight, pawn), test-first, including the bounds-bug regression | planned | engine-foundation |
 | king-safety-endgame | Enemy-attack mapping, legal-move filtering for king safety, and checkmate-vs-stalemate detection | planned | move-generation |
 | special-moves | Castling (rights threaded through `GameState`), en passant (target in `GameState`), promotion (counter quarantined in `GameState`) | planned | king-safety-endgame |
