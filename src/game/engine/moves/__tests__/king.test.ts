@@ -1,13 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { PieceType } from "../../../piece-type";
-import { GameState } from "../../game-state";
-import { Position } from "../../engine";
+import { CastlingRights, GameState } from "../../game-state";
+import { Position, legalMoves, applyMove } from "../../engine";
 import { kingMoves } from "../king";
+
+const FULL_RIGHTS: CastlingRights = {
+  white: { kingSide: true, queenSide: true },
+  black: { kingSide: true, queenSide: true },
+};
 
 /** Build a minimal GameState with only the squares provided. */
 function makeState(
   placements: Array<{ y: number; x: number; piece: PieceType }>,
-  turn: "white" | "black" = "white"
+  turn: "white" | "black" = "white",
+  castling: CastlingRights = FULL_RIGHTS
 ): GameState {
   const squares: Array<Array<PieceType | null>> = Array.from({ length: 8 }, () =>
     Array(8).fill(null)
@@ -18,10 +24,7 @@ function makeState(
   return {
     squares,
     turn,
-    castling: {
-      white: { kingSide: true, queenSide: true },
-      black: { kingSide: true, queenSide: true },
-    },
+    castling,
     enPassant: null,
     promotionCount: [0, 0, 0, 0, 0, 0, 0, 0],
   };
@@ -137,5 +140,193 @@ describe("kingMoves", () => {
     for (const move of moves) {
       expect(move.from).toEqual(from);
     }
+  });
+});
+
+describe("kingMoves — castling", () => {
+  // White home rank is 7 (king [7,4], rooks [7,0]/[7,7]); Black is 0.
+
+  it("white: full rights + clear path → both castles generated", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 0, piece: PieceType.WhiteQueenRook },
+      { y: 7, x: 7, piece: PieceType.WhiteKingRook },
+    ]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).toContainEqual([7, 6]); // king-side
+    expect(tos).toContainEqual([7, 2]); // queen-side
+  });
+
+  it("black: full rights + clear path → both castles generated", () => {
+    const state = makeState(
+      [
+        { y: 0, x: 4, piece: PieceType.BlackKing },
+        { y: 0, x: 0, piece: PieceType.BlackQueenRook },
+        { y: 0, x: 7, piece: PieceType.BlackKingRook },
+      ],
+      "black"
+    );
+    const tos = kingMoves(state, [0, 4]).map((m) => m.to);
+    expect(tos).toContainEqual([0, 6]);
+    expect(tos).toContainEqual([0, 2]);
+  });
+
+  it("right is false → that castle dropped", () => {
+    const state = makeState(
+      [
+        { y: 7, x: 4, piece: PieceType.WhiteKing },
+        { y: 7, x: 0, piece: PieceType.WhiteQueenRook },
+        { y: 7, x: 7, piece: PieceType.WhiteKingRook },
+      ],
+      "white",
+      {
+        white: { kingSide: false, queenSide: true },
+        black: { kingSide: true, queenSide: true },
+      }
+    );
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).not.toContainEqual([7, 6]); // king-side dropped
+    expect(tos).toContainEqual([7, 2]); // queen-side still there
+  });
+
+  it("king-side path square occupied → king-side dropped", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 0, piece: PieceType.WhiteQueenRook },
+      { y: 7, x: 7, piece: PieceType.WhiteKingRook },
+      { y: 7, x: 5, piece: PieceType.WhiteKingBishop }, // f1 blocked
+    ]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).not.toContainEqual([7, 6]);
+    expect(tos).toContainEqual([7, 2]);
+  });
+
+  it("queen-side b-file [r,1] occupied → queen-side dropped (b-file must be empty)", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 0, piece: PieceType.WhiteQueenRook },
+      { y: 7, x: 7, piece: PieceType.WhiteKingRook },
+      { y: 7, x: 1, piece: PieceType.WhiteQueenKnight }, // b1 blocked
+    ]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).not.toContainEqual([7, 2]);
+    expect(tos).toContainEqual([7, 6]);
+  });
+
+  it("king currently in check → both castles dropped", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 0, piece: PieceType.WhiteQueenRook },
+      { y: 7, x: 7, piece: PieceType.WhiteKingRook },
+      { y: 0, x: 4, piece: PieceType.BlackQueenRook }, // rook checks e1 down the e-file
+    ]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).not.toContainEqual([7, 6]);
+    expect(tos).not.toContainEqual([7, 2]);
+  });
+
+  it("king-side transit square [r,5] attacked → king-side dropped", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 7, piece: PieceType.WhiteKingRook },
+      { y: 0, x: 5, piece: PieceType.BlackQueenRook }, // attacks f-file → f1 [7,5]
+    ]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).not.toContainEqual([7, 6]);
+  });
+
+  it("king-side destination square [r,6] attacked → king-side dropped", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 7, piece: PieceType.WhiteKingRook },
+      { y: 0, x: 6, piece: PieceType.BlackQueenRook }, // attacks g-file → g1 [7,6]
+    ]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).not.toContainEqual([7, 6]);
+  });
+
+  it("queen-side transit square [r,3] attacked → queen-side dropped", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 0, piece: PieceType.WhiteQueenRook },
+      { y: 0, x: 3, piece: PieceType.BlackQueenRook }, // attacks d-file → d1 [7,3]
+    ]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).not.toContainEqual([7, 2]);
+  });
+
+  it("queen-side destination square [r,2] attacked → queen-side dropped", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 0, piece: PieceType.WhiteQueenRook },
+      { y: 0, x: 2, piece: PieceType.BlackQueenRook }, // attacks c-file → c1 [7,2]
+    ]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).not.toContainEqual([7, 2]);
+  });
+
+  it("queen-side allowed when ONLY the b-file [r,1] is attacked (not a king square)", () => {
+    // An enemy rook covering the b-file ([7,1]) but nothing on c/d/e files.
+    // The b-file is a path square (must be empty) but NOT a check-gated square.
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 0, piece: PieceType.WhiteQueenRook },
+      { y: 5, x: 1, piece: PieceType.BlackQueenRook }, // attacks b-file (incl b1 [7,1])
+    ]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).toContainEqual([7, 2]); // queen-side still generated
+  });
+
+  it("unrelated enemy piece not covering the king's squares → castle still generated", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 7, piece: PieceType.WhiteKingRook },
+      { y: 0, x: 0, piece: PieceType.BlackQueenRook }, // a8 rook, covers a-file only
+    ]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).toContainEqual([7, 6]);
+  });
+
+  it("no rook in the corner → no castle even with the right set", () => {
+    // Pins the existing single-step suite's assumption: rights without a rook
+    // must not synthesise a castle.
+    const state = makeState([{ y: 7, x: 4, piece: PieceType.WhiteKing }]);
+    const tos = kingMoves(state, [7, 4]).map((m) => m.to);
+    expect(tos).not.toContainEqual([7, 6]);
+    expect(tos).not.toContainEqual([7, 2]);
+  });
+
+  it("end-to-end: a generated king-side castle survives legalMoves and applyMove relocates king + rook", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 7, piece: PieceType.WhiteKingRook },
+    ]);
+    const legal = legalMoves(state, [7, 4]);
+    const castle = legal.find((m) => m.to[0] === 7 && m.to[1] === 6);
+    expect(castle).toBeDefined();
+
+    const next = applyMove(state, castle!);
+    expect(next.squares[7][6]).toBe(PieceType.WhiteKing); // king on g1
+    expect(next.squares[7][5]).toBe(PieceType.WhiteKingRook); // rook on f1
+    expect(next.squares[7][4]).toBeNull(); // e1 vacated
+    expect(next.squares[7][7]).toBeNull(); // h1 vacated
+    expect(next.castling.white.kingSide).toBe(false);
+    expect(next.castling.white.queenSide).toBe(false);
+  });
+
+  it("end-to-end: a generated queen-side castle relocates king + rook correctly", () => {
+    const state = makeState([
+      { y: 7, x: 4, piece: PieceType.WhiteKing },
+      { y: 7, x: 0, piece: PieceType.WhiteQueenRook },
+    ]);
+    const legal = legalMoves(state, [7, 4]);
+    const castle = legal.find((m) => m.to[0] === 7 && m.to[1] === 2);
+    expect(castle).toBeDefined();
+
+    const next = applyMove(state, castle!);
+    expect(next.squares[7][2]).toBe(PieceType.WhiteKing); // king on c1
+    expect(next.squares[7][3]).toBe(PieceType.WhiteQueenRook); // rook on d1
+    expect(next.squares[7][4]).toBeNull(); // e1 vacated
+    expect(next.squares[7][0]).toBeNull(); // a1 vacated
   });
 });
