@@ -32,7 +32,7 @@ const KIND_ORDER: readonly PromotionKind[] = [
  * `constants.ts` module (which pulls in baseUrl-aliased UI imports the engine
  * test/build graph must not depend on).
  */
-const PROMOTED_IDS: readonly (readonly PieceType[])[] = [
+export const PROMOTED_IDS: readonly (readonly PieceType[])[] = [
   // White
   [
     PieceType.WhiteQueenPromoted1,

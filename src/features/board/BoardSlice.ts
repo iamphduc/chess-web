@@ -3,7 +3,7 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 
 import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
-import { HistorySquares } from "game/piece-moves";
+import { HistorySquares } from "game/board-types";
 import { FallenPiece, MoveNotation, pieceNotation, SpecialCase } from "game/piece-notation";
 import { Position as PiecePosition } from "game/pieces/piece";
 import { Pawn } from "game/pieces/pawn";

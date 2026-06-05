@@ -1,5 +1,5 @@
 import { pieceFactory } from "./piece-factory";
-import { HistorySquares } from "./piece-moves";
+import { HistorySquares } from "./board-types";
 import { PieceType } from "./piece-type";
 import { Pawn } from "./pieces/pawn";
 import { Piece, Position } from "./pieces/piece";
@@ -66,15 +66,19 @@ export class PieceNotation {
             // Different position
             (y !== fromY || x !== fromX)
           ) {
-            const possibleMoves = piece.getPossibleMoves([y, x], squares);
-            for (const moves of possibleMoves) {
-              if (moves[0] === toY && moves[1] === toX) {
-                // If two pieces can move to the same file (row)
-                if (fromX === x) {
-                  return 8 - fromY + "";
-                }
-                return String.fromCharCode(fromX + 97);
+            // Pawn capture-disambiguation: the other same-colour pawn at [y, x]
+            // could also capture onto [toY, toX] when that square is one rank
+            // ahead (colour-relative) and one file to the side. Computed inline
+            // now that the legacy `Pawn.getPossibleMoves` move generator is gone
+            // (the engine owns legality; this is presentation-only notation).
+            const dir = piece.isWhitePiece() ? -1 : 1;
+            const canCaptureTarget = toY === y + dir && Math.abs(toX - x) === 1;
+            if (canCaptureTarget) {
+              // If two pieces can move to the same file (row)
+              if (fromX === x) {
+                return 8 - fromY + "";
               }
+              return String.fromCharCode(fromX + 97);
             }
           }
         }
