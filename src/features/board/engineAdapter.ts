@@ -1,5 +1,5 @@
 import { PieceType } from "../../game/piece-type";
-import { HistorySquares } from "../../game/piece-moves";
+import { HistorySquares } from "../../game/board-types";
 import { GameState } from "../../game/engine/game-state";
 import { Move, Position } from "../../game/engine/engine";
 import { gameStatus } from "../../game/engine/game-status";

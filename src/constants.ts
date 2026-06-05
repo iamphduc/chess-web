@@ -1,5 +1,6 @@
-import { Square } from "game/piece-moves";
+import { Square } from "game/board-types";
 import { PieceType } from "game/piece-type";
+import { PROMOTED_IDS } from "game/engine/moves/promotion";
 
 export const initialSquares: Square[][] = [
   // 1st
@@ -61,59 +62,13 @@ export const initialSquares: Square[][] = [
   }))
 );
 
-export const PromotionBoard = [
-  // White side
-  [
-    PieceType.WhiteQueenPromoted1,
-    PieceType.WhiteQueenPromoted2,
-    PieceType.WhiteQueenPromoted3,
-    PieceType.WhiteQueenPromoted4,
-  ],
-  [
-    PieceType.WhiteRookPromoted1,
-    PieceType.WhiteRookPromoted2,
-    PieceType.WhiteRookPromoted3,
-    PieceType.WhiteRookPromoted4,
-  ],
-  [
-    PieceType.WhiteBishopPromoted1,
-    PieceType.WhiteBishopPromoted2,
-    PieceType.WhiteBishopPromoted3,
-    PieceType.WhiteBishopPromoted4,
-  ],
-  [
-    PieceType.WhiteKnightPromoted1,
-    PieceType.WhiteKnightPromoted2,
-    PieceType.WhiteKnightPromoted3,
-    PieceType.WhiteKnightPromoted4,
-  ],
-
-  // Black side
-  [
-    PieceType.BlackQueenPromoted1,
-    PieceType.BlackQueenPromoted2,
-    PieceType.BlackQueenPromoted3,
-    PieceType.BlackQueenPromoted4,
-  ],
-  [
-    PieceType.BlackRookPromoted1,
-    PieceType.BlackRookPromoted2,
-    PieceType.BlackRookPromoted3,
-    PieceType.BlackRookPromoted4,
-  ],
-  [
-    PieceType.BlackBishopPromoted1,
-    PieceType.BlackBishopPromoted2,
-    PieceType.BlackBishopPromoted3,
-    PieceType.BlackBishopPromoted4,
-  ],
-  [
-    PieceType.BlackKnightPromoted1,
-    PieceType.BlackKnightPromoted2,
-    PieceType.BlackKnightPromoted3,
-    PieceType.BlackKnightPromoted4,
-  ],
-];
+/**
+ * Single-sourced from the engine's `PROMOTED_IDS` (the live promotion-id table
+ * after the legacy `piece-moves.ts` table was deleted). Re-exported here under
+ * the historical `PromotionBoard` name so the public `constants` surface is
+ * preserved. The 8-slot order is `[WQ, WR, WB, WN, BQ, BR, BB, BN]`.
+ */
+export const PromotionBoard = PROMOTED_IDS;
 
 export const SQUARE_SIZE_XS = 39;
 export const SQUARE_SIZE_MD = 52;
