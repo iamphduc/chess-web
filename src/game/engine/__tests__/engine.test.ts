@@ -75,4 +75,22 @@ describe("tracer: applyMove", () => {
     expect(after).not.toBe(before);
     expect(after.squares).not.toBe(before.squares);
   });
+
+  it("carries castling rights and promotion counts unchanged for a quiet push", () => {
+    const before = initialGameState();
+    const after = applyMove(before, { from: E2, to: E3 });
+    expect(after.castling).toEqual(before.castling);
+    expect(after.promotionCount).toEqual(before.promotionCount);
+  });
+
+  it("clears enPassant on a non-double-push quiet move", () => {
+    // A single push (e2->e3) is not a double-push, so it must leave no
+    // en-passant target even if one was pending.
+    const before: GameState = {
+      ...initialGameState(),
+      enPassant: [2, 0],
+    };
+    const after = applyMove(before, { from: E2, to: E3 });
+    expect(after.enPassant).toBeNull();
+  });
 });
