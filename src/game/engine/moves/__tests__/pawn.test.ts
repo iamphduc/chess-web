@@ -1,14 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { GameState, EngineSquare } from "../../game-state";
-import { Move, Position } from "../../engine";
+import { Move, Position, applyMove } from "../../engine";
 import { PieceType } from "../../../piece-type";
+import { pieceKind, colorOf } from "../classify";
 import { pawnMoves } from "../pawn";
 
 /**
  * Pawn pseudo-legal move tests. These pin the generalization of the tracer's
  * white-pawn-push logic to both colours, plus diagonal captures and edge-file
- * bounds handling. En-passant and promotion are explicitly out of scope and are
- * pinned here as NOT present (a last-rank push is an ordinary `Move`).
+ * bounds handling, AND the `special-moves` extensions: en-passant generation
+ * (a diagonal onto the `state.enPassant` empty square) and four-way promotion
+ * (a last-rank landing expands to four `promotion`-typed moves).
  */
 
 /** An empty 8x8 grid. */
@@ -231,40 +233,211 @@ describe("pawnMoves — edge files drop the off-board diagonal", () => {
   });
 });
 
-describe("pawnMoves — promotion is out of scope (plain Move on last rank)", () => {
-  it("white pawn reaching row 0 emits a plain Move with no extra fields", () => {
+/** The promotion kinds carried by a set of last-rank moves, sorted. */
+function promotionKinds(moves: Move[], to: Position): (string | undefined)[] {
+  return moves
+    .filter((m) => m.to[0] === to[0] && m.to[1] === to[1])
+    .map((m) => m.promotion)
+    .sort();
+}
+
+describe("pawnMoves — promotion expands a last-rank landing to four moves", () => {
+  it("white push to row 0 yields exactly four moves, one per promotion kind", () => {
     const from: Position = [1, 4];
     const state = stateWith([[from, PieceType.WhitePawnE]], "white");
     const moves = pawnMoves(state, from);
 
-    expect(has(moves, from, [0, 4])).toBe(true);
-    const push = moves.find((m) => m.to[0] === 0 && m.to[1] === 4)!;
-    // Pinned: an ordinary Move — only `from`/`to`, no promotion-typed field.
-    expect(Object.keys(push).sort()).toEqual(["from", "to"]);
+    // The push reaches the last rank: four distinct-kind moves, no plain push.
+    expect(promotionKinds(moves, [0, 4])).toEqual([
+      "bishop",
+      "knight",
+      "queen",
+      "rook",
+    ]);
+    // Exactly four moves total (only the push is possible here).
+    expect(moves).toHaveLength(4);
+    for (const m of moves) {
+      expect(m.from).toEqual(from);
+      expect(m.to).toEqual([0, 4]);
+    }
   });
 
-  it("black pawn reaching row 7 emits a plain Move with no extra fields", () => {
+  it("black push to row 7 yields exactly four distinct-kind promotion moves", () => {
     const from: Position = [6, 4];
     const state = stateWith([[from, PieceType.BlackPawnE]], "black");
     const moves = pawnMoves(state, from);
 
-    expect(has(moves, from, [7, 4])).toBe(true);
-    const push = moves.find((m) => m.to[0] === 7 && m.to[1] === 4)!;
-    expect(Object.keys(push).sort()).toEqual(["from", "to"]);
+    expect(promotionKinds(moves, [7, 4])).toEqual([
+      "bishop",
+      "knight",
+      "queen",
+      "rook",
+    ]);
+    expect(moves).toHaveLength(4);
+  });
+
+  it("white capture onto the last rank also expands to four promotion moves", () => {
+    const from: Position = [1, 4];
+    const state = stateWith(
+      [
+        [from, PieceType.WhitePawnE],
+        [[0, 3], PieceType.BlackQueenRook], // enemy on the last-rank diagonal
+        [[0, 4], PieceType.BlackKing], // blocks the push so only the capture remains
+      ],
+      "white"
+    );
+    const moves = pawnMoves(state, from);
+
+    expect(promotionKinds(moves, [0, 3])).toEqual([
+      "bishop",
+      "knight",
+      "queen",
+      "rook",
+    ]);
+    expect(moves).toHaveLength(4);
+  });
+
+  it("a non-last-rank push and capture carry no promotion field", () => {
+    const from: Position = [6, 4];
+    const state = stateWith(
+      [
+        [from, PieceType.WhitePawnE],
+        [[5, 3], PieceType.BlackPawnD], // capture, not on the last rank
+      ],
+      "white"
+    );
+    const moves = pawnMoves(state, from);
+    for (const m of moves) {
+      expect(m.promotion).toBeUndefined();
+      expect(Object.keys(m).sort()).toEqual(["from", "to"]);
+    }
   });
 });
 
-describe("pawnMoves — en passant is out of scope (no diagonal onto empty via enPassant)", () => {
-  it("does not generate a capture onto an empty diagonal even when enPassant points there", () => {
+describe("pawnMoves — en passant generates a capture onto the enPassant square", () => {
+  it("white captures en passant onto the empty square behind a double-pushed pawn", () => {
+    // Black just double-pushed d7→d5; the en-passant target is d6 = [2, 3].
+    const from: Position = [3, 4]; // white pawn on e5
+    const state = stateWith(
+      [
+        [from, PieceType.WhitePawnE],
+        [[3, 3], PieceType.BlackPawnD], // the pawn that double-pushed, on d5
+      ],
+      "white",
+      [2, 3] // enPassant target d6
+    );
+    const moves = pawnMoves(state, from);
+    expect(has(moves, from, [2, 3])).toBe(true);
+  });
+
+  it("black captures en passant toward +y onto the enPassant square", () => {
+    // White double-pushed e2→e4; the en-passant target is e3 = [5, 4].
+    const from: Position = [4, 3]; // black pawn on d4
+    const state = stateWith(
+      [
+        [from, PieceType.BlackPawnD],
+        [[4, 4], PieceType.WhitePawnE], // the pawn that double-pushed, on e4
+      ],
+      "black",
+      [5, 4] // enPassant target e3
+    );
+    const moves = pawnMoves(state, from);
+    expect(has(moves, from, [5, 4])).toBe(true);
+  });
+
+  it("generates no diagonal-onto-empty when enPassant is null", () => {
     const from: Position = [3, 4];
-    // enPassant target sits on the white pawn's left forward diagonal, but the
-    // square is empty — this generator must ignore state.enPassant entirely.
+    const state = stateWith(
+      [
+        [from, PieceType.WhitePawnE],
+        [[3, 3], PieceType.BlackPawnD],
+      ],
+      "white",
+      null
+    );
+    const moves = pawnMoves(state, from);
+    expect(has(moves, from, [2, 3])).toBe(false);
+    expect(has(moves, from, [2, 5])).toBe(false);
+  });
+
+  it("generates no en-passant move when enPassant points at a different square", () => {
+    const from: Position = [3, 4];
+    // enPassant points two files away — not either of this pawn's diagonals.
+    const state = stateWith(
+      [[from, PieceType.WhitePawnE]],
+      "white",
+      [2, 1]
+    );
+    const moves = pawnMoves(state, from);
+    expect(has(moves, from, [2, 3])).toBe(false);
+    expect(has(moves, from, [2, 5])).toBe(false);
+  });
+
+  it("en-passant capture carries no promotion field (it cannot reach the last rank)", () => {
+    const from: Position = [3, 4];
     const state = stateWith(
       [[from, PieceType.WhitePawnE]],
       "white",
       [2, 3]
     );
+    const ep = pawnMoves(state, from).find(
+      (m) => m.to[0] === 2 && m.to[1] === 3
+    )!;
+    expect(ep.promotion).toBeUndefined();
+  });
+
+  it("an edge-file en-passant target does not wrap to the off-board diagonal", () => {
+    // White a-file pawn on a5 = [3, 0]; a bogus enPassant at [2, -1] is off-board
+    // and must never produce a move (inBounds gates the diagonal first).
+    const from: Position = [3, 0];
+    const state = stateWith(
+      [[from, PieceType.WhitePawnA]],
+      "white",
+      [2, 7] // far h-file target — cannot be reached by an a-file pawn
+    );
     const moves = pawnMoves(state, from);
-    expect(has(moves, from, [2, 3])).toBe(false);
+    for (const m of moves) {
+      expect(m.to[1]).toBeGreaterThanOrEqual(0);
+      expect(m.to[1]).toBeLessThan(8);
+    }
+    expect(has(moves, from, [2, 7])).toBe(false);
+  });
+});
+
+describe("pawnMoves — cross-check with applyMove (engine-core)", () => {
+  it("applyMove on the generated en-passant move removes the captured pawn", () => {
+    const from: Position = [3, 4]; // white e5
+    const state = stateWith(
+      [
+        [from, PieceType.WhitePawnE],
+        [[3, 3], PieceType.BlackPawnD], // black pawn on d5
+      ],
+      "white",
+      [2, 3] // en-passant target d6
+    );
+    const ep = pawnMoves(state, from).find(
+      (m) => m.to[0] === 2 && m.to[1] === 3
+    )!;
+    const next = applyMove(state, ep);
+
+    // The mover landed on d6; its origin and the captured pawn's square are empty.
+    expect(next.squares[2][3]).toBe(PieceType.WhitePawnE);
+    expect(next.squares[3][4]).toBeNull();
+    expect(next.squares[3][3]).toBeNull(); // captured black pawn removed
+  });
+
+  it("applyMove on a promotion move yields an allocated promoted id of that kind", () => {
+    const from: Position = [1, 4];
+    const state = stateWith([[from, PieceType.WhitePawnE]], "white");
+    const queenMove = pawnMoves(state, from).find(
+      (m) => m.promotion === "queen"
+    )!;
+    const next = applyMove(state, queenMove);
+
+    const landed = next.squares[0][4]!;
+    expect(landed).not.toBeNull();
+    expect(pieceKind(landed)).toBe("queen");
+    expect(colorOf(landed)).toBe("white");
+    expect(next.squares[1][4]).toBeNull();
   });
 });

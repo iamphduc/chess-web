@@ -1,5 +1,6 @@
 import { GameState } from "../game-state";
 import { Move, Position } from "../engine";
+import { PromotionKind } from "./promotion";
 import {
   pieceKind,
   colorOf,
@@ -7,6 +8,14 @@ import {
   occupant,
   relationTo,
 } from "./classify";
+
+/** The four kinds a pawn may promote to, in `promotionCount` slot order. */
+const PROMOTION_KINDS: readonly PromotionKind[] = [
+  "queen",
+  "rook",
+  "bishop",
+  "knight",
+];
 
 /**
  * Pseudo-legal pawn moves for the pawn standing on `from`, for either colour.
@@ -27,13 +36,16 @@ import {
  *   target is `inBounds` AND holds an enemy piece. A file-edge pawn (a-/h-file)
  *   has only one in-board diagonal; the off-board one is dropped via `inBounds`
  *   rather than allowed to wrap.
- *
- * Deliberately OUT OF SCOPE (owned by the `special-moves` slice):
- * - **En passant:** `state.enPassant` is never read; a diagonal onto an empty
- *   square is never emitted.
- * - **Promotion:** a push or capture onto the last rank emits an ordinary
- *   {@link Move} (just `from`/`to`) — no promotion-typed field, no
- *   `promotionCount` bookkeeping.
+ * - **En passant:** a forward diagonal onto an `inBounds` EMPTY square is emitted
+ *   IFF `state.enPassant` is non-null and equals that square. This is the ONLY
+ *   case a pawn moves diagonally onto an empty square. The captured pawn removal
+ *   and the `enPassant` bookkeeping are {@link applyMove}'s job, not ours.
+ * - **Promotion:** any generated move (push or capture, incl. the hypothetical
+ *   en-passant — which can never reach the last rank) that lands on the mover's
+ *   LAST RANK (White row 0, Black row 7) is expanded into FOUR moves, one per
+ *   {@link PromotionKind} (`queen`/`rook`/`bishop`/`knight`), sharing `from`/`to`.
+ *   A move short of the last rank carries no `promotion` field. The promoted-id
+ *   allocation is {@link applyMove}'s job; we only set `move.promotion`.
  *
  * Like every Wave-2 generator, this does NOT verify the piece kind/colour
  * matches the side to move and does NOT do check filtering — the dispatcher and
@@ -50,13 +62,17 @@ export function pawnMoves(state: GameState, from: Position): Move[] {
   const color = colorOf(piece);
   const forward = color === "white" ? -1 : 1;
   const startRow = color === "white" ? 6 : 1;
+  const lastRow = color === "white" ? 0 : 7;
 
-  const moves: Move[] = [];
+  // Collect plain `to` destinations first, then expand last-rank landings into
+  // the four promotion variants in one pass.
+  const targets: Position[] = [];
 
-  // Single push (and, gated on it, the double push).
+  // Single push (and, gated on it, the double push). A double push can never
+  // reach the last rank, so it never needs promotion expansion.
   const oneY = y + forward;
   if (inBounds(oneY, x) && occupant(state, oneY, x) === null) {
-    moves.push({ from, to: [oneY, x] });
+    targets.push([oneY, x]);
 
     const twoY = y + forward * 2;
     if (
@@ -64,18 +80,41 @@ export function pawnMoves(state: GameState, from: Position): Move[] {
       inBounds(twoY, x) &&
       occupant(state, twoY, x) === null
     ) {
-      moves.push({ from, to: [twoY, x] });
+      targets.push([twoY, x]);
     }
   }
 
-  // Diagonal captures: only onto an in-bounds enemy. `inBounds` first so a
+  // Forward diagonals: an enemy is an ordinary capture; an EMPTY square is a
+  // capture only when it is the en-passant target. `inBounds` first so a
   // file-edge pawn drops its off-board diagonal instead of wrapping.
   for (const dx of [-1, 1]) {
     const capY = y + forward;
     const capX = x + dx;
     if (!inBounds(capY, capX)) continue;
-    if (relationTo(color, occupant(state, capY, capX)) === "enemy") {
-      moves.push({ from, to: [capY, capX] });
+
+    const target = occupant(state, capY, capX);
+    if (relationTo(color, target) === "enemy") {
+      targets.push([capY, capX]);
+    } else if (
+      target === null &&
+      state.enPassant !== null &&
+      state.enPassant[0] === capY &&
+      state.enPassant[1] === capX
+    ) {
+      targets.push([capY, capX]);
+    }
+  }
+
+  // Expand: a last-rank landing becomes four promotion moves; everything else
+  // stays a single plain move.
+  const moves: Move[] = [];
+  for (const to of targets) {
+    if (to[0] === lastRow) {
+      for (const kind of PROMOTION_KINDS) {
+        moves.push({ from, to, promotion: kind });
+      }
+    } else {
+      moves.push({ from, to });
     }
   }
 
