@@ -1,17 +1,17 @@
 # Sprint: Move Generation
 
-_From plan: docs/plans/pure-engine-refactor.md · Slug: move-generation · Status: active · Generated: 2026-06-04_
+_From plan: docs/plans/pure-engine-refactor.md · Slug: move-generation · Status: archived · Generated: 2026-06-04_
 
 ## Status board
 
 | Wave | Slice | Title | Difficulty | Agent | Branch | PR | Status | Depends on |
 |------|-------|-------|------------|-------|--------|----|--------|------------|
-| 1 | geometry | Shared piece classification + board-geometry helpers (kind/color, `inBounds`, ray/offset walkers) | 3 | engineer-senior | move-generation-geometry | — | pending | — |
-| 2 | sliding | Stateless sliding-piece generator (bishop / rook / queen) with blocker stops | 3 | engineer-senior | move-generation-sliding | — | pending | geometry |
-| 2 | knight | Stateless knight generator (eight L-offsets, own-piece blocking) | 2 | engineer-junior | move-generation-knight | — | pending | geometry |
-| 2 | king-step | Stateless king single-step generator (eight neighbours; NO castling) | 2 | engineer-junior | move-generation-king-step | — | pending | geometry |
-| 2 | pawn | Stateless pawn generator (single/double push, diagonal captures; NO en-passant/promotion) | 3 | engineer-senior | move-generation-pawn | — | pending | geometry |
-| 3 | dispatch | Generalize `legalMoves` to a per-kind dispatcher + named bounds-bug regression test | 3 | engineer-senior | move-generation-dispatch | — | pending | sliding, knight, king-step, pawn |
+| 1 | geometry | Shared piece classification + board-geometry helpers (kind/color, `inBounds`, ray/offset walkers) | 3 | engineer-senior | move-generation-geometry | merged | done | — |
+| 2 | sliding | Stateless sliding-piece generator (bishop / rook / queen) with blocker stops | 3 | engineer-senior | move-generation-sliding | merged | done | geometry |
+| 2 | knight | Stateless knight generator (eight L-offsets, own-piece blocking) | 2 | engineer-junior | move-generation-knight | merged | done | geometry |
+| 2 | king-step | Stateless king single-step generator (eight neighbours; NO castling) | 2 | engineer-junior | move-generation-king-step | merged | done | geometry |
+| 2 | pawn | Stateless pawn generator (single/double push, diagonal captures; NO en-passant/promotion) | 3 | engineer-senior | move-generation-pawn | merged | done | geometry |
+| 3 | dispatch | Generalize `legalMoves` to a per-kind dispatcher + named bounds-bug regression test | 3 | engineer-senior | move-generation-dispatch | merged | done | sliding, knight, king-step, pawn |
 
 Wave membership lives in the **Wave** column; slices sharing a wave run in parallel and must own disjoint file sets.
 
@@ -93,10 +93,8 @@ Wave membership lives in the **Wave** column; slices sharing a wave run in paral
 
 ## Sprint summary
 
-Appended by the orchestrator after the last wave completes, immediately before archive.
-
-- **Slices shipped:** <slice-code list>
-- **Runtime smoke:** <PR URL | clean> · bugs found+fixed: <N> (runtime regressions static checks missed) · deferred: <M>
-- **Reviewer:** <PR URL | clean> · severe findings: <N> (count of `SEVERE:` PENDING entries emitted)
-- **Queue entries:** resolved <N>, deferred <M> — link the deferred ones inline
-- **Approximate token cost:** <number or rough range>
+- **Slices shipped:** geometry (#8), sliding (#12), knight (#10), king-step (#11), pawn (#9), dispatch (#13) — all merged to `main` via merge commits (admin-merge; `main` branch protection requires a review the orchestrator can't supply). Three waves: W1 geometry seam → W2 sliding/knight/king-step/pawn (4-wide parallel) → W3 dispatch + bounds regression.
+- **Runtime smoke:** clean (no smoke PR) · bugs found+fixed: 0 · deferred: 0 — no runtime surface introduced (pseudo-legal generators + `legalMoves` dispatcher are additive, NOT wired into `BoardSlice`; strangler-fig keeps the live app on the old engine). Verified by integrated `npm test` (67 passed, 9 files) + `npm run build` (compiled) on merged `main`. The `## Smoke recipe` stub remains unfilled — harmless this sprint (every slice `none — pure static slice`), but will block from `cutover-cleanup` onward when the engine is wired in.
+- **Reviewer:** clean (no PR) · severe findings: 0 — four lenses clear over `7fd436f..a91c128` (12 files, +1423/−58): pseudo-legal generation correct (ray stop/capture, offset filtering, pawn direction-by-colour + double-push gating, edge-file diagonal dropped via `inBounds`), both axes route through `inBounds`, bounds regression genuinely pins off-board destinations on both axes, scope discipline holds (no check filtering/castling/en-passant/promotion), tests non-tautological, no security surface.
+- **Queue entries:** resolved 2 (sprint-draft ack; dispatch working-tree bookkeeping note), deferred 5 — all PENDING: geometry generator-signature pin · `occupant` off-board folds-in (gate on `inBounds`) · reviewer cosmetic trio (`slidingMoves` dead null-guard · `pieceKind` doc prose imprecise · `pawn` defensive non-pawn guard inconsistency).
+- **Approximate token cost:** ~6 engineer + 1 reviewer subagents + orchestration; rough order ~250–350k tokens across the sprint.
