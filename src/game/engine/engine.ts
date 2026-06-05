@@ -4,6 +4,7 @@ import { slidingMoves } from "./moves/sliding";
 import { knightMoves } from "./moves/knight";
 import { kingMoves } from "./moves/king";
 import { pawnMoves } from "./moves/pawn";
+import { isInCheck } from "./moves/attack";
 
 /**
  * A board position as `[y, x]` (0-indexed), matching the `GameState` grid:
@@ -35,11 +36,11 @@ export interface Move {
  * colour does not match `state.turn` (moving out of turn).
  *
  * The output is PSEUDO-LEGAL: it does NOT filter moves that would leave (or
- * expose) the mover's king in check. King-safety / check filtering arrives in
- * the `king-safety-endgame` sprint; pseudo-legal output is this slice's
- * contract.
+ * expose) the mover's own king in check — {@link legalMoves} layers that
+ * king-safety filter on top. Private to this module so the filter can never be
+ * re-entrant.
  */
-export function legalMoves(state: GameState, from: Position): Move[] {
+function pseudoLegalMoves(state: GameState, from: Position): Move[] {
   const [y, x] = from;
   if (!inBounds(y, x)) return [];
 
@@ -59,6 +60,39 @@ export function legalMoves(state: GameState, from: Position): Move[] {
     case "pawn":
       return pawnMoves(state, from);
   }
+}
+
+/**
+ * LEGAL destinations for the piece on `from`: the pseudo-legal moves of
+ * {@link pseudoLegalMoves} minus any that would leave the MOVER's own king in
+ * check.
+ *
+ * For each pseudo-legal `Move m`, we capture the mover's colour, apply `m` with
+ * {@link applyMove}, and keep `m` iff the mover's king is NOT in check in the
+ * resulting position. Note the subtlety: we test the mover's king, not
+ * `applied.turn` — `applyMove` has already flipped the turn to the opponent.
+ *
+ * This single rule subsumes all three king-safety cases: a pinned piece may not
+ * leave its pin line, a side in check must resolve it (capture the checker,
+ * block the ray, or move the king), and the king may not step into an attacked
+ * square (including capturing a defended piece).
+ *
+ * Still out of scope for this sprint (deferred to `special-moves`): castling
+ * through / into / out of check, and en-passant legality. `applyMove` handles
+ * captures by overwriting the destination, so capture-resolves-check works here.
+ */
+export function legalMoves(state: GameState, from: Position): Move[] {
+  const [y, x] = from;
+  const piece = inBounds(y, x) ? state.squares[y][x] : null;
+  // `pseudoLegalMoves` already guards off-board / empty / out-of-turn, but we
+  // need the mover's colour for the filter; an empty/off-board `from` yields no
+  // pseudo-legal moves, so the loop below is a no-op and `[]` filters to `[]`.
+  const mover = piece === null ? state.turn : colorOf(piece);
+
+  return pseudoLegalMoves(state, from).filter((move) => {
+    const applied = applyMove(state, move);
+    return !isInCheck(applied, mover);
+  });
 }
 
 /**
