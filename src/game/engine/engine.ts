@@ -1,5 +1,9 @@
-import { GameState, EngineSquare, PieceColor } from "./game-state";
-import { PieceType } from "../piece-type";
+import { GameState } from "./game-state";
+import { colorOf, inBounds, pieceKind } from "./moves/classify";
+import { slidingMoves } from "./moves/sliding";
+import { knightMoves } from "./moves/knight";
+import { kingMoves } from "./moves/king";
+import { pawnMoves } from "./moves/pawn";
 
 /**
  * A board position as `[y, x]` (0-indexed), matching the `GameState` grid:
@@ -8,7 +12,7 @@ import { PieceType } from "../piece-type";
 export type Position = readonly [number, number];
 
 /**
- * A move from one square to another. The tracer slice models only quiet,
+ * A move from one square to another. This slice models only quiet,
  * non-special moves, so a move is fully described by its endpoints; captures,
  * castling, en passant and promotion carry no extra data here.
  */
@@ -18,44 +22,22 @@ export interface Move {
 }
 
 /**
- * Tracer-bullet move set. This deliberately handles ONLY the quiet white-pawn
- * push the tracer exercises (single step, plus the double step from the start
- * rank). It proves the engine seam — `initialGameState` → `legalMoves` →
- * `applyMove` — end to end.
+ * Pseudo-legal destinations for the piece on `from`, given whose turn it is.
  *
- * Full move generation for every piece (and captures, king safety, special
- * moves) is the next sprint's work and is intentionally NOT attempted here.
- */
-const WHITE_PAWNS: ReadonlySet<EngineSquare> = new Set([
-  PieceType.WhitePawnA,
-  PieceType.WhitePawnB,
-  PieceType.WhitePawnC,
-  PieceType.WhitePawnD,
-  PieceType.WhitePawnE,
-  PieceType.WhitePawnF,
-  PieceType.WhitePawnG,
-  PieceType.WhitePawnH,
-]);
-
-/** White's pawn start rank in `[y, x]` terms (row 6). */
-const WHITE_PAWN_START_ROW = 6;
-
-function inBounds(y: number, x: number): boolean {
-  return y >= 0 && y < 8 && x >= 0 && x < 8;
-}
-
-function colorOf(piece: EngineSquare): PieceColor | null {
-  if (piece === null) return null;
-  return piece.startsWith("WHITE_") ? "white" : "black";
-}
-
-/**
- * Legal destinations for the piece on `from`, given whose turn it is.
+ * Validates the `from` square, then classifies the piece with {@link pieceKind}
+ * and delegates to the matching pseudo-legal generator:
+ * - bishop / rook / queen → {@link slidingMoves}
+ * - knight → {@link knightMoves}
+ * - king → {@link kingMoves} (single-step only; castling is `special-moves`)
+ * - pawn → {@link pawnMoves} (no en-passant/promotion; those are `special-moves`)
  *
- * Tracer scope: only quiet white-pawn pushes are generated. Any other piece,
- * any non-empty target square, or moving out of turn yields no moves. This is
- * enough to drive one quiet move through the seam; do not read it as a complete
- * move generator.
+ * Returns `[]` when `from` is off the board, empty, or holds a piece whose
+ * colour does not match `state.turn` (moving out of turn).
+ *
+ * The output is PSEUDO-LEGAL: it does NOT filter moves that would leave (or
+ * expose) the mover's king in check. King-safety / check filtering arrives in
+ * the `king-safety-endgame` sprint; pseudo-legal output is this slice's
+ * contract.
  */
 export function legalMoves(state: GameState, from: Position): Move[] {
   const [y, x] = from;
@@ -65,26 +47,18 @@ export function legalMoves(state: GameState, from: Position): Move[] {
   if (piece === null) return [];
   if (colorOf(piece) !== state.turn) return [];
 
-  // Tracer: only white pawns, pushing forward (toward row 0).
-  if (!WHITE_PAWNS.has(piece)) return [];
-
-  const moves: Move[] = [];
-
-  const oneY = y - 1;
-  if (inBounds(oneY, x) && state.squares[oneY][x] === null) {
-    moves.push({ from, to: [oneY, x] });
-
-    const twoY = y - 2;
-    if (
-      y === WHITE_PAWN_START_ROW &&
-      inBounds(twoY, x) &&
-      state.squares[twoY][x] === null
-    ) {
-      moves.push({ from, to: [twoY, x] });
-    }
+  switch (pieceKind(piece)) {
+    case "bishop":
+    case "rook":
+    case "queen":
+      return slidingMoves(state, from);
+    case "knight":
+      return knightMoves(state, from);
+    case "king":
+      return kingMoves(state, from);
+    case "pawn":
+      return pawnMoves(state, from);
   }
-
-  return moves;
 }
 
 /**
