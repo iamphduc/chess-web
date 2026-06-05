@@ -1,6 +1,6 @@
 # Sprint: Cutover & Cleanup
 
-_From plan: docs/plans/pure-engine-refactor.md · Slug: cutover-cleanup · Status: active · Generated: 2026-06-04_
+_From plan: docs/plans/pure-engine-refactor.md · Slug: cutover-cleanup · Status: archived · Generated: 2026-06-04_
 
 This is the **strangler-fig cutover** — the single late, revertable commit where the live app stops calling the legacy singleton engine (`game/piece-moves.ts`, the mutable state on `game/pieces/*`) and starts driving `BoardSlice` from the pure engine (`game/engine/*`). It is the final sprint in the plan. Per the "engine boundary excludes presentation" decision, the engine answers only "legal moves" + "resulting position"; **notation, `lastMoves` highlights, and the fallen-pieces list stay reducer/adapter-side**, so the cutover is an *adapter* between the engine's `GameState` and `BoardSlice`'s existing UI-facing state — not a UI rewrite.
 
@@ -10,8 +10,8 @@ The cutover wiring (W1) must land and be smoke-green **before/with** the dead-co
 
 | Wave | Slice | Title | Difficulty | Agent | Branch | PR | Status | Depends on |
 |------|-------|-------|------------|-------|--------|----|--------|------------|
-| 1 | cutover | Wire `BoardSlice` to the pure engine via a `GameState`↔UI adapter; thin reducer-wiring tests incl. reset-clears-across-games | 5 | engineer-senior | cutover-cleanup-cutover | — | pending | — |
-| 2 | cleanup | Delete the legacy singleton engine + the mutable game-state on `pieces/*`; reconcile the promotion-id single-source | 4 | engineer-senior | cutover-cleanup-cleanup | — | pending | cutover |
+| 1 | cutover | Wire `BoardSlice` to the pure engine via a `GameState`↔UI adapter; thin reducer-wiring tests incl. reset-clears-across-games | 5 | engineer-senior | cutover-cleanup-cutover | merged | done | — |
+| 2 | cleanup | Delete the legacy singleton engine + the mutable game-state on `pieces/*`; reconcile the promotion-id single-source | 4 | engineer-senior | cutover-cleanup-cleanup | merged | done | cutover |
 
 Wave membership lives in the **Wave** column; slices sharing a wave run in parallel and must own disjoint file sets. Here the two slices are strictly sequential (deletion depends on the cutover being green), so each is its own wave.
 
@@ -90,10 +90,8 @@ These are the load-bearing design tensions flagged at draft time. They are guida
 
 ## Sprint summary
 
-Appended by the orchestrator after the last wave completes, immediately before archive.
-
-- **Slices shipped:** <slice-code list>
-- **Runtime smoke:** <PR URL | clean> · bugs found+fixed: <N> · deferred: <M>
-- **Reviewer:** <PR URL | clean> · severe findings: <N>
-- **Queue entries:** resolved <N>, deferred <M>
-- **Approximate token cost:** <number or rough range>
+- **Slices shipped:** cutover (#27), cleanup (#28), + reviewer fix (#29) — all merged to `main` via merge commits (admin-merge). Two strictly-sequential waves: W1 `cutover` (wire `BoardSlice` → pure engine via `engineAdapter.ts`; no deletions) → W2 `cleanup` (delete legacy singleton engine, single-source promotion ids). The strangler-fig cutover: the live app now runs entirely on the pure engine; the legacy `piece-moves.ts` singleton is gone (zero remaining imports).
+- **Runtime smoke:** GREEN (orchestrator-run, live gate this sprint) · bugs found+fixed: 0 · deferred: 0 — ran after W1 (before deletion) AND re-ran after W2: fresh load renders the exact correct start position from the new engine's `GameState`→UI projection; after the `pieces/*` strip all 32 pieces still render with their SVG images (presentation getters intact); **zero console errors** both times. Could not drive a live `react-dnd` drag *gesture* in-harness (HTML5 backend rejects synthetic events; squares not in a11y tree; store not exposed) — behavioral correctness rests on the node-level reducer-wiring tests (incl. reset-clears-across-games, promotion, turn-flip) + perft depth-3 + recorded mate. No smoke PR (no fixes needed).
+- **Reviewer:** PR #29 · severe findings: 0 — verified the high-risk adapter/reducer/deletion paths line-by-line vs pre-diff behavior (promotion ply-replacement, turn parity, en-passant/castle, `PROMOTED_IDS` value-identity, deletion safety). Found + fixed ONE notation-only regression: the cleanup's inlined pawn disambiguation dropped the enemy-occupancy gate → a quiet pawn push with a friendly pawn diagonally behind the empty destination got a spurious file suffix (`ee4`); restored the gate + added the first-ever notation regression test (166 tests green).
+- **Queue entries:** resolved 4 (sprint-draft ack; promotion-id single-source reconciled — engine `PROMOTED_IDS` now authoritative; cutover + cleanup logic-free cross-slice type/config touches; the notation regression — caught & fixed), deferred 3 — `piece-notation.ts` broader coverage (en-passant/castle/check suffix strings still untested), the 5th-of-type promotion clamp (quarantine cap), and the runtime safety-bound clock note (human-authorized to run past the 4h default for this final sprint).
+- **Approximate token cost:** ~3 engineer + 1 reviewer subagents + a live browser runtime smoke + orchestration; rough order ~350–450k tokens across the sprint (the heaviest, owing to the cutover rewrite + live smoke).
