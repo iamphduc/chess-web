@@ -1,0 +1,99 @@
+# Sprint: Cutover & Cleanup
+
+_From plan: docs/plans/pure-engine-refactor.md · Slug: cutover-cleanup · Status: active · Generated: 2026-06-04_
+
+This is the **strangler-fig cutover** — the single late, revertable commit where the live app stops calling the legacy singleton engine (`game/piece-moves.ts`, the mutable state on `game/pieces/*`) and starts driving `BoardSlice` from the pure engine (`game/engine/*`). It is the final sprint in the plan. Per the "engine boundary excludes presentation" decision, the engine answers only "legal moves" + "resulting position"; **notation, `lastMoves` highlights, and the fallen-pieces list stay reducer/adapter-side**, so the cutover is an *adapter* between the engine's `GameState` and `BoardSlice`'s existing UI-facing state — not a UI rewrite.
+
+The cutover wiring (W1) must land and be smoke-green **before/with** the dead-code deletion (W2): the cutover is one `git revert` away if the smoke reveals a behavioural gap (a known risk), and the deletion is its own diff.
+
+## Status board
+
+| Wave | Slice | Title | Difficulty | Agent | Branch | PR | Status | Depends on |
+|------|-------|-------|------------|-------|--------|----|--------|------------|
+| 1 | cutover | Wire `BoardSlice` to the pure engine via a `GameState`↔UI adapter; thin reducer-wiring tests incl. reset-clears-across-games | 5 | engineer-senior | cutover-cleanup-cutover | — | pending | — |
+| 2 | cleanup | Delete the legacy singleton engine + the mutable game-state on `pieces/*`; reconcile the promotion-id single-source | 4 | engineer-senior | cutover-cleanup-cleanup | — | pending | cutover |
+
+Wave membership lives in the **Wave** column; slices sharing a wave run in parallel and must own disjoint file sets. Here the two slices are strictly sequential (deletion depends on the cutover being green), so each is its own wave.
+
+## Per-slice detail
+
+### cutover: Wire `BoardSlice` to the pure engine via a `GameState`↔UI adapter
+
+- **Difficulty justification:** 5 — architecture-touching, the seam the whole plan converges on. Rewrites every `BoardSlice` reducer to source legality/application from the engine while preserving the entire UI-facing state shape, plus a two-way adapter. The dominant ambiguity (adapter shape, `isEnemyAttacked`/`pieceAttackedKing` derivation, where presentation stays) is resolved here.
+- **Scope:**
+  - **Add a presentation adapter module** (`src/features/board/engineAdapter.ts`) bridging the pure engine's `GameState` and `BoardSlice`'s existing UI-facing shape. Direction A (engine → UI): project a `GameState` into the `HistorySquares` shape the UI reads — `squares[y][x] = { pieceType, isEnemyAttacked }`. The engine grid is `EngineSquare[][]` (`PieceType | null`), so this is a `.map` re-wrapping each square; `isEnemyAttacked` may be set to `false` uniformly (see Adapter notes) since the UI consumes it only via `pieceAttackedKing`. Direction B (UI action → engine): map `selectPiece`/`movePiece`/`promotePawn` payloads (a `PieceType` + `[y,x]`) into engine `Move`s and call `legalMoves`/`applyMove`/`gameStatus`.
+  - **Store `GameState` in the slice.** Per the decision, "Redux stores `GameState`; `history` becomes `GameState[]`." Add a parallel `engine: GameState` (or `history: GameState[]`) field. **Keep** the existing UI-facing fields (`history: { squares: HistorySquares }[]`, `possibleMoves`, `lastMoves`, `pieceAttackedKing`, `promotionPosition`, `notation`, `fallenPieces`, `gameOver`, `isPlaying`) so no UI component changes — derive/refresh them from `GameState` on each reducer. `initialState` seeds the engine via `initialGameState()`.
+  - **Rewrite the three move reducers to call the engine:**
+    - `selectPiece` → `legalMoves(state.engine, [y,x])`, project the moves' `to` squares into `possibleMoves` (preserving the deselect-toggle behaviour). Replace the legacy `getPossibleMoves` + `calculateEnemyAttack` + king-safety loop entirely.
+    - `movePiece` → build the `Move` for the selected piece + destination, call `applyMove`, replace the engine state and refresh the projected `history` squares. Turn is now read from `engine.turn` (not `history.length % 2`); see the turn-derivation note. Castling rook relocation and en-passant capture-removal now come from `applyMove` (geometry-driven) — delete the slice's hand-rolled castling `switch` and en-passant block. Promotion is detected from last-rank geometry → set `promotionPosition` and stop (the picker dispatches `promotePawn`).
+    - `promotePawn` → re-issue the pawn's move with `Move.promotion` set (the engine's `allocatePromotedId` hands out the unique promoted id), `applyMove`, refresh.
+    - `gameOver` ← derive from `gameStatus(engine)` (`"checkmate"` → Win, `"stalemate"` → Draw, `"ongoing"` → Continue). `pieceAttackedKing` ← if the side to move is in check (`findKing` + `isSquareAttacked` / `isInCheck`), set it to the checked king's `PieceType`, else `null`.
+  - **Presentation stays reducer-side, unchanged in source:** notation generation keeps using `game/piece-notation.ts` (`pieceNotation`, `pieceFactory.getAbbreviation`) and `lastMoves`/`fallenPieces` (via `pieceFactory.getWeight`) stay computed in the reducer. These helpers are NOT engine-coupled mutable state and survive cleanup — do not delete them here. Only the *legality/application/game-over* path moves to the engine.
+  - **Thin reducer-wiring tests** (`src/features/board/__tests__/board-slice.test.ts`, Vitest `environment: 'node'` — dispatch actions against `boardSlice.reducer`, assert resulting state; **no React/jsdom/RTL** — these are reducer tests, the suite stays node-level). At minimum: (a) a quiet move updates the projected squares + flips turn; (b) `selectPiece` populates `possibleMoves` from the engine; (c) a promotion sets `promotionPosition` then `promotePawn` lands a promoted id; (d) **`reset` fully clears state across two consecutive games** — play a few moves (incl. a capture/promotion so `promotionCount` and `fallenPieces` are non-empty), `reset`, assert the engine + every UI-facing field is back to the initial value and a fresh game behaves identically (this is plan success criterion #5, and the regression that motivated the whole plan).
+  - **Do NOT:** delete any legacy files in this slice (that's `cleanup`, gated on this being green — keeps the cutover a clean revertable diff). Do NOT touch any `*.tsx` component (the adapter exists precisely so the UI shape is preserved). Do NOT rewrite notation or `lastMoves` logic — only re-verify their wiring. Do NOT add jsdom/RTL.
+- **Files owned:**
+  - `src/features/board/BoardSlice.ts` (rewrite)
+  - `src/features/board/engineAdapter.ts` (new)
+  - `src/features/board/__tests__/board-slice.test.ts` (new)
+- **Success criteria:**
+  - `npm test` (`vitest run`) green — full engine suite still passes + the new reducer-wiring tests.
+  - `npx tsc --noEmit` clean and `npm run build` (`react-scripts build`) clean — no type errors, no remaining UI-shape breakage.
+  - **Runtime smoke (LIVE this sprint):** `npm install --legacy-peer-deps`, `npm start` → http://localhost:3000; load with no console errors; play a full game exercising **castle, en passant, pawn promotion (picker), and deliver checkmate (GameOver overlay)**; then **reset / new game and confirm state clears across two consecutive games**. (Per `docs/codebase-structure.md` → `## Smoke recipe`.)
+  - The reset-clears-across-games reducer test passes.
+- **Depends on:** —
+
+---
+
+### cleanup: Delete the legacy singleton engine + the mutable game-state on `pieces/*`
+
+- **Difficulty justification:** 4 — wide-blast-radius deletion that must keep `tsc`/`build` green and not nick the surviving presentation layer. The subtlety is that `game/pieces/*` and `piece-factory.ts` are dual-purpose: their *mutable game-state* methods/fields are legacy-engine state to delete, but their *stateless presentation getters* (`getImage`, `getWeight`, `getAbbreviation`, `isWhitePiece`) back the UI (`Piece.tsx`, `FallenPiece.tsx`) and notation and MUST survive.
+- **Scope:**
+  - **Delete the legacy singleton engine** `src/game/piece-moves.ts` — the `PieceMoves` class + the `pieceMoves` singleton: the mutable king positions, the `promotionBoardCount` promotion counter, `calculateEnemyAttack`, `isStalemate`, `updatePiecePosition`, `promotePawn`. This IS the "old singleton state" plan success criterion #6. The `Square`/`HistorySquares` *types* it also exports are still consumed by `constants.ts`, `piece-notation.ts`, `pieces/*`, and the adapter's UI-facing shape — **relocate those type definitions** (e.g. into `src/features/board/engineAdapter.ts` or a small `src/game/board-types.ts`) before deleting the file, and repoint importers. (If the adapter slice already homed these types, this slice just deletes the class.)
+  - **Strip the mutable game-state off `game/pieces/*`:** remove `King.getCastlingMoves` / `removePossibleCastling` / the `isKingSideCastlingPossible`/`isQueenSideCastlingPossible` fields; remove `Pawn.enPassantPosition` / `setEnPassantPosition` / `getEnPassantPosition` / `getAttackedSquares` and the en-passant branch; remove the `getPossibleMoves` move-generation overrides across `pieces/*` (king/queen/rook/bishop/knight/pawn) and `Piece.getOccupiedSquare` — none are called once the engine drives legality. **Keep** the stateless presentation surface (`image`/`weight`/`abbreviation` + `getImage`/`getWeight`/`getAbbreviation`/`isWhitePiece`) that `pieceFactory`, `Piece.tsx`, `FallenPiece.tsx`, and `piece-notation.ts` still use. `pieceFactory`/`piece-factory.ts` itself **survives** (it is the UI's image/weight/abbreviation lookup).
+  - **Reconcile the promotion-id single-source-of-truth** (deferred-to-cutover PENDING). The engine's `moves/promotion.ts` rebuilds `PROMOTED_IDS` rather than importing `constants.ts`'s `PromotionBoard` (because `constants.ts` transitively imports baseUrl-aliased UI modules Vitest can't resolve). Now that the engine meets the UI: **if cheap**, collapse the divergence — relocate `PromotionBoard` into the engine layer (and have `constants.ts` re-export it), or have the legacy `promotePawn` path (now deleted) stop being the second source so only one table remains. Pick whichever is the smaller, test-green diff; if neither is cheap without dragging baseUrl-aliased imports into the engine's Vitest graph, leave a PENDING noting the table stays hand-mirrored and why (do not regress the engine test graph to chase this).
+  - **Verify no remaining imports of legacy engine internals** (`piece-moves`'s `pieceMoves`, `pieces/*` move-gen, the en-passant/castling state) anywhere in `src/`. Plan success criterion #6: "no remaining imports of the old engine internals."
+  - **Do NOT:** delete `piece-factory.ts`, `piece-notation.ts`, `piece-type.ts`, or the presentation getters on `pieces/*` — they are the surviving reducer/UI presentation layer. Do NOT touch `BoardSlice.ts` reducer logic (the adapter slice owns it; this slice only repoints type imports if the type relocation lands here). Do NOT re-introduce any baseUrl-aliased import into `game/engine/*` (would break Vitest — the long-standing tsconfig-baseUrl-alias-under-Vitest constraint).
+- **Files owned:**
+  - `src/game/piece-moves.ts` (delete; relocate `Square`/`HistorySquares` types first)
+  - `src/game/pieces/king.ts`, `src/game/pieces/queen.ts`, `src/game/pieces/rook.ts`, `src/game/pieces/bishop.ts`, `src/game/pieces/knight.ts`, `src/game/pieces/pawn.ts`, `src/game/pieces/piece.ts` (strip mutable game-state, keep presentation getters)
+  - `src/game/piece-notation.ts`, `src/constants.ts` (repoint relocated `Square`/`HistorySquares` type imports; promotion-id reconciliation if it lands here)
+  - `src/game/engine/moves/promotion.ts` (only if the promotion-id reconciliation relocates the table here)
+  - `src/game/board-types.ts` (new, optional — home for relocated `Square`/`HistorySquares` if not put in `engineAdapter.ts`)
+- **Success criteria:**
+  - `git grep`/search confirms zero imports of `game/piece-moves`'s `pieceMoves` singleton and zero calls to the deleted `pieces/*` move-gen / castling / en-passant methods anywhere in `src/`.
+  - `npx tsc --noEmit` clean and `npm run build` clean with the legacy engine gone.
+  - `npm test` green (the engine suite + the reducer-wiring tests from `cutover`, unaffected by deleting code they don't import).
+  - Runtime smoke re-confirms the full-game playthrough (orchestrator's gate) — deleting dead code must not change behaviour.
+- **Depends on:** cutover
+
+---
+
+## Adapter & design notes (for the engineers and the orchestrator)
+
+These are the load-bearing design tensions flagged at draft time. They are guidance, not new scope.
+
+- **Adapter shape (engine → UI squares).** The UI reads `state.board.history[last].squares[y][x].pieceType`/`.isEnemyAttacked`. The engine's `GameState.squares` is `EngineSquare[][]` (`PieceType | null`). The adapter wraps each cell as `{ pieceType: cell, isEnemyAttacked: false }`. The legacy `isEnemyAttacked` flag fed castling-through-check (now handled inside the engine's `king.ts`) and check highlighting; the UI's check highlight actually comes from `pieceAttackedKing`, so a uniform `false` is sufficient. If a square-level attack highlight is ever wanted, the engine exports `isSquareAttacked` — but that is not required for parity.
+- **Turn derivation (a flagged cutover risk).** The legacy UI derives `isWhiteTurn = history.length % 2 === 1` in `Board.tsx`, `GameOver.tsx`, and (legacy) `BoardSlice`. With promotion, the slice mutates `history[last]` in place (no push), so length-parity turn derivation already couples to the move/promotion sequence. The engine carries `turn` authoritatively in `GameState`. **Keep the projected `history` array length growing in lockstep with moves** so the components' `history.length % 2` derivation still matches `engine.turn`, OR accept that `Board.tsx`/`GameOver.tsx` still read `history.length` and ensure the adapter pushes one `history` entry per ply (and replaces-in-place on promotion, as today). This is exactly the "reducer-only concern (turn derivation)" the plan's known risk warns the cutover may surface — the reducer-wiring test for turn flip is the guard.
+- **`pieceAttackedKing` derivation.** Compute via the engine: after `applyMove`, the side to move is the one possibly in check; `findKing(engine, engine.turn)` + `isSquareAttacked` (or `isInCheck`) tells you whether to set `pieceAttackedKing` to that king's `PieceType` (`engine.turn === "white" ? WhiteKing : BlackKing`) or `null`.
+- **Promotion-id single source (PENDING, deferred-to-cutover).** Reconcile in `cleanup` if cheap; the constraint is that `game/engine/*` must not import baseUrl-aliased modules (Vitest can't resolve them). Safe option: relocate `PromotionBoard` *into* the engine (a presentation-free module) and re-export from `constants.ts`. Escape hatch: leave the table hand-mirrored with a fresh PENDING explaining the Vitest-graph constraint — do not regress the engine test graph to chase single-sourcing.
+- **5th-of-a-type promotion clamp (PENDING).** The engine clamps a 5th promotion of one type to the `*Promoted4` id (counter still increments) rather than throwing. The cutover inherits this quarantine behaviour unchanged; the reducer-wiring tests need not exercise it (it is an extreme edge case), but do not "fix" it here — it is the documented quarantine cap.
+- **Reducer-wiring tests stay node-level.** The current Vitest suite is `environment: 'node'` with no component tests. Reducer-wiring tests import `boardSlice.reducer` + actions and dispatch directly — no DOM. **Do not** add jsdom/RTL for this sprint; that is explicitly "later if/when component tests are wanted" per the Vitest decision.
+- **Cutover/deletion atomicity (revertability).** W1 (`cutover`) must merge green — engine wired, all tests + build + runtime smoke pass — before W2 (`cleanup`) deletes the legacy engine. The cutover is then one revertable commit; the deletion is its own diff. If the runtime smoke surfaces a behavioural gap, revert `cutover` (the legacy engine is still present until `cleanup` lands) and surface a PENDING rather than patching blindly.
+
+## Operational constraints
+
+- **Test runner:** Vitest (`vitest run`), `environment: 'node'`. New tests import from `vitest`.
+- **Imports under Vitest:** use **relative imports** inside engine-graph and any module the Vitest graph pulls in — the `vitest.config.ts` does not resolve the tsconfig `baseUrl: ./src` aliases. UI/`features` modules (compiled by `react-scripts`, not under the Vitest graph) may keep `game/...`/`app/...` aliases; the new reducer-wiring test, if it imports engine modules, should reach them via the slice/adapter (which the app build resolves), or use relative paths if pulled directly into Vitest.
+- **Per-worktree install:** each engineer worktree runs `npm install --legacy-peer-deps` (plain `npm install` is blocked by the `@types/node@^16` vs `vitest` peer conflict). If the first install yields a corrupt tree on Windows (`@rollup/rollup-win32-x64-msvc` invalid / missing `std-env`), delete `node_modules` and reinstall once.
+- **Branch naming:** flat, `cutover-cleanup-<slice-code>` (`cutover-cleanup-cutover`, `cutover-cleanup-cleanup`).
+- **Runtime-smoke gate is LIVE this sprint** — the `## Smoke recipe` is filled; `/code` will run a real `npm start` smoke (full-game playthrough + reset-clears-across-games).
+
+## Sprint summary
+
+Appended by the orchestrator after the last wave completes, immediately before archive.
+
+- **Slices shipped:** <slice-code list>
+- **Runtime smoke:** <PR URL | clean> · bugs found+fixed: <N> · deferred: <M>
+- **Reviewer:** <PR URL | clean> · severe findings: <N>
+- **Queue entries:** resolved <N>, deferred <M>
+- **Approximate token cost:** <number or rough range>
