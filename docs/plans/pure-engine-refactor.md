@@ -2,7 +2,7 @@
 
 _Generated: 2026-06-04 · Status: active · Grilled-with: grill-me_
 
-<!-- autopilot-run: started=2026-06-04T19:01:08Z sprints=2 waves=6 -->
+<!-- autopilot-run: started=2026-06-04T19:01:08Z sprints=3 waves=9 -->
 
 ## Goal
 Replace the leaking mutable-singleton chess engine with a pure, testable engine built around an immutable `GameState` value, and grow a trustworthy hand-authored test suite that encodes correct chess. Built test-first, strangler-fig style, so the live app keeps working at every commit until a single late cutover.
@@ -42,7 +42,7 @@ The current rules live in module-level singletons (`whiteKing`, `whitePawn`, `pi
 |--------|------|--------|------------|
 | engine-foundation | Establish the `GameState` value and a tracer-bullet vertical slice (`legalMoves` + `applyMove` for one quiet move) proving the engine seam end-to-end; stand up the test harness | done | — |
 | move-generation | Stateless move generation for all pieces (sliding, knight, pawn), test-first, including the bounds-bug regression | done | engine-foundation |
-| king-safety-endgame | Enemy-attack mapping, legal-move filtering for king safety, and checkmate-vs-stalemate detection | planned | move-generation |
+| king-safety-endgame | Enemy-attack mapping, legal-move filtering for king safety, and checkmate-vs-stalemate detection | done | move-generation |
 | special-moves | Castling (rights threaded through `GameState`), en passant (target in `GameState`), promotion (counter quarantined in `GameState`) | planned | king-safety-endgame |
 | external-anchors | Perft node-count tests (depth 2–3 from start + one tactical position) and a recorded short game replayed move-for-move | planned | special-moves |
 | cutover-cleanup | Flip `BoardSlice` to the new engine, add thin reducer-wiring tests, smoke-test the running app, delete old singleton state, verify `reset` clears across games | planned | external-anchors |

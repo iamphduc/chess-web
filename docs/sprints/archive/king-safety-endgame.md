@@ -1,14 +1,14 @@
 # Sprint: King Safety & Endgame
 
-_From plan: docs/plans/pure-engine-refactor.md · Slug: king-safety-endgame · Status: active · Generated: 2026-06-04_
+_From plan: docs/plans/pure-engine-refactor.md · Slug: king-safety-endgame · Status: archived · Generated: 2026-06-04_
 
 ## Status board
 
 | Wave | Slice | Title | Difficulty | Agent | Branch | PR | Status | Depends on |
 |------|-------|-------|------------|-------|--------|----|--------|------------|
-| 1 | attack-map | Enemy-attack mapping (`isSquareAttacked`), king location + `isInCheck` | 4 | engineer-senior | king-safety-endgame-attack-map | — | pending | — |
-| 2 | legal-filter | Filter pseudo-legal moves that leave the mover's own king in check | 4 | engineer-senior | king-safety-endgame-legal-filter | — | pending | attack-map |
-| 3 | game-status | Checkmate vs stalemate (and ongoing) detection over all legal moves | 3 | engineer-senior | king-safety-endgame-game-status | — | pending | legal-filter |
+| 1 | attack-map | Enemy-attack mapping (`isSquareAttacked`), king location + `isInCheck` | 4 | engineer-senior | king-safety-endgame-attack-map | merged | done | — |
+| 2 | legal-filter | Filter pseudo-legal moves that leave the mover's own king in check | 4 | engineer-senior | king-safety-endgame-legal-filter | merged | done | attack-map |
+| 3 | game-status | Checkmate vs stalemate (and ongoing) detection over all legal moves | 3 | engineer-senior | king-safety-endgame-game-status | merged | done | legal-filter |
 
 Wave membership lives in the **Wave** column; slices sharing a wave run in parallel and must own disjoint file sets.
 
@@ -79,10 +79,8 @@ The dependency chain is intrinsic to chess: legal-move filtering needs an attack
 
 ## Sprint summary
 
-Appended by the orchestrator after the last wave completes, immediately before archive.
-
-- **Slices shipped:** <slice-code list>
-- **Runtime smoke:** <PR URL | clean> · bugs found+fixed: <N> (runtime regressions static checks missed) · deferred: <M>
-- **Reviewer:** <PR URL | clean> · severe findings: <N> (count of `SEVERE:` PENDING entries emitted)
-- **Queue entries:** resolved <N>, deferred <M> — link the deferred ones inline
-- **Approximate token cost:** <number or rough range>
+- **Slices shipped:** attack-map (#15), legal-filter (#16), game-status (#17) — all merged to `main` via merge commits (admin-merge; `main` branch protection requires a review the orchestrator can't supply). Three sequential waves (intrinsic dependency chain: attack-map → legal-filter → game-status), each a single engineer-senior slice.
+- **Runtime smoke:** clean (no smoke PR) · bugs found+fixed: 0 · deferred: 0 — no runtime surface (attack map, check-filtered `legalMoves`, and game-end helpers are additive, NOT wired into `BoardSlice`; strangler-fig). Verified by integrated `npm test` (102 passed, 12 files) + `npm run build` (compiled) on merged `main`. The `## Smoke recipe` stub remains unfilled — harmless this sprint (every slice `none — pure static slice`), but will block from `cutover-cleanup` onward when the engine is wired in.
+- **Reviewer:** clean (no PR) · severe findings: 0 — four lenses clear over `000b398..e80fefb` (6 files, +828/−4): attack semantics correct (pawn diagonals only, turn-independent, no `legalMoves` dependency), self-check filter tests the captured `mover` in the post-`applyMove` position and is non-re-entrant, game-end delegates all legality to `legalMoves`, mate/stalemate/pin positions hand-checked genuine and non-tautological, scope intact.
+- **Queue entries:** resolved 1 (sprint-draft ack), deferred 0 new — no engineer/reviewer PENDINGs this sprint (the recurring uncommitted-sprint-doc note is orchestrator bookkeeping, not logged). Earlier move-generation cosmetic PENDINGs remain open and untouched.
+- **Approximate token cost:** ~3 engineer + 1 reviewer subagents + orchestration; rough order ~150–220k tokens across the sprint.
