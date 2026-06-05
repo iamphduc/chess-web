@@ -68,11 +68,20 @@ export class PieceNotation {
           ) {
             // Pawn capture-disambiguation: the other same-colour pawn at [y, x]
             // could also capture onto [toY, toX] when that square is one rank
-            // ahead (colour-relative) and one file to the side. Computed inline
-            // now that the legacy `Pawn.getPossibleMoves` move generator is gone
-            // (the engine owns legality; this is presentation-only notation).
+            // ahead (colour-relative) and one file to the side AND actually holds
+            // an enemy to capture. The enemy-occupancy gate mirrors the legacy
+            // `Pawn.getPossibleMoves`/`getAttackedSquares`, which only listed a
+            // diagonal as reachable when occupied by an enemy — without it a quiet
+            // pawn push gets a spurious file suffix whenever a friendly pawn sits
+            // diagonally behind the (empty) destination. (Engine owns legality;
+            // this is presentation-only notation.)
             const dir = piece.isWhitePiece() ? -1 : 1;
-            const canCaptureTarget = toY === y + dir && Math.abs(toX - x) === 1;
+            const targetPieceType = squares[toY]?.[toX]?.pieceType;
+            const targetIsEnemy =
+              !!targetPieceType &&
+              targetPieceType.includes("BLACK") === piece.isWhitePiece();
+            const canCaptureTarget =
+              targetIsEnemy && toY === y + dir && Math.abs(toX - x) === 1;
             if (canCaptureTarget) {
               // If two pieces can move to the same file (row)
               if (fromX === x) {
