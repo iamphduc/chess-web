@@ -1,6 +1,6 @@
 # Sprint: external-anchors
 
-_From plan: docs/plans/pure-engine-refactor.md · Slug: external-anchors · Status: active · Generated: 2026-06-04_
+_From plan: docs/plans/pure-engine-refactor.md · Slug: external-anchors · Status: archived · Generated: 2026-06-04_
 
 Anchors the hand-authored engine against **external ground truth** independent of our own beliefs — the mitigation the plan names for the "hand-authoring chess rules risks encoding our own misunderstanding" risk. Two anchors: published **perft** node counts (start position depth 1-3 + one tactical position) and one **recorded short game** replayed move-for-move ending in checkmate. This sprint is **test-only / additive** — it adds no engine behaviour, only ground-truth tests (plus, optionally, a tiny test-only position-builder helper). It must NOT wire anything into `BoardSlice` (that is `cutover-cleanup`).
 
@@ -8,9 +8,9 @@ Anchors the hand-authored engine against **external ground truth** independent o
 
 | Wave | Slice | Title | Difficulty | Agent | Branch | PR | Status | Depends on |
 |------|-------|-------|------------|-------|--------|----|--------|------------|
-| 1 | perft-start | Perft harness + start-position node counts (depth 1-3) | 3 | engineer-senior | external-anchors-perft-start | — | pending | — |
-| 1 | recorded-game | Replay a famous decisive miniature move-for-move to checkmate | 2 | engineer-junior | external-anchors-recorded-game | — | pending | — |
-| 2 | perft-tactical | Perft on one tactical position (Kiwipete) depth 1-2 | 3 | engineer-senior | external-anchors-perft-tactical | — | pending | perft-start |
+| 1 | perft-start | Perft harness + start-position node counts (depth 1-3) | 3 | engineer-senior | external-anchors-perft-start | merged | done | — |
+| 1 | recorded-game | Replay a famous decisive miniature move-for-move to checkmate | 2 | engineer-junior | external-anchors-recorded-game | merged | done | — |
+| 2 | perft-tactical | Perft on one tactical position (Kiwipete) depth 1-3 | 3 | engineer-senior | external-anchors-perft-tactical | merged | done | perft-start |
 
 Wave membership lives in the **Wave** column; slices sharing a wave run in parallel and must own disjoint file sets.
 
@@ -81,10 +81,9 @@ Wave membership lives in the **Wave** column; slices sharing a wave run in paral
 
 ## Sprint summary
 
-Appended by the orchestrator after the last wave completes, immediately before archive.
-
-- **Slices shipped:** <slice-code list>
-- **Runtime smoke:** <PR URL | clean> · bugs found+fixed: <N> (runtime regressions static checks missed) · deferred: <M>
-- **Reviewer:** <PR URL | clean> · severe findings: <N> (count of `SEVERE:` PENDING entries emitted)
-- **Queue entries:** resolved <N>, deferred <M> — link the deferred ones inline
-- **Approximate token cost:** <number or rough range>
+- **Slices shipped:** perft-start (#24), recorded-game (#23), perft-tactical (#25) — all merged to `main` via merge commits (admin-merge). Two waves: W1 `perft-start` ∥ `recorded-game` (parallel/disjoint) → W2 `perft-tactical` (reuses perft-start's `perft-helper.ts`).
+- **Runtime smoke:** clean (no smoke PR) · bugs found+fixed: 0 · deferred: 0 — test-only/additive sprint, no app surface (nothing wired into `BoardSlice`). Verified by integrated `npm test` (160 passed, 17 files) + `npm run build` (compiled) on merged `main`.
+- **Ground-truth result:** the hand-authored engine matches **all published perft counts on first run** — start position 20/400/8902 (depth 1–3) and Kiwipete 48/2039/97862 (depth 1–3) — plus a recorded Scholar's-mate replayed move-for-move to `gameStatus==="checkmate"`. **No engine bug surfaced.** This retires the plan's headline risk ("hand-authoring chess rules risks encoding our own misunderstanding").
+- **Reviewer:** clean (no PR) · severe findings: 0 — four lenses clear over `5770c15..579fe0c`; hand-verified `perft()` is a faithful non-cheating board scan, counts are real published values asserted against genuine recursion, Kiwipete transcription exact, the recorded game checks per-ply legality + terminal checkmate, scope test-only.
+- **Queue entries:** resolved 2 (sprint-draft ack; **smoke-recipe stub — filled by the orchestrator at this archive**, unblocking `cutover-cleanup`'s runtime-smoke gate), deferred 0 new. Earlier `special-moves` PENDINGs (5th-promotion clamp; promotion-id-table divergence risk re-pointed at cutover) remain open.
+- **Approximate token cost:** ~3 engineer + 1 reviewer subagents + orchestration; rough order ~150–200k tokens across the sprint.
