@@ -1,0 +1,100 @@
+# Sprint: Special Moves
+
+_From plan: docs/plans/pure-engine-refactor.md · Slug: special-moves · Status: active · Generated: 2026-06-04_
+
+## Status board
+
+| Wave | Slice | Title | Difficulty | Agent | Branch | PR | Status | Depends on |
+|------|-------|-------|------------|-------|--------|----|--------|------------|
+| 1 | engine-core | Extend `Move` with `promotion`; teach `applyMove` castling/en-passant/promotion bookkeeping + rights maintenance; promotion-id allocator | 5 | engineer-senior | special-moves-engine-core | — | pending | — |
+| 2 | castling | Generate rights-/path-/check-gated two-square castling moves in `king.ts` | 4 | engineer-senior | special-moves-castling | — | pending | engine-core |
+| 2 | pawn-special | En-passant capture (consume `state.enPassant`) + four-way promotion move generation in `pawn.ts` | 4 | engineer-senior | special-moves-pawn-special | — | pending | engine-core |
+
+Wave membership lives in the **Wave** column; slices sharing a wave run in parallel and must own disjoint file sets.
+
+## Per-slice detail
+
+### engine-core: `Move` shape, special-move `applyMove`, promotion-id allocator
+
+- **Difficulty justification:** This is the single shared seam every other special move stands on, and it is the most rule-laden change in the sprint. It changes the public `Move` contract (a `promotion?` field that `external-anchors` perft and `cutover-cleanup`'s adapter inherit), and rewrites `applyMove` — which is also what `legalMoves`' king-safety filter calls — to do five interacting jobs at once: relocate the rook on a castle, remove the en-passant-captured pawn, set/clear the en-passant target, swap the promoted-piece id, and maintain castling rights when a king/rook moves or a rook is captured. The promotion path must honour the quarantined unique-id scheme (counter in `GameState`, untouched enum). Getting any of these wrong silently corrupts every downstream slice and the eventual perft counts, and `applyMove` must stay pure and never mutate the input.
+- **Scope:**
+  - **`Move` shape (in `src/game/engine/engine.ts`):** add an optional `promotion?: PieceKind` field to the `Move` interface (`PieceKind` is `"queen" | "rook" | "bishop" | "knight"`-subset of the union in `classify.ts`; import it). A `Move` with `promotion` set means "the pawn moving `from → to` promotes to that kind." Quiet/castle/en-passant moves leave it `undefined`. Do NOT add castle/en-passant marker fields — `applyMove` infers those from geometry (below). Update the `Move` doc comment to describe the field and the geometric inference convention.
+  - **Promotion-id allocator (new file `src/game/engine/moves/promotion.ts`):** a pure helper, e.g. `allocatePromotedId(color: PieceColor, kind: PieceKind, counts: PromotionCount): { id: PieceType; nextCounts: PromotionCount }`. It maps `(color, kind)` to the slot index in the 8-slot `promotionCount` tuple ordered `[WQ, WR, WB, WN, BQ, BR, BB, BN]` (white offset 0, black offset 4; within a side the order is queen, rook, bishop, knight — mirror `PromotionBoard` in `src/constants.ts`), reads the current count `n` at that slot, returns the `n`-th unique promoted `PieceType` id for that `(color, kind)`, and a `nextCounts` tuple with that slot incremented by 1. Build the id-lookup table from the existing `PieceType` enum (the `*QueenPromoted1..4`, `*RookPromoted1..4`, `*BishopPromoted1..4`, `*KnightPromoted1..4` ids) — you may reuse `src/constants.ts`'s `PromotionBoard` array directly (import it; it is exactly `[Q,R,B,N]` per side) rather than re-listing ids. Honour the quarantine: do NOT introduce `{ kind, color }`; just hand out the next pre-allocated id. The 4-per-type cap is accepted (a 5th promotion of one type is out of scope; pick a defensible behaviour — clamp/throw — and document it; real games rarely hit it and perft positions here won't).
+  - **`applyMove` rewrite (in `engine.ts`):** keep it pure (build a fresh grid; never mutate `state`). On top of the existing piece-relocation, handle, by geometry:
+    - **Castling** — a `king`-kind piece whose move spans two files (`|toX - fromX| === 2`) on the same rank: in addition to moving the king, relocate the rook. King-side (`toX === 6`): rook `[fromY, 7] → [fromY, 5]`. Queen-side (`toX === 2`): rook `[fromY, 0] → [fromY, 3]`. Clear **both** of that side's rights.
+    - **En passant** — a `pawn`-kind piece moving diagonally (`toX !== fromX`) onto an **empty** destination square: besides moving the pawn, remove the captured enemy pawn, which sits at `[fromY, toX]` (same rank as the mover's origin, file of the destination).
+    - **Promotion** — when `move.promotion` is set, the piece that lands on `to` is the allocated promoted id (call `allocatePromotedId(mover, move.promotion, state.promotionCount)`), and the returned `nextCounts` becomes the new `promotionCount`. (The pawn-reaches-last-rank geometry is enforced by the generator; `applyMove` trusts `move.promotion`.)
+    - **En-passant target maintenance** — set `enPassant` to the skipped square (`[(fromY+toY)/2, fromX]`) **iff** this move is a pawn double-push (`pawn` kind and `|toY - fromY| === 2`); otherwise set `enPassant` to `null`. (The target is valid for exactly the opponent's next move.)
+    - **Castling-rights maintenance** — beyond the castle case above: if the moving piece is a king, clear both of the mover's rights; if a rook leaves a starting corner, clear that side's matching right (white queen-side rook `[7,0]`, white king-side `[7,7]`, black queen-side `[0,0]`, black king-side `[0,7]`); if the destination square is one of those four corners (a rook is **captured** there), clear the **captured** side's matching right. Use the colour/kind of the relevant piece, not hard-coded turn. Leave the other side's rights untouched. Produce a fresh `castling` object (don't alias the input's sub-objects).
+  - Keep `pseudoLegalMoves`/`legalMoves` structure intact — `legalMoves`' end-position self-check filter is unchanged and continues to catch "castle into check" / "still in check" redundantly; the through-square check is `king.ts`'s job (document this in the `legalMoves` doc comment, replacing the "castling … still `special-moves`" note).
+  - Use **relative imports**. Do NOT wire into `BoardSlice`/`piece-moves.ts`/`src/game/pieces/*` (strangler-fig). Do NOT undertake the `{ kind, color }` redesign.
+- **Files owned:** `src/game/engine/engine.ts`, `src/game/engine/moves/promotion.ts`, `src/game/engine/moves/__tests__/promotion.test.ts`, `src/game/engine/__tests__/apply-move-special.test.ts`, `src/game/engine/__tests__/engine.test.ts`
+- **Success criteria:** `Move.promotion` exported; `allocatePromotedId` exported and pure (input `counts` not mutated). `applyMove` tests (in `apply-move-special.test.ts`) green via `npm test` pinning: a king-side castle relocates both king and rook and clears both that side's rights; a queen-side castle likewise; a king move (non-castle) clears both its rights; a starting-corner rook move clears exactly its one right; capturing a rook on its starting corner clears the captured side's right; a pawn double-push sets `enPassant` to the skipped square and any non-double-push clears it to `null`; an en-passant capture removes the pawn on `[fromY, toX]` and vacates both diagonal-origin and captured squares; a promotion move replaces the pawn with the allocated id and increments exactly the right `promotionCount` slot, and two successive same-kind/colour promotions hand out distinct ids. `promotion.test.ts` pins the slot mapping for all eight `(color, kind)` pairs and the sequential id hand-out. The existing tracer tests in `engine.test.ts` stay green (a quiet push still carries castling/promotionCount unchanged and clears `enPassant`). `npx tsc --noEmit` and `npm run build` clean; only owned files changed; new engine not wired into `BoardSlice`.
+- **Depends on:** —
+
+### castling: Generate two-square castling moves (rights / path / check gated)
+
+- **Difficulty justification:** Castling has the most legality preconditions of any move and is the one place the move generator itself must consult the attack map: a castle is illegal if the king is currently in check, passes through an attacked square, or lands on one — and the generic end-position self-check filter in `legalMoves` cannot see the *transit* square, so this slice must check all three squares explicitly via `isSquareAttacked`. It also has to read `GameState.castling` rights and verify an empty path, while staying confined to `king.ts` (no `engine.ts` edits) so it can run in parallel with `pawn-special`.
+- **Scope:** Extend `src/game/engine/moves/king.ts`'s `kingMoves` (or add a private `castlingMoves` it calls) so that, in addition to the eight single-step moves, it emits castling moves when ALL hold for a side's right:
+  - the mover is a king on its home square (white `[7,4]`, black `[0,4]`) and that side's `kingSide`/`queenSide` right in `state.castling` is `true`;
+  - the squares between king and the relevant rook are empty — king-side `[r,5]`,`[r,6]`; queen-side `[r,1]`,`[r,2]`,`[r,3]` (note the b-file square must be empty for queen-side but is NOT a king-transit square);
+  - the king is **not currently in check**, does **not pass through** an attacked square, and does **not land on** an attacked square — i.e. none of `[r,4]`, the transit square, and the destination is attacked by the opponent. King-side transit/dest = `[r,5]`/`[r,6]`; queen-side transit/dest = `[r,3]`/`[r,2]`. Use `isSquareAttacked(state, sq, opponent)` from `./attack`.
+  - Emit the castle as a plain two-file king `Move` (`from = king square`, `to = [r,6]` or `[r,2]`, no `promotion`). `applyMove` (engine-core) infers the rook move from this geometry — do NOT add marker fields.
+  - The rook on the relevant corner should exist and be the mover's rook; you may rely on the rights flag implying it, but a defensive empty/kind check is acceptable. Do NOT verify the rook itself is unattacked or that the rook's path (queen-side b-file) is check-free — only the king's squares matter for castling legality (the b-file need only be *empty*).
+  - Do NOT modify `engine.ts`, `attack.ts`, `pawn.ts`, `classify.ts`, the old engine, or `BoardSlice`. Use **relative imports** (`../engine`, `../game-state`, `./classify`, `./attack`).
+- **Files owned:** `src/game/engine/moves/king.ts`, `src/game/engine/moves/__tests__/king.test.ts`
+- **Success criteria:** Tests green via `npm test` pinning, for both colours where natural: from a position with full rights and a clear path, both castles are generated; a castle is dropped when the right is `false`; dropped when any path square is occupied (including a piece only on the queen-side b-file); dropped when the king is currently in check; dropped when the transit square is attacked; dropped when the destination square is attacked; a castle that is legal despite an *unrelated* enemy piece (not covering king squares) is still generated. The existing single-step `king.test.ts` cases stay green. End-to-end via `legalMoves`: a generated legal castle survives the king-safety filter, and `applyMove` on it produces the castled position (cross-checks engine-core). `npx tsc --noEmit` and `npm run build` clean; only owned files changed; new engine not wired into `BoardSlice`.
+- **Depends on:** engine-core
+
+### pawn-special: En-passant capture + four-way promotion generation
+
+- **Difficulty justification:** Two distinct pawn rules in one file. En-passant generation must consume the timing-sensitive `state.enPassant` target and emit a capture onto an *empty* square — the one pawn move whose destination is empty — keeping the colour-direction reasoning correct for both sides. Promotion must fan a single last-rank push/capture into four separate `Move`s (one per promotion kind), which is the chess-correct, perft-faithful behaviour and the shape the `Move.promotion` field exists for. Both interact with the existing push/double-push/diagonal-capture logic without breaking it, and stay confined to `pawn.ts`.
+- **Scope:** Extend `src/game/engine/moves/pawn.ts`'s `pawnMoves`:
+  - **En passant:** for each forward diagonal `[y+forward, x±1]` that is in-bounds and **empty**, emit a capture `Move` onto it **iff** `state.enPassant` is non-null and equals that square (`[y+forward, x±1]`). This is the only case where a pawn moves diagonally onto an empty square. Do NOT remove the captured pawn here (that is `applyMove`'s job) and do NOT set/clear `enPassant`. Keep the existing enemy-occupied diagonal captures unchanged.
+  - **Promotion:** whenever a generated pawn move (single push, or a diagonal capture, or an en-passant capture) lands on the **last rank for the mover** (White row 0, Black row 7), replace that single `Move` with **four** moves carrying `promotion: "queen" | "rook" | "bishop" | "knight"` (same `from`/`to`, four kinds). A pawn move that does not reach the last rank carries no `promotion` field. (A double-push can never reach the last rank, so it is never a promotion.)
+  - Preserve all existing behaviour: single/double push gating, edge-pawn non-wrapping, enemy-only ordinary diagonal captures. Do NOT modify `engine.ts`, `king.ts`, `attack.ts`, `classify.ts`, the old engine, or `BoardSlice`. Use **relative imports**.
+- **Files owned:** `src/game/engine/moves/pawn.ts`, `src/game/engine/moves/__tests__/pawn.test.ts`
+- **Success criteria:** Tests green via `npm test` pinning: with `state.enPassant` set to the square behind an adjacent enemy double-pushed pawn, the en-passant diagonal capture is generated; with `enPassant === null` (or pointing elsewhere) no diagonal-onto-empty move is generated; a pawn one square from the last rank generates exactly four promotion moves on a push, and four on a promotion-capture, each tagged with a distinct kind; a non-last-rank push/capture carries no `promotion`; edge pawns still don't wrap; the existing push/double-push/ordinary-capture cases stay green. End-to-end (cross-check engine-core): `applyMove` on the generated en-passant move removes the captured pawn, and on a promotion move yields the allocated promoted id. `npx tsc --noEmit` and `npm run build` clean; only owned files changed; new engine not wired into `BoardSlice`.
+- **Depends on:** engine-core
+
+---
+
+## Field semantics
+
+- **Wave:** the leading column — the parallel batch a slice runs in. Slices sharing a wave run concurrently and **must own disjoint file sets**. Assign waves to **maximize parallel width**: each slice goes in the *earliest* wave where (a) all its `Depends on` slices sit in strictly-earlier waves and (b) its `Files owned` are disjoint from every slice already in that wave. Open a new wave only when a dependency or file conflict forces it — never split independent, non-conflicting slices across waves. **Cap each wave at 5 slices**; eligible overflow spills into the next wave (still respecting deps and disjoint files).
+- **Slug:** matches the row in the main plan's Sprint sequence (`docs/plans/pure-engine-refactor.md`).
+- **Sprint doc Status:** `active` while in `docs/sprints/`; flipped to `archived` immediately before `mv` to `docs/sprints/archive/`.
+- **Slice Status transitions:** `pending` → `pr open` → `done`, with `blocked` as terminal.
+- **PR values:** `—` / URL / `blocked` / `skipped — verification failed` / `merged`.
+- **Difficulty (1–5):** 1 = trivial; 3 = ordinary; 5 = architecture-touching or ambiguous. Scored per slice; justification belongs in the per-slice detail.
+- **Agent:** derived from Difficulty — **1–2 → `engineer-junior`**, **3–5 → `engineer-senior`**. The board is canonical; per-slice detail never re-states the score or agent.
+- **Branch naming:** `<sprint-slug>-<slice-code>` (kebab-case, **flat — no `/`** so a slice branch can't D/F-collide with a `<sprint-slug>`-named integration branch used as the merge-target).
+- **Files owned:** explicit paths, verified to exist; cross-checked for disjointness within the wave.
+
+## Why this slicing (two waves, W2 width 2)
+
+`engine.ts` is the contention point: all three special moves need `applyMove` to do new bookkeeping, and `applyMove` is one function in one file. Rather than slice **by special-move type** (which would serialize three conflicting edits to the same `applyMove`), this sprint concentrates **all** `engine.ts` / `Move`-shape / `applyMove` / promotion-id work into a single foundation slice (`engine-core`, W1). That frees the two **generator** slices — castling in `king.ts`, en-passant + promotion generation in `pawn.ts` — to run in **parallel** in W2: they only *read* `GameState` and *construct* the new `Move` shape; they never touch `applyMove`. Their files are disjoint (`king.ts` vs `pawn.ts`, each with its own test). Both depend on `engine-core` because they build `Move`s with the new `promotion` field and their success criteria cross-check `applyMove`/`legalMoves` end-to-end.
+
+The castle's through/into/out-of-check legality lives in `king.ts` (it needs `isSquareAttacked`, and the generic `legalMoves` end-position filter cannot see the king's *transit* square); en-passant capture *removal* and target set/clear live in `applyMove` (engine-core), while en-passant *generation* (reading `state.enPassant`) lives in `pawn.ts` — kept in the pawn generator rather than a new module, since it is pawn-move logic. Only promotion gets a dedicated module (`moves/promotion.ts`), because the quarantined unique-id allocation is a discrete, separately-testable concern.
+
+## Operational notes (carried from prior sprints)
+
+- **Per-worktree install:** worktrees don't share `node_modules`; each slice must run `npm install --legacy-peer-deps` in its worktree before tests/build (plain `npm install` is blocked by the `@types/node@^16` vs vitest peer conflict). No runtime impact.
+- **Corrupt-first-install retry:** if the first install yields a corrupt tree (npm optional-dep extraction bug on Windows — `@rollup/rollup-win32-x64-msvc` invalid), delete `node_modules` and reinstall once.
+- **Relative imports under Vitest:** `vitest.config.ts` does NOT resolve tsconfig `baseUrl` aliases. All engine modules use **relative imports** (`../game-state`, `../engine`, `./classify`, `./attack`, `./promotion`). This sprint does not add `vite-tsconfig-paths`.
+- **Worktree teardown** may need `git worktree remove --force` because per-worktree `node_modules` is untracked.
+- **Strangler-fig boundary:** this sprint is additive and pure — `Move` grows a field, `applyMove` gains special-move bookkeeping, generators gain castling/en-passant/promotion, but **none of it is wired into `BoardSlice`**. The live app stays on the old engine until `cutover-cleanup`. Do NOT touch `piece-moves.ts`, `BoardSlice.ts`, `src/game/pieces/*`, `src/constants.ts` (read-only reuse of `PromotionBoard` is fine), or the old singleton state.
+- **Quarantine discipline:** promotion uses the existing `PieceType` unique-id enum and the `GameState.promotionCount` counter; do NOT begin the `{ kind, color }` redesign (explicitly deferred per `docs/decisions.md` → "Quarantine the promoted-piece identity scheme").
+- **Smoke-recipe stub:** `docs/codebase-structure.md`'s `## Smoke recipe` is still unfilled. Harmless this sprint (every slice is a pure static slice with no runtime app surface; verified by `npm test` + `tsc` + `npm run build`), but `/code`'s fail-closed runtime-smoke gate will halt from `cutover-cleanup` onward until it's filled.
+
+## Sprint summary
+
+Appended by the orchestrator after the last wave completes, immediately before archive.
+
+- **Slices shipped:** <slice-code list>
+- **Runtime smoke:** <PR URL | clean> · bugs found+fixed: <N> (runtime regressions static checks missed) · deferred: <M>
+- **Reviewer:** <PR URL | clean> · severe findings: <N> (count of `SEVERE:` PENDING entries emitted)
+- **Queue entries:** resolved <N>, deferred <M> — link the deferred ones inline
+- **Approximate token cost:** <number or rough range>
+</content>
+</invoke>
