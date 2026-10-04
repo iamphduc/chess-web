@@ -2,14 +2,14 @@
 
 _From plan: docs/plans/vite-migration.md · Slug: ci-deploy · Status: active · Generated: 2026-10-04_
 
-<!-- autopilot-run: started=2026-10-04T06:58:18Z sprints=1 waves=4 -->
+<!-- autopilot-run: started=2026-10-04T06:58:18Z sprints=1 waves=5 -->
 
 ## Status board
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | C1 | GitHub Actions workflow (verify, secrets, Pages deploy); remove `gh-pages`; package becomes ESM | ci-deploy-C1 | — | in-progress | — | — |
-| 2 | D1 | Document the CI and deploy; decisions entry; fix the stale `engineAdapter.ts` header | ci-deploy-D1 | — | pending | — | C1 |
+| 1 | C1 | GitHub Actions workflow (verify, secrets, Pages deploy); remove `gh-pages`; package becomes ESM | ci-deploy-C1 | #36 | merged | high | — |
+| 2 | D1 | Document the CI and deploy; decisions entry; fix the stale `engineAdapter.ts` header | ci-deploy-D1 | — | in-progress | — | C1 |
 
 Plan branch: `vite-migration`. Wave heads: `ci-deploy-w1`, `ci-deploy-w2`.
 
