@@ -3,10 +3,10 @@ import { BsClockHistory } from "react-icons/bs";
 
 import "./Player.css";
 import { DEFAULT_TIME } from "../../../constants";
-import AvatarDefault from "assets/chess-player.png";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import { stop } from "../BoardSlice";
 import { GameOverType } from "./GameOver";
+import { avatarSrc as getAvatarSrc } from "./avatar";
 
 interface Props {
   name: string;
@@ -32,7 +32,7 @@ export const Player = ({ name, title, avatar, isWhite }: Props) => {
 
   const isWhiteTurn = history.length % 2 === 1;
   const isActive = isWhite === isWhiteTurn;
-  const avatarSrc = avatar ? require(`assets/${avatar}`) : AvatarDefault;
+  const avatarSrc = getAvatarSrc(avatar);
 
   useEffect(() => {
     if (!isPlaying) {
