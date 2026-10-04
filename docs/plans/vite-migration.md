@@ -36,7 +36,7 @@ CRA is no longer maintained ([Sunsetting Create React App](https://react.dev/blo
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
 | vite-switch | App runs, tests and builds on Vite 8 + Vitest 5 locally, with the same behavior. CRA is removed, plain `npm install` works, and docs are updated. | done | — |
-| ci-deploy | GitHub Actions runs PR checks and deploys `main` to GitHub Pages. The local `gh-pages` script is removed and the live site passes the smoke playthrough. | planned | vite-switch |
+| ci-deploy | GitHub Actions runs PR checks and deploys `main` to GitHub Pages. The local `gh-pages` script is removed and the live site passes the smoke playthrough. | done | vite-switch |
 
 ## Look
 none — no UI change. The app must render exactly as it does today.

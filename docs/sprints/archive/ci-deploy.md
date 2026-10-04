@@ -1,15 +1,15 @@
 # Sprint: CI and Pages deploy
 
-_From plan: docs/plans/vite-migration.md · Slug: ci-deploy · Status: active · Generated: 2026-10-04_
+_From plan: docs/plans/vite-migration.md · Slug: ci-deploy · Status: archived · Generated: 2026-10-04_
 
-<!-- autopilot-run: started=2026-10-04T23:33:17Z sprints=0 waves=1 -->
+<!-- autopilot-run: started=2026-10-04T23:33:17Z sprints=1 waves=1 -->
 
 ## Status board
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
 | 1 | C1 | GitHub Actions workflow (verify, secrets, Pages deploy); remove `gh-pages`; package becomes ESM | ci-deploy-C1 | #36 | merged | high | — |
-| 2 | D1 | Document the CI and deploy; decisions entry; fix the stale `engineAdapter.ts` header | ci-deploy-D1 | — | in-progress | — | C1 |
+| 2 | D1 | Document the CI and deploy; decisions entry; fix the stale `engineAdapter.ts` header | ci-deploy-D1 | #37 | merged | medium | C1 |
 
 Plan branch: `vite-migration`. Wave heads: `ci-deploy-w1`, `ci-deploy-w2`.
 
@@ -99,3 +99,14 @@ Why it runs in order: the workflow tests need a YAML parser, so C1 changes `pack
   - `[test] existing docs checks (sections, smoke recipe values, real scripts only, layout paths, vite decision) still pass — tests/docs.test.ts › (existing tests)`
 - **Depends on:** C1
 - **One-way door:** none
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date (`origin/main` had no new commits).
+- **Slices shipped:** C1, D1 (wave PRs #36, #37 into `vite-migration`).
+- **Queue entries:** resolved 2 (the Vite CommonJS-config warning; the stale `engineAdapter.ts` header), deferred 0. One gate-5 halt (`--max-runtime`, 4h default) between wave 1 and wave 2 — logged and resolved in `docs/handoff-queue.md` (2026-10-04).
+- **Slice log:**
+  - C1: high · test-first yes · runtime clean `npm ci` + build + preview at `/chess-web/`; real GitHub Actions run on PR #36 (`verify` pass, `secrets` pass, `deploy` skipped) · 4 NOTEs · time lost: first engineer stalled (10 min no output during a mutation check) and was re-dispatched once into the same worktree; the re-dispatch found the leftover mutation in the workflow's deploy `if`, restored it, and kept a real test fix (`f743836`)
+  - D1: medium · test-first yes (one test green from the start, proven by a deliberate doc break) · runtime `npm ci` + build + preview at `/chess-web/`, 32 pieces, no console messages · 2 NOTEs · time lost ~5 min (regex escaping in a test)
+  - Wave fixes: none. Stalls: 1 (C1, re-dispatched once). CI on both wave PRs: `verify` + `secrets` pass, `deploy` skipped.
+- **Agent context at hand-back:** ~215k tokens (sprint-planner 71k, C1 re-dispatch 66k, D1 78k; the stalled C1 run reported none) — each agent's final context size, not tokens billed.
