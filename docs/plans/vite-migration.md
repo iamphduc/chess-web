@@ -2,7 +2,7 @@
 
 _Generated: 2026-10-03 · Status: active · Grilled-with: pod (fast)_
 
-<!-- autopilot-run: started=2026-10-04T06:58:18Z sprints=0 waves=0 -->
+<!-- autopilot-run: started=2026-10-04T06:58:18Z sprints=1 waves=3 -->
 
 ## Goal
 Replace Create React App (`react-scripts`) with Vite, and build, test and deploy the site from GitHub Actions instead of a local `gh-pages` script. The app must look and play exactly as it does today.
@@ -35,7 +35,7 @@ CRA is no longer maintained ([Sunsetting Create React App](https://react.dev/blo
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| vite-switch | App runs, tests and builds on Vite 8 + Vitest 5 locally, with the same behavior. CRA is removed, plain `npm install` works, and docs are updated. | planned | — |
+| vite-switch | App runs, tests and builds on Vite 8 + Vitest 5 locally, with the same behavior. CRA is removed, plain `npm install` works, and docs are updated. | done | — |
 | ci-deploy | GitHub Actions runs PR checks and deploys `main` to GitHub Pages. The local `gh-pages` script is removed and the live site passes the smoke playthrough. | planned | vite-switch |
 
 ## Look

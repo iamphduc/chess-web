@@ -1,8 +1,8 @@
 # Sprint: Vite switch
 
-_From plan: docs/plans/vite-migration.md · Slug: vite-switch · Status: active · Generated: 2026-10-04_
+_From plan: docs/plans/vite-migration.md · Slug: vite-switch · Status: archived · Generated: 2026-10-04_
 
-<!-- autopilot-run: started=2026-10-04T06:58:18Z sprints=0 waves=3 -->
+<!-- autopilot-run: started=2026-10-04T06:58:18Z sprints=1 waves=3 -->
 
 ## Status board
 
@@ -10,7 +10,7 @@ _From plan: docs/plans/vite-migration.md · Slug: vite-switch · Status: active 
 |------|-------|-------|--------|----|--------|------------|------------|
 | 1 | A1 | Replace the `require()` avatar lookup with a static, tested map | vite-switch-A1 | #33 | merged | high | — |
 | 2 | V1 | Swap CRA for Vite 8 + Vitest 5 in one `vite.config.ts`; plain `npm install` | vite-switch-V1 | #34 | merged | medium | A1 |
-| 3 | D1 | Update `docs/codebase-structure.md` (+ decisions entry) for Vite and the post-cutover engine | vite-switch-D1 | — | in-progress | — | V1 |
+| 3 | D1 | Update `docs/codebase-structure.md` (+ decisions entry) for Vite and the post-cutover engine | vite-switch-D1 | #35 | merged | medium | V1 |
 
 Plan branch: `vite-migration`. Wave heads: `vite-switch-w1`, `vite-switch-w2`, `vite-switch-w3`.
 
@@ -117,3 +117,15 @@ Why it runs in order: `package.json` and `package-lock.json` change in one slice
   - `[test] decisions.md has an entry heading mentioning Vite — tests/docs.test.ts › decisions records the vite switch`
 - **Depends on:** V1
 - **One-way door:** none
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date (first sprint; `vite-migration` cut from `origin/main` 301e649).
+- **Slices shipped:** A1, V1, D1 (wave PRs #33, #34, #35 into `vite-migration`).
+- **Queue entries:** resolved 4 (`@types/node` / `--legacy-peer-deps`, the baseUrl-alias-under-Vitest note, per-worktree `--legacy-peer-deps` install, the cutover's `vitest.config.ts` alias); deferred 2 — the Vite CommonJS-config warning (for `ci-deploy`) and the stale `engineAdapter.ts` header comment (see `docs/handoff-queue.md`, 2026-10-04).
+- **Slice log:**
+  - A1: high · test-first yes · runtime dev server, both avatars load, Play, no console errors · 0 NOTEs · time lost none
+  - V1: medium · test-first partly — one test commit also carried file moves (staging slip, no force-push); the svg-mock test was already green and was proven by mutation · runtime production preview + dev under `/chess-web/`, full playthrough (castle, en passant, promotion, checkmate, reset across two games) · 6 NOTEs (incl. an SVG data-URL inlining regression found and fixed in-slice) · time lost none
+  - D1: medium · test-first yes · runtime preview + dev from the new recipe, 32 pieces, e2–e4 drag · 3 NOTEs · time lost none
+  - Wave fixes: none. Stalls: none. Orchestrator wave checks: wave 1 dev server on :3001 (port 3000 held by an unrelated app); wave 2 production preview on :3001 with e2–e4 dragged via the browser tool; wave 3 build + tests. Two known issues recorded: `docs/known-issues/windows-server-teardown.md`, `docs/known-issues/browser-smoke-drag.md`.
+- **Agent context at hand-back:** ~352k tokens (sprint-planner 80k, A1 58k, V1 126k, D1 88k) — each agent's final context size, not tokens billed.
