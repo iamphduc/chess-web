@@ -49,9 +49,16 @@ describe("production build", () => {
     expect(files.length).toBeGreaterThan(0);
     const js = files.map((f) => readFileSync(f, "utf8")).join("\n");
     expect(js).not.toContain("svg-mock");
-    // 6 piece kinds x 2 colours, emitted as files or inlined as data URLs
-    const emitted = readdirSync(join(outDir, "assets")).filter((f) => f.endsWith(".svg")).length;
-    const inlined = (js.match(/data:image\/svg\+xml/g) ?? []).length;
-    expect(emitted + inlined).toBeGreaterThanOrEqual(12);
+    const emitted = readdirSync(join(outDir, "assets")).filter((f) => f.endsWith(".svg"));
+    // 6 piece kinds x 2 colours
+    expect(emitted).toHaveLength(12);
+  });
+
+  it("svgs are emitted as files, never inlined as data URLs", () => {
+    // Piece.tsx puts the URL in an unquoted CSS url(...); an inlined
+    // data:image/svg+xml URL has quotes and spaces, so the piece renders blank.
+    expect(build.status, `${build.stdout}\n${build.stderr}`).toBe(0);
+    const js = jsFiles(outDir).map((f) => readFileSync(f, "utf8")).join("\n");
+    expect(js).not.toContain("data:image/svg+xml");
   });
 });
