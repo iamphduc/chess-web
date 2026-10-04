@@ -1,6 +1,6 @@
 # Plan: Move from Create React App to Vite
 
-_Generated: 2026-10-03 · Status: active · Grilled-with: pod (fast)_
+_Generated: 2026-10-03 · Status: archived · Grilled-with: pod (fast)_
 
 <!-- autopilot-run: started=2026-10-04T06:58:18Z sprints=1 waves=3 -->
 
