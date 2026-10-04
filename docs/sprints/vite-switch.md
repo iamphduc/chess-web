@@ -2,14 +2,14 @@
 
 _From plan: docs/plans/vite-migration.md · Slug: vite-switch · Status: active · Generated: 2026-10-04_
 
-<!-- autopilot-run: started=2026-10-04T06:58:18Z sprints=0 waves=1 -->
+<!-- autopilot-run: started=2026-10-04T06:58:18Z sprints=0 waves=2 -->
 
 ## Status board
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | A1 | Replace the `require()` avatar lookup with a static, tested map | vite-switch-A1 | — | in-progress | — | — |
-| 2 | V1 | Swap CRA for Vite 8 + Vitest 5 in one `vite.config.ts`; plain `npm install` | vite-switch-V1 | — | pending | — | A1 |
+| 1 | A1 | Replace the `require()` avatar lookup with a static, tested map | vite-switch-A1 | #33 | merged | high | — |
+| 2 | V1 | Swap CRA for Vite 8 + Vitest 5 in one `vite.config.ts`; plain `npm install` | vite-switch-V1 | — | in-progress | — | A1 |
 | 3 | D1 | Update `docs/codebase-structure.md` (+ decisions entry) for Vite and the post-cutover engine | vite-switch-D1 | — | pending | — | V1 |
 
 Plan branch: `vite-migration`. Wave heads: `vite-switch-w1`, `vite-switch-w2`, `vite-switch-w3`.
