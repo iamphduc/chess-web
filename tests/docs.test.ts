@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { parse } from "yaml";
 
 const ROOT = join(__dirname, "..");
 const read = (file: string) => readFileSync(join(ROOT, file), "utf8");
@@ -19,7 +20,15 @@ function section(doc: string, name: string): string {
 describe("docs", () => {
   it("codebase-structure has no stale CRA or pre-cutover text", () => {
     const doc = structure();
-    for (const stale of ["react-scripts", "--legacy-peer-deps", "not yet wired", "piece-moves.ts"]) {
+    for (const stale of [
+      "react-scripts",
+      "--legacy-peer-deps",
+      "not yet wired",
+      "piece-moves.ts",
+      "gh-pages.js",
+      "npm run deploy",
+      "loaded as CommonJS",
+    ]) {
       expect(doc.includes(stale), stale).toBe(false);
     }
     expect(doc.toLowerCase().includes("localhost"), "localhost").toBe(false);
@@ -74,5 +83,41 @@ describe("docs", () => {
   it("decisions records the vite switch", () => {
     // \bVite\b: "Vitest" in an older heading must not count.
     expect(read("docs/decisions.md")).toMatch(/^## .*\bVite\b/m);
+  });
+
+  it("CI section describes the workflow", () => {
+    const ci = section(structure(), "CI");
+    expect(ci.trim()).not.toMatch(/^None\b/);
+    expect(ci).toContain(".github/workflows/pod-ci.yml");
+    expect(existsSync(join(ROOT, ".github/workflows/pod-ci.yml"))).toBe(true);
+    for (const text of ["pull_request", "main", "Node 24", "https://iamphduc.github.io/chess-web/"]) {
+      expect(ci.includes(text), text).toBe(true);
+    }
+  });
+
+  it("CI section lists the human setup", () => {
+    const ci = section(structure(), "CI");
+    expect(ci).toMatch(/Pages.*Source.*"GitHub Actions"/);
+  });
+
+  it("documented verification matches CI", () => {
+    const recipe = section(structure(), "Smoke recipe");
+    const m = /Verification:\*\*\s*`([^`]+)`/.exec(recipe);
+    expect(m, "Verification: command in the smoke recipe").not.toBeNull();
+    const workflow = parse(read(".github/workflows/pod-ci.yml"));
+    const runs: string[] = (workflow.jobs.verify.steps as { run?: string }[])
+      .filter((step) => typeof step.run === "string")
+      .map((step) => step.run!.trim());
+    expect(runs).toContain(m![1].trim());
+  });
+
+  it("decisions records the actions deploy", () => {
+    expect(read("docs/decisions.md")).toMatch(/^## (?=.*GitHub Actions)(?=.*\bPages\b).*$/m);
+  });
+
+  it("engineAdapter header has no stale alias note", () => {
+    const src = read("src/features/board/engineAdapter.ts");
+    expect(src.includes("baseUrl"), "baseUrl").toBe(false);
+    expect(src.includes("does not resolve"), "does not resolve").toBe(false);
   });
 });
