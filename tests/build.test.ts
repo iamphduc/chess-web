@@ -54,6 +54,12 @@ describe("production build", () => {
     expect(emitted).toHaveLength(12);
   });
 
+  it("config loads as ESM without a CommonJS warning", () => {
+    expect(build.status, `${build.stdout}\n${build.stderr}`).toBe(0);
+    const lines = `${build.stdout}\n${build.stderr}`.split(/\r?\n/);
+    expect(lines.filter((l) => l.includes("CommonJS") && l.includes("vite.config"))).toEqual([]);
+  });
+
   it("svgs are emitted as files, never inlined as data URLs", () => {
     // Piece.tsx puts the URL in an unquoted CSS url(...); an inlined
     // data:image/svg+xml URL has quotes and spaces, so the piece renders blank.
