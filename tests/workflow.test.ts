@@ -86,8 +86,10 @@ describe("pod-ci workflow", () => {
     // both come after the verification step, so a red build uploads nothing
     const s = steps("verify");
     const verification = s.findIndex((x) => x.run?.trim() === verificationCommand());
-    expect(s.indexOf(configure!)).toBeGreaterThan(verification);
-    expect(s.indexOf(upload!)).toBeGreaterThan(verification);
+    const at = (action: string) => s.findIndex((x) => x.uses?.split("@")[0] === action);
+    expect(verification).toBeGreaterThanOrEqual(0);
+    expect(at("actions/configure-pages")).toBeGreaterThan(verification);
+    expect(at("actions/upload-pages-artifact")).toBeGreaterThan(verification);
   });
 
   it("secrets job scans the full history with gitleaks", () => {
