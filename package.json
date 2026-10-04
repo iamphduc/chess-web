@@ -1,15 +1,12 @@
 {
   "name": "chess-web",
   "version": "0.1.0",
-  "homepage": ".",
   "private": true,
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.3",
-    "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.11.47",
+    "@types/node": "^24.19.1",
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
     "framer-motion": "^7.3.5",
@@ -19,40 +16,23 @@
     "react-dom": "^18.2.0",
     "react-icons": "^4.4.0",
     "react-redux": "^8.0.2",
-    "react-scripts": "5.0.1",
-    "typescript": "^4.7.4",
+    "typescript": "^5.9.3",
     "uuid": "^9.0.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
     "test": "vitest run",
-    "eject": "react-scripts eject",
     "deploy": "node gh-pages.js",
     "predeploy": "npm run build"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
   "devDependencies": {
     "@types/uuid": "^9.0.0",
+    "@vitejs/plugin-react": "^6.1.1",
     "gh-pages": "^5.0.0",
-    "vitest": "^2.1.9"
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
   }
 }
