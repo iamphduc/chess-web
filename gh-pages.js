@@ -1,7 +1,7 @@
 const ghpages = require("gh-pages");
 
 ghpages.publish(
-  "build",
+  "dist",
   {
     branch: "gh-pages",
     repo: "https://github.com/iamphduc/chess-web.git",
