@@ -28,8 +28,8 @@ A client-side chess web app: Vite + React 18 + TypeScript + Redux Toolkit, deplo
 - **SVGs:** never inlined (`build.assetsInlineLimit` returns `false` for `.svg`), because `Piece.tsx` and `Promotion.tsx` put image URLs in an unquoted CSS `url(...)` that a `data:` URL breaks.
 - **Tests:** Vitest with `environment: 'node'` (no jsdom, no component tests). Tests live in `__tests__/` folders under `src/` (they run through the app's own imports and aliases) and in the root `tests/` folder (tests that read files or run processes with Node APIs; `tsconfig` gives `src/` only `vite/client` types).
 - **SVG mock:** under Vitest only, every `*.svg` import resolves to `src/__mocks__/svgMock.ts` (default export `"svg-mock"`). The production build bundles the real SVGs.
-- **Known warning:** Vite 8 prints "ESM syntax in a file loaded as CommonJS (vite.config.ts)" on every run. It is harmless; it goes away when the `ci-deploy` sprint removes the CommonJS `gh-pages.js`.
-- **Deploy (until `ci-deploy`):** `npm run deploy` builds (through `predeploy`), then `gh-pages.js` pushes `dist/` to the `gh-pages` branch.
+- **ESM package:** `package.json` has `"type": "module"`, so any Node script at the repo root must be ESM or be named `.cjs`.
+- **Deploy:** GitHub Actions builds and publishes `dist/` to GitHub Pages on push to `main`; there is no local deploy script. See `## CI`.
 
 ## Smoke recipe
 
@@ -47,4 +47,15 @@ The app is a static single-page client; there is no server, database or login to
 
 ## CI
 
-None. The `ci-deploy` sprint adds a GitHub Actions workflow (typecheck, test and build on PRs; deploy to Pages on push to `main`).
+One GitHub Actions workflow: `.github/workflows/pod-ci.yml`.
+
+- **Triggers:** every `pull_request` (any target branch, including wave PRs into a plan branch), and `push` to `main` only. Pushes to other branches don't run it. To deploy again, re-run the `main` push run from the Actions tab.
+- **`verify`:** Node 24 (`actions/setup-node`, npm cache), `npm ci`, then the smoke recipe's **Verification:** command (`npm run build && npm test`; `build` runs `tsc --noEmit`, so this is typecheck, build and tests). On a push to `main` it then uploads `dist/` as the Pages artifact; on a PR it uploads nothing.
+- **`secrets`:** gitleaks (`gitleaks/gitleaks-action@v2`) scans the full git history (`fetch-depth: 0`).
+- **`deploy`:** runs only on push to `main`, after both `verify` and `secrets` pass. It publishes `dist/` to `https://iamphduc.github.io/chess-web/` with `actions/deploy-pages`, in the `github-pages` environment. Only this job can write (`pages: write`, `id-token: write`); the rest are `contents: read`. Deploys queue (concurrency group `pages`) and never cancel each other. On a PR it shows as skipped.
+- Actions are pinned to major tags (`@vN`). The only secret used is `GITHUB_TOKEN`.
+
+**Human setup** (agents don't change repo settings):
+
+- Before the first deploy from `main`: repo Settings → Pages → Source → "GitHub Actions". Until then Pages keeps serving the old `gh-pages` branch, and the `deploy` job fails. Rollback: switch Source back to the `gh-pages` branch.
+- Decide whether `verify` and `secrets` become required status checks on `main`.
