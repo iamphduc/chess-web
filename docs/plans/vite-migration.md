@@ -2,6 +2,8 @@
 
 _Generated: 2026-10-03 · Status: active · Grilled-with: pod (fast)_
 
+<!-- autopilot-run: started=2026-10-04T06:58:18Z sprints=0 waves=0 -->
+
 ## Goal
 Replace Create React App (`react-scripts`) with Vite, and build, test and deploy the site from GitHub Actions instead of a local `gh-pages` script. The app must look and play exactly as it does today.
 
