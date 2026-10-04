@@ -25,9 +25,11 @@ describe("vite toolchain", () => {
       build: "tsc --noEmit && vite build",
       preview: "vite preview",
       test: "vitest run",
-      deploy: "node gh-pages.js",
-      predeploy: "npm run build",
     });
+    expect(p.type).toBe("module");
+    expect(p.scripts.deploy).toBeUndefined();
+    expect(p.scripts.predeploy).toBeUndefined();
+    expect(deps["gh-pages"]).toBeUndefined();
   });
 
   it("dependency ranges match the plan", () => {
@@ -46,7 +48,7 @@ describe("vite toolchain", () => {
   });
 
   it("CRA-era files are removed", () => {
-    for (const file of ["vitest.config.ts", "public/index.html", "src/react-app-env.d.ts"]) {
+    for (const file of ["vitest.config.ts", "public/index.html", "src/react-app-env.d.ts", "gh-pages.js"]) {
       expect(existsSync(join(ROOT, file)), file).toBe(false);
     }
   });
@@ -76,7 +78,6 @@ describe("vite toolchain", () => {
   it("build output is dist", () => {
     const ignored = read(".gitignore").split(/\r?\n/).map((l) => l.trim());
     expect(ignored).toContain("/dist");
-    expect(read("gh-pages.js")).toMatch(/publish\(\s*"dist"/);
   });
 
   it("dependency tree is clean without legacy peer deps", () => {
