@@ -35,7 +35,7 @@ Constraint: keep the app's current look (dark page, white pill for the side to m
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| ticking-clock | Drift-free countdown plus the chess.com-style ticking icon, low-time stages, reduced motion and the screen-reader alert | planned | — |
+| ticking-clock | Drift-free countdown plus the chess.com-style ticking icon, low-time stages, reduced motion and the screen-reader alert | done | — |
 
 Status values: `planned` / `active` / `done`. The orchestrator only flips its row's Status — it does not rewrite Goal/Depends-on retroactively.
 

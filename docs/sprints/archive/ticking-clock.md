@@ -1,8 +1,8 @@
 # Sprint: Ticking clock
 
-_From plan: docs/plans/animated-clock.md · Slug: ticking-clock · Status: active · Generated: 2026-10-05_
+_From plan: docs/plans/animated-clock.md · Slug: ticking-clock · Status: archived · Generated: 2026-10-05_
 
-<!-- autopilot-run: started=2026-10-05T07:34:17Z sprints=0 waves=1 -->
+<!-- autopilot-run: started=2026-10-05T07:34:17Z sprints=1 waves=2 -->
 
 ## Status board
 
@@ -10,7 +10,7 @@ _From plan: docs/plans/animated-clock.md · Slug: ticking-clock · Status: activ
 |------|-------|-------|--------|----|--------|------------|------------|
 | 1 | L1 | Look: clock color tokens and Quicksand 700 | ticking-clock-L1 | merged | done | high | — |
 | 1 | T1 | Pure clock math: drift-free countdown, format, stage, hand angle, tick cadence, alert | ticking-clock-T1 | merged | done | high | — |
-| 2 | C1 | Ticking clock UI: inline SVG icon, low-time pill, timer role, Player rewrite, features row | ticking-clock-C1 | — | pending | — | L1, T1 |
+| 2 | C1 | Ticking clock UI: inline SVG icon, low-time pill, timer role, Player rewrite, features row | ticking-clock-C1 | merged | done | medium | L1, T1 |
 
 Plan branch: `animated-clock`. Wave heads: `ticking-clock-w1`, `ticking-clock-w2`.
 
@@ -124,3 +124,16 @@ The icon draws in `currentColor`, so it follows the pill's ink. Existing variabl
 - **One-way door:** none
 
 Note for C1: after this slice `react-icons` has no importer left. Removing it changes `package.json` and the lockfile and is outside the plan, so leave it and add a PENDING suggesting the cleanup. The low-time 0.0 and red pill can't be reached in a real 10-minute browser run; the `player-clock` tests cover them (plan risk).
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date (first sprint of the plan, cut from `origin/main` at preflight)
+- **Slices shipped:** L1, T1, C1 (wave PRs #41, #42)
+- **Queue entries:** resolved 0, deferred 3: stalemate-shows-win (Fix next), Quicksand real bold (Needs your decision), `react-icons` unused (Someday). See `docs/handoff-queue.md`, 2026-10-05.
+- **Slice log:**
+  - L1: high · test-first yes · runtime dev server, font + token evals, desktop and 375 px screenshots · 1 NOTE · time lost none
+  - T1: high · test-first yes · runtime build + dev server 200 (no UI) · 5 NOTEs · time lost none (used `git worktree remove --force` at teardown; recorded `docs/known-issues/worktree-remove-untracked.md`)
+  - C1: medium (Firefox not checked) · test-first yes · runtime tick sampling, turn switch by drag, low time via shifted `Date.now`, reduced motion via Chrome flag, desktop and 375 px · 3 NOTEs · time lost ~2 min hung heredoc, drag workaround for stale refs
+  - Orchestrator: L1 trimmed before dispatch (font self-hosting cut). No wave fixes, no stalls.
+  - Teardown: the permission system refused `git clean -fdX`, so worktrees `ticking-clock-w1` and `ticking-clock-C1` remain on disk (merged and pushed; branches deleted on origin).
+- **Agent context at hand-back:** 332,868 tokens (sprint-planner 75,374 + L1 74,876 + T1 62,364 + C1 120,254), *each agent's final context size, not tokens billed*
