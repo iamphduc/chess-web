@@ -75,3 +75,7 @@ export const Player = ({ name, title, avatar, isWhite }: Props) => {
     </div>
   );
 };
+
+// Stubs so the new tests fail on assertions; real versions come next.
+export const clockForPhase = (_phase: string, clock: unknown, _now: number): unknown => clock;
+export const msUntilNextTick = (_ms: number, interval: number): number => interval;
