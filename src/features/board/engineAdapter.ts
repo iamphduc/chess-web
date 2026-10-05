@@ -18,9 +18,9 @@ import { GameOverType } from "./components/GameOver";
  * {@link Move}s. Notation, `lastMoves` highlighting and the fallen-pieces list
  * stay reducer-side and are NOT computed here.
  *
- * Engine modules are imported via RELATIVE paths (not the `game/...` baseUrl
- * alias) so the Vitest reducer-wiring graph — which does not resolve the tsconfig
- * `baseUrl` — can pull this module in through the slice.
+ * Engine modules are imported via relative paths. They are kept as they are;
+ * the bare-import prefixes (`game/...` and the rest) now resolve everywhere —
+ * dev, build and Vitest — so either style works.
  */
 
 /**
