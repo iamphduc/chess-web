@@ -1,6 +1,6 @@
 # Plan: Animated clock
 
-_Generated: 2026-10-05 · Status: active · Grilled-with: grilling (fast)_
+_Generated: 2026-10-05 · Status: archived · Grilled-with: grilling (fast)_
 
 ## Goal
 Make the running player's clock visibly tick: replace the static `BsClockHistory` icon with a small clock face whose hand steps forward once a second, in a chess.com-like style, with low-time warnings. Fix the countdown so it stays accurate, so the icon and the digits never fall out of step.

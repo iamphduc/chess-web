@@ -132,8 +132,8 @@ Note for C1: after this slice `react-icons` has no importer left. Removing it ch
 - **Queue entries:** resolved 0, deferred 3: stalemate-shows-win (Fix next), Quicksand real bold (Needs your decision), `react-icons` unused (Someday). See `docs/handoff-queue.md`, 2026-10-05.
 - **Slice log:**
   - L1: high · test-first yes · runtime dev server, font + token evals, desktop and 375 px screenshots · 1 NOTE · time lost none
-  - T1: high · test-first yes · runtime build + dev server 200 (no UI) · 5 NOTEs · time lost none (used `git worktree remove --force` at teardown; recorded `docs/known-issues/worktree-remove-untracked.md`)
+  - T1: high · test-first yes · runtime build + dev server 200 (no UI) · 5 NOTEs · time lost none (used `git worktree remove --force` at teardown; recorded `docs/known-issues/worktree-remove.md`)
   - C1: medium (Firefox not checked) · test-first yes · runtime tick sampling, turn switch by drag, low time via shifted `Date.now`, reduced motion via Chrome flag, desktop and 375 px · 3 NOTEs · time lost ~2 min hung heredoc, drag workaround for stale refs
   - Orchestrator: L1 trimmed before dispatch (font self-hosting cut). No wave fixes, no stalls.
-  - Teardown: the permission system refused `git clean -fdX`, so worktrees `ticking-clock-w1` and `ticking-clock-C1` remain on disk (merged and pushed; branches deleted on origin).
+  - Teardown: the permission system refused `git clean -fdX`; a plain `git worktree remove` then worked for every worktree (ignored `node_modules` doesn't block it). Known issue corrected: `docs/known-issues/worktree-remove.md`.
 - **Agent context at hand-back:** 332,868 tokens (sprint-planner 75,374 + L1 74,876 + T1 62,364 + C1 120,254), *each agent's final context size, not tokens billed*
