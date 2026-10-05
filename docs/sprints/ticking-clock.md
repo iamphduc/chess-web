@@ -2,14 +2,14 @@
 
 _From plan: docs/plans/animated-clock.md · Slug: ticking-clock · Status: active · Generated: 2026-10-05_
 
-<!-- autopilot-run: started=2026-10-05T07:34:17Z sprints=0 waves=0 -->
+<!-- autopilot-run: started=2026-10-05T07:34:17Z sprints=0 waves=1 -->
 
 ## Status board
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | L1 | Look: clock color tokens and Quicksand 700 | ticking-clock-L1 | — | pending | — | — |
-| 1 | T1 | Pure clock math: drift-free countdown, format, stage, hand angle, tick cadence, alert | ticking-clock-T1 | — | pending | — | — |
+| 1 | L1 | Look: clock color tokens and Quicksand 700 | ticking-clock-L1 | merged | done | high | — |
+| 1 | T1 | Pure clock math: drift-free countdown, format, stage, hand angle, tick cadence, alert | ticking-clock-T1 | merged | done | high | — |
 | 2 | C1 | Ticking clock UI: inline SVG icon, low-time pill, timer role, Player rewrite, features row | ticking-clock-C1 | — | pending | — | L1, T1 |
 
 Plan branch: `animated-clock`. Wave heads: `ticking-clock-w1`, `ticking-clock-w2`.
