@@ -262,7 +262,11 @@ export const boardSlice = createSlice({
 
     stop: (state) => {
       state.isPlaying = false;
-      state.gameOver = GameOverType.Win;
+      // A flag fall ends a game still in progress as a win for the other side;
+      // a checkmate or stalemate result already set by the move is kept.
+      if (state.gameOver === GameOverType.Continue) {
+        state.gameOver = GameOverType.Win;
+      }
     },
 
     reset: () => {
