@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap");
 
 :root {
   --background: #fff;
@@ -8,6 +8,14 @@
   --dark-text: #fff;
   --dark-title: #595959;
   --dark-surface: rgba(0, 0, 0, 0.24);
+
+  /* Player clocks (ink on bg). The low pair is ~3.96:1: large digits and icon only. */
+  --clock-waiting-bg: #474747;
+  --clock-waiting-ink: #FFFFFF;
+  --clock-running-bg: #FFFFFF;
+  --clock-running-ink: #1C1C1C;
+  --clock-low-bg: #D9534F;
+  --clock-low-ink: #FFFFFF;
 }
 
 body {
