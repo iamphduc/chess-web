@@ -13,7 +13,7 @@ const render = (remainingMs: number, isActive = true, playerName = "Me") =>
 function timerTag(html: string): string {
   const tags = html.match(/<[a-z]+[^>]*role="timer"[^>]*>/g) ?? [];
   expect(tags, "exactly one timer").toHaveLength(1);
-  return tags[0];
+  return tags[0] ?? "";
 }
 
 function timerClasses(html: string): string[] {
@@ -50,7 +50,7 @@ function timerElement(html: string): string {
 function alertText(html: string): string {
   const all = html.match(/<([a-z]+)[^>]*role="alert"[^>]*>([^<]*)<\/\1>/g) ?? [];
   expect(all, "exactly one alert").toHaveLength(1);
-  return all[0].replace(/<[^>]+>/g, "");
+  return (all[0] ?? "").replace(/<[^>]+>/g, "");
 }
 
 describe("PlayerClock", () => {
