@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clock Look Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Azeret+Mono:wght@500;600&family=Red+Hat+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page: #333333;
+    --pill-off: #474747;
+    --pill-on: #ffffff;
+    --ink: #1c1c1c;
+    --soft: #b8b8b8;
+    --play: #059862;
+    --reset: #d9534f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: #fff;
+    font: 500 16px/1.5 "Quicksand", sans-serif;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-size: 2rem; margin: 0 0 4px; }
+  .intro { color: var(--soft); max-width: 68ch; margin: 0 0 12px; }
+  .toggle { display: inline-flex; gap: 8px; align-items: center; color: var(--soft); cursor: pointer; }
+  nav.jump { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; }
+  nav.jump a { color: #fff; background: var(--pill-off); padding: 6px 14px; border-radius: 6px; text-decoration: none; }
+  nav.jump a:hover { background: #555; }
+  nav.jump a:focus-visible, .button:focus-visible, .toggle input:focus-visible { outline: 2px solid #8ab4f8; outline-offset: 2px; }
+
+  section.dir { margin-top: 56px; padding-top: 24px; border-top: 1px solid #4a4a4a; }
+  .dir-head { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: baseline; }
+  .letter { font-size: 3rem; font-weight: 700; line-height: 1; grid-row: span 2; }
+  .dir-head h2 { margin: 0; font-size: 1.5rem; }
+  .thesis { margin: 0; color: var(--soft); max-width: 70ch; }
+  .detail { margin: 12px 0 0; max-width: 70ch; }
+  h3 { font-size: 1rem; color: var(--soft); margin: 32px 0 12px; font-weight: 600; }
+
+  .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+  .sw { width: 116px; }
+  .sw i { display: block; height: 48px; border-radius: 6px; border: 1px solid #555; }
+  .sw b { display: block; font-size: 13px; margin-top: 6px; }
+  .sw span { font-size: 13px; color: var(--soft); }
+
+  .type-row { display: flex; align-items: baseline; gap: 16px; padding: 6px 0; border-bottom: 1px solid #404040; }
+  .type-row small { width: 140px; flex: none; color: var(--soft); font-size: 13px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+  .cell small { display: block; color: var(--soft); font-size: 13px; margin-top: 8px; }
+
+  /* App controls, copied from Button.css */
+  .button { padding: 10px 20px; font: 700 16px "Quicksand", sans-serif; border: none; border-radius: 6px; color: #fff; background: rgba(0,0,0,.24); cursor: pointer; }
+  .button:hover, .button.is-hover { filter: brightness(.8); }
+  .button.is-pressed { filter: brightness(.7); transform: translateY(1px); }
+  .button.is-focus { outline: 2px solid #8ab4f8; outline-offset: 2px; }
+  .button--play { background: var(--play); }
+  .button--reset { background: var(--reset); }
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .btn-row small { width: 72px; color: var(--soft); font-size: 13px; }
+
+  /* Clock pill, based on Player.css */
+  .pill {
+    display: inline-flex; align-items: center; gap: 14px;
+    padding: 2px 10px; border-radius: 6px; font-size: 1.5rem;
+    background: var(--pill-off); color: #fff;
+  }
+  .pill.on { background: var(--pill-on); color: var(--ink); }
+  .pill .t { font-family: var(--digits); font-weight: var(--digits-weight, 600); font-variant-numeric: tabular-nums; min-width: 4.2ch; text-align: right; }
+  .pill svg { width: 28px; height: 28px; flex: none; overflow: visible; }
+  .pill.wide svg { width: 42px; height: 34px; }
+  .pill.low .t { color: var(--warn); }
+  .pill.crit .t { color: var(--crit); }
+  .pill.out { background: var(--crit); color: #fff; }
+
+  /* Picked: chess.com style (plan reading) */
+  .P { --digits: "Quicksand", sans-serif; --digits-weight: 700; --hand: currentColor; --warn: #fff; --crit: #fff; }
+  .P .hand { transform-origin: 12px 12px; transition: none; }
+  .P .pill.low, .P .pill.crit, .P .pill.out { background: #d9534f; color: #fff; }
+  .P .pill.low .t, .P .pill.crit .t { color: #fff; }
+  section.P { border-top: 2px solid #d9534f; }
+
+  /* A: quartz tick */
+  .A { --digits: "Quicksand", sans-serif; --digits-weight: 700; --hand: #059862; --warn: #b7791f; --crit: #d9534f; }
+  .A .hand { transform-origin: 12px 12px; transition: transform .22s cubic-bezier(.3, 1.9, .55, 1); }
+  .A .low .rim { stroke: var(--warn); }
+  .A .low .hand { stroke: var(--warn); }
+  .A .crit .rim, .A .crit .hand { stroke: var(--crit); }
+  .A .out .rim, .A .out .hand { stroke: #fff; }
+
+  /* B: flag fall */
+  .B { --digits: "Azeret Mono", monospace; --digits-weight: 600; --case: #6b4a2e; --flag: #c8102e; --warn: #b7791f; --crit: #c8102e; }
+  .B .hand { transform-origin: var(--o); transition: transform .12s ease-out; }
+  .B .flag { transform-origin: 9px 7.6px; transition: transform .4s ease-in-out; }
+  .B .crit .flag { animation: wobble .5s ease-in-out infinite alternate; }
+  @keyframes wobble { from { transform: rotate(4deg); } to { transform: rotate(-6deg); } }
+
+  /* C: sixty beads */
+  .C { --digits: "Red Hat Mono", monospace; --digits-weight: 600; --bead: #2f6fd0; --bead-off: rgba(0,0,0,.12); --warn: #b7791f; --crit: #d9534f; }
+  .C .pill:not(.on) { --bead-off: rgba(255,255,255,.14); --bead: #9fb9e6; }
+  .C .bead { fill: var(--bead-off); transition: fill .3s; }
+  .C .bead.lit { fill: var(--bead); }
+  .C .low .bead.lit { fill: var(--warn); }
+  .C .crit .bead.lit { fill: var(--crit); animation: breathe 1s ease-in-out infinite; }
+  .C .out .bead { fill: rgba(255,255,255,.35); }
+  @keyframes breathe { 50% { opacity: .45; } }
+
+  body.frozen .hand, body.frozen .flag, body.frozen .bead { transition: none !important; animation: none !important; }
+
+  /* Screens */
+  .screens { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .frame { border: 1px solid #555; border-radius: 10px; padding: 16px; background: var(--page); }
+  .frame-label { color: var(--soft); font-size: 13px; margin: 0 0 8px; }
+  .desk { display: flex; gap: 16px; align-items: flex-start; }
+  .board { aspect-ratio: 1; background: conic-gradient(#b58863 25%, #f0d9b5 0 50%, #b58863 0 75%, #f0d9b5 0) 0 0 / 25% 25%; border-radius: 4px; flex: none; }
+  .desk .board { width: 300px; }
+  .side { width: 260px; display: flex; flex-direction: column; gap: 8px; }
+  .player { display: flex; justify-content: space-between; align-items: center; }
+  .who { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+  .avatar { width: 32px; height: 32px; border-radius: 4px; background: #6d6d6d; }
+  .title-badge { background: #8b0000; font-size: .75rem; padding: 1px 4px; border-radius: 4px; }
+  .notation { background: rgba(0,0,0,.24); border-radius: 6px; padding: 8px 10px; color: #ddd; font-size: 14px; min-height: 64px; }
+  .phone { width: 375px; max-width: 100%; }
+  .phone .board { width: 100%; margin: 8px 0; }
+  .phone .pill { font-size: 1.25rem; }
+  .phone .pill svg { width: 24px; height: 24px; }
+  .phone .pill.wide svg { width: 36px; height: 29px; }
+  .side .pill, .phone .pill { gap: 10px; }
+  @media (max-width: 720px) {
+    .desk { flex-direction: column; }
+    .desk .board, .side { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Clock look: your pick, then the three drafts</h1>
+  <p class="intro">Every option keeps the app as it is: dark page, white pill for the side to move, Quicksand text, green Play and red Reset. What changes is the clock icon, how it moves each second, and how it warns at low time (under 20s, then tenths under 10s). The demos below are live.</p>
+  <label class="toggle"><input type="checkbox" id="freeze"> Show with reduced motion (how it looks when the OS asks for less motion)</label>
+  <nav class="jump"><a href="#P">Your pick · chess.com style</a><a href="#A">A · Quartz tick</a><a href="#B">B · Flag fall</a><a href="#C">C · Sixty beads</a></nav>
+  <div id="dirs"></div>
+</div>
+
+<script>
+const DIRS = [
+  {
+    id: "P", name: "Your pick: chess.com style",
+    thesis: "A plain, sporty game clock: a small round clock face beside bold digits. Its dark hand jumps a quarter turn each second (12, 3, 6, 9) on the side to move.",
+    detail: "This is the reading written into the plan. No colored hand, no bounce. Under 20s the whole running pill turns red with white text. Under 10s the digits show tenths (9.8), which is the one chess.com detail the research confirmed. At zero it shows 0.0 on red. The waiting clock never moves.",
+    palette: [["Page", "#333333"], ["Waiting pill", "#474747"], ["Running pill", "#FFFFFF"], ["Ink and hand", "#1C1C1C"], ["Low time pill", "#D9534F"], ["Text on red", "#FFFFFF"]],
+    fonts: "Digits: Quicksand 700 with even-width numbers (already in the app). Text: Quicksand 500.",
+    wide: false
+  },
+  {
+    id: "A", name: "Quartz tick",
+    thesis: "A watch dial whose green second hand clicks forward once a second, with a small overshoot and settle, like a quartz watch.",
+    detail: "The memorable part: the click. Under 20s the dial and digits turn amber. Under 10s they turn red and the hand ticks twice a second, so it feels faster without anything flashing. At 0:00 the pill turns red.",
+    palette: [["Page", "#333333"], ["Waiting pill", "#474747"], ["Running pill", "#FFFFFF"], ["Ink", "#1C1C1C"], ["Second hand", "#059862"], ["Low time", "#B7791F"], ["Out of time", "#D9534F"]],
+    fonts: "Digits: Quicksand 700 (already in the app). Text: Quicksand 500.",
+    wide: false
+  },
+  {
+    id: "B", name: "Flag fall",
+    thesis: "A tiny wooden tournament chess clock: two faces, a ticking hand on the running side, and the red flag real clocks drop at time-out.",
+    detail: "The memorable part: the flag. It rests on the dial, lifts during the last 10s and shakes gently, then falls when time runs out, just like \"flagging\" in over-the-board chess. Digits move to a mechanical monospace.",
+    palette: [["Page", "#333333"], ["Waiting pill", "#474747"], ["Running pill", "#FFFFFF"], ["Ink", "#1C1C1C"], ["Walnut case", "#6B4A2E"], ["Flag / out", "#C8102E"], ["Low time", "#B7791F"]],
+    fonts: "Digits: Azeret Mono 600. Text: Quicksand 500.",
+    wide: true
+  },
+  {
+    id: "C", name: "Sixty beads",
+    thesis: "The icon is a ring of 60 beads, one per second of the current minute. A bead goes dark every second, so you can see the minute drain away.",
+    detail: "The memorable part: the ring emptying clockwise. Under 20s the beads left turn amber. Under 10s they turn red and breathe slowly. With reduced motion the beads still go dark but nothing breathes.",
+    palette: [["Page", "#333333"], ["Waiting pill", "#474747"], ["Running pill", "#FFFFFF"], ["Ink", "#1C1C1C"], ["Bead", "#2F6FD0"], ["Low time", "#B7791F"], ["Out of time", "#D9534F"]],
+    fonts: "Digits: Red Hat Mono 600. Text: Quicksand 500.",
+    wide: false
+  }
+];
+
+const STATES = [
+  { key: "idle", label: "Before Play: still, full time", start: 600, live: false, on: false },
+  { key: "run", label: "Running: your turn", start: 598, live: true, on: true },
+  { key: "wait", label: "Opponent's turn: still", start: 452, live: false, on: false },
+  { key: "low", label: "Low time: under 20s", start: 19, live: true, on: true, loop: [19, 10] },
+  { key: "crit", label: "Critical: under 10s, tenths shown", start: 9.9, live: true, on: true, loop: [9.9, 0.1] },
+  { key: "out", label: "Out of time", start: 0, live: false, on: true },
+  { key: "reduced", label: "Running, reduced motion", start: 541, live: true, on: true, reduced: true }
+];
+
+function iconA() {
+  let ticks = "";
+  for (let i = 0; i < 12; i++) {
+    const a = i * Math.PI / 6, r1 = i % 3 ? 8 : 7, r2 = 9;
+    ticks += `<line x1="${12 + r1 * Math.sin(a)}" y1="${12 - r1 * Math.cos(a)}" x2="${12 + r2 * Math.sin(a)}" y2="${12 - r2 * Math.cos(a)}" stroke="currentColor" stroke-width="${i % 3 ? .8 : 1.4}" stroke-linecap="round" opacity=".7"/>`;
+  }
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="rim" cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.6"/>${ticks}<line class="hand" x1="12" y1="14" x2="12" y2="4" stroke="var(--hand)" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg>`;
+}
+function iconB() {
+  return `<svg viewBox="0 0 30 24" aria-hidden="true">
+    <rect x="6" y="2.6" width="6" height="2.2" rx="1" fill="var(--case)"/><rect x="18" y="1.2" width="6" height="3.6" rx="1" fill="var(--case)"/>
+    <rect x="1" y="4.6" width="28" height="18" rx="3" fill="var(--case)"/>
+    <circle cx="9" cy="13.6" r="6" fill="#fff" stroke="#1c1c1c" stroke-width=".8"/><circle cx="21" cy="13.6" r="6" fill="#fff" stroke="#1c1c1c" stroke-width=".8"/>
+    <line class="hand" style="--o: 9px 13.6px" x1="9" y1="14.6" x2="9" y2="8.8" stroke="#1c1c1c" stroke-width="1.1" stroke-linecap="round"/>
+    <line x1="21" y1="13.6" x2="23.6" y2="11.4" stroke="#1c1c1c" stroke-width="1.1" stroke-linecap="round"/>
+    <path class="flag" d="M9 7.6 L14.2 7.6 L14.2 10.4 Z" fill="var(--flag)"/>
+    <circle cx="9" cy="13.6" r=".9" fill="#1c1c1c"/><circle cx="21" cy="13.6" r=".9" fill="#1c1c1c"/></svg>`;
+}
+function iconC() {
+  let b = "";
+  for (let i = 0; i < 60; i++) {
+    const a = i * Math.PI / 30;
+    b += `<circle class="bead" data-i="${i}" cx="${(12 + 10.4 * Math.sin(a)).toFixed(2)}" cy="${(12 - 10.4 * Math.cos(a)).toFixed(2)}" r="${i % 5 ? .62 : .9}"/>`;
+  }
+  return `<svg viewBox="0 0 24 24" aria-hidden="true">${b}<circle cx="12" cy="12" r="1.6" fill="currentColor"/></svg>`;
+}
+const ICONS = { P: iconA, A: iconA, B: iconB, C: iconC };
+
+function fmt(t, dir) {
+  if (t <= 0 && dir === "P") return "0.0";
+  if (t <= 0) return "0:00";
+  if (t < 10) return t.toFixed(1);
+  const m = Math.floor(t / 60), s = Math.floor(t % 60);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+function cls(t, on) {
+  if (!on) return "";
+  if (t <= 0) return "on out";
+  if (t < 10) return "on crit";
+  if (t < 20) return "on low";
+  return "on";
+}
+function pill(dir, st, extra = "") {
+  return `<div class="pill ${dir.wide ? "wide" : ""} ${cls(st.start, st.on)}" data-dir="${dir.id}" data-t="${st.start}" ${st.live ? "data-live" : ""} ${st.loop ? `data-loop="${st.loop}"` : ""} ${st.reduced ? "data-reduced" : ""} data-on="${st.on ? 1 : 0}" ${extra}>${ICONS[dir.id]()}<span class="t">${fmt(st.start, dir.id)}</span></div>`;
+}
+
+function buttons() {
+  const rows = [["Default", ""], ["Hover", "is-hover"], ["Pressed", "is-pressed"], ["Focus", "is-focus"]];
+  return rows.map(([n, c]) => `<div class="btn-row"><small>${n}</small><button class="button button--play ${c}">Play</button><button class="button button--reset ${c}">Reset</button><button class="button ${c}">Undo</button></div>`).join("");
+}
+
+function sidebar(dir) {
+  return `
+    <div class="player"><div class="who"><span class="avatar"></span>Stockfish</div>${pill(dir, { start: 452, live: false, on: false })}</div>
+    <div class="notation">1. e4 e5 2. Nf3 Nc6 3. Bb5 a6</div>
+    <div class="btn-row" style="margin:0"><button class="button button--play">Play</button><button class="button button--reset">Reset</button></div>
+    <div class="player"><div class="who"><span class="avatar"></span><span class="title-badge">GM</span>You</div>${pill(dir, { start: 598, live: true, on: true })}</div>`;
+}
+
+function section(dir) {
+  const sw = dir.palette.map(([n, h]) => `<div class="sw"><i style="background:${h}"></i><b>${n}</b><span>${h}</span></div>`).join("");
+  const states = STATES.map(s => `<div class="cell">${pill(dir, s)}<small>${s.label}</small></div>`).join("");
+  return `<section class="dir ${dir.id}" id="${dir.id}">
+    <div class="dir-head"><span class="letter">${dir.id}</span><h2>${dir.name}</h2><p class="thesis">${dir.thesis}</p></div>
+    <p class="detail">${dir.detail}</p>
+    <h3>Palette</h3><div class="swatches">${sw}</div>
+    <h3>Type</h3><p class="intro" style="margin:0 0 8px">${dir.fonts}</p>
+    <div class="type-row"><small>Clock 24px</small><span style="font:var(--digits-weight) 24px var(--digits); font-variant-numeric: tabular-nums">09:58 · 0:19 · 7.4</span></div>
+    <div class="type-row"><small>Player name 15px</small><span style="font-weight:600;font-size:15px">Stockfish</span></div>
+    <div class="type-row"><small>Text 16px</small><span>1. e4 e5 2. Nf3 Nc6 3. Bb5 a6</span></div>
+    <div class="type-row"><small>Small 13px</small><span style="font-size:13px">Reset clears the board and both clocks</span></div>
+    <h3>Buttons (current app, unchanged)</h3>${buttons()}
+    <h3>Clock states</h3><div class="grid">${states}</div>
+    <h3>In the app</h3>
+    <div class="screens">
+      <div><p class="frame-label">Desktop</p><div class="frame desk"><div class="board"></div><div class="side">${sidebar(dir)}</div></div></div>
+      <div><p class="frame-label">Phone, 375px</p><div class="frame phone">
+        <div class="player"><div class="who"><span class="avatar"></span>Stockfish</div>${pill(dir, { start: 452, live: false, on: false })}</div>
+        <div class="board"></div>
+        <div class="player"><div class="who"><span class="avatar"></span>You</div>${pill(dir, { start: 14, live: true, on: true, loop: [19, 10] })}</div>
+      </div></div>
+    </div>
+  </section>`;
+}
+
+document.getElementById("dirs").innerHTML = DIRS.map(section).join("");
+
+// Live demo: each pill keeps its own time and steps its icon once per second.
+const pills = [...document.querySelectorAll(".pill[data-live]")].map(el => ({
+  el, dir: el.dataset.dir, t: parseFloat(el.dataset.t), loop: el.dataset.loop ? el.dataset.loop.split(",").map(Number) : null,
+  reduced: "reduced" in el.dataset, steps: 0
+}));
+document.querySelectorAll(".pill").forEach(el => paintStatic(el, parseFloat(el.dataset.t)));
+
+function paintStatic(el, t) {
+  const dir = el.dataset.dir, on = el.dataset.on === "1";
+  if (dir === "B") {
+    const flag = el.querySelector(".flag");
+    const angle = t <= 0 && on ? 120 : 55;
+    flag.style.transform = `rotate(${angle}deg)`;
+    if (t < 10 && t > 0 && on) flag.style.transform = "";
+  }
+  if (dir === "C") beads(el, t);
+}
+function beads(el, t) {
+  const left = t <= 0 ? 0 : (Math.ceil(t) % 60 || 60);
+  el.querySelectorAll(".bead").forEach(b => b.classList.toggle("lit", +b.dataset.i < left));
+}
+function step(p) {
+  p.steps++;
+  const frozen = p.reduced || document.body.classList.contains("frozen");
+  if (p.dir === "A" && !frozen) p.el.querySelector(".hand").style.transform = `rotate(${p.steps * (p.t < 10 ? 3 : 6)}deg)`;
+  if (p.dir === "P" && !frozen) p.el.querySelector(".hand").style.transform = `rotate(${p.steps * 90}deg)`;
+  if (p.dir === "B" && !frozen) p.el.querySelector(".hand").style.transform = `rotate(${p.steps * 6}deg)`;
+  if (p.dir === "C") beads(p.el, p.t);
+}
+
+let last = performance.now(), acc = 0;
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, .25); last = now;
+  for (const p of pills) {
+    const before = p.t;
+    p.t -= dt;
+    if (p.loop && p.t < p.loop[1]) p.t = p.loop[0];
+    const crossed = Math.floor(before) !== Math.floor(p.t) || (p.dir === "A" && p.t < 10 && Math.floor(before * 2) !== Math.floor(p.t * 2));
+    p.el.querySelector(".t").textContent = fmt(p.t, p.dir);
+    p.el.className = `pill ${p.el.classList.contains("wide") ? "wide" : ""} ${cls(p.t, true)}`;
+    if (p.dir === "B") paintStatic(p.el, p.t);
+    if (crossed) step(p);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+document.getElementById("freeze").addEventListener("change", e => document.body.classList.toggle("frozen", e.target.checked));
+</script>
+</body>
+</html>
