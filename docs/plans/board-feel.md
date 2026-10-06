@@ -1,6 +1,6 @@
 # Plan: Better board feel
 
-_Generated: 2026-10-06 · Status: active · Grilled-with: grilling (fast)_
+_Generated: 2026-10-06 · Status: archived · Grilled-with: grilling (fast)_
 
 <!-- autopilot-run: started=2026-10-06T11:36:12Z sprints=2 waves=3 -->
 
