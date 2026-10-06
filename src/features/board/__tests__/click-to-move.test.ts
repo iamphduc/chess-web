@@ -67,14 +67,17 @@ describe("click to move", () => {
   });
 
   it("click elsewhere deselects", () => {
+    const selected = click(fresh(), ...B1);
+    expect(selected.selectedPiece).not.toBeNull();
+
     // An empty square that isn't a legal destination for the knight.
-    let state = click(click(fresh(), ...B1), 4, 4);
+    let state = click(selected, 4, 4);
     expect(state.selectedPiece).toBeNull();
     expect(state.possibleMoves).toEqual([]);
     expect(state.history).toHaveLength(1);
 
     // An opponent piece that isn't a legal capture.
-    state = click(click(fresh(), ...B1), ...E7);
+    state = click(selected, ...E7);
     expect(state.selectedPiece).toBeNull();
     expect(state.possibleMoves).toEqual([]);
     expect(state.history).toHaveLength(1);
@@ -239,6 +242,7 @@ describe("click to move", () => {
 
   it("off-board click is treated as an empty square", () => {
     const selected = click(fresh(), ...B1);
+    expect(selected.selectedPiece).not.toBeNull();
     for (const [y, x] of [
       [-1, -1],
       [8, 0],
