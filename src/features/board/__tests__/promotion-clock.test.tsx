@@ -86,3 +86,38 @@ describe("clocks while the promotion picker is open", () => {
     expect(render(s, <GameOver />)).toBe("");
   });
 });
+
+describe("no other move while the promotion picker is open", () => {
+  it("the opponent cannot pick up or move a piece; the mover's clock keeps running", () => {
+    const before = whitePickingPromotion();
+    let s = reducer(before, selectPiece({ pieceType: PieceType.BlackPawnA, y: 1, x: 0 }));
+    expect(s.selectedPiece).toBeNull();
+    expect(s.possibleMoves).toEqual([]);
+    s = reducer(s, movePiece({ to: [3, 0] })); // a5
+    expect(s.history).toHaveLength(before.history.length);
+    expect(s.notation).toEqual(before.notation);
+    expect(s.pendingPromotion).toEqual(before.pendingPromotion);
+    expect(runningClocks(s)).toEqual({ white: true, black: false });
+
+    s = reducer(s, promotePawn({ piecePromoted: PiecePromoted.Queen }));
+    expect(s.notation[s.notation.length - 1]).toBe("hxg8=Q");
+    expect(s.history[s.history.length - 1].squares[0][6].pieceType).toBe(PieceType.WhiteQueenPromoted1);
+    expect(s.history[s.history.length - 1].squares[1][0].pieceType).toBe(PieceType.BlackPawnA);
+  });
+
+  it("a piece selected before the move cannot move during the picker", () => {
+    // A selection left over cannot slip a move in while the picker is open.
+    let s = whitePickingPromotion();
+    s = { ...s, selectedPiece: { pieceType: PieceType.BlackPawnA, y: 1, x: 0 } };
+    const after = reducer(s, movePiece({ to: [3, 0] }));
+    expect(after.history).toHaveLength(s.history.length);
+    expect(after.notation).toEqual(s.notation);
+  });
+
+  it("after the pick the opponent moves as normal", () => {
+    let s = reducer(whitePickingPromotion(), promotePawn({ piecePromoted: PiecePromoted.Queen }));
+    s = move(s, PieceType.BlackPawnA, [1, 0], [3, 0]); // a5
+    expect(s.notation.slice(-2)).toEqual(["hxg8=Q", "a5"]);
+    expect(runningClocks(s)).toEqual({ white: true, black: false });
+  });
+});
