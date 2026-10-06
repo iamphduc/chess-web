@@ -8,6 +8,7 @@ import {
   ClockState,
   clockPhase,
   initialClock,
+  isWhiteClockTurn,
   pauseClock,
   remainingMs,
   startClock,
@@ -39,11 +40,10 @@ export function msUntilNextTick(ms: number, interval: number): number {
 }
 
 export const Player = ({ name, title, avatar, isWhite }: Props) => {
-  const { history, isPlaying, gameOver } = useAppSelector((state) => state.board);
+  const { history, pendingPromotion, isPlaying, gameOver } = useAppSelector((state) => state.board);
   const dispatch = useAppDispatch();
 
-  const isWhiteTurn = history.length % 2 === 1;
-  const isActive = isWhite === isWhiteTurn;
+  const isActive = isWhite === isWhiteClockTurn(history.length, pendingPromotion !== null);
   const gameContinues = gameOver === GameOverType.Continue;
   const phase = clockPhase(isPlaying, isActive, gameContinues);
 

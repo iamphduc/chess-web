@@ -9,6 +9,7 @@ import {
   formatClock,
   handAngle,
   initialClock,
+  isWhiteClockTurn,
   lowTimeAlert,
   pauseClock,
   remainingMs,
@@ -204,5 +205,20 @@ describe("clock", () => {
     expect(lowTimeAlert(10_000)).toBe("");
     expect(lowTimeAlert(9999)).toBe("10 seconds left");
     expect(lowTimeAlert(0)).toBe("10 seconds left");
+  });
+});
+
+describe("isWhiteClockTurn", () => {
+  it("follows the side to move: history holds the start position plus one entry per ply", () => {
+    expect(isWhiteClockTurn(1, false)).toBe(true); // start: White to move
+    expect(isWhiteClockTurn(2, false)).toBe(false); // after 1.e4
+    expect(isWhiteClockTurn(3, false)).toBe(true);
+  });
+
+  it("keeps the mover's clock running while the promotion picker is open", () => {
+    // White pushed a pawn to the 8th rank: the ply is in history, White still picks.
+    expect(isWhiteClockTurn(10, true)).toBe(true);
+    // Black pushed a pawn to the 1st rank.
+    expect(isWhiteClockTurn(11, true)).toBe(false);
   });
 });
