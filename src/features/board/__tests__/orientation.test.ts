@@ -51,11 +51,13 @@ describe("orientation", () => {
     expect(at("h8", false)).toEqual({ rank: null, file: null });
     expect(at("e4", false)).toEqual({ rank: null, file: null });
 
-    // Flipped.
+    // Flipped: display column 0 is the h-file, so flipped ranks sit on h1..h8.
+    // (The sprint doc's example "a1 has rank 1" breaks its own rule; a1 is the
+    // top-right square when flipped. h1, top-left, carries rank "1".)
     expect(at("h8", true)).toEqual({ rank: "8", file: "h" });
-    expect(at("a1", true)).toEqual({ rank: "1", file: null });
+    expect(at("h1", true)).toEqual({ rank: "1", file: null });
     expect(at("a8", true)).toEqual({ rank: null, file: "a" });
-    expect(at("h1", true)).toEqual({ rank: null, file: null });
+    expect(at("a1", true)).toEqual({ rank: null, file: null });
     expect(at("e4", true)).toEqual({ rank: null, file: null });
 
     for (const flipped of [false, true]) {
