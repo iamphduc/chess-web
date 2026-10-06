@@ -9,6 +9,7 @@ import { Position as PiecePosition } from "game/pieces/piece";
 import { Pawn } from "game/pieces/pawn";
 import { GameState, initialGameState } from "../../game/engine/game-state";
 import { applyMove, legalMoves, Position } from "../../game/engine/engine";
+import { colorOf } from "../../game/engine/moves/classify";
 import {
   buildMove,
   checkedKingPieceType,
@@ -32,6 +33,12 @@ interface PawnPromotion {
 
 interface PieceMove {
   to: PiecePosition;
+}
+
+/** A board square, in board coordinates (White's view). */
+interface SquareClick {
+  y: number;
+  x: number;
 }
 
 /** Endpoints of a pending pawn move awaiting the promotion picker's choice. */
@@ -93,6 +100,145 @@ function createInitialState(): BoardState {
 
 const initialState = createInitialState();
 
+/**
+ * Play the selected piece to `dest`, as `movePiece` and a click on a legal square
+ * both do: notation, fallen pieces, the last-move highlight and the promotion step.
+ */
+function playMove(state: BoardState, dest: PiecePosition): void {
+  const { selectedPiece, fallenPieces } = state;
+  if (!selectedPiece || state.gameOver !== GameOverType.Continue || state.pendingPromotion) return;
+
+  const [toY, toX] = dest;
+  const { pieceType, y: fromY, x: fromX } = selectedPiece;
+
+  const engine = state.engineHistory[state.engineHistory.length - 1];
+  const projected = state.history[state.history.length - 1].squares;
+  const piece = pieceFactory.getPiece(pieceType);
+
+  const from: Position = [fromY, fromX];
+  const to: Position = [toY, toX];
+
+  // --- Geometry classification (mirrors the engine's applyMove inference) ---
+  const isPawn = piece instanceof Pawn;
+  const isCastle = pieceType === PieceType.WhiteKing || pieceType === PieceType.BlackKing
+    ? Math.abs(toX - fromX) === 2
+    : false;
+  const destOccupied = engine.squares[toY][toX] !== null;
+  const isEnPassant = isPawn && toX !== fromX && !destOccupied;
+  const isCapture = destOccupied || isEnPassant;
+  const isPromotion = isPawn && (toY === 0 || toY === 7);
+
+  // --- lastMoves highlight (reducer-side presentation, unchanged source) ---
+  state.lastMoves = [
+    ...state.lastMoves,
+    [
+      [fromY, fromX],
+      [toY, toX],
+    ],
+  ];
+
+  // --- Notation (reducer-side presentation, unchanged source) ---
+  // Disambiguation + fallen pieces are computed from the PRE-move board.
+  const abbreviationSuffix = pieceNotation.getSuffixAbbreviation(engine, from, to);
+  let newNotation: MoveNotation = {
+    abbreviation: piece.getAbbreviation() + abbreviationSuffix,
+    position: [toY, toX],
+  };
+
+  if (isCastle) {
+    newNotation.abbreviation =
+      toX - fromX === 2 ? SpecialCase.KingSideCastling : SpecialCase.QueenSideCastling;
+  } else if (isEnPassant) {
+    // The captured pawn sits beside the destination, on the mover's rank.
+    const capturedPieceType = projected[fromY][toX].pieceType;
+    if (capturedPieceType) {
+      pieceNotation.addFallenPiece(fallenPieces, capturedPieceType);
+    }
+    newNotation = {
+      abbreviation: String.fromCharCode(fromX + 97) + SpecialCase.Capture,
+      position: [toY, toX],
+    };
+  } else if (isCapture) {
+    const capturedPieceType = projected[toY][toX].pieceType;
+    if (capturedPieceType) {
+      pieceNotation.addFallenPiece(fallenPieces, capturedPieceType);
+    }
+    // Pawn captures are written with the origin file letter.
+    if (isPawn) {
+      newNotation.abbreviation = String.fromCharCode(fromX + 97);
+    }
+    newNotation.abbreviation += SpecialCase.Capture;
+  }
+
+  // --- Apply on the engine and refresh the projected position ---
+  // A promotion is applied here too (the pawn visibly lands on the last rank,
+  // as a pawn), so `history` grows one entry per ply and the picker overlays
+  // the moved pawn. `promotePawn` then replaces this ply IN PLACE (re-issuing
+  // the move from the pre-move engine state with the chosen kind), mirroring
+  // the legacy in-place history replacement and keeping turn parity intact.
+  const next = applyMove(engine, buildMove(from, to));
+  state.engineHistory = [
+    ...(state.engineHistory as GameState[]),
+    next,
+  ] as typeof state.engineHistory;
+  state.history = [...state.history, { squares: projectSquares(next) }];
+  console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
+
+  let newNotationString = pieceNotation.toAlgebraicNotationString(newNotation);
+
+  if (isPromotion) {
+    // Stop: wait for the picker. The check/game-over suffix and the engine's
+    // promoted id are resolved in promotePawn once the kind is chosen.
+    state.promotionPosition = [toY, toX];
+    state.pendingPromotion = {
+      from: [fromY, fromX],
+      to: [toY, toX],
+    };
+    state.notation = [...state.notation, newNotationString];
+    state.selectedPiece = null;
+    state.possibleMoves = [];
+    return;
+  }
+
+  newNotationString = appendCheckSuffix(next, newNotationString, state);
+  state.notation = [...state.notation, newNotationString];
+  state.selectedPiece = null;
+  state.possibleMoves = [];
+}
+
+/** True when `[y, x]` holds a piece of the side to move. */
+function isMoversPiece(state: BoardState, y: number, x: number): boolean {
+  const piece = currentEngine(state).squares[y]?.[x] ?? null;
+  return piece !== null && colorOf(piece) === currentEngine(state).turn;
+}
+
+function currentEngine(state: BoardState): GameState {
+  return state.engineHistory[state.engineHistory.length - 1];
+}
+
+/** Make the piece on `[y, x]` the selection, with its legal moves from the engine. */
+function select(state: BoardState, y: number, x: number): void {
+  const pieceType = currentEngine(state).squares[y][x] as PieceType;
+  state.selectedPiece = { pieceType, y, x };
+  console.log(`Selected ${pieceType}`);
+  state.possibleMoves = legalMoves(currentEngine(state), [y, x]).map((move) => [
+    move.to[0],
+    move.to[1],
+  ]);
+}
+
+function clearSelection(state: BoardState): void {
+  if (state.selectedPiece === null && state.possibleMoves.length === 0) return;
+  state.selectedPiece = null;
+  state.possibleMoves = [];
+}
+
+/** No piece moves once the game is over, nor while the promotion picker is open. */
+function inputLocked(state: BoardState): boolean {
+  return state.gameOver !== GameOverType.Continue || state.pendingPromotion !== null;
+}
+
+
 export const boardSlice = createSlice({
   name: "board",
   initialState,
@@ -123,107 +269,43 @@ export const boardSlice = createSlice({
     },
 
     movePiece: (state, action: PayloadAction<PieceMove>) => {
-      const { selectedPiece, fallenPieces } = state;
-      if (!selectedPiece || state.gameOver !== GameOverType.Continue || state.pendingPromotion) return;
+      playMove(state, action.payload.to);
+    },
 
-      const {
-        to: [toY, toX],
-      } = action.payload;
-      const { pieceType, y: fromY, x: fromX } = selectedPiece;
+    /** A click (or tap) on board square `[y, x]`: select, deselect, reselect or move. */
+    clickSquare: (state, action: PayloadAction<SquareClick>) => {
+      if (inputLocked(state)) return;
+      const { y, x } = action.payload;
 
-      const engine = state.engineHistory[state.engineHistory.length - 1];
-      const projected = state.history[state.history.length - 1].squares;
-      const piece = pieceFactory.getPiece(pieceType);
-
-      const from: Position = [fromY, fromX];
-      const to: Position = [toY, toX];
-
-      // --- Geometry classification (mirrors the engine's applyMove inference) ---
-      const isPawn = piece instanceof Pawn;
-      const isCastle = pieceType === PieceType.WhiteKing || pieceType === PieceType.BlackKing
-        ? Math.abs(toX - fromX) === 2
-        : false;
-      const destOccupied = engine.squares[toY][toX] !== null;
-      const isEnPassant = isPawn && toX !== fromX && !destOccupied;
-      const isCapture = destOccupied || isEnPassant;
-      const isPromotion = isPawn && (toY === 0 || toY === 7);
-
-      // --- lastMoves highlight (reducer-side presentation, unchanged source) ---
-      state.lastMoves = [
-        ...state.lastMoves,
-        [
-          [fromY, fromX],
-          [toY, toX],
-        ],
-      ];
-
-      // --- Notation (reducer-side presentation, unchanged source) ---
-      // Disambiguation + fallen pieces are computed from the PRE-move board.
-      const abbreviationSuffix = pieceNotation.getSuffixAbbreviation(engine, from, to);
-      let newNotation: MoveNotation = {
-        abbreviation: piece.getAbbreviation() + abbreviationSuffix,
-        position: [toY, toX],
-      };
-
-      if (isCastle) {
-        newNotation.abbreviation =
-          toX - fromX === 2 ? SpecialCase.KingSideCastling : SpecialCase.QueenSideCastling;
-      } else if (isEnPassant) {
-        // The captured pawn sits beside the destination, on the mover's rank.
-        const capturedPieceType = projected[fromY][toX].pieceType;
-        if (capturedPieceType) {
-          pieceNotation.addFallenPiece(fallenPieces, capturedPieceType);
-        }
-        newNotation = {
-          abbreviation: String.fromCharCode(fromX + 97) + SpecialCase.Capture,
-          position: [toY, toX],
-        };
-      } else if (isCapture) {
-        const capturedPieceType = projected[toY][toX].pieceType;
-        if (capturedPieceType) {
-          pieceNotation.addFallenPiece(fallenPieces, capturedPieceType);
-        }
-        // Pawn captures are written with the origin file letter.
-        if (isPawn) {
-          newNotation.abbreviation = String.fromCharCode(fromX + 97);
-        }
-        newNotation.abbreviation += SpecialCase.Capture;
-      }
-
-      // --- Apply on the engine and refresh the projected position ---
-      // A promotion is applied here too (the pawn visibly lands on the last rank,
-      // as a pawn), so `history` grows one entry per ply and the picker overlays
-      // the moved pawn. `promotePawn` then replaces this ply IN PLACE (re-issuing
-      // the move from the pre-move engine state with the chosen kind), mirroring
-      // the legacy in-place history replacement and keeping turn parity intact.
-      const next = applyMove(engine, buildMove(from, to));
-      state.engineHistory = [
-        ...(state.engineHistory as GameState[]),
-        next,
-      ] as typeof state.engineHistory;
-      state.history = [...state.history, { squares: projectSquares(next) }];
-      console.log(`Moved ${pieceType} from ${[fromY, fromX]} to ${[toY, toX]}`);
-
-      let newNotationString = pieceNotation.toAlgebraicNotationString(newNotation);
-
-      if (isPromotion) {
-        // Stop: wait for the picker. The check/game-over suffix and the engine's
-        // promoted id are resolved in promotePawn once the kind is chosen.
-        state.promotionPosition = [toY, toX];
-        state.pendingPromotion = {
-          from: [fromY, fromX],
-          to: [toY, toX],
-        };
-        state.notation = [...state.notation, newNotationString];
-        state.selectedPiece = null;
-        state.possibleMoves = [];
+      const { selectedPiece } = state;
+      if (selectedPiece && state.possibleMoves.some(([py, px]) => py === y && px === x)) {
+        playMove(state, [y, x]);
         return;
       }
 
-      newNotationString = appendCheckSuffix(next, newNotationString, state);
-      state.notation = [...state.notation, newNotationString];
-      state.selectedPiece = null;
-      state.possibleMoves = [];
+      if (isMoversPiece(state, y, x)) {
+        if (selectedPiece && selectedPiece.y === y && selectedPiece.x === x) {
+          console.log(`Deselected ${selectedPiece.pieceType}`);
+          clearSelection(state);
+        } else {
+          select(state, y, x);
+        }
+        return;
+      }
+
+      clearSelection(state);
+    },
+
+    /** Drag start on `[y, x]`: select a piece of the side to move, never toggle. */
+    pickUp: (state, action: PayloadAction<SquareClick>) => {
+      if (inputLocked(state)) return;
+      const { y, x } = action.payload;
+      if (isMoversPiece(state, y, x)) {
+        const { selectedPiece } = state;
+        if (!selectedPiece || selectedPiece.y !== y || selectedPiece.x !== x) select(state, y, x);
+        return;
+      }
+      clearSelection(state);
     },
 
     promotePawn: (state, action: PayloadAction<PawnPromotion>) => {
@@ -315,4 +397,4 @@ function appendCheckSuffix(
   return notationString;
 }
 
-export const { selectPiece, movePiece, promotePawn, start, stop, reset } = boardSlice.actions;
+export const { selectPiece, movePiece, clickSquare, pickUp, promotePawn, start, stop, reset } = boardSlice.actions;
