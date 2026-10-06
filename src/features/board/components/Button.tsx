@@ -73,11 +73,11 @@ const SoundIcon = ({ on }: { on: boolean }) => (
     aria-hidden="true"
     focusable="false"
   >
-    <path d="M11 5 6 9H3v6h3l5 4z" />
+    <path d="M11 4 6 8.5H2v7h4l5 4.5z" />
     {on ? (
-      <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" />
     ) : (
-      <path d="M16 9l6 6M22 9l-6 6" />
+      <path d="M15.5 8.5l6 7M21.5 8.5l-6 7" />
     )}
   </svg>
 );
