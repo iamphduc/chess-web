@@ -52,12 +52,14 @@ Context: `main` required 1 approving review, but the human is the only reviewer 
 Decision: The classic branch protection rule is converted to two rulesets on `main`. `main-1` restricts deletions and blocks force pushes, with no bypass. `main-2` requires a PR with **0 approvals** and requires the `verify` and `secrets` checks to pass; Repository admin is on its bypass list. Repo Actions settings: workflow token is read-only, and workflows can't create or approve PRs. Pages Source is "GitHub Actions". Branches other than `main` (plan branches, wave heads) have no rules.
 Consequences: A plain `gh pr merge --merge` works once CI is green, so the review-bypass precondition in the 2026-06-04 "main requires review" entry no longer applies; `--admin` is only needed to skip failing checks, and still needs the human's say-so. Green CI is now the gate on `main`, not a review. Wave PRs into a plan branch are not gated; the final plan PR into `main` is.
 
-## 2026-10-05 — Existing bold Quicksand text uses the real 700 weight (agent default — override anytime)
+## 2026-10-05 — Existing bold Quicksand text uses the real 700 weight
 Context: The animated-clock plan loads Quicksand 700 for the clock digits. Before that only 500 was loaded, so every `font-weight: bold` Quicksand text (sidebar headings "Fallen Pieces"/"Notation", square labels) was drawn as fake bold.
 Decision: Keep it: those rules now render in real Quicksand 700, slightly heavier and crisper.
 Consequences: To go back to the old look, set `font-weight: 500` on `.board-sidebar__title` and the square-label rule in `Square.css`.
+Confirmed by the user 2026-10-06.
 
-## 2026-10-05 — Clock digits round down (agent default — override anytime)
+## 2026-10-05 — Clock digits round down
 Context: `formatClock` floors the remaining time, so the running clock reads `09:59` about 1 ms after Play (the old clock showed `10:00` for the first second), and shows `0.0` for the last 100 ms before the flag falls.
 Decision: Keep rounding down, as the sprint contract specified, so the red pill starts exactly when the digits read `00:19` and the hand and digits change on the same whole second.
 Consequences: To show `10:00` for the first second, switch `formatClock` (and `handAngle`, to stay in step) to round up, and move the low-time check so red still begins at `00:19`.
+Confirmed by the user 2026-10-06.
