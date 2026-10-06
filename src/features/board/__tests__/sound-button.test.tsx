@@ -1,6 +1,4 @@
 import React from "react";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Provider } from "react-redux";
 import { DndProvider } from "react-dnd";
@@ -71,9 +69,14 @@ describe("sound button", () => {
     expect(offIcon).not.toEqual(onIcon);
   });
 
-  it("sound-on style uses the token", () => {
-    const css = readFileSync(join(__dirname, "..", "components", "Button.css"), "utf8");
-    const rule = css.match(/\.button--sound-on\s*\{([^}]*)\}/)?.[1];
+  it("sound-on style uses the token", async () => {
+    // node:fs through a plain string, since src/ tests only get the vite/client types.
+    const fs = await import(/* @vite-ignore */ "node:fs" as string);
+    const buttonCss: string = fs.readFileSync(
+      new URL("../components/Button.css", import.meta.url),
+      "utf8"
+    );
+    const rule = buttonCss.match(/\.button--sound-on\s*\{([^}]*)\}/)?.[1];
     expect(rule).toBeDefined();
     expect(rule).toMatch(/background(-color)?:\s*var\(--board-sound-on\)\s*;/);
   });

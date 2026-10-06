@@ -96,7 +96,7 @@ describe("move sound", () => {
           [PieceType.WhiteKing, sq("e1")],
           [PieceType.WhiteKingRook, sq("h1")],
           [PieceType.WhiteQueenRook, sq("a1")],
-          [PieceType.BlackKing, sq("h8")],
+          [PieceType.BlackKing, sq("e8")], // off the a-, h-, d- and f-files, so no rook checks it
         ]),
       });
     const short = drag(castling(), "e1", "g1");

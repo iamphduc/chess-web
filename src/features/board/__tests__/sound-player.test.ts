@@ -70,11 +70,11 @@ class FakeTarget {
   }
   count() {
     let n = 0;
-    for (const set of this.listeners.values()) n += set.size;
+    this.listeners.forEach((set) => (n += set.size));
     return n;
   }
   fire(type: string) {
-    for (const fn of [...(this.listeners.get(type) ?? [])]) fn();
+    Array.from(this.listeners.get(type) ?? new Set<() => void>()).forEach((fn) => fn());
   }
 }
 
@@ -115,14 +115,21 @@ async function settle() {
   for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0));
 }
 
+// Node's process, typed here because src/ tests only get the vite/client types.
+const proc = (globalThis as unknown as {
+  process: {
+    on(event: "unhandledRejection", fn: (reason: unknown) => void): void;
+    off(event: "unhandledRejection", fn: (reason: unknown) => void): void;
+  };
+}).process;
 const unhandled: unknown[] = [];
 const onUnhandled = (reason: unknown) => unhandled.push(reason);
 beforeEach(() => {
   unhandled.length = 0;
-  process.on("unhandledRejection", onUnhandled);
+  proc.on("unhandledRejection", onUnhandled);
 });
 afterEach(() => {
-  process.off("unhandledRejection", onUnhandled);
+  proc.off("unhandledRejection", onUnhandled);
 });
 
 describe("sound player", () => {

@@ -15,6 +15,7 @@ import { GameOver } from "./components/GameOver";
 import { Button, ButtonType } from "./components/Button";
 import { useMediaQuery } from "hooks/useMediaQuery";
 import { displayOrder } from "./orientation";
+import { useMoveSound } from "./useMoveSound";
 
 // Keyed by color, so each card (and its running clock) keeps its state when the cards swap.
 const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
@@ -32,6 +33,7 @@ export const Board = () => {
     (state) => state.board
   );
   const flipped = useAppSelector((state) => state.view.flipped);
+  useMoveSound();
 
   let squareSize = SQUARE_SIZE_XS;
   if (useMediaQuery("only screen and (min-width: 768px)")) squareSize = SQUARE_SIZE_MD;
@@ -95,6 +97,7 @@ export const Board = () => {
             <Button type={ButtonType.Play} />
             <Button type={ButtonType.Reset} />
             <Button type={ButtonType.Flip} />
+            <Button type={ButtonType.Sound} />
           </div>
         </BoardSidebar>
 

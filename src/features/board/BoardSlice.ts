@@ -20,6 +20,7 @@ import {
 import { PiecePromoted } from "./components/Promotion";
 import { GameOverType } from "./components/GameOver";
 import { isWhiteClockTurn } from "./clock";
+import { MoveSound, pickSound } from "./sound";
 
 interface PieceSelection {
   pieceType: PieceType;
@@ -72,6 +73,8 @@ interface BoardState {
   /** Set when a flag falls; kept if a pending promotion is finished afterwards. */
   flagFallWinner: "White" | "Black" | null;
   isPlaying: boolean;
+  /** The last completed ply's sound: a new object per ply, `null` before the first. */
+  moveSound: MoveSound | null;
 }
 
 function createInitialState(): BoardState {
@@ -95,6 +98,7 @@ function createInitialState(): BoardState {
     gameOver: GameOverType.Continue,
     flagFallWinner: null,
     isPlaying: false,
+    moveSound: null,
   };
 }
 
@@ -204,6 +208,20 @@ function playMove(state: BoardState, dest: PiecePosition): void {
   state.notation = [...state.notation, newNotationString];
   state.selectedPiece = null;
   state.possibleMoves = [];
+  state.moveSound = plySound(next, { promotion: false, castle: isCastle, capture: isCapture });
+}
+
+/** A new sound object for a completed ply, from the position it leaves. */
+function plySound(
+  next: GameState,
+  move: { promotion: boolean; castle: boolean; capture: boolean }
+): MoveSound {
+  const kind = pickSound({
+    ...move,
+    gameEnd: gameOverFromStatus(next) !== GameOverType.Continue,
+    check: checkedKingPieceType(next) !== null,
+  });
+  return { kind };
 }
 
 /** True when `[y, x]` holds a piece of the side to move. */
@@ -341,6 +359,8 @@ export const boardSlice = createSlice({
         state.gameOver = resultBefore;
       }
       state.notation[state.notation.length - 1] = latest;
+      // The ply is complete only now, so its sound comes from the picked piece's position.
+      state.moveSound = plySound(next, { promotion: true, castle: false, capture: false });
 
       state.promotionPosition = [-1, -1];
       state.pendingPromotion = null;
