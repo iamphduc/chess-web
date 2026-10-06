@@ -8,8 +8,8 @@ _From plan: docs/plans/board-feel.md · Slug: board-interaction · Status: activ
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | L1 | Look: `--board-*` tokens, focus ring and icon-button style | board-interaction-L1 | — | pending | — | — |
-| 1 | R1 | Rules: click-to-move reducer, flip state and orientation math | board-interaction-R1 | — | pending | — | — |
+| 1 | L1 | Look: `--board-*` tokens, focus ring and icon-button style | board-interaction-L1 | — | pushed | high | — |
+| 1 | R1 | Rules: click-to-move reducer, flip state and orientation math | board-interaction-R1 | — | pushed | medium | — |
 | 1 | T1 | Touch-drag check: HTML5 backend and `react-dnd-multi-backend` at 375 px | board-interaction-T1 | — | pending | — | — |
 | 2 | H1 | Highlights (Look A), click and drag wiring, tap-to-move | board-interaction-H1 | — | pending | — | L1, R1 |
 | 2 | F1 | Flip board UI, player swap, promotion picker, reduced motion | board-interaction-F1 | — | pending | — | L1, R1 |
@@ -27,7 +27,7 @@ Why this split: wave 1 is three independent pieces (theme, pure logic, a throwaw
 **Orientation helpers** (R1, `src/features/board/orientation.ts`, pure):
 - `toDisplay([y, x], flipped) → [row, col]`: the identity when not flipped, and `[7 - y, 7 - x]` when flipped. It's its own inverse, so the same function maps display back to board.
 - `displayOrder(flipped) → [y, x][]`: 64 board coordinates in render order (display row 0 to 7, column 0 to 7 within each row).
-- `squareLabels(y, x, flipped) → { rank: string | null; file: string | null }`: the rank label sits on display column 0 and the file label on display row 7. Rank text is `8 - y` and file text is `a` to `h` for `x`. Unflipped, a8 has rank `"8"`, h1 has file `"h"`, and a1 has both. Flipped, h8 has rank `"8"` and file `"h"`, a1 has rank `"1"` only, and e4 has neither.
+- `squareLabels(y, x, flipped) → { rank: string | null; file: string | null }`: the rank label sits on display column 0 and the file label on display row 7. Rank text is `8 - y` and file text is `a` to `h` for `x`. Unflipped, a8 has rank `"8"`, h1 has file `"h"`, and a1 has both. Flipped, h8 has rank `"8"` and file `"h"`, h1 (display top-left) has rank `"1"` only, a1 (display top-right) has neither, and e4 has neither.
 - `promotionPlacement(y, x, flipped, squareSize) → { left, right, top, bottom }`: today's `Promotion.tsx` formula applied to the display `[row, col]` instead of `[y, x]`. `left = col <= 3 ? size*col - size/2 : "unset"`, `right = col > 3 ? size*(7-col) - size/2 : "unset"`, `top = row === 0 ? size : "unset"`, and `bottom = row === 7 ? size : "unset"`.
 
 **Click-to-move rules** (R1, `src/features/board/BoardSlice.ts`). There are two new actions. `movePiece`, `promotePawn`, `stop` and `reset` keep their behavior, and `selectPiece` stays for the existing tests. The UI stops calling `selectPiece` after H1.
@@ -107,7 +107,7 @@ Board, square, overlay and piece CSS use only these tokens for color.
   - `[test]` `toggleFlip` inverts `flipped` and two toggles return to `false`. The board `reset` leaves `view.flipped` unchanged, and the store's initial `view.flipped` is `false` — `view-slice.test.ts` › `flip toggles and survives reset`
   - `[test]` `toDisplay` maps a8 to `[0,0]` unflipped and to `[7,7]` flipped, and applying it twice returns the input for all 64 squares — `orientation.test.ts` › `toDisplay maps and inverts`
   - `[test]` `displayOrder` lists 64 distinct squares and starts with a8 unflipped and h1 flipped — `orientation.test.ts` › `displayOrder covers the board`
-  - `[test]` `squareLabels` returns the contract's examples (a1, a8, h1, h8, e4, both orientations), and exactly 8 rank and 8 file labels in each orientation — `orientation.test.ts` › `labels sit on left and bottom edges`
+  - `[test]` `squareLabels` returns the contract's examples (a1, a8, h1, h8, e4, both orientations; flipped h1 has rank "1" only and flipped a1 has neither), and exactly 8 rank and 8 file labels in each orientation — `orientation.test.ts` › `labels sit on left and bottom edges`
   - `[test]` `promotionPlacement` for e8 with size 60 gives `right: 150` and `top: 60` unflipped, and `left: 150` and `bottom: 60` flipped. e1 gives the mirror of both — `orientation.test.ts` › `promotion picker follows the flip`
 - **Depends on:** —
 - **One-way door:** none
@@ -165,7 +165,7 @@ Board, square, overlay and piece CSS use only these tokens for color.
   - `[test]` A legal empty square gives `dot`, a legal occupied square gives `ring`, and a non-legal square gives `null` — `square-marks.test.ts` › `dot on empty, ring on capture`
   - `[test]` `isOver && canDrop` gives `dropEdge: true`, and `isOver && !canDrop` gives no `dropEdge` and no other new mark — `square-marks.test.ts` › `drop edge only on legal drag-over`
   - `[test]` `check` is true only for the checked king's square — `square-marks.test.ts` › `check glow on king square`
-  - `[test]` The rendered `Square` for e2 has `data-square="e2"`. Unflipped, a1 shows `1` and `a`. With `view.flipped` set, h8 shows `8` and `h`, and a1 shows only `1` — `square.test.tsx` › `labels and data-square follow the flip`
+  - `[test]` The rendered `Square` for e2 has `data-square="e2"`. Unflipped, a1 shows `1` and `a`. With `view.flipped` set, h8 shows `8` and `h`, h1 shows only `1`, and a1 shows no label — `square.test.tsx` › `labels and data-square follow the flip`
   - `[test]` `Square.css`, `Overlay.css` and `Piece.css` contain no color literals (hex, `rgb(`, `rgba(`) and no `drop-shadow`, and they use `var(--board-highlight)`, `var(--board-hint)`, `var(--board-check)` and `var(--board-drop-edge)` — `tests/board-css.test.ts` › `board styles use only board tokens`
   - `[manual]` Desktop and 375 px:
     - After a move, both squares are tinted yellow.
