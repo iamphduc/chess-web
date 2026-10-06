@@ -10,7 +10,7 @@ describe("PieceDragImage", () => {
   it("drag image draws the piece at the square size", () => {
     const html = renderToStaticMarkup(
       <PieceDragImage
-        pieceType={PieceType.WhiteKnightKing}
+        pieceType={PieceType.WhiteKingKnight}
         size={48}
         style={{ transform: "translate(10px, 20px)", position: "fixed", top: 0, left: 0 }}
       />
