@@ -1,41 +1,33 @@
+/* Square marks, Look A. Colors come only from the --board-* tokens. */
 .overlay {
   position: absolute;
-  top: 0px;
-  left: 0px;
-  height: 100%;
-  width: 100%;
-  opacity: 0.5;
-  z-index: 2;
+  inset: 0;
+  pointer-events: none;
 }
-.overlay--illegal {
-  background-color: #dc3545;
+
+/* Under the piece. */
+.overlay--highlight {
+  background: var(--board-highlight);
+  z-index: 0;
 }
-.overlay--legal {
-  background-color: #28a745;
-}
-.overlay--last_move {
-  background-color: #ffc107;
+.overlay--check {
+  background: var(--board-check);
   z-index: 0;
 }
 
-.overlay__possible {
-  position: absolute;
-  width: 35%;
-  height: 35%;
-  background-color: rgba(0, 0, 0, 0.5);
+/* Over the piece. */
+.overlay--dot {
+  inset: 33.5%;
   border-radius: 50%;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  background: var(--board-hint);
+  z-index: 3;
 }
-
-.overlay__enemy {
-  position: absolute;
-  width: 90%;
-  height: 90%;
-  border: 4px solid rgba(0, 0, 0, 0.5);
+.overlay--ring {
   border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  border: calc(var(--square-size, 52px) * 0.09) solid var(--board-hint);
+  z-index: 3;
+}
+.overlay--drop-edge {
+  box-shadow: inset 0 0 0 calc(var(--square-size, 52px) * 0.06) var(--board-drop-edge);
+  z-index: 3;
 }
