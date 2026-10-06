@@ -1,11 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-/** How the board is shown. Not saved, and the board `reset` doesn't touch it. */
+import { browserStorage, loadSoundOn } from "./soundSetting";
+
+/**
+ * How the board is shown. The board `reset` doesn't touch it. `flipped` isn't saved;
+ * `soundOn` is saved by the Sound button and loaded here.
+ */
 interface ViewState {
   flipped: boolean;
+  soundOn: boolean;
 }
 
-const initialState: ViewState = { flipped: false };
+const initialState: ViewState = { flipped: false, soundOn: loadSoundOn(browserStorage) };
 
 export const viewSlice = createSlice({
   name: "view",
@@ -14,7 +20,10 @@ export const viewSlice = createSlice({
     toggleFlip: (state) => {
       state.flipped = !state.flipped;
     },
+    toggleSound: (state) => {
+      state.soundOn = !state.soundOn;
+    },
   },
 });
 
-export const { toggleFlip } = viewSlice.actions;
+export const { toggleFlip, toggleSound } = viewSlice.actions;
