@@ -11,6 +11,7 @@ import WKnight from "assets/knight-white.svg";
 import BKnight from "assets/knight-black.svg";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import { promotePawn } from "../BoardSlice";
+import { promotionPlacement } from "../orientation";
 
 export enum PiecePromoted {
   Queen = "QUEEN",
@@ -27,6 +28,7 @@ export const Promotion = ({ squareSize }: Props) => {
   const {
     promotionPosition: [y, x],
   } = useAppSelector((state) => state.board);
+  const flipped = useAppSelector((state) => state.view.flipped);
   const dispatch = useAppDispatch();
 
   // If pawn reach the 0th row, then it is white side
@@ -39,15 +41,7 @@ export const Promotion = ({ squareSize }: Props) => {
   const promotionPieceSize = { width: squareSize * 0.6, height: squareSize * 0.6 };
 
   return y !== -1 && x !== -1 ? (
-    <div
-      className={`promotion`}
-      style={{
-        left: x <= 3 ? squareSize * x - squareSize / 2 : "unset",
-        right: x > 3 ? squareSize * (7 - x) - squareSize / 2 : "unset",
-        top: y === 0 ? squareSize : "unset",
-        bottom: y === 7 ? squareSize : "unset",
-      }}
-    >
+    <div className={`promotion`} style={promotionPlacement(y, x, flipped, squareSize)}>
       <div
         style={{ backgroundImage: `url(${queenImage})`, ...promotionPieceSize }}
         className="promotion__piece"

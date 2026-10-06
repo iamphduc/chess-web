@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, MotionConfig } from "framer-motion";
 
 import "./Board.css";
 import { SQUARE_SIZE_MD, SQUARE_SIZE_XL, SQUARE_SIZE_XS } from "../../constants";
@@ -14,15 +14,24 @@ import { Notation } from "./components/Notation";
 import { GameOver } from "./components/GameOver";
 import { Button, ButtonType } from "./components/Button";
 import { useMediaQuery } from "hooks/useMediaQuery";
+import { displayOrder } from "./orientation";
 
+// Keyed by color, so each card (and its running clock) keeps its state when the cards swap.
 const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
-  <Player name={name} title={title} avatar={avatar} isWhite={isWhite} />
+  <Player
+    key={isWhite ? "white" : "black"}
+    name={name}
+    title={title}
+    avatar={avatar}
+    isWhite={isWhite}
+  />
 );
 
 export const Board = () => {
   const { history, possibleMoves, lastMoves, pieceAttackedKing } = useAppSelector(
     (state) => state.board
   );
+  const flipped = useAppSelector((state) => state.view.flipped);
 
   let squareSize = SQUARE_SIZE_XS;
   if (useMediaQuery("only screen and (min-width: 768px)")) squareSize = SQUARE_SIZE_MD;
@@ -37,45 +46,47 @@ export const Board = () => {
     const possibleMovesSet = new Set<string>(possibleMoves.map(([y, x]) => `(${y}-${x})`));
     const squares = [];
 
-    for (let y = 0; y < 8; y++) {
-      for (let x = 0; x < 8; x++) {
-        const squareIndex = y * 8 + x;
-        const currentSquare = current.squares[y][x];
+    // Render order follows the flip; the key stays the board index, so a flip only reorders squares.
+    for (const [y, x] of displayOrder(flipped)) {
+      const squareIndex = y * 8 + x;
+      const currentSquare = current.squares[y][x];
 
-        const isPossibleMove = possibleMovesSet.has(`(${y}-${x})`);
-        const isLastMoveFrom = lastMove[0][0] === y && lastMove[0][1] === x;
-        const isLastMoveTo = lastMove[1][0] === y && lastMove[1][1] === x;
-        const isPieceAttackedKing = pieceAttackedKing === currentSquare.pieceType;
+      const isPossibleMove = possibleMovesSet.has(`(${y}-${x})`);
+      const isLastMoveFrom = lastMove[0][0] === y && lastMove[0][1] === x;
+      const isLastMoveTo = lastMove[1][0] === y && lastMove[1][1] === x;
+      const isPieceAttackedKing = pieceAttackedKing === currentSquare.pieceType;
 
-        squares.push(
-          <Square
-            key={squareIndex}
-            y={y}
-            x={x}
-            pieceType={currentSquare.pieceType}
-            isPossibleMove={isPossibleMove}
-            isLastMove={isLastMoveFrom || isLastMoveTo}
-            isWhiteTurn={isWhiteTurn}
-            isPieceAttackedKing={isPieceAttackedKing}
-            isInCheck={isInCheck}
-            size={squareSize}
-          />
-        );
-      }
+      squares.push(
+        <Square
+          key={squareIndex}
+          y={y}
+          x={x}
+          pieceType={currentSquare.pieceType}
+          isPossibleMove={isPossibleMove}
+          isLastMove={isLastMoveFrom || isLastMoveTo}
+          isWhiteTurn={isWhiteTurn}
+          isPieceAttackedKing={isPieceAttackedKing}
+          isInCheck={isInCheck}
+          size={squareSize}
+        />
+      );
     }
     return squares;
-  }, [history, lastMoves, pieceAttackedKing, possibleMoves, squareSize]);
+  }, [flipped, history, lastMoves, pieceAttackedKing, possibleMoves, squareSize]);
+
+  const [white, black] = players;
+  const [top, bottom] = flipped ? [white, black] : [black, white];
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <div className="board" style={{ width: squareSize * 8 }}>
-        {renderPlayer(players[1])}
-        <div className="squares">
+        {renderPlayer(top)}
+        <div key="squares" className="squares">
           <AnimatePresence>{squaresToRender}</AnimatePresence>
           <Promotion squareSize={squareSize} />
           <GameOver />
         </div>
-        {renderPlayer(players[0])}
+        {renderPlayer(bottom)}
       </div>
 
       <div className="sidebar">
@@ -83,6 +94,7 @@ export const Board = () => {
           <div className="buttons">
             <Button type={ButtonType.Play} />
             <Button type={ButtonType.Reset} />
+            <Button type={ButtonType.Flip} />
           </div>
         </BoardSidebar>
 
@@ -94,6 +106,6 @@ export const Board = () => {
           <Notation />
         </BoardSidebar>
       </div>
-    </>
+    </MotionConfig>
   );
 };
