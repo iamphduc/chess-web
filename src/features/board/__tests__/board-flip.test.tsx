@@ -41,13 +41,19 @@ function firstPiece(html: string): string | undefined {
 function nameOrder(html: string): string[] {
   const black = players.find((p) => !p.isWhite)!.name;
   const white = players.find((p) => p.isWhite)!.name;
-  const names = [...html.matchAll(/class="player__name">(?:<span[^>]*>[^<]*<\/span>)?([^<]*)/g)].map(
+  const names = Array.from(
+    html.matchAll(/class="player__name">(?:<span[^>]*>[^<]*<\/span>)?([^<]*)/g),
     (m) => m[1].trim()
   );
   return names.map((n) => (n === black ? "black" : n === white ? "white" : n));
 }
 
-function move(state: BoardState, pieceType: PieceType, from: [number, number], to: [number, number]) {
+function move(
+  state: BoardState,
+  pieceType: PieceType,
+  from: [number, number],
+  to: [number, number]
+) {
   state = reducer(state, selectPiece({ pieceType, y: from[0], x: from[1] }));
   return reducer(state, movePiece({ to }));
 }
@@ -90,7 +96,7 @@ describe("board flip", () => {
   it("flip button reflects state", () => {
     const store = makeStore();
     const flipButton = (html: string) => {
-      const buttons = html.match(/<div class="buttons">.*?<\/div>/s)?.[0] ?? "";
+      const buttons = html.match(/<div class="buttons">[\s\S]*?<\/div>/)?.[0] ?? "";
       return buttons.match(/<button[^>]*aria-label="Flip board"[^>]*>/)?.[0] ?? "";
     };
 
