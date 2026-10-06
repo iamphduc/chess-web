@@ -25,7 +25,7 @@ export function squareMarks(input: SquareMarkInput): SquareMarks {
   return {
     highlight: input.isLastMove || input.isSelected,
     hint: input.isPossibleMove ? (input.hasPiece ? "ring" : "dot") : null,
-    check: input.isCheckedKing,
+    check: input.isCheckedKing && input.hasPiece,
     dropEdge: input.isOver && input.canDrop,
   };
 }
