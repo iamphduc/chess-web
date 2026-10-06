@@ -1,6 +1,6 @@
 # Sprint: Board interaction
 
-_From plan: docs/plans/board-feel.md · Slug: board-interaction · Status: active · Generated: 2026-10-06_
+_From plan: docs/plans/board-feel.md · Slug: board-interaction · Status: archived · Generated: 2026-10-06_
 
 <!-- autopilot-run: started=2026-10-06T11:36:12Z sprints=0 waves=2 -->
 
@@ -11,8 +11,8 @@ _From plan: docs/plans/board-feel.md · Slug: board-interaction · Status: activ
 | 1 | L1 | Look: `--board-*` tokens, focus ring and icon-button style | board-interaction-L1 | https://github.com/iamphduc/chess-web/pull/52 | done | high | — |
 | 1 | R1 | Rules: click-to-move reducer, flip state and orientation math | board-interaction-R1 | https://github.com/iamphduc/chess-web/pull/52 | done | medium | — |
 | 1 | T1 | Touch-drag check: HTML5 backend and `react-dnd-multi-backend` at 375 px | board-interaction-T1 | https://github.com/iamphduc/chess-web/pull/52 | done | medium | — |
-| 2 | H1 | Highlights (Look A), click and drag wiring, tap-to-move | board-interaction-H1 | — | pushed | high | L1, R1 |
-| 2 | F1 | Flip board UI, player swap, promotion picker, reduced motion | board-interaction-F1 | — | pushed | medium | L1, R1 |
+| 2 | H1 | Highlights (Look A), click and drag wiring, tap-to-move | board-interaction-H1 | https://github.com/iamphduc/chess-web/pull/53 | done | high | L1, R1 |
+| 2 | F1 | Flip board UI, player swap, promotion picker, reduced motion | board-interaction-F1 | https://github.com/iamphduc/chess-web/pull/53 | done | medium | L1, R1 |
 
 Why this split: wave 1 is three independent pieces (theme, pure logic, a throwaway touch check) that run side by side. Wave 2 has two UI slices that both need the tokens and the rules. They split on file lines: H1 owns the square and the piece, and F1 owns the board layout and the buttons. Sound and touch drag are the next sprint (`sound-and-touch-drag`), which plans touch drag from T1's finding.
 
@@ -212,3 +212,18 @@ Board, square, overlay and piece CSS use only these tokens for color.
   - `[manual]` With reduced motion emulated in DevTools, piece moves jump without sliding, and highlights still show.
 - **Depends on:** L1, R1
 - **One-way door:** none
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date (first sprint of the plan; `main` has no new commits since `board-feel` was cut)
+- **Slices shipped:** L1, R1, T1, H1, F1
+- **Queue entries:** resolved 1 (R1's flipped-label contract error, fixed in this doc before wave 2), deferred 1: [promotion picker overhangs the edge file](../../handoff-queue.md) (`2026-10-06 · PENDING · orchestrator → human`, Someday)
+- **Slice log:**
+  - L1: high · test-first yes · runtime focus ring and icon button at desktop and 375 px · 3 NOTEs · time lost none
+  - R1: medium · test-first yes · runtime restructured `movePiece` by drag (new actions had no UI yet) · 3 NOTEs + 1 PENDING (solved) · time lost none
+  - T1: medium · test-first n/a (research slice) · runtime HTML5 vs `rdndmb-html5-to-touch` under CDP touch at 375 px · 4 NOTEs · time lost none. **Verdict: touch drag fits** — the next sprint needs `react-dnd-multi-backend` + `rdndmb-html5-to-touch` 9.0.0, the `DndProvider options={HTML5toTouch}` swap in `src/index.tsx`, a touch drag preview (`Preview` from `react-dnd-multi-backend`), and select-on-drag-start (`pickUp`, now shipped). Details and the CDP touch script: `docs/research/touch-drag.md`.
+  - H1: high · test-first yes · runtime click, drag (page-JS `DataTransfer` and real mouse), full game by taps at 375 px · 5 NOTEs · time lost none
+  - F1: medium · test-first yes · runtime flip, moves/promotion/mate flipped, clocks mid-game, 375 px, reduced motion · 5 NOTEs · time lost none
+  - Wave fix: none (the picker overhang is the older formula, deferred as PENDING)
+  - Stalls: none. Machine: the wave 2 check's dev server was stopped once by Claude Code's low-memory guard and restarted at the human's go-ahead.
+- **Agent context at hand-back:** 513,784 tokens across the five engineers (L1 76,840 · R1 95,082 · T1 98,689 · H1 116,962 · F1 126,211) — each agent's final context size, not tokens billed

@@ -2,6 +2,8 @@
 
 _Generated: 2026-10-06 · Status: active · Grilled-with: grilling (fast)_
 
+<!-- autopilot-run: started=2026-10-06T11:36:12Z sprints=1 waves=2 -->
+
 ## Goal
 Make the board feel like chess.com: restyled move highlights, click-to-move that behaves as players expect, a flip-board button, move sounds with a mute toggle, play that works on a phone, and less motion when the OS asks for it. The board stays custom; only its feel changes.
 
@@ -66,7 +68,7 @@ The board already has legal-move dots, capture rings, a last-move overlay, a che
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| board-interaction | Look A highlights, click-to-move polish, flip board, reduced motion, and tap-to-move on touch, plus a phone touch-drag check that decides the next sprint's touch work | planned | — |
+| board-interaction | Look A highlights, click-to-move polish, flip board, reduced motion, and tap-to-move on touch, plus a phone touch-drag check that decides the next sprint's touch work | done | — |
 | sound-and-touch-drag | Move sounds with the mute toggle, and touch drag through the multi-backend if the first sprint's check says it fits | planned | board-interaction |
 
 Status values: `planned` / `active` / `done`. The orchestrator only flips its row's Status — it does not rewrite Goal/Depends-on retroactively.
