@@ -45,7 +45,7 @@ function render(store: TestStore, name: string, pieceType: PieceType | null = nu
 /** The text of each edge label in the markup, by kind. */
 function labels(markup: string): { rank: string[]; file: string[] } {
   const pick = (kind: string) =>
-    [...markup.matchAll(new RegExp(`square__label--${kind}[^>]*>([^<]*)<`, "g"))].map((m) => m[1]);
+    Array.from(markup.matchAll(new RegExp(`square__label--${kind}[^>]*>([^<]*)<`, "g"))).map((m) => m[1]);
   return { rank: pick("rank"), file: pick("file") };
 }
 
