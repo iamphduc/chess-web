@@ -2,15 +2,15 @@
 
 _From plan: docs/plans/board-feel.md · Slug: board-interaction · Status: active · Generated: 2026-10-06_
 
-<!-- autopilot-run: started=2026-10-06T11:36:12Z sprints=0 waves=1 -->
+<!-- autopilot-run: started=2026-10-06T11:36:12Z sprints=0 waves=2 -->
 
 ## Status board
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | L1 | Look: `--board-*` tokens, focus ring and icon-button style | board-interaction-L1 | — | pushed | high | — |
-| 1 | R1 | Rules: click-to-move reducer, flip state and orientation math | board-interaction-R1 | — | pushed | medium | — |
-| 1 | T1 | Touch-drag check: HTML5 backend and `react-dnd-multi-backend` at 375 px | board-interaction-T1 | — | pending | — | — |
+| 1 | L1 | Look: `--board-*` tokens, focus ring and icon-button style | board-interaction-L1 | https://github.com/iamphduc/chess-web/pull/52 | done | high | — |
+| 1 | R1 | Rules: click-to-move reducer, flip state and orientation math | board-interaction-R1 | https://github.com/iamphduc/chess-web/pull/52 | done | medium | — |
+| 1 | T1 | Touch-drag check: HTML5 backend and `react-dnd-multi-backend` at 375 px | board-interaction-T1 | https://github.com/iamphduc/chess-web/pull/52 | done | medium | — |
 | 2 | H1 | Highlights (Look A), click and drag wiring, tap-to-move | board-interaction-H1 | — | pending | — | L1, R1 |
 | 2 | F1 | Flip board UI, player swap, promotion picker, reduced motion | board-interaction-F1 | — | pending | — | L1, R1 |
 
