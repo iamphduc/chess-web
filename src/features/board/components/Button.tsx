@@ -4,13 +4,15 @@ import { useInstantLayoutTransition } from "framer-motion";
 import "./Button.css";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import { reset, start } from "../BoardSlice";
-import { toggleFlip } from "../viewSlice";
+import { toggleFlip, toggleSound } from "../viewSlice";
+import { browserStorage, saveSoundOn } from "../soundSetting";
 
 export enum ButtonType {
   Play = "Play",
   Reset = "Reset",
   Undo = "Undo",
   Flip = "Flip",
+  Sound = "Sound",
 }
 
 interface Props {
@@ -59,10 +61,53 @@ const FlipButton = () => {
   );
 };
 
+/** A speaker: with sound waves when on, with a cross when off. */
+const SoundIcon = ({ on }: { on: boolean }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.25}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M11 4 6 8.5H2v7h4l5 4.5z" />
+    {on ? (
+      <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" />
+    ) : (
+      <path d="M15.5 8.5l6 7M21.5 8.5l-6 7" />
+    )}
+  </svg>
+);
+
+const SoundButton = () => {
+  const dispatch = useAppDispatch();
+  const soundOn = useAppSelector((state) => state.view.soundOn);
+
+  return (
+    <button
+      type="button"
+      className={`button button--icon${soundOn ? " button--sound-on" : ""}`}
+      aria-label="Sound"
+      aria-pressed={soundOn}
+      title="Sound"
+      onClick={() => {
+        dispatch(toggleSound());
+        saveSoundOn(browserStorage, !soundOn);
+      }}
+    >
+      <SoundIcon on={soundOn} />
+    </button>
+  );
+};
+
 export const Button = ({ type }: Props) => {
   const dispatch = useAppDispatch();
 
   if (type === ButtonType.Flip) return <FlipButton />;
+  if (type === ButtonType.Sound) return <SoundButton />;
 
   const handleClick = () => {
     switch (type) {

@@ -40,3 +40,7 @@
   width: 1em;
   height: 1em;
 }
+/* Sound on: the Play green from the board tokens; off keeps the dark surface. */
+.button--sound-on {
+  background-color: var(--board-sound-on);
+}
