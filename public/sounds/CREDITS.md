@@ -14,6 +14,6 @@ Each file is the pack's `.ogg` sound decoded and saved as a 16-bit mono 22,050 H
 | `move.wav` | move | `Audio/impactWood_light_002.ogg` | none |
 | `capture.wav` | capture | `Audio/impactGeneric_light_002.ogg` | 400 Hz high-pass |
 | `castle.wav` | castle | `Audio/impactPlank_medium_000.ogg` | 400 Hz high-pass |
-| `check.wav` | check | `Audio/impactMetal_light_000.ogg` | none |
+| `check.wav` | check | `Audio/impactGlass_medium_004.ogg` | none (picked by ear over the metal clank) |
 | `promote.wav` | promote | `Audio/impactGlass_light_000.ogg` | none |
 | `game-end.wav` | game-end | `Audio/impactBell_heavy_000.ogg` | none |
