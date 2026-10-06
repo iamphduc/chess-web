@@ -81,9 +81,9 @@ describe("moves after the game is over", () => {
   });
 
   it("a promotion picked after a flag fall keeps the flag-fall result", () => {
-    // White: Ka1, Pb7; black: Kh8 (far away, so =Q is not mate). b8 waits for the picker.
+    // White: Ka1, Pb7; black: Kh6 (out of the new queen's reach). b8 waits for the picker.
     const grid = emptyGrid();
-    grid[0][7] = PieceType.BlackKing;
+    grid[2][7] = PieceType.BlackKing;
     grid[7][0] = PieceType.WhiteKing;
     grid[1][1] = PieceType.WhitePawnB;
     let state = reducer(seeded({ ...initialGameState(), squares: grid }), start());
