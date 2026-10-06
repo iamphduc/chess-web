@@ -1,6 +1,6 @@
 # Sprint: Sound and touch drag
 
-_From plan: docs/plans/board-feel.md · Slug: sound-and-touch-drag · Status: active · Generated: 2026-10-06_
+_From plan: docs/plans/board-feel.md · Slug: sound-and-touch-drag · Status: archived · Generated: 2026-10-06_
 
 <!-- autopilot-run: started=2026-10-06T11:36:12Z sprints=1 waves=3 -->
 
@@ -8,8 +8,8 @@ _From plan: docs/plans/board-feel.md · Slug: sound-and-touch-drag · Status: ac
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | S1 | Move sounds, Sound toggle, and the plan's closing docs | sound-and-touch-drag-S1 | — | pushed | medium | — |
-| 1 | T1 | Touch drag through `react-dnd-multi-backend` | sound-and-touch-drag-T1 | — | pushed | medium | — |
+| 1 | S1 | Move sounds, Sound toggle, and the plan's closing docs | sound-and-touch-drag-S1 | https://github.com/iamphduc/chess-web/pull/54 | done | medium | — |
+| 1 | T1 | Touch drag through `react-dnd-multi-backend` | sound-and-touch-drag-T1 | https://github.com/iamphduc/chess-web/pull/54 | done | medium | — |
 
 Why this split: sound and touch drag share no files and no state, so they run side by side in one wave, with at most two dev servers at once. Sound stays one slice: the rules, the setting, the player and the button are small, and the button and the hook can't be built without the other three. The plan's closing docs go in S1, which owns `docs/codebase-structure.md`. The Look foundation is already in place from `board-interaction` (L1), so this sprint has no `L1`.
 
@@ -153,3 +153,15 @@ Why this split: sound and touch drag share no files and no state, so they run si
   - `[manual]` Look at 375 px mid-drag: the preview is the plain piece at square size, with no box, shadow or tint, and the source piece is faded on its square as before.
 - **Depends on:** —
 - **One-way door:** none
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date (`main` had no new commits)
+- **Slices shipped:** S1, T1
+- **Queue entries:** resolved 0, deferred 0 (no new entries; the earlier picker-overhang PENDING is unrelated to this sprint)
+- **Slice log:**
+  - S1: medium · test-first yes · runtime every move kind's `data-last-sound` after a real click, mute across a reload, 375 px row · 5 NOTEs · time lost ~5 min (installing `ffmpeg-static` was denied; the `.ogg` files were converted to `.wav` in the browser)
+  - T1: medium · test-first yes · runtime CDP touch drag, tap, scroll and swipe, flipped drag, 800 px preview size, desktop mouse drag · 3 NOTEs · time lost none
+  - Wave fix: none
+  - Stalls: none
+- **Agent context at hand-back:** 258,523 tokens across the two engineers (S1 162,523 · T1 96,000) — each agent's final context size, not tokens billed
