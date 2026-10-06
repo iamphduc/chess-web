@@ -3,26 +3,18 @@ import React from "react";
 import "./Overlay.css";
 
 export enum OverlayType {
-  Illegal = "ILLEGAL",
-  Legal = "LEGAL",
-  Possible = "POSSIBLE",
-  LastMove = "LAST_MOVE",
-  Enemy = "Enemy",
+  Highlight = "HIGHLIGHT",
+  Check = "CHECK",
+  Dot = "DOT",
+  Ring = "RING",
+  DropEdge = "DROP_EDGE",
 }
 
 interface Props {
   type: OverlayType;
-  handleClick?: () => void;
 }
 
-export const Overlay = ({ type, handleClick }: Props) => {
-  return (
-    <div
-      className={`overlay overlay--${type.toLowerCase()}`}
-      onClick={() => handleClick && handleClick()}
-    >
-      {type === OverlayType.Possible && <div className="overlay__possible" />}
-      {type === OverlayType.Enemy && <div className="overlay__enemy" />}
-    </div>
-  );
-};
+/** A mark drawn over a square. Marks never take clicks; the square handles them. */
+export const Overlay = ({ type }: Props) => (
+  <div className={`overlay overlay--${type.toLowerCase().replace("_", "-")}`} aria-hidden="true" />
+);
