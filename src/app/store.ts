@@ -1,10 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 
 import { boardSlice } from "features/board/BoardSlice";
+import { viewSlice } from "features/board/viewSlice";
 
 export const store = configureStore({
   reducer: {
     board: boardSlice.reducer,
+    view: viewSlice.reducer,
   },
 });
 
