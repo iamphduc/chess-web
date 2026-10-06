@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Board Feel Looks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap">
+<style>
+  :root {
+    --page: #333333;
+    --ink: #FFFFFF;
+    --muted: #BDBDBD;
+    --surface: rgba(0, 0, 0, 0.24);
+    --light: rgb(234, 240, 206);
+    --dark: rgb(187, 190, 100);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 16px 64px; background: var(--page); color: var(--ink); font: 500 16px/1.5 "Quicksand", sans-serif; }
+  h1 { font-size: 1.75rem; margin: 0 0 4px; }
+  h2 { font-size: 1.5rem; margin: 0 0 4px; }
+  h3 { font-size: 1.05rem; margin: 24px 0 8px; color: var(--muted); }
+  p { margin: 0 0 8px; max-width: 70ch; }
+  .intro { color: var(--muted); }
+  .dir { margin-top: 40px; padding: 20px; border-radius: 12px; background: rgba(0,0,0,0.25); }
+  .thesis { color: var(--muted); }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .swatch { width: 120px; font-size: 12px; }
+  .swatch i { display: block; height: 44px; border-radius: 6px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.15); background-image: linear-gradient(var(--c), var(--c)), linear-gradient(var(--under), var(--under)); }
+  .tile { text-align: center; font-size: 12px; color: var(--muted); width: 78px; }
+  .tile .sq { width: 78px; height: 78px; margin-bottom: 4px; }
+  .type span { display: block; }
+
+  /* board */
+  .board { display: grid; grid-template-columns: repeat(8, var(--s)); border-radius: 4px; overflow: hidden; }
+  .sq { position: relative; width: var(--s, 78px); height: var(--s, 78px); }
+  .sq.l { background: var(--light); }
+  .sq.d { background: var(--dark); }
+  .sq .hl { position: absolute; inset: 0; }
+  .sq .pc { position: absolute; inset: 0; background-size: contain; background-repeat: no-repeat; z-index: 1; }
+  .sq .co { position: absolute; font: 700 calc(var(--s, 78px) * 0.2)/1 "Quicksand", sans-serif; z-index: 2; }
+  .sq .co.rank { top: 2px; left: 3px; }
+  .sq .co.file { bottom: 2px; right: 3px; }
+  .sq.l .co { color: var(--dark); }
+  .sq.d .co { color: var(--light); }
+  .mark { position: absolute; z-index: 3; pointer-events: none; }
+
+  /* controls */
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: none; border-radius: 6px; font: 700 16px "Quicksand", sans-serif; color: #fff; background: var(--surface); cursor: pointer; }
+  .btn svg { width: 20px; height: 20px; }
+  .ctl { text-align: center; font-size: 12px; color: var(--muted); }
+  .ctl .btn { margin-bottom: 4px; }
+
+  .screens { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .screen { background: #333; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); }
+  .screen .bar { display: flex; justify-content: space-between; align-items: center; margin: 6px 0; font-size: 14px; }
+  .screen .bar b { font-weight: 700; }
+  .phone { width: 343px; }
+  .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+
+  /* ---------- Direction A: chess.com classic ---------- */
+  .A { --last: rgba(255, 255, 51, 0.5); --sel: rgba(255, 255, 51, 0.5); --dot: rgba(0, 0, 0, 0.14); --ring: rgba(0, 0, 0, 0.14); --check: radial-gradient(circle, #ff0000 0%, rgba(231, 0, 0, 0.9) 25%, rgba(169, 0, 0, 0) 89%); --over: rgba(255, 255, 255, 0.65); --btn-on: #059862; --focus: #FFFFFF; }
+  .A .hl.last, .A .hl.sel { background: var(--last); }
+  .A .hl.check { background: var(--check); }
+  .A .mark.dot { width: 33%; height: 33%; left: 33.5%; top: 33.5%; border-radius: 50%; background: var(--dot); }
+  .A .mark.ring { inset: 0; border-radius: 50%; border: calc(var(--s, 78px) * 0.09) solid var(--ring); }
+  .A .mark.over { inset: 0; box-shadow: inset 0 0 0 calc(var(--s, 78px) * 0.06) var(--over); }
+  .A .mark.illegal { inset: 0; }
+
+  /* ---------- Direction B: lichess green ---------- */
+  .B { --last: rgba(155, 199, 0, 0.41); --sel: rgba(20, 85, 30, 0.5); --dot: rgba(20, 85, 30, 0.5); --ring: rgba(20, 85, 0, 0.3); --check: radial-gradient(ellipse at center, rgba(255, 0, 0, 1) 0%, rgba(231, 0, 0, 1) 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%); --over: rgba(20, 85, 30, 0.3); --btn-on: #3E7A27; --focus: #9BC700; }
+  .B .hl.last { background: var(--last); }
+  .B .hl.sel { background: var(--sel); }
+  .B .hl.check { background: var(--check); }
+  .B .mark.dot { inset: 0; background: radial-gradient(var(--dot) 19%, transparent 20%); }
+  .B .mark.ring { inset: 0; background: radial-gradient(transparent 0%, transparent 79%, var(--ring) 80%); }
+  .B .mark.over { inset: 0; background: var(--over); }
+  .B .mark.illegal { inset: 0; }
+
+  /* ---------- Direction C: crisp outlines ---------- */
+  .C { --last: #E8A33D; --sel: #FFFFFF; --dot: rgba(28, 28, 28, 0.55); --ring: rgba(28, 28, 28, 0.55); --check: #D9534F; --over: #FFFFFF; --btn-on: #E8A33D; --focus: #E8A33D; }
+  .C .hl.last { box-shadow: inset 0 0 0 calc(var(--s, 78px) * 0.06) var(--last); }
+  .C .hl.sel { box-shadow: inset 0 0 0 calc(var(--s, 78px) * 0.06) var(--sel); background: rgba(255,255,255,0.18); }
+  .C .hl.check { background: var(--check); opacity: 0.85; }
+  .C .mark.dot { width: 24%; height: 24%; left: 38%; top: 38%; border-radius: 50%; background: var(--dot); }
+  .C .mark.ring { inset: 6%; border-radius: 50%; border: calc(var(--s, 78px) * 0.05) solid var(--ring); }
+  .C .mark.over { inset: 0; box-shadow: inset 0 0 0 calc(var(--s, 78px) * 0.09) var(--over); }
+  .C .mark.illegal { inset: 0; }
+
+  /* control states per direction */
+  .btn.hover { filter: brightness(1.25); }
+  .btn.pressed { filter: brightness(0.8); transform: translateY(1px); }
+  .btn.on { background: var(--btn-on); }
+  .btn.focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .btn.off { color: #BDBDBD; }
+</style>
+</head>
+<body>
+<h1>Board feel: three highlight looks</h1>
+<p class="intro">The board colors (Wheat), pieces, and Quicksand 500/700 stay as they are in every direction. Only the highlights and the two new buttons (Flip, Sound) change. Pick A, B, C, or a mix.</p>
+
+<div id="dirs"></div>
+
+<script>
+const ASSET = "../../src/assets/";
+const NAMES = { k: "king", q: "queen", r: "rook", b: "bishop", n: "knight", p: "pawn" };
+const img = (c) => `${ASSET}${NAMES[c.toLowerCase()]}-${c === c.toUpperCase() ? "white" : "black"}.svg`;
+
+function parseFen(fen) {
+  return fen.split("/").map((row) => {
+    const out = [];
+    for (const ch of row) /\d/.test(ch) ? out.push(...Array(+ch).fill(null)) : out.push(ch);
+    return out;
+  });
+}
+const files = "abcdefgh";
+const sqName = (y, x) => files[x] + (8 - y);
+
+// marks: { "e4": ["last"], ... } — hl: last, sel, check; mark: dot, ring, over
+function board({ fen, size, marks = {}, flipped = false }) {
+  const grid = parseFen(fen);
+  const el = document.createElement("div");
+  el.className = "board";
+  el.style.setProperty("--s", size + "px");
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const y = flipped ? 7 - r : r, x = flipped ? 7 - c : c;
+    const name = sqName(y, x);
+    const sq = document.createElement("div");
+    sq.className = "sq " + ((y + x) % 2 ? "d" : "l");
+    sq.style.setProperty("--s", size + "px");
+    for (const m of marks[name] || []) {
+      const d = document.createElement("div");
+      d.className = ["last", "sel", "check"].includes(m) ? "hl " + m : "mark " + m;
+      sq.append(d);
+    }
+    const p = grid[y][x];
+    if (p) { const d = document.createElement("div"); d.className = "pc"; d.style.backgroundImage = `url(${img(p)})`; sq.append(d); }
+    if (c === 0) sq.insertAdjacentHTML("beforeend", `<span class="co rank">${8 - y}</span>`);
+    if (r === 7) sq.insertAdjacentHTML("beforeend", `<span class="co file">${files[x]}</span>`);
+    el.append(sq);
+  }
+  return el;
+}
+
+function tile(label, { piece = null, marks = [], dark = false }) {
+  const t = document.createElement("div");
+  t.className = "tile";
+  const sq = document.createElement("div");
+  sq.className = "sq " + (dark ? "d" : "l");
+  for (const m of marks) {
+    const d = document.createElement("div");
+    d.className = ["last", "sel", "check"].includes(m) ? "hl " + m : "mark " + m;
+    sq.append(d);
+  }
+  if (piece) { const d = document.createElement("div"); d.className = "pc"; d.style.backgroundImage = `url(${img(piece)})`; sq.append(d); }
+  t.append(sq, label);
+  return t;
+}
+
+const flipIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v14M3 14l4 4 4-4M17 20V6M13 10l4-4 4 4"/></svg>`;
+const soundOn = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>`;
+const soundOff = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>`;
+
+function ctl(label, html, cls) {
+  return `<div class="ctl"><button class="btn ${cls}">${html}</button><br>${label}</div>`;
+}
+
+// Scenario 1: after 1.e4 e5 2.Qh5 Nf6, white picks the queen.
+const FEN1 = "rnbqkb1r/pppp1ppp/5n2/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR";
+const marks1 = {
+  g8: ["last"], f6: ["last"], h5: ["sel"],
+  g4: ["dot"], f3: ["dot"], e2: ["dot"], d1: ["dot"], g5: ["dot"], f5: ["dot"], h6: ["dot"], g6: ["dot"], h4: ["dot"], h3: ["dot"],
+  e5: ["ring"], h7: ["ring"], f7: ["ring"],
+};
+// Scenario 2: 3.Qxf7+ — check, shown flipped (Black's view) at phone width.
+const FEN2 = "rnbqkb1r/pppp1Qpp/5n2/4p3/4P3/8/PPPP1PPP/RNB1KBNR";
+const marks2 = { h5: ["last"], f7: ["last"], e8: ["check"] };
+
+const DIRS = [
+  {
+    id: "A", name: "A — chess.com classic",
+    thesis: "Warm yellow tint marks both the last move and the picked piece; soft grey dots and rings; check is a red glow on the king's square.",
+    palette: [["Last move / selected", "rgba(255,255,51,.5)"], ["Dot / ring", "rgba(0,0,0,.14)"], ["Check", "#E70000"], ["Drag-over edge", "rgba(255,255,255,.65)"], ["Sound on", "#059862"], ["Focus ring", "#FFFFFF"]],
+    detail: "Memorable detail: the yellow tint is one color for both the move just played and the piece in your hand, so the eye learns a single signal.",
+  },
+  {
+    id: "B", name: "B — lichess green",
+    thesis: "Chessground's brown-theme colors: lime last move, deep green for the picked piece and its dots, capture targets marked by green corners.",
+    palette: [["Last move", "rgba(155,199,0,.41)"], ["Selected / dot", "rgba(20,85,30,.5)"], ["Capture corners", "rgba(20,85,0,.3)"], ["Check", "#E70000"], ["Sound on", "#3E7A27"], ["Focus ring", "#9BC700"]],
+    detail: "Memorable detail: a capture square shows green corners instead of a ring, so the enemy piece stays fully visible. Note: green on the olive dark squares is low contrast.",
+  },
+  {
+    id: "C", name: "C — crisp outlines",
+    thesis: "Outlines instead of fills: an amber frame for the last move, a white frame for the picked piece, solid red square for check. Best contrast on the Wheat board.",
+    palette: [["Last move frame", "#E8A33D"], ["Selected frame", "#FFFFFF"], ["Dot / ring", "rgba(28,28,28,.55)"], ["Check", "#D9534F"], ["Sound on", "#E8A33D"], ["Focus ring", "#E8A33D"]],
+    detail: "Memorable detail: frames never tint the square, so light and dark squares keep their own colors and the board stays readable even with many marks.",
+  },
+];
+
+const root = document.getElementById("dirs");
+for (const d of DIRS) {
+  const sec = document.createElement("section");
+  sec.className = "dir " + d.id;
+  sec.innerHTML = `<h2>${d.name}</h2><p class="thesis">${d.thesis}</p><p class="thesis">${d.detail}</p>
+    <h3>Palette (on the Wheat board)</h3><div class="row pal"></div>
+    <h3>Type (unchanged)</h3>
+    <div class="type"><span style="font:700 1.5rem Quicksand">Notation 1. e4 e5 — Quicksand 700</span><span>Body and buttons — Quicksand 500, 16 px</span></div>
+    <h3>Square states (light and dark)</h3><div class="row tiles"></div>
+    <h3>Controls</h3><div class="row ctls"></div>
+    <h3>Screens</h3><div class="screens"></div>`;
+  const pal = sec.querySelector(".pal");
+  for (const [label, c] of d.palette) pal.insertAdjacentHTML("beforeend", `<div class="swatch"><i style="--c:${c};--under:${label.includes("Sound") || label.includes("Focus") ? "#333" : "rgb(187,190,100)"}"></i>${label}<br><code>${c}</code></div>`);
+
+  const tiles = sec.querySelector(".tiles");
+  const states = [
+    ["Plain", {}], ["Last move", { marks: ["last"], piece: "N" }], ["Selected", { marks: ["sel"], piece: "Q" }],
+    ["Legal dot", { marks: ["dot"] }], ["Capture", { marks: ["ring"], piece: "p" }], ["Check", { marks: ["check"], piece: "k" }],
+    ["Drag over", { marks: ["over"] }],
+  ];
+  for (const dark of [false, true]) for (const [l, o] of states) tiles.append(tile(`${l}${dark ? " (dark)" : ""}`, { ...o, dark }));
+
+  sec.querySelector(".ctls").innerHTML =
+    ctl("Flip", flipIcon + "Flip", "") + ctl("Flip hover", flipIcon + "Flip", "hover") + ctl("Flip pressed", flipIcon + "Flip", "pressed") + ctl("Flip focus", flipIcon + "Flip", "focus") +
+    ctl("Sound on", soundOn, "on") + ctl("Sound on hover", soundOn, "on hover") + ctl("Sound on pressed", soundOn, "on pressed") +
+    ctl("Sound off", soundOff, "off") + ctl("Sound off hover", soundOff, "off hover") + ctl("Sound focus", soundOn, "on focus");
+
+  const screens = sec.querySelector(".screens");
+  const desk = document.createElement("div");
+  desk.innerHTML = `<div class="label">Desktop, 52 px squares — White picked the queen after 2…Nf6</div>`;
+  const s1 = document.createElement("div"); s1.className = "screen";
+  s1.innerHTML = `<div class="bar"><b>Black</b><span>09:41</span></div>`;
+  s1.append(board({ fen: FEN1, size: 52, marks: marks1 }));
+  s1.insertAdjacentHTML("beforeend", `<div class="bar"><b>White</b><span style="display:flex;gap:8px"><button class="btn">${flipIcon}</button><button class="btn on">${soundOn}</button></span></div>`);
+  desk.append(s1);
+  const ph = document.createElement("div");
+  ph.innerHTML = `<div class="label">375 px phone, flipped (Black at bottom) — 3.Qxf7+ check</div>`;
+  const s2 = document.createElement("div"); s2.className = "screen phone";
+  s2.innerHTML = `<div class="bar"><b>White</b><span>09:38</span></div>`;
+  s2.append(board({ fen: FEN2, size: 39.875, marks: marks2, flipped: true }));
+  s2.insertAdjacentHTML("beforeend", `<div class="bar"><b>Black</b><span style="display:flex;gap:8px"><button class="btn">${flipIcon}</button><button class="btn off">${soundOff}</button></span></div>`);
+  ph.append(s2);
+  screens.append(desk, ph);
+  root.append(sec);
+}
+</script>
+</body>
+</html>
