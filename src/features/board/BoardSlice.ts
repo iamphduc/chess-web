@@ -93,6 +93,9 @@ export const boardSlice = createSlice({
   initialState,
   reducers: {
     selectPiece: (state, action: PayloadAction<PieceSelection>) => {
+      // No piece moves once the game is over (checkmate, stalemate, flag fall).
+      if (state.gameOver !== GameOverType.Continue) return;
+
       // Deselect Piece
       if (state.selectedPiece && state.selectedPiece.pieceType === action.payload.pieceType) {
         console.log(`Deselected ${state.selectedPiece.pieceType}`);
@@ -115,7 +118,7 @@ export const boardSlice = createSlice({
 
     movePiece: (state, action: PayloadAction<PieceMove>) => {
       const { selectedPiece, fallenPieces } = state;
-      if (!selectedPiece) return;
+      if (!selectedPiece || state.gameOver !== GameOverType.Continue) return;
 
       const {
         to: [toY, toX],
@@ -247,7 +250,13 @@ export const boardSlice = createSlice({
       if (promotedId) {
         latest += "=" + pieceFactory.getPiece(promotedId).getAbbreviation();
       }
+      // A flag that fell while the picker was open keeps its result: the pawn
+      // still becomes the chosen piece, but the game stays over.
+      const resultBefore = state.gameOver;
       latest = appendCheckSuffix(next, latest, state);
+      if (resultBefore !== GameOverType.Continue) {
+        state.gameOver = resultBefore;
+      }
       state.notation[state.notation.length - 1] = latest;
 
       state.promotionPosition = [-1, -1];
@@ -267,6 +276,9 @@ export const boardSlice = createSlice({
       if (state.gameOver === GameOverType.Continue) {
         state.gameOver = GameOverType.Win;
       }
+      // Drop a piece still held, so no move hints stay on the board.
+      state.selectedPiece = null;
+      state.possibleMoves = [];
     },
 
     reset: () => {
