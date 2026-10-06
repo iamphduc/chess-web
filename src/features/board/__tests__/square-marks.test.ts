@@ -55,6 +55,9 @@ describe("squareMarks", () => {
   it("check glow on king square", () => {
     expect(squareMarks({ ...none, hasPiece: true, isCheckedKing: true }).check).toBe(true);
     expect(squareMarks({ ...none, hasPiece: true }).check).toBe(false);
+    // Board compares the checked king's type to each square's piece type, so an empty
+    // square matches when nobody is in check (null === null). Only a piece glows.
+    expect(squareMarks({ ...none, isCheckedKing: true }).check).toBe(false);
     expect(squareMarks({ ...none, isLastMove: true, isPossibleMove: true }).check).toBe(false);
     // Selecting the checked king shows both the tint and the glow.
     expect(
