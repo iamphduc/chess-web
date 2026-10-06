@@ -16,6 +16,16 @@
   --clock-running-ink: #1C1C1C;
   --clock-low-bg: #D9534F;
   --clock-low-ink: #FFFFFF;
+
+  /* Board (Look A). Board, square, overlay and piece CSS use only these for color. */
+  --board-light: rgb(234, 240, 206);
+  --board-dark: rgb(187, 190, 100);
+  --board-highlight: rgba(255, 255, 51, 0.5); /* last move and selected square */
+  --board-hint: rgba(0, 0, 0, 0.14); /* legal-move dot and capture ring */
+  --board-check: radial-gradient(circle, #ff0000 0%, rgba(231, 0, 0, 0.9) 25%, rgba(169, 0, 0, 0) 89%);
+  --board-drop-edge: rgba(255, 255, 255, 0.65); /* inset edge on a legal drag-over square */
+  --board-sound-on: #059862;
+  --board-focus: #FFFFFF;
 }
 
 body {
