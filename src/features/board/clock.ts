@@ -81,3 +81,14 @@ export function tickInterval(phase: ClockPhase, ms: number): 1000 | 100 | null {
 export function lowTimeAlert(ms: number): string {
   return ms < TENTHS_MS ? "10 seconds left" : "";
 }
+
+/**
+ * Whether White's clock is the one that runs. `historyLength` counts the start
+ * position plus one entry per ply. While the promotion picker is open the pawn
+ * move is already in history, but the mover is still choosing a piece, so the
+ * mover's clock keeps running until the piece is picked.
+ */
+export function isWhiteClockTurn(historyLength: number, promotionPending: boolean): boolean {
+  const whiteToMove = historyLength % 2 === 1;
+  return promotionPending ? !whiteToMove : whiteToMove;
+}

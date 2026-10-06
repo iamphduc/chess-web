@@ -10,15 +10,17 @@ export enum GameOverType {
 }
 
 export const GameOver = () => {
-  const { history, gameOver } = useAppSelector((state) => state.board);
+  const { history, gameOver, flagFallWinner } = useAppSelector((state) => state.board);
 
+  // Checkmate: the side to move lost. A flag fall stores its own winner.
   const isWhiteTurn = history.length % 2 === 1;
+  const winner = flagFallWinner ?? (isWhiteTurn ? "Black" : "White");
 
   return gameOver === GameOverType.Continue ? (
     <></>
   ) : (
     <div className="game-over">
-      {gameOver === GameOverType.Win && <div>{`${!isWhiteTurn ? "White" : "Black"} Win!`}</div>}
+      {gameOver === GameOverType.Win && <div>{`${winner} Win!`}</div>}
       {gameOver === GameOverType.Draw && <div>Draw!</div>}
     </div>
   );

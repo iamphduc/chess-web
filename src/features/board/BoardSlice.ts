@@ -18,6 +18,7 @@ import {
 } from "./engineAdapter";
 import { PiecePromoted } from "./components/Promotion";
 import { GameOverType } from "./components/GameOver";
+import { isWhiteClockTurn } from "./clock";
 
 interface PieceSelection {
   pieceType: PieceType;
@@ -44,7 +45,8 @@ interface BoardState {
    * Engine state per ply — `engineHistory[last]` is the current position. Grows
    * one entry per move and is replaced-in-place on promotion, so it stays in
    * lockstep with the UI-facing `history` array (and thus the components'
-   * `history.length % 2` turn derivation matches `engine.turn`).
+   * `history.length % 2` turn derivation matches `engine.turn`). The clocks
+   * also read `pendingPromotion`: the mover's clock runs until the piece is picked.
    */
   engineHistory: GameState[];
 
@@ -60,6 +62,8 @@ interface BoardState {
   notation: string[];
 
   gameOver: GameOverType;
+  /** Set when a flag falls; kept if a pending promotion is finished afterwards. */
+  flagFallWinner: "White" | "Black" | null;
   isPlaying: boolean;
 }
 
@@ -82,6 +86,7 @@ function createInitialState(): BoardState {
     fallenPieces: [],
     notation: [],
     gameOver: GameOverType.Continue,
+    flagFallWinner: null,
     isPlaying: false,
   };
 }
@@ -270,6 +275,9 @@ export const boardSlice = createSlice({
       // a checkmate or stalemate result already set by the move is kept.
       if (state.gameOver === GameOverType.Continue) {
         state.gameOver = GameOverType.Win;
+        // The side whose clock was running lost on time.
+        const whiteFlagged = isWhiteClockTurn(state.history.length, state.pendingPromotion !== null);
+        state.flagFallWinner = whiteFlagged ? "Black" : "White";
       }
       // Drop a piece still held, so no move hints stay on the board.
       state.selectedPiece = null;
