@@ -1,8 +1,9 @@
 import { pieceFactory } from "./piece-factory";
-import { HistorySquares } from "./board-types";
 import { PieceType } from "./piece-type";
-import { Pawn } from "./pieces/pawn";
-import { Piece, Position } from "./pieces/piece";
+import { Position } from "./pieces/piece";
+import { GameState } from "./engine/game-state";
+import { legalMoves, Position as EnginePosition } from "./engine/engine";
+import { colorOf, pieceKind } from "./engine/moves/classify";
 
 export enum SpecialCase {
   None = "",
@@ -33,68 +34,53 @@ export class PieceNotation {
     fallenPieces.sort((pieceA, pieceB) => pieceB.weight - pieceA.weight);
   }
 
+  /**
+   * SAN disambiguation: when another piece of the same kind and colour can also
+   * LEGALLY move to `to`, return what tells the mover apart — its origin file if
+   * no rival shares that file, else its origin rank if no rival shares that
+   * rank, else both (e.g. `Qh4e1`). Returns `""` when no rival can reach `to`.
+   *
+   * Rivals come from the engine's `legalMoves`, so a pinned or blocked piece
+   * never forces a suffix. Kings never need one (one per side). Pawn captures
+   * are written with their origin file by the caller, which overwrites this.
+   *
+   * `state` is the PRE-move position with the mover's side to move.
+   */
   public getSuffixAbbreviation(
-    squares: HistorySquares,
-    pieceToCheck: Piece,
-    [fromY, fromX]: Position,
-    [toY, toX]: Position
+    state: GameState,
+    [fromY, fromX]: EnginePosition,
+    [toY, toX]: EnginePosition
   ): string {
-    // Finally, a few special cases for algebraic notation: In some positions, two of the same
-    // piece (such as two knights) can be moved to the same square. In this case, you still write
-    // the piece abbreviation, but you then add the file (row) that the piece is on before you
-    // write the square.
-    // - chess.com
+    const mover = state.squares[fromY]?.[fromX];
+    if (!mover) return "";
+    const kind = pieceKind(mover);
+    const color = colorOf(mover);
 
-    // Complexity:
-    // - Time: O(64 * N), N is the number of moves of the same piece type
-    // - Space: O(1)
-
-    const isWhite = pieceToCheck.isWhitePiece();
-
+    const rivals: EnginePosition[] = [];
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 8; x++) {
-        const pieceType = squares[y][x].pieceType;
-        if (pieceType) {
-          const piece = pieceFactory.getPiece(pieceType);
-          if (
-            // Same type
-            pieceToCheck.constructor.name === piece.constructor.name &&
-            // Not a Pawn
-            piece instanceof Pawn &&
-            // Same color
-            piece.isWhitePiece() === isWhite &&
-            // Different position
-            (y !== fromY || x !== fromX)
-          ) {
-            // Pawn capture-disambiguation: the other same-colour pawn at [y, x]
-            // could also capture onto [toY, toX] when that square is one rank
-            // ahead (colour-relative) and one file to the side AND actually holds
-            // an enemy to capture. The enemy-occupancy gate mirrors the legacy
-            // `Pawn.getPossibleMoves`/`getAttackedSquares`, which only listed a
-            // diagonal as reachable when occupied by an enemy — without it a quiet
-            // pawn push gets a spurious file suffix whenever a friendly pawn sits
-            // diagonally behind the (empty) destination. (Engine owns legality;
-            // this is presentation-only notation.)
-            const dir = piece.isWhitePiece() ? -1 : 1;
-            const targetPieceType = squares[toY]?.[toX]?.pieceType;
-            const targetIsEnemy =
-              !!targetPieceType &&
-              targetPieceType.includes("BLACK") === piece.isWhitePiece();
-            const canCaptureTarget =
-              targetIsEnemy && toY === y + dir && Math.abs(toX - x) === 1;
-            if (canCaptureTarget) {
-              // If two pieces can move to the same file (row)
-              if (fromX === x) {
-                return 8 - fromY + "";
-              }
-              return String.fromCharCode(fromX + 97);
-            }
-          }
+        const piece = state.squares[y][x];
+        if (
+          piece === null ||
+          (y === fromY && x === fromX) ||
+          pieceKind(piece) !== kind ||
+          colorOf(piece) !== color
+        ) {
+          continue;
         }
+        const reaches = legalMoves(state, [y, x]).some(
+          ({ to: [y2, x2] }) => y2 === toY && x2 === toX
+        );
+        if (reaches) rivals.push([y, x]);
       }
     }
 
-    return "";
+    if (rivals.length === 0) return "";
+    const file = String.fromCharCode(fromX + 97);
+    const rank = String(8 - fromY);
+    if (rivals.every(([, x]) => x !== fromX)) return file;
+    if (rivals.every(([y]) => y !== fromY)) return rank;
+    return file + rank;
   }
 
   public toAlgebraicNotationString(moveNotation: MoveNotation): string {

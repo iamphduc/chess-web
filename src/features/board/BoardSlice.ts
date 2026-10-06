@@ -153,12 +153,7 @@ export const boardSlice = createSlice({
 
       // --- Notation (reducer-side presentation, unchanged source) ---
       // Disambiguation + fallen pieces are computed from the PRE-move board.
-      const abbreviationSuffix = pieceNotation.getSuffixAbbreviation(
-        projected,
-        piece,
-        [fromY, fromX],
-        [toY, toX]
-      );
+      const abbreviationSuffix = pieceNotation.getSuffixAbbreviation(engine, from, to);
       let newNotation: MoveNotation = {
         abbreviation: piece.getAbbreviation() + abbreviationSuffix,
         position: [toY, toX],
