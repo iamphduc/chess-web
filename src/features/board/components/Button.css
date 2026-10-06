@@ -21,3 +21,22 @@
 .button--undo {
   border-radius: 0px;
 }
+.button:focus-visible {
+  outline: 3px solid var(--board-focus);
+  outline-offset: 2px;
+}
+/* Icon-only button: square, same surface, radius and hover as .button. */
+.button--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  /* one text line plus the 10px top and bottom padding, so it matches Play and Reset */
+  width: calc(1lh + 20px);
+  height: calc(1lh + 20px);
+}
+.button--icon svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
