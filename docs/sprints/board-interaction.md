@@ -11,8 +11,8 @@ _From plan: docs/plans/board-feel.md · Slug: board-interaction · Status: activ
 | 1 | L1 | Look: `--board-*` tokens, focus ring and icon-button style | board-interaction-L1 | https://github.com/iamphduc/chess-web/pull/52 | done | high | — |
 | 1 | R1 | Rules: click-to-move reducer, flip state and orientation math | board-interaction-R1 | https://github.com/iamphduc/chess-web/pull/52 | done | medium | — |
 | 1 | T1 | Touch-drag check: HTML5 backend and `react-dnd-multi-backend` at 375 px | board-interaction-T1 | https://github.com/iamphduc/chess-web/pull/52 | done | medium | — |
-| 2 | H1 | Highlights (Look A), click and drag wiring, tap-to-move | board-interaction-H1 | — | pending | — | L1, R1 |
-| 2 | F1 | Flip board UI, player swap, promotion picker, reduced motion | board-interaction-F1 | — | pending | — | L1, R1 |
+| 2 | H1 | Highlights (Look A), click and drag wiring, tap-to-move | board-interaction-H1 | — | pushed | high | L1, R1 |
+| 2 | F1 | Flip board UI, player swap, promotion picker, reduced motion | board-interaction-F1 | — | pushed | medium | L1, R1 |
 
 Why this split: wave 1 is three independent pieces (theme, pure logic, a throwaway touch check) that run side by side. Wave 2 has two UI slices that both need the tokens and the rules. They split on file lines: H1 owns the square and the piece, and F1 owns the board layout and the buttons. Sound and touch drag are the next sprint (`sound-and-touch-drag`), which plans touch drag from T1's finding.
 
