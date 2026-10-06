@@ -98,8 +98,9 @@ export const boardSlice = createSlice({
   initialState,
   reducers: {
     selectPiece: (state, action: PayloadAction<PieceSelection>) => {
-      // No piece moves once the game is over (checkmate, stalemate, flag fall).
-      if (state.gameOver !== GameOverType.Continue) return;
+      // No piece moves once the game is over (checkmate, stalemate, flag fall),
+      // nor while the mover is still choosing a promotion piece.
+      if (state.gameOver !== GameOverType.Continue || state.pendingPromotion) return;
 
       // Deselect Piece
       if (state.selectedPiece && state.selectedPiece.pieceType === action.payload.pieceType) {
@@ -123,7 +124,7 @@ export const boardSlice = createSlice({
 
     movePiece: (state, action: PayloadAction<PieceMove>) => {
       const { selectedPiece, fallenPieces } = state;
-      if (!selectedPiece || state.gameOver !== GameOverType.Continue) return;
+      if (!selectedPiece || state.gameOver !== GameOverType.Continue || state.pendingPromotion) return;
 
       const {
         to: [toY, toX],
