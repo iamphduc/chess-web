@@ -8,8 +8,9 @@ import { colorOf, pieceKind } from "./engine/moves/classify";
 export enum SpecialCase {
   None = "",
   Capture = "x",
-  QueenSideCastling = "0-0-0",
-  KingSideCastling = "0-0",
+  // PGN/SAN writes castling with the capital letter O, not the digit zero.
+  QueenSideCastling = "O-O-O",
+  KingSideCastling = "O-O",
   Check = "+",
   Checkmate = "#",
 }
