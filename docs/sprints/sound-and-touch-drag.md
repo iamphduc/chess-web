@@ -8,8 +8,8 @@ _From plan: docs/plans/board-feel.md · Slug: sound-and-touch-drag · Status: ac
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | S1 | Move sounds, Sound toggle, and the plan's closing docs | sound-and-touch-drag-S1 | — | pending | — | — |
-| 1 | T1 | Touch drag through `react-dnd-multi-backend` | sound-and-touch-drag-T1 | — | pending | — | — |
+| 1 | S1 | Move sounds, Sound toggle, and the plan's closing docs | sound-and-touch-drag-S1 | — | pushed | medium | — |
+| 1 | T1 | Touch drag through `react-dnd-multi-backend` | sound-and-touch-drag-T1 | — | pushed | medium | — |
 
 Why this split: sound and touch drag share no files and no state, so they run side by side in one wave, with at most two dev servers at once. Sound stays one slice: the rules, the setting, the player and the button are small, and the button and the hook can't be built without the other three. The plan's closing docs go in S1, which owns `docs/codebase-structure.md`. The Look foundation is already in place from `board-interaction` (L1), so this sprint has no `L1`.
 
