@@ -57,7 +57,7 @@ describe("BookNote and LiemCardDetail", () => {
     heMoved(inBook, "book");
     const html = note(inBook);
     expect(html).toMatch(/class="liem-note"[^>]*data-book-state="in-book"/);
-    const rows = [...html.matchAll(/<div class="([^"]*)" data-uci="([^"]+)" data-played="(true|false)"/g)];
+    const rows = Array.from(html.matchAll(/<div class="([^"]*)" data-uci="([^"]+)" data-played="(true|false)"/g));
     expect(rows.map((r) => [r[2], r[3]])).toEqual([
       ["d2d4", "true"],
       ["e2e4", "false"],
