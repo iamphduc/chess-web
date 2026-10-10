@@ -23,6 +23,7 @@ const EXPECTED_DEPENDENCIES = [
   "react-dnd-multi-backend",
   "react-dom",
   "react-redux",
+  "stockfish",
   "typescript",
   "uuid",
   "web-vitals",
