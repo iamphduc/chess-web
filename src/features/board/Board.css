@@ -15,3 +15,60 @@
   gap: 10px;
   justify-content: center;
 }
+
+/*
+ * vs Liem, card open: the squares dim under the setup card. Both sit in one grid
+ * cell, so on a small board the card grows the box downward instead of being cut off.
+ */
+.squares--setup {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.squares__grid,
+.squares__overlay {
+  grid-area: 1 / 1;
+}
+
+.squares__grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  align-self: start;
+  pointer-events: none;
+}
+
+.squares__overlay {
+  /* Above the squares, whose pieces make their own stacking layers. */
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12px 12px 0;
+}
+
+@media only screen and (min-width: 768px) {
+  .squares__overlay {
+    padding: 8% 6% 0;
+  }
+}
+
+/* vs Liem in a game: his card, his book note, then yours, as wide as the sidebar boxes. */
+.liem-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: calc(13px * 24);
+  margin: 8px 0;
+}
+
+@media only screen and (min-width: 768px) {
+  .liem-side {
+    width: calc(13px * 32);
+  }
+}
+@media only screen and (min-width: 1200px) {
+  .liem-side {
+    width: calc(13px * 36);
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "le-quang-liem",
+  "name": "Le Quang Liem",
+  "title": "GM",
+  "federation": "VIE",
+  "fideId": 12401137,
+  "rating": 2732,
+  "avatar": "le-quang-liem.png",
+  "aliases": ["Le Quang Liem", "Le, Quang Liem", "Le Liem Quang", "Le, Liem Quang", "Liem Le Quang", "Liem, Le Quang", "Liem Le"],
+  "sources": {
+    "lichessFideUrl": "https://lichess.org/fide/12401137/Le_Quang_Liem",
+    "lichessUser": null,
+    "chesscomUser": "liemle"
+  },
+  "books": { "slow": "book-slow.json", "online": "book-online.json" }
+}

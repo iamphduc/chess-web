@@ -47,6 +47,16 @@ describe("vite toolchain", () => {
     expect(major(deps["framer-motion"])).toBe(7);
   });
 
+  it("stockfish pinned and node engine declared", () => {
+    const p = pkg();
+    // an exact version: no ^, ~, range or tag
+    expect(p.dependencies.stockfish).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(p.devDependencies?.stockfish).toBeUndefined();
+    expect(p.engines).toEqual({ node: ">=22.12" });
+    const lock = JSON.parse(read("package-lock.json"));
+    expect(lock.packages["node_modules/stockfish"].version).toBe(p.dependencies.stockfish);
+  });
+
   it("CRA-era files are removed", () => {
     for (const file of ["vitest.config.ts", "public/index.html", "src/react-app-env.d.ts", "gh-pages.js"]) {
       expect(existsSync(join(ROOT, file)), file).toBe(false);
