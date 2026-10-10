@@ -24,6 +24,8 @@ export interface MoveChoice {
 
 export interface Opponent {
   chooseMove(state: GameState, settings: OpponentSettings): Promise<MoveChoice>;
+  /** Starts a new game: the move in flight rejects `superseded`, and the engine resets. */
+  newGame(): void;
   /** Stops the opponent and its engine for good. */
   dispose(): void;
 }
@@ -117,7 +119,12 @@ export function createOpponent(deps: {
       }
     },
 
-    newGame() {},
+    newGame() {
+      if (disposed) return;
+      current?.abort();
+      current = null;
+      engine.newGame();
+    },
 
     dispose() {
       if (disposed) return;

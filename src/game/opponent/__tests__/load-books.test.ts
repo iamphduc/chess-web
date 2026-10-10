@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { bookUrl } from "../players/book-urls";
+import playerJson from "../players/le-quang-liem/player.json";
 import { LIEM } from "../players/index";
 import { BookLoadError, createBookLoader, type FetchBook } from "../players/load-books";
 import type { Book, BookName, PlayerEntry } from "../types";
@@ -132,9 +132,7 @@ describe("createBookLoader", () => {
 
 describe("bookUrl", () => {
   it("book URLs for each book", () => {
-    const entry = JSON.parse(
-      readFileSync(new URL("../players/le-quang-liem/player.json", import.meta.url), "utf8")
-    ) as PlayerEntry;
+    const entry: PlayerEntry = playerJson;
     for (const name of ["slow", "online"] as const) {
       const u = bookUrl(entry, name);
       expect(typeof u).toBe("string");
@@ -147,5 +145,16 @@ describe("bookUrl", () => {
   it("throws for a player with no committed book", () => {
     const ghost = { ...LIEM.entry, id: "nobody" };
     expect(() => bookUrl(ghost, "slow")).toThrow(/nobody/);
+  });
+
+  it("a load for such a player rejects BookLoadError, not a thrown error", async () => {
+    const ghost = { ...LIEM.entry, id: "nobody" };
+    const f = fakeFetch();
+    const loader = createBookLoader({ fetch: f.fetch, url: bookUrl });
+    let load!: Promise<unknown>;
+    expect(() => (load = loader.load(ghost))).not.toThrow();
+    const error = await failure(load);
+    expect(error.message).toMatch(/nobody/);
+    expect(f.calls).toEqual([]);
   });
 });

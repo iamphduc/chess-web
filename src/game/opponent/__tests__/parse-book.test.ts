@@ -1,13 +1,12 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { BookError, parseBook } from "../parse-book";
+import online from "../players/le-quang-liem/book-online.json";
+import slow from "../players/le-quang-liem/book-slow.json";
 import type { BookName } from "../types";
 
-const DIR = new URL("../players/le-quang-liem/", import.meta.url);
-
-function committed(name: BookName): unknown {
-  return JSON.parse(readFileSync(new URL(`book-${name}.json`, DIR), "utf8"));
-}
+// Test-only JSON imports: the app never imports a book (players/load-books.ts fetches them).
+const COMMITTED: Record<BookName, unknown> = { slow, online };
+const committed = (name: BookName): unknown => structuredClone(COMMITTED[name]);
 
 /** A small valid book; each case below breaks one thing in a fresh copy. */
 function valid(): Record<string, unknown> {
