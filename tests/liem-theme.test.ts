@@ -110,8 +110,8 @@ const CONTRACT_CLASSES = [
 // Properties that paint a color. Their values must come from tokens.
 const COLOR_PROPS =
   /^(color|background|background-color|border|border-(top|right|bottom|left)(-color)?|border-color|outline|outline-color|box-shadow|text-shadow|fill|stroke|text-decoration(-color)?|caret-color|accent-color)$/;
-// Values that are fine without a token: no color at all, or "use what's inherited".
-const COLOR_KEYWORDS = /^(none|0|transparent|currentcolor|inherit|initial|unset)$/i;
+// Words allowed next to the tokens in a color property: sizes, line styles, and no-color keywords.
+const NOT_A_COLOR = /^(-?[\d.]+(px|em|rem|%)?|solid|dashed|dotted|inset|none|transparent|currentcolor|inherit|initial|unset)$/i;
 
 describe("liem theme", () => {
   it("liem tokens have the Look values", () => {
@@ -162,8 +162,9 @@ describe("liem theme", () => {
     for (const { selector, body } of all) {
       for (const [prop, value] of declarations(body)) {
         if (!COLOR_PROPS.test(prop)) continue;
-        if (COLOR_KEYWORDS.test(value)) continue;
-        expect(value, `${selector} { ${prop} } uses a token`).toMatch(/var\(--/);
+        // anything left once the tokens are taken out must be a size, a style or a no-color keyword
+        const rest = value.replace(/var\(--[\w-]+\)/g, "").split(/[\s,]+/).filter(Boolean);
+        for (const word of rest) expect(word, `${selector} { ${prop}: ${value} }`).toMatch(NOT_A_COLOR);
       }
     }
 

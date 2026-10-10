@@ -33,7 +33,7 @@ A client-side chess web app: Vite + React 18 + TypeScript + Redux Toolkit, deplo
 - **`src/game/board-types.ts`**: the UI board types, `Square` (`{ pieceType, isEnemyAttacked }`) and `HistorySquares`.
 - **`src/game/piece-type.ts`**: the `PieceType` enum, including the promoted ids. `src/game/players.ts` holds the two players' names and avatars.
 - **`src/constants.ts`**: the start position, `PromotionBoard`, square sizes and the default clock time. It is imported by relative path; `constants` is not a bare-import prefix.
-- **`src/assets/`**: piece SVGs and avatar PNGs.
+- **`src/assets/`**: piece SVGs, avatar PNGs and the self-hosted Quicksand fonts (`fonts/`).
 
 ## Stack & conventions
 
@@ -42,7 +42,8 @@ A client-side chess web app: Vite + React 18 + TypeScript + Redux Toolkit, deplo
 - **Base path:** `base` is `/chess-web/` in dev, build and preview. Files in `public/` are referenced as `/x`, never `%PUBLIC_URL%`.
 - **Bare imports:** `app/`, `assets/`, `features/`, `game/` and `hooks/` resolve to `src/<prefix>/`. The single source is tsconfig `paths` (no `baseUrl`); Vite reads it through `resolve.tsconfigPaths`. Anything else, such as `constants`, is imported by relative path.
 - **Sounds:** move sounds live in `public/sounds/` (one `.wav` per kind, each under 100 KB), with their source and CC0 licence in `public/sounds/CREDITS.md`. Vite copies them to `dist/sounds/`; the player loads them from `${import.meta.env.BASE_URL}sounds/`.
-- **Clock colors:** the player clocks use only the `--clock-*` tokens in `src/index.css` `:root` (waiting, running and low pairs; the low pair is for the large digits and icon only). Quicksand loads weights 500 and 700 from the Google Fonts `@import` there.
+- **Clock colors:** the player clocks use only the `--clock-*` tokens in `src/index.css` `:root` (waiting, running and low pairs; the low pair is for the large digits and icon only). Quicksand 500 and 700 (latin woff2) are self-hosted in `src/assets/fonts/` with their SIL OFL licence (`OFL.txt`), loaded by `@font-face` rules (`font-display: swap`) in `src/index.css`; Vite emits them to `/chess-web/assets/`. No CSS under `src/` loads anything over http(s).
+- **vs-Liem look:** `src/styles/liem.css` (imported from `src/index.tsx`) holds the `.liem-*` classes for the mode tabs, setup card, color tiles, strength steps, Book badge, book note and the dimmed board. Its colors come only from the `--liem-*` and `--book-bar` tokens in `src/index.css` `:root` (plus `--board-focus` for the 3 px focus ring). Flag red is for edges and underlines, never text.
 - **SVGs:** never inlined (`build.assetsInlineLimit` returns `false` for `.svg`), because `Piece.tsx` and `Promotion.tsx` put image URLs in an unquoted CSS `url(...)` that a `data:` URL breaks.
 - **Tests:** Vitest with `environment: 'node'` (no jsdom). Components may be tested in node by rendering to a string with `react-dom/server`'s `renderToStaticMarkup` (wrap in the Redux `Provider` with the real store if they read it); effects and timers don't run there, so keep timing logic in pure functions. Tests live in `__tests__/` folders under `src/` (they run through the app's own imports and aliases) and in the root `tests/` folder (tests that read files or run processes with Node APIs; `tsconfig` gives `src/` only `vite/client` types).
 - **SVG mock:** under Vitest only, every `*.svg` import resolves to `src/__mocks__/svgMock.ts` (default export `"svg-mock"`). The production build bundles the real SVGs.
