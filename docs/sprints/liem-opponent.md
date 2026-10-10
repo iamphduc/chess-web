@@ -13,7 +13,7 @@ _From plan: docs/plans/play-like-liem.md · Slug: liem-opponent · Status: activ
 | 1 | C1 | Match state, his turn, and the opponent controller | liem-opponent-C1 | merged | done | medium | — |
 | 1 | D1 | GPL-3.0 LICENSE and README credits | liem-opponent-D1 | merged | done | medium | — |
 | 2 | U1 | Mode tabs, setup card, and the start/new-game actions | liem-opponent-U1 | — | pending | — | L1, G1, C1 |
-| 2 | U2 | Book note and his card's badge | liem-opponent-U2 | — | pending | — | L1, G1, C1 |
+| 2 | U2 | Book note and his card's badge | liem-opponent-U2 | — | pushed | medium | L1, G1, C1 |
 | 3 | U3 | vs-Liem board layout, opponent wiring, lazy-bundle check, preview smoke | liem-opponent-U3 | — | pending | — | G1, P1, C1, U1, U2 |
 
 Plan branch `play-like-liem`; wave heads `liem-opponent-w1`, `liem-opponent-w2`, `liem-opponent-w3`.
@@ -211,7 +211,7 @@ The Start game button is the existing `.button.button--play`.
 ### U2: Book note and his card's badge
 - **Scope:**
   - `bookNote.ts` (pure):
-    - `bookMoveLabel(state, uci)`: the move number, then `.` for White or `...` for Black. Then the piece letter, the disambiguation from `pieceNotation.getSuffixAbbreviation`, and `x` on captures. Pawn captures start with the from-file. Castling is `O-O`/`O-O-O`, a promotion ends `=Q`, and there are no check marks.
+    - `bookMoveLabel(state, ply, uci)` (`ply` = plies before the move; `GameState` has no move counter): the move number, then `.` for White or `...` for Black. Then the piece letter, the disambiguation from `pieceNotation.getSuffixAbbreviation`, and `x` on captures. Pawn captures start with the from-file. Castling is `O-O`/`O-O-O`, a promotion ends `=Q`, and there are no check marks.
     - `bookNoteView(board, match)`. Its `kind` is one of:
       - `waiting`: no `lastChoice`, or its `gameId` isn't the board's.
       - `in-book`: source `book`.
