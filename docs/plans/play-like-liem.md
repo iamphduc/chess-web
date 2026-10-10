@@ -1,6 +1,6 @@
 # Plan: Play like Liem
 
-_Generated: 2026-10-09 · Status: active · Grilled-with: grilling (fast)_
+_Generated: 2026-10-09 · Status: archived · Grilled-with: grilling (fast)_
 
 ## Goal
 Add a computer opponent that plays like GM Le Quang Liem (FIDE 12401137, Vietnam, 2732 classical). It plays his real openings from a book built from his games, then a strength-limited Stockfish takes over. The human picks their color and his strength, and a book panel shows what he played in this position.

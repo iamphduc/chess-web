@@ -103,3 +103,28 @@ Consequences: Players who want him click the tab each visit. To open in vs Liem,
 Context: White text on the app green `#059862` is 3.7:1, under the 4.5:1 that normal-size text needs. The Play button, the Sound-on button and Start game all use it, and the plan had kept it as a recorded exception.
 Decision: The human chose `#047A4F` (5.38:1 with white). It replaces `#059862` everywhere the app uses it as a button color: `.button--play` in `src/features/board/components/Button.css`, and `--board-sound-on` and `--liem-start` in `src/index.css`, so the app keeps one green. Hover stays `filter: brightness(0.8)`, so it darkens in step. `tests/liem-theme.test.ts › start pair matches the Play green` and `tests/board-theme.test.ts` now require 4.5:1.
 Consequences: The green reads a little deeper next to the board's olive squares. To change it again, change all three values and the two theme tests together.
+
+## 2026-10-10 — His books have no Lichess games (agent default — override anytime)
+Context: The Lichess FIDE page `lichess.org/fide/12401137/Le_Quang_Liem` links no Lichess account, and the human didn't give a username.
+Decision: `player.json` keeps `sources.lichessUser: null`, so both books come from his Chess.com games only (3,692 kept).
+Consequences: Give his Lichess username and run `npm run book:import -- --lichess-user <name>` to add his Lichess games, then commit both book files.
+
+## 2026-10-10 — The slow book stays thin until his over-the-board games are added (agent default — override anytime)
+Context: Only 129 of his Chess.com games are slow (15 minutes or more), so the slow book has 130 positions and most slow lines fall back to the online book. vs-Liem games use 10+0 today, so they use the online book anyway.
+Decision: Ship the thin slow book, with the fallback to the online book on lines under 3 games.
+Consequences: Put his over-the-board PGN (for example from TWIC) in `games/otb/*.pgn` and re-run `npm run book:import`. It matters once a clock choice exists (see `docs/ideas/clock-choice.md`).
+
+## 2026-10-10 — Quicksand is self-hosted (agent default — override anytime)
+Context: The app loaded Quicksand from Google Fonts. The vs-Liem look added more text in it, and a third-party font request on every load leaks visits to Google.
+Decision: Quicksand 500 and 700 ship as woff2 files under `src/assets/fonts/`, with their OFL licence, through `@font-face` rules in `src/index.css`. No CSS names an http(s) URL.
+Consequences: To go back to Google Fonts, restore the `@import` and drop the `@font-face` rules and `tests/theme.test.ts › quicksand is served from the app`.
+
+## 2026-10-10 — vs-Liem setup defaults (agent default — override anytime)
+Context: The plan left the setup card's starting values open.
+Decision: The card opens on White and strength 2100; the clock is the app's 10+0, so he plays from his online book; his card shows "Thinking…" while he loads or thinks, and the book note shows "He couldn't move" with Try again when the engine or a book fails to load.
+Consequences: Change the defaults in `src/features/liem/matchSlice.ts` (`colorPick`, `strength`); a clock choice is in `docs/ideas/clock-choice.md`.
+
+## 2026-10-10 — Switching modes keeps the board's flip (agent default — override anytime)
+Context: After a vs-Liem game as Black the board is flipped. The sprint contract said switching mode "leaves the flip as is", so a two-player game then starts with White at the top.
+Decision: Keep the flip on a mode switch; Flip board turns it back.
+Consequences: To unflip on the switch to Two players, dispatch `setFlipped(false)` in `switchMode` in `src/features/liem/liemActions.ts`.
