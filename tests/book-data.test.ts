@@ -69,11 +69,16 @@ describe("committed books are valid", () => {
     expect(books.some((b) => (b.positions[START]?.length ?? 0) > 0)).toBe(true);
   });
 
-  it("players/index.ts exports the entry and both books", async () => {
+  it("players/index.ts exports the entry and no eager books", async () => {
     const { LIEM, PLAYERS } = await import("../src/game/opponent/players/index");
     expect(LIEM.entry).toEqual(entry);
+    expect(Object.keys(LIEM)).toEqual(["entry"]);
     expect(PLAYERS).toContain(LIEM);
-    for (const name of NAMES) expect(LIEM.books[name]).toEqual(JSON.parse(bookText(name)));
+
+    const source = readFileSync(join(ROOT, "src/game/opponent/players/index.ts"), "utf8");
+    expect(source).not.toMatch(/(from\s*|import\s*\(\s*)["'][^"']*book-[^"']*\.json[^"']*["']/);
+    for (const name of NAMES) expect(source).not.toContain(entry.books[name]);
+    expect(source).not.toContain("as unknown as Book");
   });
 });
 

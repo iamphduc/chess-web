@@ -117,6 +117,8 @@ export function createOpponent(deps: {
       }
     },
 
+    newGame() {},
+
     dispose() {
       if (disposed) return;
       disposed = true;
