@@ -1,0 +1,49 @@
+/*
+ * Layout only: the .liem-* classes in src/styles/liem.css give the look.
+ * The card never grows past the board it sits on (312 px at 375 px wide).
+ */
+.setup-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 360px;
+  text-align: left;
+}
+
+.setup-card__strength {
+  margin-top: 16px;
+}
+
+.setup-card__strength-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.setup-card__label {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.setup-card__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.setup-card__full {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--liem-gold);
+}
+
+.setup-card__actions {
+  margin-top: 16px;
+}
+
+/* Below the 600 px breakpoint the board is 312 px: a little less padding. */
+@media only screen and (max-width: 599px) {
+  .setup-card {
+    padding: 16px;
+  }
+}
