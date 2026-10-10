@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { store } from "app/store";
 import { reset } from "../BoardSlice";
-import { toggleFlip, toggleSound, viewSlice } from "../viewSlice";
+import { setFlipped, toggleFlip, toggleSound, viewSlice } from "../viewSlice";
 
 describe("view slice", () => {
   it("flip toggles and survives reset", () => {
@@ -47,5 +47,19 @@ describe("view slice", () => {
     store.dispatch(toggleFlip());
     store.dispatch(toggleSound());
     expect(store.getState().view.soundOn).toBe(true);
+  });
+
+  it("setFlipped sets the side", () => {
+    const { reducer } = viewSlice;
+    const initial = reducer(undefined, { type: "@@INIT" });
+    const flipped = reducer(initial, setFlipped(true));
+    expect(flipped.flipped).toBe(true);
+    expect(flipped.soundOn).toBe(initial.soundOn);
+    // A repeat changes nothing: the same state object comes back.
+    expect(reducer(flipped, setFlipped(true))).toBe(flipped);
+    const back = reducer(flipped, setFlipped(false));
+    expect(back.flipped).toBe(false);
+    expect(reducer(back, setFlipped(false))).toBe(back);
+    expect(reducer(initial, setFlipped(false))).toBe(initial);
   });
 });
