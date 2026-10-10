@@ -88,3 +88,18 @@ Consequences: A line he played only once leaves the book one move earlier than i
 Context: The Liem opponent bundles the Stockfish WASM build (the `stockfish` npm package), which is GPL v3. A public app that ships GPL code must offer its own source under the GPL. The repo had no licence before.
 Decision: Add `LICENSE` with the verbatim GPL v3 text from gnu.org and set `"license": "GPL-3.0-or-later"` in `package.json`. The README gets a Licence section and a Credits section for Stockfish (and nmrugg's `stockfish` package), the game data sources (Chess.com public API, Lichess database and API, TWIC and chessgames.com files) and the sounds. The committed books hold only move counts per position, never game files, because TWIC allows personal use only.
 Consequences: Once this reaches `main`, copies of the public repo taken from then on are GPL-licensed, and that grant can't be taken back for them. To stop offering later versions under the GPL, remove Stockfish and `LICENSE`. To narrow to "version 3 only", change `package.json` and `LICENSE_ID` in `tests/license.test.ts` to `GPL-3.0-only` and the README Licence line; the `LICENSE` text stays the same. The `-or-later` choice is pending the human's confirmation.
+
+## 2026-10-10 — The engine and books load when a vs-Liem game starts, not on page load
+Context: Stockfish's lite WASM is about 7.3 MB and the two books about 400 KB. Most visits may never play him, and the page opened before at about 385 KB of JS.
+Decision: Nothing from Stockfish and no book JSON is in the entry bundle. `useLiemOpponent.ts` imports `liemOpponent.ts` with a dynamic `import()`, and calls it (`preload`) only once a vs-Liem game has started; the books are fetched by URL and the worker module is its own chunk. One controller per mount loads him once and keeps him for later games. `tests/build.test.ts › engine and books load lazily` checks the entry chunk has no "stockfish" and no book position key, and that the `.wasm`, its worker JS and both books are separate assets.
+Consequences: The first vs-Liem game waits for the download (his card says "Thinking…" meanwhile); a failed download shows the note's Try again. To load earlier (for example on hovering the tab), call the controller's `preload` there.
+
+## 2026-10-10 — The page opens in Two players
+Context: The app was a two-player board until now, and its smoke recipe and tests start from that board.
+Decision: `match.mode` starts as `"two-player"` and isn't saved, so every load opens in Two players with the old layout. The `vs Liem` tab switches mode, which resets the board and opens the setup card.
+Consequences: Players who want him click the tab each visit. To open in vs Liem, change the `matchSlice` default (and the smoke recipe's first steps); to remember the last mode, save it like the Sound setting.
+
+## 2026-10-10 — App green darkened to #047A4F
+Context: White text on the app green `#059862` is 3.7:1, under the 4.5:1 that normal-size text needs. The Play button, the Sound-on button and Start game all use it, and the plan had kept it as a recorded exception.
+Decision: The human chose `#047A4F` (5.38:1 with white). It replaces `#059862` everywhere the app uses it as a button color: `.button--play` in `src/features/board/components/Button.css`, and `--board-sound-on` and `--liem-start` in `src/index.css`, so the app keeps one green. Hover stays `filter: brightness(0.8)`, so it darkens in step. `tests/liem-theme.test.ts › start pair matches the Play green` and `tests/board-theme.test.ts` now require 4.5:1.
+Consequences: The green reads a little deeper next to the board's olive squares. To change it again, change all three values and the two theme tests together.

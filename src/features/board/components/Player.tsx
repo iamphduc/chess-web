@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { type ReactNode, useEffect, useRef, useState } from "react";
 
 import "./Player.css";
 import { useAppDispatch, useAppSelector } from "app/hooks";
@@ -24,6 +24,8 @@ interface Props {
   title: string | null;
   avatar: string | null;
   isWhite: boolean;
+  /** Extra lines under the name, such as his strength and Book badge. */
+  detail?: ReactNode;
 }
 
 /**
@@ -48,7 +50,7 @@ export function msUntilNextTick(ms: number, interval: number): number {
   return (ms % interval) + 1;
 }
 
-export const Player = ({ name, title, avatar, isWhite }: Props) => {
+export const Player = ({ name, title, avatar, isWhite, detail }: Props) => {
   const { history, pendingPromotion, isPlaying, gameOver, gameId } = useAppSelector(
     (state) => state.board
   );
@@ -115,6 +117,7 @@ export const Player = ({ name, title, avatar, isWhite }: Props) => {
         <div className="player__name">
           {title && <span className="player__title">{title}</span>}
           {name}
+          {detail != null && <div className="player__detail">{detail}</div>}
         </div>
       </div>
       <PlayerClock remainingMs={shownMs} isActive={isActive} playerName={name} />
