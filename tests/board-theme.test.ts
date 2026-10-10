@@ -82,7 +82,7 @@ const LOOK: Record<string, string> = {
   "--board-drop-edge": "rgba(255, 255, 255, 0.65)",
   "--board-light": "rgb(234, 240, 206)",
   "--board-dark": "rgb(187, 190, 100)",
-  "--board-sound-on": "#059862",
+  "--board-sound-on": "#047A4F",
   "--board-focus": "#FFFFFF",
 };
 
@@ -117,6 +117,13 @@ describe("board theme", () => {
   it("focus ring and sound-on icon meet 3:1", () => {
     expect(contrast(parseColor(token("--board-focus")), PAGE)).toBeGreaterThanOrEqual(3);
     expect(contrast(WHITE, parseColor(token("--board-sound-on")))).toBeGreaterThanOrEqual(3);
+  });
+
+  it("play and sound-on share the app green, with 4.5:1 white text", () => {
+    const play = rules(buttonCss()).find((r) => r.selector === ".button--play");
+    const playBg = play?.body.match(/background-color\s*:\s*([^;]+);/)?.[1].trim();
+    expect(playBg?.toLowerCase()).toBe(token("--board-sound-on").toLowerCase());
+    expect(contrast(WHITE, parseColor(playBg!))).toBeGreaterThanOrEqual(4.5);
   });
 
   it("buttons have the focus ring and icon style", () => {

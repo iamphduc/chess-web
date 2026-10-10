@@ -76,7 +76,7 @@ const LOOK: Record<string, string> = {
   "--liem-gold-tint": "#2F2A14",
   "--liem-badge-bg": "#3A3214",
   "--liem-line": "#474747",
-  "--liem-start": "#059862",
+  "--liem-start": "#047A4F",
   "--book-bar": "#BBBE64",
 };
 
@@ -144,9 +144,8 @@ describe("liem theme", () => {
     const playBg = declarations(play?.body ?? "").find(([p]) => p === "background-color")?.[1];
     expect(playBg?.toLowerCase()).toBe(start.toLowerCase());
     const ratio = contrast(token("--liem-text"), start);
-    expect(ratio).toBeGreaterThanOrEqual(3);
-    // documented: like today's Play button, it passes only for large or bold text, not 4.5:1
-    expect(ratio).toBeLessThan(4.5);
+    // white Start game text meets 4.5:1 (decisions 2026-10-10: app green darkened to #047A4F)
+    expect(ratio).toBeGreaterThanOrEqual(4.5);
   });
 
   it("base control styles use only tokens", () => {
