@@ -7,8 +7,9 @@ import { HistorySquares } from "game/board-types";
 import { FallenPiece, MoveNotation, pieceNotation, SpecialCase } from "game/piece-notation";
 import { Position as PiecePosition } from "game/pieces/piece";
 import { Pawn } from "game/pieces/pawn";
-import { GameState, initialGameState } from "../../game/engine/game-state";
-import { applyMove, legalMoves, Position } from "../../game/engine/engine";
+import { GameState, initialGameState, PieceColor } from "../../game/engine/game-state";
+import { applyMove, legalMoves, Move, Position } from "../../game/engine/engine";
+import { PromotionKind } from "../../game/engine/moves/promotion";
 import { colorOf } from "../../game/engine/moves/classify";
 import {
   buildMove,
@@ -48,7 +49,25 @@ interface PendingPromotion {
   to: [number, number];
 }
 
+/** His move for one ply of one game. Stale or illegal ones are ignored. */
+export interface OpponentMove {
+  gameId: number;
+  /** Plies played when he chose: `engineHistory.length - 1`. */
+  ply: number;
+  move: Move;
+}
+
+interface NewGame {
+  /** The side the human plays, or `null` for two players. */
+  humanColor: PieceColor | null;
+}
+
 interface BoardState {
+  /** 0 at load, +1 on every `reset` and `newGame`. The clocks restart when it changes. */
+  gameId: number;
+  /** The side the human plays against Liem; `null` is a two-player game. */
+  humanColor: PieceColor | null;
+
   /**
    * Engine state per ply — `engineHistory[last]` is the current position. Grows
    * one entry per move and is replaced-in-place on promotion, so it stays in
@@ -80,6 +99,8 @@ interface BoardState {
 function createInitialState(): BoardState {
   const engine = initialGameState();
   return {
+    gameId: 0,
+    humanColor: null,
     engineHistory: [engine],
     history: [{ squares: projectSquares(engine) }],
     pieceAttackedKing: null,
@@ -109,18 +130,25 @@ const initialState = createInitialState();
  * both do: notation, fallen pieces, the last-move highlight and the promotion step.
  */
 function playMove(state: BoardState, dest: PiecePosition): void {
-  const { selectedPiece, fallenPieces } = state;
-  if (!selectedPiece || state.gameOver !== GameOverType.Continue || state.pendingPromotion) return;
+  const { selectedPiece } = state;
+  if (!selectedPiece || inputLocked(state)) return;
+  playPly(state, [selectedPiece.y, selectedPiece.x], [dest[0], dest[1]]);
+}
 
-  const [toY, toX] = dest;
-  const { pieceType, y: fromY, x: fromX } = selectedPiece;
+/**
+ * Play `from` → `to` for the side to move: notation, fallen pieces, the last-move
+ * highlight, check, game over and the sound. A pawn reaching the last rank with
+ * no `promotion` stops for the picker (a human move). With one, the ply completes.
+ */
+function playPly(state: BoardState, from: Position, to: Position, promotion?: PromotionKind): void {
+  const { fallenPieces } = state;
+  const [fromY, fromX] = from;
+  const [toY, toX] = to;
 
   const engine = state.engineHistory[state.engineHistory.length - 1];
   const projected = state.history[state.history.length - 1].squares;
+  const pieceType = engine.squares[fromY][fromX] as PieceType;
   const piece = pieceFactory.getPiece(pieceType);
-
-  const from: Position = [fromY, fromX];
-  const to: Position = [toY, toX];
 
   // --- Geometry classification (mirrors the engine's applyMove inference) ---
   const isPawn = piece instanceof Pawn;
@@ -180,7 +208,7 @@ function playMove(state: BoardState, dest: PiecePosition): void {
   // the moved pawn. `promotePawn` then replaces this ply IN PLACE (re-issuing
   // the move from the pre-move engine state with the chosen kind), mirroring
   // the legacy in-place history replacement and keeping turn parity intact.
-  const next = applyMove(engine, buildMove(from, to));
+  const next = applyMove(engine, buildMove(from, to, promotion));
   state.engineHistory = [
     ...(state.engineHistory as GameState[]),
     next,
@@ -190,7 +218,7 @@ function playMove(state: BoardState, dest: PiecePosition): void {
 
   let newNotationString = pieceNotation.toAlgebraicNotationString(newNotation);
 
-  if (isPromotion) {
+  if (isPromotion && promotion === undefined) {
     // Stop: wait for the picker. The check/game-over suffix and the engine's
     // promoted id are resolved in promotePawn once the kind is chosen.
     state.promotionPosition = [toY, toX];
@@ -204,11 +232,21 @@ function playMove(state: BoardState, dest: PiecePosition): void {
     return;
   }
 
+  if (isPromotion) {
+    // The kind is already chosen, so the ply completes now (=Q, then +/#).
+    const promotedId = next.squares[toY][toX];
+    if (promotedId) {
+      newNotationString += "=" + pieceFactory.getPiece(promotedId).getAbbreviation();
+    }
+  }
   newNotationString = appendCheckSuffix(next, newNotationString, state);
   state.notation = [...state.notation, newNotationString];
   state.selectedPiece = null;
   state.possibleMoves = [];
-  state.moveSound = plySound(next, { promotion: false, castle: isCastle, capture: isCapture });
+  // A promotion sounds the same as a human's pick in promotePawn.
+  state.moveSound = isPromotion
+    ? plySound(next, { promotion: true, castle: false, capture: false })
+    : plySound(next, { promotion: false, castle: isCastle, capture: isCapture });
 }
 
 /** A new sound object for a completed ply, from the position it leaves. */
@@ -251,9 +289,31 @@ function clearSelection(state: BoardState): void {
   state.possibleMoves = [];
 }
 
-/** No piece moves once the game is over, nor while the promotion picker is open. */
+/** True when the human plays Liem and the side to move is his. */
+function isHisTurn(state: BoardState): boolean {
+  return state.humanColor !== null && currentEngine(state).turn !== state.humanColor;
+}
+
+/**
+ * No human input once the game is over, while the promotion picker is open, or on
+ * his turn in a vs-Liem game. `promotePawn` doesn't check it: the human's own pick
+ * comes after the turn has flipped.
+ */
 function inputLocked(state: BoardState): boolean {
-  return state.gameOver !== GameOverType.Continue || state.pendingPromotion !== null;
+  return (
+    state.gameOver !== GameOverType.Continue || state.pendingPromotion !== null || isHisTurn(state)
+  );
+}
+
+/** His move is played only for the current game and ply, on his turn, when it's legal. */
+function acceptsOpponentMove(state: BoardState, { gameId, ply, move }: OpponentMove): boolean {
+  if (gameId !== state.gameId || ply !== state.engineHistory.length - 1) return false;
+  if (!isHisTurn(state)) return false;
+  if (state.gameOver !== GameOverType.Continue || state.pendingPromotion !== null) return false;
+  const [toY, toX] = move.to;
+  return legalMoves(currentEngine(state), move.from).some(
+    (m) => m.to[0] === toY && m.to[1] === toX && m.promotion === move.promotion
+  );
 }
 
 
@@ -263,8 +323,8 @@ export const boardSlice = createSlice({
   reducers: {
     selectPiece: (state, action: PayloadAction<PieceSelection>) => {
       // No piece moves once the game is over (checkmate, stalemate, flag fall),
-      // nor while the mover is still choosing a promotion piece.
-      if (state.gameOver !== GameOverType.Continue || state.pendingPromotion) return;
+      // while the mover is still choosing a promotion piece, or on his turn.
+      if (inputLocked(state)) return;
 
       // Deselect Piece
       if (state.selectedPiece && state.selectedPiece.pieceType === action.payload.pieceType) {
@@ -387,8 +447,25 @@ export const boardSlice = createSlice({
       state.possibleMoves = [];
     },
 
-    reset: () => {
-      return createInitialState();
+    /** His move, as one complete ply (a promotion included). */
+    playOpponentMove: (state, action: PayloadAction<OpponentMove>) => {
+      if (!acceptsOpponentMove(state, action.payload)) return;
+      const { from, to, promotion } = action.payload.move;
+      playPly(state, from, to, promotion);
+    },
+
+    reset: (state) => {
+      return { ...createInitialState(), gameId: state.gameId + 1 };
+    },
+
+    /** A fresh game whose clocks start at once. The human plays `humanColor`. */
+    newGame: (state, action: PayloadAction<NewGame>) => {
+      return {
+        ...createInitialState(),
+        gameId: state.gameId + 1,
+        humanColor: action.payload.humanColor,
+        isPlaying: true,
+      };
     },
   },
 });
@@ -417,4 +494,15 @@ function appendCheckSuffix(
   return notationString;
 }
 
-export const { selectPiece, movePiece, clickSquare, pickUp, promotePawn, start, stop, reset } = boardSlice.actions;
+export const {
+  selectPiece,
+  movePiece,
+  clickSquare,
+  pickUp,
+  promotePawn,
+  start,
+  stop,
+  reset,
+  newGame,
+  playOpponentMove,
+} = boardSlice.actions;

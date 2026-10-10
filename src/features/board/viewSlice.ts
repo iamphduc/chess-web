@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
 
 import { browserStorage, loadSoundOn } from "./soundSetting";
 
@@ -20,10 +21,14 @@ export const viewSlice = createSlice({
     toggleFlip: (state) => {
       state.flipped = !state.flipped;
     },
+    /** Sets the side shown at the bottom; the same value changes nothing. */
+    setFlipped: (state, action: PayloadAction<boolean>) => {
+      state.flipped = action.payload;
+    },
     toggleSound: (state) => {
       state.soundOn = !state.soundOn;
     },
   },
 });
 
-export const { toggleFlip, toggleSound } = viewSlice.actions;
+export const { toggleFlip, setFlipped, toggleSound } = viewSlice.actions;

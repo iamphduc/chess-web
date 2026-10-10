@@ -390,7 +390,7 @@ describe("playOpponentMove", () => {
 
     // The same ply by hand in a two-player game ends in the same board and notation.
     const byHand = (() => {
-      let s = { ...position([[PieceType.WhiteKing, "d1"]]), humanColor: null };
+      let s: BoardState = { ...position([[PieceType.WhiteKing, "d1"]]), humanColor: null };
       s = tap(s, "b2", "b1");
       return reducer(s, promotePawn({ piecePromoted: PiecePromoted.Queen }));
     })();
