@@ -49,6 +49,23 @@ describe("clockForPhase", () => {
   });
 });
 
+describe("clockForPhase on a new game", () => {
+  it("a new game restarts the clock", () => {
+    const low = { remainingMs: 4000, startedAt: 1000 };
+    const stopped = { remainingMs: 0, startedAt: null };
+    // Running: full time, started now, even if it was already running.
+    expect(clockForPhase("running", low, 7000, true)).toEqual({ remainingMs: TOTAL_MS, startedAt: 7000 });
+    expect(clockForPhase("running", stopped, 7000, true)).toEqual({ remainingMs: TOTAL_MS, startedAt: 7000 });
+    // Paused or reset: back to the start clock.
+    expect(clockForPhase("paused", low, 7000, true)).toEqual(initialClock());
+    expect(clockForPhase("paused", stopped, 7000, true)).toEqual(initialClock());
+    expect(clockForPhase("reset", low, 7000, true)).toEqual(initialClock());
+    expect(clockForPhase("reset", initialClock(), 7000, true)).toEqual(initialClock());
+    // Without a new game, a running clock keeps its time.
+    expect(clockForPhase("running", low, 7000, false)).toBe(low);
+  });
+});
+
 describe("msUntilNextTick", () => {
   it("waits until the shown digits change, not a fixed second from turn start", () => {
     expect(msUntilNextTick(543210, 1000)).toBe(211); // 09:03 -> 09:02 at 542999
