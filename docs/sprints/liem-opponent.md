@@ -14,9 +14,9 @@ _From plan: docs/plans/play-like-liem.md · Slug: liem-opponent · Status: activ
 | 1 | D1 | GPL-3.0 LICENSE and README credits | liem-opponent-D1 | merged | done | medium | — |
 | 2 | U1 | Mode tabs, setup card, and the start/new-game actions | liem-opponent-U1 | https://github.com/iamphduc/chess-web/pull/62 | pushed | medium | L1, G1, C1 |
 | 2 | U2 | Book note and his card's badge | liem-opponent-U2 | https://github.com/iamphduc/chess-web/pull/62 | pushed | medium | L1, G1, C1 |
-| 3 | U3 | vs-Liem board layout, opponent wiring, lazy-bundle check, preview smoke | liem-opponent-U3 | — | pending | — | G1, P1, C1, U1, U2 |
+| 2 | U3 | vs-Liem board layout, opponent wiring, lazy-bundle check, preview smoke | liem-opponent-U3 | — | pending | — | G1, P1, C1, U1, U2 |
 
-Plan branch `play-like-liem`; wave heads `liem-opponent-w1`, `liem-opponent-w2`, `liem-opponent-w3`.
+Plan branch `play-like-liem`; wave heads `liem-opponent-w1`, `liem-opponent-w2`. U3 moved into wave 2 on 2026-10-10: the human tried PR #62 and asked for the vs-Liem layout before merging, so U3 branches off `liem-opponent-w2` and joins PR #62.
 
 ## Shared contract
 
