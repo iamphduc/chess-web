@@ -67,8 +67,9 @@ The human's pick: **"I like a mix between A and B"** from [the draft](../design-
 - **Layout:**
   - **Mode tabs** ("vs Liem" / "Two players") sit above the board, from B.
   - **The pre-game card**, from B, sits over the dimmed board (brightness 0.45). It shows his name with a gold star, "GM · Vietnam · 2732", three color tiles (White, Black, Random, each with a piece glyph), the 7 gold strength steps with the Elo shown large, and a green **Start game** button. A **New game** button reopens it.
-  - **During the game**, from A, the sidebar shows his player card ("GM · playing 2100" plus a gold "★ Book · N" badge while in book), then the book note with move, bar and count rows, then your card.
-  - **At 375 px** everything stacks: tabs, board, his card, book note, your card. The setup card fits within the board's square (312 px): below 600 px it uses less padding, shorter tiles, a 24 px Elo and 40 px strength steps.
+  - **Player cards** sit above and below the board, where Two players puts its cards, in every vs-Liem state (card open or in a game), so the board doesn't move on a tab switch. His card ("GM · playing 2100" plus a gold "★ Book · N" badge while in book) is on his color's side and your card on yours, following the flip.
+  - **During the game**, from A, the sidebar shows the book note with move, bar and count rows, then New game, Flip and Sound.
+  - **At 375 px** everything stacks: tabs, his or your card, board, the other card, book note, buttons. The setup card fits within the board's square (312 px): below 600 px it uses less padding, shorter tiles, a 24 px Elo and 40 px strength steps.
 - **Signature detail:** the flag colors. A red edge and gold star on the challenge card, and the book note's olive edge turning flag red with "He's on his own from here" when the game leaves his book.
 - **Rules out:** chess.com-style character art and chat; a table-heavy explorer (look C); browser-default sliders and selects. Strength is the step control, not `<input type="range">` styling left at default.
 - **Draft:** `docs/design-drafts/play-liem-look.html`. The mix: B for setup, tabs, the badge and the color tiles. A for the book note and the "Out of his book" state.
