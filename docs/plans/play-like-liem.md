@@ -42,7 +42,7 @@ Constraints: static site on GitHub Pages, no backend, so everything runs in the 
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| liem-book | Import script, the slow and online books as JSON, and his move choice (book, then Stockfish in a worker, checked against `legalMoves`) behind one interface, tested without UI | planned | — |
+| liem-book | Import script, the slow and online books as JSON, and his move choice (book, then Stockfish in a worker, checked against `legalMoves`) behind one interface, tested without UI | done | — |
 | liem-opponent | Mode switch, pre-game card (color and strength), playing him on the board with clocks, the book panel, the LICENSE and credits | planned | liem-book |
 
 ## Look
