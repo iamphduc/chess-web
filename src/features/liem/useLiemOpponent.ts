@@ -56,7 +56,7 @@ export function syncLiemTurn(
 export function useLiemOpponent(): { retry: () => void } {
   const dispatch = useAppDispatch();
   const board = useAppSelector((state) => state.board);
-  const match = useAppSelector((state) => state.match as RootState["match"] | undefined);
+  const match = useAppSelector((state) => state.match);
   const controller = useRef<OpponentController | null>(null);
 
   useEffect(() => {
@@ -68,13 +68,13 @@ export function useLiemOpponent(): { retry: () => void } {
     };
   }, [dispatch]);
 
-  const gameId = match ? liemGameId(board, match) : null;
+  const gameId = liemGameId(board, match);
   useEffect(() => {
     if (gameId !== null) controller.current?.preload();
   }, [gameId]);
 
   useEffect(() => {
-    if (controller.current && match) syncLiemTurn(controller.current, board, match);
+    if (controller.current) syncLiemTurn(controller.current, board, match);
   }, [board, match]);
 
   const retry = useCallback(() => controller.current?.retry(), []);

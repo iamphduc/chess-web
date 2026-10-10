@@ -5,7 +5,6 @@ import "./Board.css";
 import { SQUARE_SIZE_MD, SQUARE_SIZE_XL, SQUARE_SIZE_XS } from "../../constants";
 import { PlayerInfo, players } from "game/players";
 import { useAppDispatch, useAppSelector } from "app/hooks";
-import type { RootState } from "app/store";
 import type { PieceColor } from "game/engine/game-state";
 import { LIEM } from "game/opponent/players";
 import { ModeTabs } from "features/liem/components/ModeTabs";
@@ -83,12 +82,11 @@ export const Board = () => {
   );
   const flipped = useAppSelector((state) => state.view.flipped);
   const humanColor = useAppSelector((state) => state.board.humanColor);
-  // Older test stores have no `match` reducer; they get the two-player board.
-  const match = useAppSelector((state) => state.match as RootState["match"] | undefined);
+  const match = useAppSelector((state) => state.match);
   useMoveSound();
   const { retry } = useLiemOpponent();
 
-  const vsLiem = match?.mode === "liem";
+  const vsLiem = match.mode === "liem";
   const setupOpen = vsLiem && match.setupOpen;
   const liemHuman = vsLiem && !setupOpen ? humanColor : null;
 
