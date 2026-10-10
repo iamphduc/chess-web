@@ -1,0 +1,95 @@
+[Event "Fixture Open"]
+[Site "Fixture City"]
+[Date "2020.01.01"]
+[Round "1"]
+[White "Le Quang Liem"]
+[Black "Opponent, Alpha"]
+[Result "1-0"]
+[WhiteFideId "12401137"]
+[BlackFideId "999"]
+
+1. d4 {a comment} d5 2. c4 e6 (2... c6 3. Nf3) 3. Nc3 $1 Nf6 1-0
+
+[Event "Fixture Open"]
+[Site "Fixture City"]
+[Date "2020.01.02"]
+[Round "2"]
+[White "Opponent, Bravo"]
+[Black "Le, Quang Liem"]
+[Result "0-1"]
+[TimeControl "-"]
+
+1. e4 c5 2. Nf3 d6 0-1
+
+[Event "Fixture Classic"]
+[Date "2020.01.03"]
+[White "LE,  quang   LIEM"]
+[Black "Opponent, Charlie"]
+[Result "1/2-1/2"]
+[TimeControl "?"]
+
+1. d4 Nf6 2. c4 e6 1/2-1/2
+
+[Event "Fixture 960"]
+[Date "2020.01.04"]
+[White "Le Quang Liem"]
+[Black "Opponent, Delta"]
+[Result "1-0"]
+[Variant "Chess960"]
+
+1. e4 e5 1-0
+
+[Event "Fixture Setup"]
+[Date "2020.01.05"]
+[White "Le Quang Liem"]
+[Black "Opponent, Echo"]
+[Result "1-0"]
+[SetUp "1"]
+[FEN "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1"]
+
+1. e4 1-0
+
+[Event "Fixture Unfinished"]
+[Date "2020.01.06"]
+[White "Le Quang Liem"]
+[Black "Opponent, Foxtrot"]
+[Result "*"]
+
+1. e4 e5 *
+
+[Event "Fixture Others"]
+[Date "2020.01.07"]
+[White "Opponent, Golf"]
+[Black "Opponent, Hotel"]
+[Result "1-0"]
+
+1. e4 e5 1-0
+
+[Event "Fixture Open"]
+[Site "Fixture City"]
+[Date "2020.01.01"]
+[Round "1"]
+[White "Le Quang Liem"]
+[Black "Opponent, Alpha"]
+[Result "1-0"]
+[WhiteFideId "12401137"]
+[BlackFideId "999"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 1-0
+
+[Event "Fixture Blitz"]
+[Date "2020.01.08"]
+[White "Opponent, India"]
+[Black "Le Quang Liem"]
+[Result "1-0"]
+[TimeControl "180+2"]
+
+1. Nf3 d5 1-0
+
+[Event "Fixture Illegal"]
+[Date "2020.01.09"]
+[White "Le Quang Liem"]
+[Black "Opponent, Juliet"]
+[Result "0-1"]
+
+1. e4 e5 2. Ke3 Nc6 0-1
