@@ -41,9 +41,57 @@
   margin-top: 16px;
 }
 
-/* Below the 600 px breakpoint the board is 312 px: a little less padding. */
+/*
+ * Below the 600 px breakpoint the board is 312 px and the overlay leaves 300 px under its
+ * 12 px top padding: tighter spacing, a one-line title, shorter tiles. Text stays 14 px or
+ * more and tap targets 40 px or more.
+ */
 @media only screen and (max-width: 599px) {
   .setup-card {
-    padding: 16px;
+    padding: 12px 16px;
+  }
+
+  .setup-card .liem-card__title,
+  .setup-card .liem-star {
+    font-size: 18px;
+  }
+
+  .setup-card .liem-card__sub {
+    margin: 2px 0 10px;
+  }
+
+  .setup-card .liem-tile {
+    padding: 6px 4px;
+  }
+
+  .setup-card .liem-tile__glyph {
+    font-size: 20px;
+    line-height: 1.1;
+  }
+
+  .setup-card .setup-card__strength {
+    margin-top: 10px;
+  }
+
+  .setup-card .liem-elo {
+    font-size: 24px;
+  }
+
+  /* The bar stays 10 px; the padding makes the tap target 40 px. */
+  .setup-card .liem-steps {
+    margin-top: 2px;
+  }
+
+  .setup-card .liem-step {
+    height: 40px;
+    padding: 15px 0;
+  }
+
+  .setup-card .setup-card__actions {
+    margin-top: 8px;
+  }
+
+  .setup-card .button--play {
+    min-height: 40px;
   }
 }

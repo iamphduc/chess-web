@@ -98,3 +98,8 @@ Consequences: The first vs-Liem game waits for the download (his card says "Thin
 Context: The app was a two-player board until now, and its smoke recipe and tests start from that board.
 Decision: `match.mode` starts as `"two-player"` and isn't saved, so every load opens in Two players with the old layout. The `vs Liem` tab switches mode, which resets the board and opens the setup card.
 Consequences: Players who want him click the tab each visit. To open in vs Liem, change the `matchSlice` default (and the smoke recipe's first steps); to remember the last mode, save it like the Sound setting.
+
+## 2026-10-10 — App green darkened to #047A4F
+Context: White text on the app green `#059862` is 3.7:1, under the 4.5:1 that normal-size text needs. The Play button, the Sound-on button and Start game all use it, and the plan had kept it as a recorded exception.
+Decision: The human chose `#047A4F` (5.38:1 with white). It replaces `#059862` everywhere the app uses it as a button color: `.button--play` in `src/features/board/components/Button.css`, and `--board-sound-on` and `--liem-start` in `src/index.css`, so the app keeps one green. Hover stays `filter: brightness(0.8)`, so it darkens in step. `tests/liem-theme.test.ts › start pair matches the Play green` and `tests/board-theme.test.ts` now require 4.5:1.
+Consequences: The green reads a little deeper next to the board's olive squares. To change it again, change all three values and the two theme tests together.
