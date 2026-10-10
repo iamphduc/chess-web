@@ -1,0 +1,216 @@
+/*
+ * vs-Liem look (plan play-like-liem, ## Look). Colors come only from the
+ * --liem-* and --book-bar tokens in src/index.css (plus --board-focus for the ring).
+ * Red marks edges and underlines only, never text.
+ */
+
+/* Mode tabs: "vs Liem" / "Two players". */
+.liem-tabs {
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid var(--liem-line);
+}
+
+.liem-tab,
+.liem-tile,
+.liem-step {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.liem-tab {
+  padding: 6px 2px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--liem-text-soft);
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+}
+
+.liem-tab:hover {
+  color: var(--liem-text);
+}
+
+.liem-tab[aria-selected="true"] {
+  color: var(--liem-text);
+  border-bottom-color: var(--liem-red);
+}
+
+/* The pre-game challenge card. */
+.liem-card {
+  padding: 20px;
+  color: var(--liem-text);
+  background-color: var(--liem-card);
+  border-top: 4px solid var(--liem-red);
+  border-radius: 10px;
+}
+
+.liem-card__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.liem-star {
+  font-size: 22px;
+  color: var(--liem-gold);
+}
+
+.liem-card__sub {
+  margin: 4px 0 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--liem-text-soft);
+}
+
+/* Color tiles: White, Black, Random. */
+.liem-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.liem-tile {
+  padding: 10px 4px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--liem-text);
+  background-color: var(--liem-note);
+  border: 2px solid var(--liem-line);
+  border-radius: 8px;
+}
+
+.liem-tile:hover {
+  border-color: var(--liem-text-soft);
+}
+
+.liem-tile[aria-checked="true"] {
+  border-color: var(--liem-gold);
+  background-color: var(--liem-gold-tint);
+}
+
+.liem-tile__glyph {
+  display: block;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+/* Strength: 7 gold steps, the Elo shown large. */
+.liem-steps {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+
+/* The bar is 10px tall; the padding keeps the tap target 24px. */
+.liem-step {
+  height: 24px;
+  padding: 7px 0;
+  background-color: var(--liem-line);
+  background-clip: content-box;
+  border: 0;
+  border-radius: 3px;
+}
+
+.liem-step:hover {
+  background-color: var(--liem-text-soft);
+}
+
+.liem-step--lit,
+.liem-step--lit:hover {
+  background-color: var(--liem-gold);
+}
+
+.liem-elo {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--liem-gold);
+}
+
+/* Focus ring for every Liem control. */
+.liem-tab:focus-visible,
+.liem-tile:focus-visible,
+.liem-step:focus-visible {
+  outline: 3px solid var(--board-focus);
+  outline-offset: 2px;
+}
+
+.liem-tab:disabled,
+.liem-tile:disabled,
+.liem-step:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* "Book" badge on his player card. */
+.liem-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--liem-gold);
+  background-color: var(--liem-badge-bg);
+  border-radius: 999px;
+}
+
+/* In-game book note: olive edge, red when he's out of book. */
+.liem-note {
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--liem-text);
+  background-color: var(--liem-note);
+  border-left: 4px solid var(--book-bar);
+  border-radius: 6px;
+}
+
+.liem-note--out {
+  border-left-color: var(--liem-red);
+}
+
+.liem-note__row {
+  display: grid;
+  grid-template-columns: 52px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 15px;
+  color: var(--liem-text-soft);
+}
+
+.liem-note__row--played {
+  font-weight: 700;
+  color: var(--liem-text);
+}
+
+.liem-note__bar {
+  height: 8px;
+  background-color: var(--book-bar);
+  border-radius: 4px;
+}
+
+.liem-note__count {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--liem-text-soft);
+}
+
+/* The board behind the setup card. */
+.liem-dimmed {
+  filter: brightness(0.45);
+}
