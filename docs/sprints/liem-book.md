@@ -7,7 +7,7 @@ _From plan: docs/plans/play-like-liem.md · Slug: liem-book · Status: active ·
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | K1 | Position codec and book format | liem-book-K1 | — | pending | — | — |
+| 1 | K1 | Position codec and book format | liem-book-K1 | — | done | medium | — |
 | 1 | S1 | Stockfish lite UCI engine behind `MoveEngine` | liem-book-S1 | — | pending | — | — |
 | 2 | I1 | Import script, live run, committed books and player entry | liem-book-I1 | — | pending | — | K1 |
 | 2 | M1 | His move choice: book, fallback, engine, legality check | liem-book-M1 | — | pending | — | K1, S1 |
