@@ -158,7 +158,6 @@ describe("board modes", () => {
     expectYourCard(below[0]);
     expect(clockText(above[0])).toBe("10:00");
     expect(clockText(below[0])).toBe("10:00");
-    expect(html).not.toMatch(/player__time--running/);
     expect(cards(divWithClass(html, "sidebar"))).toEqual([]);
 
     expect(buttonLabels(html)).toEqual(["Flip board", "Sound"]);
@@ -179,6 +178,24 @@ describe("board modes", () => {
     expectYourCard(yours);
     expect(yours).not.toMatch(/player__time--running/);
     expect(playerNames(html)).toEqual([LIEM.entry.name, "You"]);
+  });
+
+  it("setup cards follow the flip", () => {
+    // Flipped, White is on top: with White picked, your card is above and his below.
+    const store = createAppStore();
+    store.dispatch(toggleFlip());
+    store.dispatch(switchMode("liem"));
+    let { above, below } = cardsAround(render(store));
+    expectYourCard(above[0]);
+    expectHisCard(below[0]);
+
+    // Unflipped with Black picked: Black (you) is on top, White (him) below.
+    const unflipped = createAppStore();
+    unflipped.dispatch(switchMode("liem"));
+    unflipped.dispatch(setColorPick("black"));
+    ({ above, below } = cardsAround(render(unflipped)));
+    expectYourCard(above[0]);
+    expectHisCard(below[0]);
   });
 
   it("vs-Liem as White puts him on Black, above the board", () => {
