@@ -1,14 +1,14 @@
 # Sprint: Liem's book and move choice
 
 _From plan: docs/plans/play-like-liem.md · Slug: liem-book · Status: active · Generated: 2026-10-09_
-<!-- autopilot-run: started=2026-10-09T17:30:00+07:00 sprints=0 waves=1 -->
+<!-- autopilot-run: started=2026-10-09T17:30:00+07:00 sprints=0 waves=2 -->
 
 ## Status board
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | K1 | Position codec and book format | liem-book-K1 | — | done | medium | — |
-| 1 | S1 | Stockfish lite UCI engine behind `MoveEngine` | liem-book-S1 | — | pending | — | — |
+| 1 | K1 | Position codec and book format | liem-book-K1 | #59 | merged | medium | — |
+| 1 | S1 | Stockfish lite UCI engine behind `MoveEngine` | liem-book-S1 | #59 | merged | medium | — |
 | 2 | I1 | Import script, live run, committed books and player entry | liem-book-I1 | — | pending | — | K1 |
 | 2 | M1 | His move choice: book, fallback, engine, legality check | liem-book-M1 | — | pending | — | K1, S1 |
 
