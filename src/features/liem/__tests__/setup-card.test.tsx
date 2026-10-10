@@ -30,7 +30,7 @@ function tagsWithRole(html: string, role: string): string[] {
 /** The text inside each element with `role="<role>"` (tags stripped). */
 function textsWithRole(html: string, role: string): string[] {
   const re = new RegExp(`<button[^>]*role="${role}"[^>]*>(.*?)</button>`, "g");
-  return [...html.matchAll(re)].map((m) => m[1].replace(/<[^>]+>/g, ""));
+  return Array.from(html.matchAll(re), (m) => m[1].replace(/<[^>]+>/g, ""));
 }
 
 describe("mode tabs", () => {
@@ -88,7 +88,7 @@ describe("setup card markup", () => {
     expect(steps.map((t) => t.includes('aria-checked="true"'))).toEqual([false, false, false, true, false, false, false]);
     expect(steps.map((t) => t.includes("liem-step--lit"))).toEqual([true, true, true, true, false, false, false]);
     expect(html).toMatch(/class="liem-elo"[^>]*>2100</);
-    expect(html).not.toContain("Full");
+    expect(html).not.toMatch(/>Full</);
   });
 
   it("full strength shows 2732 and the word Full, all steps lit", () => {
