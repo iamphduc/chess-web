@@ -1,0 +1,29 @@
+[Event "Live Chess"]
+[Site "Chess.com"]
+[Date "2024.01.01"]
+[White "LiemLe"]
+[Black "opponent_november"]
+[Result "1-0"]
+[TimeControl "60"]
+
+1. e4 {[%clk 0:00:59.9]} 1... e5 {[%clk 0:00:59.1]} 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7# 1-0
+
+[Event "Let's Play!"]
+[Site "Chess.com"]
+[Date "2024.01.02"]
+[White "opponent_oscar"]
+[Black "liemle"]
+[Result "0-1"]
+[TimeControl "1/86400"]
+
+1. e4 e5 0-1
+
+[Event "Live Chess"]
+[Site "Chess.com"]
+[Date "2024.01.03"]
+[White "liemle"]
+[Black "opponent_papa"]
+[Result "1-0"]
+[TimeControl "60"]
+
+1. e4 e5 2. f4 exf4 3. g3 fxg3 4. Nf3 gxh2 5. Ng1 hxg1=Q 6. Rxg1 1-0

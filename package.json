@@ -26,11 +26,14 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "book:import": "tsx scripts/book/import-book.ts"
   },
   "devDependencies": {
     "@types/uuid": "^9.0.0",
     "@vitejs/plugin-react": "^6.1.1",
+    "chess.js": "^1.4.0",
+    "tsx": "^4.23.15",
     "vite": "^8.3.2",
     "vitest": "^5.0.3",
     "yaml": "^2.9.1"

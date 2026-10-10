@@ -28,6 +28,7 @@ A client-side chess web app: Vite + React 18 + TypeScript + Redux Toolkit, deplo
   - `players/`: one folder per player (`player.json` and the two committed book JSON files), plus `index.ts` exporting `PLAYERS` and `LIEM`. Nothing outside this folder hard-codes a player's data.
   - **Relative imports only** under `src/game/opponent/` (no `game/` aliases), so the Node import script under `scripts/` (run with `tsx`) and its tests can load it.
   - **No PGN parser in the app:** `chess.js` (or any PGN parser) is imported only under `scripts/`, never under `src/`. Raw PGN stays in the git-ignored `/games/` folder.
+- **`scripts/book/`**: the Node import script that builds the books (run with `tsx`, never bundled). `timecontrol.ts` (clock estimate and slow/online class), `games.ts` (PGN to his filtered, deduped, colored games, parsed with `chess.js` and replayed through `uciToMove`), `build-book.ts` (games to the two `Book`s, the `minGames` floor and the 3 MB budget, byte-stable JSON), `sources.ts` (Lichess account, Lichess export, Chess.com monthly archives, retries on 429, all through an injected `fetch`), and `import-book.ts` (`runImport` plus the thin CLI). Tests in `scripts/book/__tests__/` use fixture PGN and HTML only.
 - **`src/game/pieces/*`**: presentation only. Each piece class holds its image, weight and notation letter; no move rules and no game state. `src/game/piece-factory.ts` maps a `PieceType` to its piece object, and `src/game/piece-notation.ts` writes move notation.
 - **`src/game/board-types.ts`**: the UI board types, `Square` (`{ pieceType, isEnemyAttacked }`) and `HistorySquares`.
 - **`src/game/piece-type.ts`**: the `PieceType` enum, including the promoted ids. `src/game/players.ts` holds the two players' names and avatars.
@@ -65,6 +66,15 @@ The app is a static single-page client; there is no server, database or login to
 - **Phone (375 px):** `emulate --viewport "375x812x2,mobile,touch"` (`resize` stops at 500 px). The button row wraps. Play a full game by tapping squares (click from page JS, see `docs/known-issues/browser-smoke-touch.md`): castling, en passant, promotion and checkmate, with no console errors. To drag pieces by touch, follow the touch drag run in `docs/known-issues/browser-smoke-touch.md`.
 - **Browser smoke gotchas:** pieces are not in the accessibility tree, so drags need a workaround; see `docs/known-issues/browser-smoke-drag.md`. Stopping a dev/preview server on Windows can leave it holding the port; see `docs/known-issues/windows-server-teardown.md`.
 - **Verification:** `npm run build && npm test`. Both must pass.
+
+## Building the books
+
+`npm run book:import` rebuilds `src/game/opponent/players/le-quang-liem/book-slow.json` and `book-online.json`. It runs by hand, never in CI or tests, and **it calls the live Lichess and Chess.com APIs**. Commit the two JSON files it writes.
+
+- **Flags:** `npm run book:import -- --lichess-user <name>` sets the Lichess account. Without it the script uses `sources.lichessUser` in `player.json`, else the account linked from the Lichess FIDE page (`sources.lichessFideUrl`). If none resolves, it warns and builds without Lichess.
+- **`games/` (git-ignored):** put his over-the-board PGN files in `games/otb/*.pgn` (for example from TWIC). Downloads are saved in `games/cache/`; finished Chess.com months are read from there on the next run, and the archive list, the current month and the Lichess export are always fetched again.
+- **Output:** the script prints the Lichess account used, games read and kept per source, the skipped counts by reason, the games cut short at a rejected move, and per book the games, positions, `minGames` and size. If any source fails (an HTTP error, or still 429 after 3 retries one minute apart), it exits non-zero and writes no book.
+- Every request sends `User-Agent: chess-web-book-import/1.0 (+https://github.com/iamphduc/chess-web)`. The rules for which games go into which book are in `docs/decisions.md` (2026-10-09 entries).
 
 ## CI
 

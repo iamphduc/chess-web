@@ -1,0 +1,32 @@
+[Event "Rated Blitz game"]
+[Site "https://lichess.org/fixture1"]
+[Date "2023.05.01"]
+[White "FixtureUser"]
+[Black "opponent_kilo"]
+[Result "0-1"]
+[TimeControl "180+0"]
+[Variant "Standard"]
+
+1. e4 e5 2. Nf3 Nc6 0-1
+
+[Event "Rated Correspondence game"]
+[Site "https://lichess.org/fixture2"]
+[Date "2023.05.02"]
+[White "opponent_lima"]
+[Black "fixtureuser"]
+[Result "1-0"]
+[TimeControl "-"]
+[Variant "Standard"]
+
+1. d4 d5 1-0
+
+[Event "Rated Classical game"]
+[Site "https://lichess.org/fixture3"]
+[Date "2023.05.03"]
+[White "fixtureuser"]
+[Black "opponent_mike"]
+[Result "1/2-1/2"]
+[TimeControl "1800+0"]
+[Variant "Standard"]
+
+1. e4 c5 1/2-1/2
