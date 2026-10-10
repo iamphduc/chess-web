@@ -36,36 +36,24 @@ const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
   />
 );
 
-/** One sidebar card in a vs-Liem game. `data-color` names the side it plays. */
-const LiemSideCard = ({ color, children }: { color: PieceColor; children: React.ReactNode }) => (
-  <div className="liem-side__card" data-color={color}>
-    {children}
-  </div>
-);
-
-/** The sidebar's vs-Liem block: his card, his book note, then yours. His data is `LIEM.entry` only. */
-const LiemSide = ({ humanColor, onRetry }: { humanColor: PieceColor; onRetry: () => void }) => {
-  const hisColor: PieceColor = humanColor === "white" ? "black" : "white";
+/** His card: name, title and avatar from `LIEM.entry` only, with his strength and Book badge. */
+const renderLiem = (color: PieceColor) => {
   const { name, title, avatar } = LIEM.entry;
   return (
-    <div className="liem-side">
-      <LiemSideCard color={hisColor}>
-        <Player
-          key={hisColor}
-          name={name}
-          title={title}
-          avatar={avatar}
-          isWhite={hisColor === "white"}
-          detail={<LiemCardDetail />}
-        />
-      </LiemSideCard>
-      <BookNote onRetry={onRetry} />
-      <LiemSideCard color={humanColor}>
-        <Player key={humanColor} name="You" title={null} avatar={null} isWhite={humanColor === "white"} />
-      </LiemSideCard>
-    </div>
+    <Player
+      key={color}
+      name={name}
+      title={title}
+      avatar={avatar}
+      isWhite={color === "white"}
+      detail={<LiemCardDetail />}
+    />
   );
 };
+
+const renderYou = (color: PieceColor) => (
+  <Player key={color} name="You" title={null} avatar={null} isWhite={color === "white"} />
+);
 
 const NewGameButton = () => {
   const dispatch = useAppDispatch();
@@ -88,7 +76,7 @@ export const Board = () => {
 
   const vsLiem = match.mode === "liem";
   const setupOpen = vsLiem && match.setupOpen;
-  const liemHuman = vsLiem && !setupOpen ? humanColor : null;
+  const liemHuman: PieceColor | null = vsLiem && !setupOpen ? humanColor : null;
 
   let squareSize = SQUARE_SIZE_XS;
   if (useMediaQuery("only screen and (min-width: 768px)")) squareSize = SQUARE_SIZE_MD;
@@ -131,14 +119,27 @@ export const Board = () => {
     return squares;
   }, [flipped, history, lastMoves, pieceAttackedKing, possibleMoves, squareSize]);
 
+  // The color shown at the top follows the flip, in every mode.
+  const [topColor, bottomColor]: PieceColor[] = flipped ? ["white", "black"] : ["black", "white"];
   const [white, black] = players;
-  const [top, bottom] = flipped ? [white, black] : [black, white];
+  let top: React.ReactNode;
+  let bottom: React.ReactNode;
+  if (!vsLiem) {
+    top = renderPlayer(topColor === "white" ? white : black);
+    bottom = renderPlayer(bottomColor === "white" ? white : black);
+  } else {
+    // In a game, your color; with the card open, the color picked so far (Random shows White).
+    const yours: PieceColor = liemHuman ?? (match.colorPick === "black" ? "black" : "white");
+    const cardFor = (c: PieceColor) => (c === yours ? renderYou(c) : renderLiem(c));
+    top = cardFor(topColor);
+    bottom = cardFor(bottomColor);
+  }
 
   return (
     <MotionConfig reducedMotion="user">
       <div className="board" style={{ width: squareSize * 8 }}>
-        {match && <ModeTabs />}
-        {!vsLiem && renderPlayer(top)}
+        <ModeTabs />
+        {top}
         {setupOpen ? (
           <div key="squares" className="squares squares--setup">
             <div className="squares__grid liem-dimmed" aria-hidden="true">
@@ -155,11 +156,15 @@ export const Board = () => {
             <GameOver />
           </div>
         )}
-        {!vsLiem && renderPlayer(bottom)}
+        {bottom}
       </div>
 
       <div className="sidebar">
-        {liemHuman && <LiemSide humanColor={liemHuman} onRetry={retry} />}
+        {liemHuman && (
+          <div className="liem-side">
+            <BookNote onRetry={retry} />
+          </div>
+        )}
 
         <BoardSidebar title="">
           <div className="buttons">
