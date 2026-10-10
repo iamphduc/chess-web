@@ -43,7 +43,7 @@ Constraints: static site on GitHub Pages, no backend, so everything runs in the 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
 | liem-book | Import script, the slow and online books as JSON, and his move choice (book, then Stockfish in a worker, checked against `legalMoves`) behind one interface, tested without UI | done | — |
-| liem-opponent | Mode switch, pre-game card (color and strength), playing him on the board with clocks, the book panel, the LICENSE and credits | planned | liem-book |
+| liem-opponent | Mode switch, pre-game card (color and strength), playing him on the board with clocks, the book panel, the LICENSE and credits | done | liem-book |
 
 ## Look
 The human's pick: **"I like a mix between A and B"** from [the draft](../design-drafts/play-liem-look.html). I chose which parts come from each and why. The setup comes from B, because a card makes starting a game feel like a challenge. The in-game book comes from A, because a side note doesn't cover the board while you play.
