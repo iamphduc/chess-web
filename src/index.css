@@ -39,12 +39,11 @@
   --board-hint: rgba(0, 0, 0, 0.14); /* legal-move dot and capture ring */
   --board-check: radial-gradient(circle, #ff0000 0%, rgba(231, 0, 0, 0.9) 25%, rgba(169, 0, 0, 0) 89%);
   --board-drop-edge: rgba(255, 255, 255, 0.65); /* inset edge on a legal drag-over square */
-  --board-sound-on: #059862;
+  --board-sound-on: #047A4F;
   --board-focus: #FFFFFF;
 
   /* vs-Liem (play-like-liem Look). src/styles/liem.css uses only these for color.
-     Red is for edges and underlines only, never text. White on --liem-start is above 3:1 but below 4.5:1,
-     the same as the Play button: bold 16px+ labels only. */
+     Red is for edges and underlines only, never text. White on --liem-start (the Play green) is 5.38:1. */
   --liem-card: #1F1F1F;
   --liem-note: #262626;
   --liem-text: #FFFFFF;
@@ -54,7 +53,7 @@
   --liem-gold-tint: #2F2A14;
   --liem-badge-bg: #3A3214;
   --liem-line: #474747;
-  --liem-start: #059862;
+  --liem-start: #047A4F;
   --book-bar: #BBBE64;
 }
 
