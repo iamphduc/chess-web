@@ -74,7 +74,10 @@ export const Player = ({ name, title, avatar, isWhite }: Props) => {
     const t = Date.now();
     const isNewGame = seenGameId.current !== gameId;
     seenGameId.current = gameId;
-    setClock((prev) => clockForPhase(phase, prev, t, isNewGame));
+    // Set the ref too, so the timer effect below schedules from the new clock.
+    const next = clockForPhase(phase, latestClock.current, t, isNewGame);
+    latestClock.current = next;
+    setClock(next);
     setNow(t);
   }, [phase, gameId]);
 
@@ -97,7 +100,7 @@ export const Player = ({ name, title, avatar, isWhite }: Props) => {
     };
     schedule();
     return () => clearTimeout(id);
-  }, [interval]); // keyed only on the interval (dispatch is stable)
+  }, [interval, gameId]); // a new game restarts the timer too, so the first tick lands on time (dispatch is stable)
 
   useEffect(() => {
     if (isPlaying && !gameContinues) {
