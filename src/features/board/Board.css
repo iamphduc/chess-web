@@ -15,3 +15,45 @@
   gap: 10px;
   justify-content: center;
 }
+
+/* vs Liem, card open: the squares dim under the setup card. */
+.squares--setup {
+  display: block;
+}
+
+.squares__grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  pointer-events: none;
+}
+
+.squares__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 8% 6% 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* vs Liem in a game: his card, his book note, then yours, as wide as the sidebar boxes. */
+.liem-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: calc(13px * 24);
+  margin: 8px 0;
+}
+
+@media only screen and (min-width: 768px) {
+  .liem-side {
+    width: calc(13px * 32);
+  }
+}
+@media only screen and (min-width: 1200px) {
+  .liem-side {
+    width: calc(13px * 36);
+  }
+}

@@ -131,9 +131,9 @@ describe("board modes", () => {
     const board = divWithClass(html, "board");
     const sidebar = divWithClass(html, "sidebar");
 
-    // No cards around the board, and his name shows once.
+    // No cards around the board: the page has his card and yours, once each.
     expect(playerNames(board)).toEqual([]);
-    expect(html.split(LIEM.entry.name)).toHaveLength(2);
+    expect(playerNames(html)).toEqual([LIEM.entry.name, "You"]);
 
     const cards = sidebarCards(html);
     expect(cards.map((c) => c.color)).toEqual(["white", "black"]);
