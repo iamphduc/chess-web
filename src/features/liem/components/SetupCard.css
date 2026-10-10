@@ -46,7 +46,7 @@
  * 12 px top padding: tighter spacing, a one-line title, shorter tiles. Text stays 14 px or
  * more and tap targets 40 px or more.
  */
-@media only screen and (max-width: 599px) {
+@media only screen and (max-width: 767px) {
   .setup-card {
     padding: 12px 16px;
   }

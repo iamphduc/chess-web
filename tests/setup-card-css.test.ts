@@ -53,8 +53,8 @@ const ruleFor = (css: string, cls: string) =>
     .join(";");
 
 const narrow = () => {
-  const block = split(source()).media.find((m) => /max-width:\s*599px/.test(m.query));
-  expect(block, "a max-width: 599px block").toBeDefined();
+  const block = split(source()).media.find((m) => /max-width:\s*767px/.test(m.query));
+  expect(block, "a max-width: 767px block").toBeDefined();
   return block!.body;
 };
 
