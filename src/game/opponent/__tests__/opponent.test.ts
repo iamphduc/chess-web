@@ -86,21 +86,29 @@ function fakeEngine(...answers: Answer[]) {
     signal: AbortSignal | undefined;
   }[] = [];
   let disposed = 0;
+  let newGames = 0;
+  /** What reached the engine, in order: "search", "abort", "newGame". */
+  const events: string[] = [];
   const engine: MoveEngine = {
     bestMove(fen, opts, signal) {
       calls.push({ fen, opts, signal });
+      events.push("search");
+      signal?.addEventListener("abort", () => events.push("abort"));
       const answer = answers.shift();
       if (answer === undefined) return Promise.reject(new Error("unscripted call"));
       if (typeof answer === "function") return answer(signal);
       if (answer instanceof Error) return Promise.reject(answer);
       return Promise.resolve(answer);
     },
-    newGame() {},
+    newGame() {
+      newGames += 1;
+      events.push("newGame");
+    },
     dispose() {
       disposed += 1;
     },
   };
-  return { engine, calls, disposed: () => disposed };
+  return { engine, calls, events, disposed: () => disposed, newGames: () => newGames };
 }
 
 /** An answer that waits until its search is aborted, then rejects `aborted`. */
@@ -420,6 +428,74 @@ describe("repeats and engine failures", () => {
     expect(fake.calls).toHaveLength(1);
     opponent.dispose();
     expect(fake.disposed()).toBe(1);
+  });
+});
+
+describe("new game", () => {
+  const start = initialGameState();
+
+  it("newGame resets the engine", async () => {
+    // The move in flight rejects superseded; the engine hears abort, then newGame, once.
+    const fake = fakeEngine(untilAborted, "e2e4");
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const inFlight = codeOf(opponent.chooseMove(start, SETTINGS));
+    await flush();
+    opponent.newGame();
+    expect(await inFlight).toBe("superseded");
+    expect(fake.newGames()).toBe(1);
+    expect(fake.events).toEqual(["search", "abort", "newGame"]);
+
+    // The next game plays on.
+    expect((await opponent.chooseMove(start, SETTINGS)).uci).toBe("e2e4");
+    expect(fake.newGames()).toBe(1);
+
+    // After dispose, newGame neither throws nor reaches the engine.
+    opponent.dispose();
+    expect(() => opponent.newGame()).not.toThrow();
+    expect(fake.newGames()).toBe(1);
+  });
+
+  it("a move whose engine answers after newGame still rejects superseded", async () => {
+    const late = deferred();
+    const fake = fakeEngine(late.answer);
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const inFlight = codeOf(opponent.chooseMove(start, SETTINGS));
+    await flush();
+    opponent.newGame();
+    late.resolve("e2e4");
+    expect(await inFlight).toBe("superseded");
+  });
+
+  it("an illegal late answer after newGame is not asked again", async () => {
+    const late = deferred();
+    const fake = fakeEngine(late.answer);
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const inFlight = codeOf(opponent.chooseMove(start, SETTINGS));
+    await flush();
+    opponent.newGame();
+    late.resolve("e2e5");
+    expect(await inFlight).toBe("superseded");
+    expect(fake.calls).toHaveLength(1);
+  });
+
+  it("newGame with nothing in flight just resets the engine", async () => {
+    const fake = fakeEngine("e2e4");
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    opponent.newGame();
+    opponent.newGame();
+    expect(fake.newGames()).toBe(2);
+    expect((await opponent.chooseMove(start, SETTINGS)).uci).toBe("e2e4");
+  });
+
+  it("an engine failure that lands after newGame reads superseded, not engine-failed", async () => {
+    let fail!: (e: Error) => void;
+    const fake = fakeEngine(() => new Promise<string | null>((_, reject) => (fail = reject)));
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const inFlight = codeOf(opponent.chooseMove(start, SETTINGS));
+    await flush();
+    opponent.newGame();
+    fail(new EngineError("timeout"));
+    expect(await inFlight).toBe("superseded");
   });
 });
 
