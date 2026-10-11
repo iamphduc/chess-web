@@ -128,3 +128,8 @@ Consequences: Change the defaults in `src/features/liem/matchSlice.ts` (`colorPi
 Context: After a vs-Liem game as Black the board is flipped. The sprint contract said switching mode "leaves the flip as is", so a two-player game then starts with White at the top.
 Decision: Keep the flip on a mode switch; Flip board turns it back.
 Consequences: To unflip on the switch to Two players, dispatch `setFlipped(false)` in `switchMode` in `src/features/liem/liemActions.ts`.
+
+## 2026-10-10 — vs-Liem player cards sit above and below the board
+Context: vs Liem first put his card and yours in the sidebar, so the board had no card above it and jumped 56 px up on every switch from Two players (`.squares` top 100 px vs 44 px at 1400 px).
+Decision: The human chose to put the vs-Liem cards above and below the board, exactly where Two players puts them: his card on his color's side, yours on yours, following the flip, with the card open and in a game. The sidebar keeps the book note, then New game, Flip and Sound, Fallen Pieces and Notation.
+Consequences: Nothing around the board moves on a tab switch (`board-modes.test.tsx › the board's surroundings are the same in every mode`). His card keeps the plain card's 56 px height, so on a 312 px board his name and strength line are cut short.

@@ -11,6 +11,7 @@ import { uciToMove } from "game/opponent/position";
 import type { MoveChoice } from "game/opponent/opponent";
 import { newLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
 import { setColorPick } from "features/liem/matchSlice";
+import { toggleFlip } from "../viewSlice";
 import type { LiemOpponent } from "features/liem/opponentController";
 import { createLiemController, liemGameId, syncLiemTurn } from "features/liem/useLiemOpponent";
 import { Board } from "../Board";
@@ -65,13 +66,29 @@ function buttonLabels(html: string): string[] {
   });
 }
 
-/** Each `[data-color]` card in the sidebar, in order. */
-function sidebarCards(html: string): { color: string; html: string }[] {
-  const sidebar = divWithClass(html, "sidebar");
-  return Array.from(sidebar.matchAll(/<div[^>]*data-color="(white|black)"/g), (m) => ({
-    color: m[1],
-    html: outerDiv(sidebar, m.index!),
-  }));
+/** The `.squares` box: the board's own squares, with or without the setup card. */
+const SQUARES_RE = /<div[^>]*class="squares(?: [^"]*)?"/;
+
+/** Each player card's html, in order. */
+function cards(html: string): string[] {
+  return Array.from(html.matchAll(/<div class="player">/g), (m) => outerDiv(html, m.index!));
+}
+
+/** The board's player cards above and below its `.squares` box. */
+function cardsAround(html: string): { above: string[]; below: string[] } {
+  const board = divWithClass(html, "board");
+  const m = SQUARES_RE.exec(board);
+  if (!m) throw new Error("no .squares");
+  const squares = outerDiv(board, m.index);
+  return {
+    above: cards(board.slice(0, m.index)),
+    below: cards(board.slice(m.index + squares.length)),
+  };
+}
+
+/** The digits on a card's clock. */
+function clockText(card: string): string {
+  return card.match(/class="player__timer">([^<]*)</)?.[1] ?? "";
 }
 
 function liemGameAs(color: "white" | "black"): Store {
@@ -80,6 +97,19 @@ function liemGameAs(color: "white" | "black"): Store {
   store.dispatch(setColorPick(color));
   store.dispatch(startLiemGame());
   return store;
+}
+
+function expectHisCard(card: string) {
+  expect(playerNames(card)).toEqual([LIEM.entry.name]);
+  expect(card).toContain(`<span class="player__title">${LIEM.entry.title}</span>`);
+  expect(card).toContain(`src="${avatarSrc(LIEM.entry.avatar)}"`);
+  expect(card).toMatch(/class="liem-detail"/);
+}
+
+function expectYourCard(card: string) {
+  expect(playerNames(card)).toEqual(["You"]);
+  expect(card).toContain(`src="${avatarSrc(null)}"`);
+  expect(card).not.toMatch(/class="liem-detail"/);
 }
 
 describe("board modes", () => {
@@ -120,56 +150,102 @@ describe("board modes", () => {
     expect(dimmed.match(/data-square="/g)).toHaveLength(64);
     expect(dimmed).not.toMatch(/role="dialog"/);
 
-    expect(playerNames(board)).toEqual([]);
-    expect(buttonLabels(html)).not.toContain("Play");
-    expect(buttonLabels(html)).not.toContain("Reset");
+    // His card above the board and yours below, both at full time; none in the sidebar.
+    const { above, below } = cardsAround(html);
+    expect(above).toHaveLength(1);
+    expect(below).toHaveLength(1);
+    expectHisCard(above[0]);
+    expectYourCard(below[0]);
+    expect(clockText(above[0])).toBe("10:00");
+    expect(clockText(below[0])).toBe("10:00");
+    expect(cards(divWithClass(html, "sidebar"))).toEqual([]);
+
+    expect(buttonLabels(html)).toEqual(["Flip board", "Sound"]);
     expect(html).not.toMatch(/data-book-state=/);
+  });
+
+  it("vs-Liem cards around the board", () => {
+    // As Black the board is flipped, so White (his color) is on top.
+    const html = render(liemGameAs("black"));
+    const { above, below } = cardsAround(html);
+    expect(above).toHaveLength(1);
+    expect(below).toHaveLength(1);
+    const [his] = above;
+    const [yours] = below;
+    expectHisCard(his);
+    // White moves first and the clocks run at once, so his (White) clock is the running one.
+    expect(his).toMatch(/player__time--running/);
+    expectYourCard(yours);
+    expect(yours).not.toMatch(/player__time--running/);
+    expect(playerNames(html)).toEqual([LIEM.entry.name, "You"]);
+  });
+
+  it("setup cards follow the flip", () => {
+    // Flipped, White is on top: with White picked, your card is above and his below.
+    const store = createAppStore();
+    store.dispatch(toggleFlip());
+    store.dispatch(switchMode("liem"));
+    let { above, below } = cardsAround(render(store));
+    expectYourCard(above[0]);
+    expectHisCard(below[0]);
+
+    // Unflipped with Black picked: Black (you) is on top, White (him) below.
+    const unflipped = createAppStore();
+    unflipped.dispatch(switchMode("liem"));
+    unflipped.dispatch(setColorPick("black"));
+    ({ above, below } = cardsAround(render(unflipped)));
+    expectYourCard(above[0]);
+    expectHisCard(below[0]);
+  });
+
+  it("vs-Liem as White puts him on Black, above the board", () => {
+    const { above, below } = cardsAround(render(liemGameAs("white")));
+    expectHisCard(above[0]);
+    expectYourCard(below[0]);
+    expect(below[0]).toMatch(/player__time--running/);
+  });
+
+  it("vs-Liem cards follow the flip", () => {
+    const store = liemGameAs("black");
+    store.dispatch(toggleFlip()); // unflipped: Black (you) on top, White (him) below
+    const { above, below } = cardsAround(render(store));
+    expectYourCard(above[0]);
+    expectHisCard(below[0]);
+    expect(below[0]).toMatch(/player__time--running/);
   });
 
   it("vs-Liem sidebar order", () => {
     const html = render(liemGameAs("black"));
-    const board = divWithClass(html, "board");
     const sidebar = divWithClass(html, "sidebar");
 
-    // No cards around the board: the page has his card and yours, once each.
-    expect(playerNames(board)).toEqual([]);
-    expect(playerNames(html)).toEqual([LIEM.entry.name, "You"]);
-
-    const cards = sidebarCards(html);
-    expect(cards.map((c) => c.color)).toEqual(["white", "black"]);
-    const [his, yours] = cards;
-    expect(playerNames(his.html)).toEqual([LIEM.entry.name]);
-    expect(his.html).toContain(`<span class="player__title">${LIEM.entry.title}</span>`);
-    expect(his.html).toContain(`src="${avatarSrc(LIEM.entry.avatar)}"`);
-    expect(his.html).toMatch(/class="liem-detail"/);
-    // White moves first and the clocks run at once, so his (White) clock is the running one.
-    expect(his.html).toMatch(/player__time--running/);
-    expect(playerNames(yours.html)).toEqual(["You"]);
-    expect(yours.html).toContain(`src="${avatarSrc(null)}"`);
-    expect(yours.html).not.toMatch(/player__time--running/);
-
-    // His card, then the note, then yours.
-    const hisAt = sidebar.indexOf(his.html);
+    // No cards in the sidebar: the note, then the buttons, Fallen Pieces and Notation.
+    expect(cards(sidebar)).toEqual([]);
     const noteAt = sidebar.indexOf("data-book-state=");
-    const yoursAt = sidebar.indexOf(yours.html);
-    expect(hisAt).toBeGreaterThan(-1);
-    expect(noteAt).toBeGreaterThan(hisAt);
-    expect(yoursAt).toBeGreaterThan(noteAt);
-
-    // Then the buttons, Fallen Pieces and Notation.
     const buttonsAt = sidebar.indexOf('class="buttons"');
-    expect(buttonsAt).toBeGreaterThan(yoursAt);
+    expect(noteAt).toBeGreaterThan(-1);
+    expect(buttonsAt).toBeGreaterThan(noteAt);
     expect(sidebar.indexOf("Fallen Pieces")).toBeGreaterThan(buttonsAt);
     expect(sidebar.indexOf("Notation")).toBeGreaterThan(sidebar.indexOf("Fallen Pieces"));
     expect(buttonLabels(html)).toEqual(["New game", "Flip board", "Sound"]);
   });
 
-  it("vs-Liem as White puts him on Black", () => {
-    const cards = sidebarCards(render(liemGameAs("white")));
-    expect(cards.map((c) => c.color)).toEqual(["black", "white"]);
-    expect(playerNames(cards[0].html)).toEqual([LIEM.entry.name]);
-    expect(playerNames(cards[1].html)).toEqual(["You"]);
-    expect(cards[1].html).toMatch(/player__time--running/);
+  it("the board's surroundings are the same in every mode", () => {
+    const setup = createAppStore();
+    setup.dispatch(switchMode("liem"));
+    const flippedSetup = createAppStore();
+    flippedSetup.dispatch(toggleFlip());
+    flippedSetup.dispatch(switchMode("liem"));
+    const states: [string, Store][] = [
+      ["two players", createAppStore()],
+      ["vs Liem, card open", setup],
+      ["vs Liem, card open, flipped", flippedSetup],
+      ["vs Liem as White", liemGameAs("white")],
+      ["vs Liem as Black", liemGameAs("black")],
+    ];
+    for (const [name, store] of states) {
+      const { above, below } = cardsAround(render(store));
+      expect({ name, above: above.length, below: below.length }).toEqual({ name, above: 1, below: 1 });
+    }
   });
 });
 
