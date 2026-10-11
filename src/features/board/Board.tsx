@@ -140,22 +140,25 @@ export const Board = () => {
       <div className="board" style={{ width: squareSize * 8 }}>
         <ModeTabs />
         {top}
-        {setupOpen ? (
-          <div key="squares" className="squares squares--setup">
-            <div className="squares__grid liem-dimmed" aria-hidden="true">
-              <AnimatePresence>{squaresToRender}</AnimatePresence>
-            </div>
+        {/* One squares subtree in every state, so opening or closing the card never remounts a piece. */}
+        <div className="squares">
+          <div
+            className={`squares__grid${setupOpen ? " liem-dimmed" : ""}`}
+            aria-hidden={setupOpen || undefined}
+          >
+            <AnimatePresence>{squaresToRender}</AnimatePresence>
+          </div>
+          {setupOpen ? (
             <div className="squares__overlay">
               <SetupCard />
             </div>
-          </div>
-        ) : (
-          <div key="squares" className="squares">
-            <AnimatePresence>{squaresToRender}</AnimatePresence>
-            <Promotion squareSize={squareSize} />
-            <GameOver />
-          </div>
-        )}
+          ) : (
+            <>
+              <Promotion squareSize={squareSize} />
+              <GameOver />
+            </>
+          )}
+        </div>
         {bottom}
       </div>
 
