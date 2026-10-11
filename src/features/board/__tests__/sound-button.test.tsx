@@ -3,18 +3,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Provider } from "react-redux";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { configureStore } from "@reduxjs/toolkit";
 import { describe, expect, it } from "vitest";
 
-import { boardSlice } from "../BoardSlice";
 import { toggleSound, viewSlice } from "../viewSlice";
 import { Board } from "../Board";
+import { createAppStore } from "../../../app/store";
 
-function makeStore() {
-  return configureStore({
-    reducer: { board: boardSlice.reducer, view: viewSlice.reducer },
-  });
-}
+const makeStore = createAppStore;
 
 function buttonsRow(store: ReturnType<typeof makeStore>): string {
   const html = renderToStaticMarkup(

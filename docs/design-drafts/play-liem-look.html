@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liem Opponent Looks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Red+Hat+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page: #333333;
+    --soft: #b8b8b8;
+    --line: #4a4a4a;
+    --play: #059862;
+    --board-light: rgb(234, 240, 206);
+    --board-dark: rgb(187, 190, 100);
+    --focus: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: #fff; font: 500 16px/1.5 "Quicksand", sans-serif; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-size: 2rem; margin: 0 0 4px; }
+  .intro { color: var(--soft); max-width: 70ch; margin: 0; }
+  nav.jump { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; }
+  nav.jump a { color: #fff; background: #474747; padding: 6px 14px; border-radius: 6px; text-decoration: none; }
+  section.dir { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--line); }
+  .dir-head { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: baseline; }
+  .letter { font-size: 3rem; font-weight: 700; line-height: 1; grid-row: span 2; }
+  .dir-head h2 { margin: 0; font-size: 1.5rem; }
+  .thesis { margin: 0; color: var(--soft); max-width: 72ch; }
+  .detail { margin: 12px 0 0; max-width: 72ch; }
+  h3 { font-size: 1rem; color: var(--soft); margin: 32px 0 12px; font-weight: 600; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+  .sw { width: 120px; }
+  .sw i { display: block; height: 48px; border-radius: 6px; border: 1px solid #555; }
+  .sw b { display: block; font-size: 14px; margin-top: 6px; }
+  .sw span { font-size: 13px; color: var(--soft); }
+  .type-row { display: flex; align-items: baseline; gap: 16px; padding: 6px 0; border-bottom: 1px solid #404040; flex-wrap: wrap; }
+  .type-row small { width: 150px; flex: none; color: var(--soft); font-size: 13px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+  .cell > small { display: block; color: var(--soft); font-size: 13px; margin-top: 8px; }
+  .screens { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; }
+  .screens > div > small { display: block; color: var(--soft); font-size: 13px; margin-bottom: 8px; }
+  .frame { border: 1px solid #555; border-radius: 8px; background: var(--page); padding: 16px; overflow: hidden; }
+  .frame.desk { width: 760px; max-width: 100%; }
+  .frame.phone { width: 375px; max-width: 100%; }
+
+  /* Shared app pieces */
+  .button { padding: 10px 20px; font: 700 16px "Quicksand", sans-serif; border: none; border-radius: 6px; color: #fff; background: rgba(0,0,0,.24); cursor: pointer; }
+  .button.play { background: var(--play); }
+  .button:hover, .is-hover { filter: brightness(.85); }
+  .is-pressed { filter: brightness(.7); transform: translateY(1px); }
+  .is-focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .is-disabled { opacity: .4; cursor: not-allowed; }
+  .board { display: grid; grid-template-columns: repeat(8, 1fr); aspect-ratio: 1; width: 100%; border-radius: 4px; overflow: hidden; }
+  .board span { display: flex; align-items: center; justify-content: center; font-size: clamp(14px, 4.2vw, 30px); line-height: 1; color: #111; }
+  .board span.l { background: var(--board-light); }
+  .board span.d { background: var(--board-dark); }
+  .board span.hl { box-shadow: inset 0 0 0 100px rgba(255,255,51,.5); }
+  .board span.w { color: #fff; text-shadow: 0 0 2px #000, 0 0 1px #000; }
+  .card { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; background: rgba(0,0,0,.24); }
+  .avatar { width: 36px; height: 36px; border-radius: 6px; background: #5b5b5b; flex: none; display: grid; place-items: center; font-weight: 700; }
+  .card .name { font-weight: 700; }
+  .card .sub { font-size: 14px; color: var(--soft); }
+  .clock { margin-left: auto; padding: 4px 10px; border-radius: 6px; background: #474747; font-weight: 700; }
+  .clock.run { background: #fff; color: #1c1c1c; }
+  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+  .side { display: flex; flex-direction: column; gap: 10px; }
+  .phone .layout { grid-template-columns: 1fr; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ===== A: Notebook ===== */
+  .A { --card: #262626; --accent: #059862; --bar: #bbbe64; --off: #d9534f; }
+  .A .seg { display: inline-flex; background: var(--card); border-radius: 6px; padding: 3px; gap: 3px; }
+  .A .seg button { font: 700 15px "Quicksand"; color: var(--soft); background: transparent; border: 0; border-radius: 4px; padding: 7px 14px; cursor: pointer; }
+  .A .seg button.on { background: var(--accent); color: #fff; }
+  .A .seg button.is-hover { background: #3a3a3a; color: #fff; filter: none; }
+  .A .slider { width: 100%; }
+  .A .range { position: relative; height: 6px; background: #474747; border-radius: 3px; margin: 14px 0 6px; }
+  .A .range b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--accent); }
+  .A .range i { position: absolute; top: 50%; width: 18px; height: 18px; border-radius: 50%; background: #fff; transform: translate(-50%, -50%); }
+  .A .range i.is-pressed { transform: translate(-50%, -50%) scale(1.2); filter: none; }
+  .A .lbl { display: flex; justify-content: space-between; font-size: 14px; color: var(--soft); }
+  .A .note { background: var(--card); border-radius: 6px; padding: 12px; border-left: 4px solid var(--bar); }
+  .A .note h4 { margin: 0 0 6px; font-size: 15px; }
+  .A .note p { margin: 0 0 8px; font-size: 15px; color: var(--soft); }
+  .A .mv { display: grid; grid-template-columns: 52px 1fr 44px; align-items: center; gap: 8px; font-size: 15px; padding: 3px 0; }
+  .A .mv .bar { height: 8px; border-radius: 4px; background: var(--bar); }
+  .A .mv.played { color: #fff; font-weight: 700; }
+  .A .mv span:last-child { text-align: right; color: var(--soft); }
+  .A .note.out { border-left-color: var(--off); }
+
+  /* ===== B: Pre-game card ===== */
+  .B { --dialog: #1f1f1f; --red: #da251d; --gold: #ffcd00; --accent: #059862; }
+  .B .dialog { background: var(--dialog); border-radius: 10px; padding: 20px; border-top: 4px solid var(--red); }
+  .B .dialog h4 { margin: 0; font-size: 22px; display: flex; align-items: center; gap: 10px; }
+  .B .star { color: var(--gold); font-size: 22px; }
+  .B .dialog p { margin: 4px 0 16px; color: var(--soft); font-size: 15px; }
+  .B .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .B .tile { border: 2px solid #474747; border-radius: 8px; padding: 10px 4px; text-align: center; background: #2a2a2a; cursor: pointer; font: 700 15px "Quicksand"; color: #fff; }
+  .B .tile .k { font-size: 28px; display: block; line-height: 1.2; }
+  .B .tile.on { border-color: var(--gold); background: #2f2a14; }
+  .B .tile.is-hover { border-color: #777; filter: none; }
+  .B .level { margin-top: 16px; }
+  .B .level .top { display: flex; justify-content: space-between; align-items: baseline; }
+  .B .level .elo { font-size: 28px; font-weight: 700; color: var(--gold); }
+  .B .steps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 8px; }
+  .B .steps i { height: 10px; border-radius: 3px; background: #474747; }
+  .B .steps i.on { background: var(--gold); }
+  .B .steps i.is-hover { background: #8a7a2a; filter: none; }
+  .B .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 14px; font-weight: 700; background: #3a3214; color: var(--gold); }
+  .B .badge.out { background: #3a1a18; color: #ff8c85; }
+  .B .badge.think { background: #2a2a2a; color: var(--soft); }
+  .B .modes { display: flex; gap: 16px; border-bottom: 1px solid #474747; }
+  .B .modes a { padding: 6px 2px; color: var(--soft); text-decoration: none; font-weight: 700; border-bottom: 3px solid transparent; }
+  .B .modes a.on { color: #fff; border-bottom-color: var(--red); }
+  .B .modes a.is-hover { color: #fff; filter: none; }
+  .B .overlay { position: relative; }
+  .B .overlay .dialog { position: absolute; inset: 8% 6% auto; box-shadow: 0 12px 40px rgba(0,0,0,.6); }
+  .B .overlay .board { filter: brightness(.45); }
+
+  /* ===== C: Explorer ===== */
+  .C { --panel: #2b2b2b; --win: #f0f0f0; --draw: #8a8a8a; --loss: #1a1a1a; --accent: #059862; }
+  .C .mono { font-family: "Red Hat Mono", monospace; }
+  .C .panel { background: var(--panel); border-radius: 6px; overflow: hidden; }
+  .C .panel header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(0,0,0,.25); font-weight: 700; font-size: 15px; }
+  .C .panel header small { color: var(--soft); font-weight: 500; font-size: 14px; }
+  .C table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .C td { padding: 6px 12px; border-top: 1px solid #3a3a3a; }
+  .C td.n { text-align: right; color: var(--soft); width: 56px; }
+  .C tr.top td { background: rgba(5,152,98,.18); }
+  .C tr.is-hover td { background: #383838; }
+  .C .wdl { display: flex; height: 14px; border-radius: 3px; overflow: hidden; min-width: 90px; font-size: 10px; line-height: 14px; }
+  .C .wdl i { font-style: normal; text-align: center; }
+  .C .wdl .w { background: var(--win); color: #111; }
+  .C .wdl .dr { background: var(--draw); color: #111; }
+  .C .wdl .b { background: var(--loss); color: #ddd; }
+  .C .src { display: inline-flex; background: #1f1f1f; border-radius: 6px; padding: 2px; }
+  .C .src button { font: 600 13px "Red Hat Mono"; border: 0; background: transparent; color: var(--soft); padding: 4px 8px; border-radius: 4px; }
+  .C .src button.on { background: #474747; color: #fff; }
+  .C .chip { display: inline-flex; gap: 6px; align-items: center; font: 700 15px "Quicksand"; border: 2px solid #474747; background: transparent; color: #fff; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+  .C .chip.on { border-color: var(--accent); background: rgba(5,152,98,.2); }
+  .C .chip.is-hover { border-color: #777; filter: none; }
+  .C select, .C .sel { font: 700 15px "Quicksand"; color: #fff; background: #1f1f1f; border: 2px solid #474747; border-radius: 6px; padding: 7px 10px; }
+  .C .sel.is-hover { border-color: #777; filter: none; }
+  .C .empty { padding: 12px; color: var(--soft); font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Liem opponent: three looks</h1>
+  <p class="intro">Each look keeps the app's dark page, Quicksand and the Wheat board. They differ in how you set up a game against Liem and how his opening book shows while you play. Hover and pressed states are shown as static copies. Game counts are placeholders, not his real numbers. Pick A, B, C or a mix.</p>
+  <nav class="jump"><a href="#A">A · Notebook</a><a href="#B">B · Pre-game card</a><a href="#C">C · Explorer</a></nav>
+
+  <!-- ================= A ================= -->
+  <section class="dir A" id="A">
+    <div class="dir-head"><span class="letter">A</span><h2>Notebook</h2>
+      <p class="thesis">Quiet and built in: the setup is one row of controls above the board, and the book is a margin note in the sidebar.</p></div>
+    <p class="detail"><b>Memorable detail:</b> the book note has an olive edge, the board's dark-square color. It turns red when the game leaves his book: "He's on his own from here."</p>
+
+    <h3>Palette</h3>
+    <div class="swatches">
+      <div class="sw"><i style="background:#333333"></i><b>#333333</b><span>page</span></div>
+      <div class="sw"><i style="background:#262626"></i><b>#262626</b><span>card</span></div>
+      <div class="sw"><i style="background:#FFFFFF"></i><b>#FFFFFF</b><span>text</span></div>
+      <div class="sw"><i style="background:#B8B8B8"></i><b>#B8B8B8</b><span>soft text</span></div>
+      <div class="sw"><i style="background:#059862"></i><b>#059862</b><span>selected / Start</span></div>
+      <div class="sw"><i style="background:#BBBE64"></i><b>#BBBE64</b><span>book bar, note edge</span></div>
+      <div class="sw"><i style="background:#D9534F"></i><b>#D9534F</b><span>out of book</span></div>
+    </div>
+
+    <h3>Type: Quicksand 700 / 500</h3>
+    <div class="type-row"><small>Title 24 / 700</small><span style="font:700 24px Quicksand">Play GM Le Quang Liem</span></div>
+    <div class="type-row"><small>Label 16 / 700</small><span style="font:700 16px Quicksand">Strength · 2100</span></div>
+    <div class="type-row"><small>Body 16 / 500</small><span>After 1.d4 Nf6 he played 2.c4 in 312 games.</span></div>
+    <div class="type-row"><small>Small 15 / 500</small><span style="font-size:15px;color:var(--soft)">Counts from 1,932 slow games</span></div>
+
+    <h3>Controls</h3>
+    <div class="grid">
+      <div class="cell"><div class="seg"><button class="on">vs Liem</button><button>Two players</button></div><small>Mode switch, default</small></div>
+      <div class="cell"><div class="seg"><button class="on">vs Liem</button><button class="is-hover">Two players</button></div><small>Hover on the other side</small></div>
+      <div class="cell"><div class="seg"><button class="on is-focus">vs Liem</button><button>Two players</button></div><small>Keyboard focus</small></div>
+      <div class="cell"><div class="seg"><button>White</button><button class="on">Black</button><button>Random</button></div><small>Color pick</small></div>
+      <div class="cell"><div class="seg is-disabled"><button class="on">White</button><button>Black</button><button>Random</button></div><small>Disabled during a game</small></div>
+      <div class="cell"><div class="slider"><div class="lbl"><b style="color:#fff">Strength</b><span>2100</span></div><div class="range"><b style="width:54%"></b><i style="left:54%"></i></div><div class="lbl"><span>1400</span><span>Full 2700</span></div></div><small>Strength slider</small></div>
+      <div class="cell"><div class="slider"><div class="lbl"><b style="color:#fff">Strength</b><span>2100</span></div><div class="range"><b style="width:54%"></b><i class="is-pressed" style="left:54%"></i></div><div class="lbl"><span>1400</span><span>Full 2700</span></div></div><small>Slider, dragging</small></div>
+      <div class="cell"><button class="button play">Start</button> <button class="button play is-hover">Start</button> <button class="button play is-pressed">Start</button><small>Start: default, hover, pressed</small></div>
+    </div>
+
+    <h3>Components</h3>
+    <div class="grid">
+      <div class="cell"><div class="note"><h4>In his book</h4><p>After 1.d4 Nf6 2.c4 e6 he plays:</p>
+        <div class="mv played"><span>3.Nf3</span><div class="bar" style="width:100%"></div><span>188</span></div>
+        <div class="mv"><span>3.g3</span><div class="bar" style="width:46%"></div><span>87</span></div>
+        <div class="mv"><span>3.Nc3</span><div class="bar" style="width:20%"></div><span>37</span></div></div><small>In book, his move in bold</small></div>
+      <div class="cell"><div class="note"><h4>Thin line</h4><p>Only 3 games reach this position.</p>
+        <div class="mv played"><span>9.Qc2</span><div class="bar" style="width:100%"></div><span>2</span></div>
+        <div class="mv"><span>9.b3</span><div class="bar" style="width:50%"></div><span>1</span></div></div><small>Few games</small></div>
+      <div class="cell"><div class="note out"><h4>Out of his book</h4><p>No game of his reaches this position. He's on his own from here.</p></div><small>Left the book</small></div>
+      <div class="cell"><div class="card"><div class="avatar">L</div><div><div class="name">Le Quang Liem</div><div class="sub">GM · playing 2100</div></div><span class="clock">05:00</span></div><small>Liem's card, waiting</small></div>
+      <div class="cell"><div class="card"><div class="avatar">L</div><div><div class="name">Le Quang Liem</div><div class="sub">GM · playing 2100</div></div><span class="clock run">04:52</span></div><small>Liem's card, his turn</small></div>
+    </div>
+
+    <h3>Screen</h3>
+    <div class="screens">
+      <div><small>Desktop</small><div class="frame desk" data-screen="A"></div></div>
+      <div><small>375 px</small><div class="frame phone" data-screen="A"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= B ================= -->
+  <section class="dir B" id="B">
+    <div class="dir-head"><span class="letter">B</span><h2>Pre-game card</h2>
+      <p class="thesis">A real "challenge" moment: a card over the dimmed board where you pick your color and his strength, then the game starts.</p></div>
+    <p class="detail"><b>Memorable detail:</b> the colors of the Vietnamese flag. A red top edge on the card, and a gold star and gold strength steps for Liem. During the game, a small gold "Book" badge sits on his card.</p>
+
+    <h3>Palette</h3>
+    <div class="swatches">
+      <div class="sw"><i style="background:#333333"></i><b>#333333</b><span>page</span></div>
+      <div class="sw"><i style="background:#1F1F1F"></i><b>#1F1F1F</b><span>card</span></div>
+      <div class="sw"><i style="background:#FFFFFF"></i><b>#FFFFFF</b><span>text</span></div>
+      <div class="sw"><i style="background:#B8B8B8"></i><b>#B8B8B8</b><span>soft text</span></div>
+      <div class="sw"><i style="background:#DA251D"></i><b>#DA251D</b><span>flag red: edge, tab</span></div>
+      <div class="sw"><i style="background:#FFCD00"></i><b>#FFCD00</b><span>flag gold: star, level, book</span></div>
+      <div class="sw"><i style="background:#059862"></i><b>#059862</b><span>Start</span></div>
+    </div>
+
+    <h3>Type: Quicksand 700 / 500</h3>
+    <div class="type-row"><small>Elo 28 / 700</small><span style="font:700 28px Quicksand;color:#FFCD00">2100</span></div>
+    <div class="type-row"><small>Title 22 / 700</small><span style="font:700 22px Quicksand">Challenge Le Quang Liem</span></div>
+    <div class="type-row"><small>Body 16 / 500</small><span>Pick your color and how hard he plays.</span></div>
+    <div class="type-row"><small>Badge 14 / 700</small><span class="badge">★ Book · 312 games</span></div>
+
+    <h3>Controls</h3>
+    <div class="grid">
+      <div class="cell"><div class="modes"><a class="on" href="#B">vs Liem</a><a href="#B">Two players</a></div><small>Mode tabs, default</small></div>
+      <div class="cell"><div class="modes"><a class="on" href="#B">vs Liem</a><a class="is-hover" href="#B">Two players</a></div><small>Tab hover</small></div>
+      <div class="cell"><div class="tiles"><div class="tile"><span class="k">♔</span>White</div><div class="tile on"><span class="k">♚</span>Black</div><div class="tile"><span class="k">?</span>Random</div></div><small>Color tiles, Black picked</small></div>
+      <div class="cell"><div class="tiles"><div class="tile is-hover"><span class="k">♔</span>White</div><div class="tile on is-focus"><span class="k">♚</span>Black</div><div class="tile"><span class="k">?</span>Random</div></div><small>Hover and focus</small></div>
+      <div class="cell"><div class="level"><div class="top"><b>Strength</b><span class="elo">2100</span></div><div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div></div><small>Steps 1400 → 2700 (7 steps)</small></div>
+      <div class="cell"><div class="level"><div class="top"><b>Strength</b><span class="elo">2300</span></div><div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="is-hover"></i><i></i><i></i></div></div><small>Hovering the next step</small></div>
+      <div class="cell"><button class="button play">Start game</button> <button class="button play is-pressed">Start game</button><small>Start: default, pressed</small></div>
+      <div class="cell"><button class="button">New game</button> <button class="button is-hover">New game</button><small>Reopens the card</small></div>
+    </div>
+
+    <h3>Components</h3>
+    <div class="grid">
+      <div class="cell"><div class="dialog"><h4><span class="star">★</span>Challenge Le Quang Liem</h4><p>GM · Vietnam · 2732</p>
+        <div class="tiles"><div class="tile on"><span class="k">♔</span>White</div><div class="tile"><span class="k">♚</span>Black</div><div class="tile"><span class="k">?</span>Random</div></div>
+        <div class="level"><div class="top"><b>Strength</b><span class="elo">2100</span></div><div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div></div>
+        <div style="margin-top:16px"><button class="button play">Start game</button></div></div><small>Setup card</small></div>
+      <div class="cell"><div class="card"><div class="avatar">L</div><div><div class="name">Le Quang Liem</div><div class="sub"><span class="badge">★ Book · 312</span></div></div><span class="clock">05:00</span></div><small>His card, in book</small></div>
+      <div class="cell"><div class="card"><div class="avatar">L</div><div><div class="name">Le Quang Liem</div><div class="sub"><span class="badge out">Out of book</span></div></div><span class="clock run">04:41</span></div><small>His card, out of book</small></div>
+      <div class="cell"><div class="card"><div class="avatar">L</div><div><div class="name">Le Quang Liem</div><div class="sub"><span class="badge think">Thinking…</span></div></div><span class="clock run">04:41</span></div><small>Engine working (under a second)</small></div>
+    </div>
+
+    <h3>Screen</h3>
+    <div class="screens">
+      <div><small>Desktop, setup card open</small><div class="frame desk" data-screen="B"></div></div>
+      <div><small>375 px</small><div class="frame phone" data-screen="B"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= C ================= -->
+  <section class="dir C" id="C">
+    <div class="dir-head"><span class="letter">C</span><h2>Explorer</h2>
+      <p class="thesis">A study tool: his book is a Lichess-style move table with game counts and win/draw/loss bars, so you see how his choices worked out.</p></div>
+    <p class="detail"><b>Memorable detail:</b> a small Slow / Online switch on the table shows both books. It's the same split the bot uses to pick its moves.</p>
+
+    <h3>Palette</h3>
+    <div class="swatches">
+      <div class="sw"><i style="background:#333333"></i><b>#333333</b><span>page</span></div>
+      <div class="sw"><i style="background:#2B2B2B"></i><b>#2B2B2B</b><span>panel</span></div>
+      <div class="sw"><i style="background:#FFFFFF"></i><b>#FFFFFF</b><span>text</span></div>
+      <div class="sw"><i style="background:#F0F0F0"></i><b>#F0F0F0</b><span>White wins</span></div>
+      <div class="sw"><i style="background:#8A8A8A"></i><b>#8A8A8A</b><span>draws</span></div>
+      <div class="sw"><i style="background:#1A1A1A"></i><b>#1A1A1A</b><span>Black wins</span></div>
+      <div class="sw"><i style="background:#059862"></i><b>#059862</b><span>his top move, selected</span></div>
+    </div>
+
+    <h3>Type: Quicksand 700 / 500 + Red Hat Mono 500 for counts</h3>
+    <div class="type-row"><small>Header 16 / 700</small><span style="font-weight:700">His book · after 1.d4 Nf6 2.c4 e6</span></div>
+    <div class="type-row"><small>Move 16 / 500</small><span>3.Nf3 &nbsp; 3.g3 &nbsp; 3.Nc3</span></div>
+    <div class="type-row"><small>Count 16 / Mono</small><span class="mono">188 · 87 · 37</span></div>
+    <div class="type-row"><small>Switch 13 / Mono</small><span class="mono" style="font-size:13px">SLOW · ONLINE</span></div>
+
+    <h3>Controls</h3>
+    <div class="grid">
+      <div class="cell"><div class="row"><span class="chip on">vs Liem</span><span class="chip">Two players</span></div><small>Mode chips</small></div>
+      <div class="cell"><div class="row"><span class="chip on">vs Liem</span><span class="chip is-hover">Two players</span></div><small>Chip hover</small></div>
+      <div class="cell"><div class="row"><span class="chip on is-focus">♔ White</span><span class="chip">♚ Black</span><span class="chip">Random</span></div><small>Color chips, focus</small></div>
+      <div class="cell"><span class="sel">Strength: 2100 ▾</span> <span class="sel is-hover">Strength: 2100 ▾</span><small>Strength select: 1400, 1700, 1900, 2100, 2300, 2500, Full</small></div>
+      <div class="cell"><div class="src"><button class="on">SLOW</button><button>ONLINE</button></div><small>Book source switch</small></div>
+      <div class="cell"><button class="button play">New game</button> <button class="button play is-pressed">New game</button><small>Start: default, pressed</small></div>
+    </div>
+
+    <h3>Components</h3>
+    <div class="grid">
+      <div class="cell" style="grid-column: span 2"><div class="panel"><header>His book <div class="src"><button class="on">SLOW</button><button>ONLINE</button></div></header>
+        <table class="mono-n">
+          <tr class="top"><td>3.Nf3</td><td class="n mono">188</td><td><div class="wdl"><i class="w" style="width:38%">38</i><i class="dr" style="width:47%">47</i><i class="b" style="width:15%">15</i></div></td></tr>
+          <tr class="is-hover"><td>3.g3</td><td class="n mono">87</td><td><div class="wdl"><i class="w" style="width:41%">41</i><i class="dr" style="width:45%">45</i><i class="b" style="width:14%">14</i></div></td></tr>
+          <tr><td>3.Nc3</td><td class="n mono">37</td><td><div class="wdl"><i class="w" style="width:30%">30</i><i class="dr" style="width:52%">52</i><i class="b" style="width:18%">18</i></div></td></tr>
+        </table></div><small>In book: top move tinted green, second row hovered</small></div>
+      <div class="cell"><div class="panel"><header>His book <small>Online · 0 games</small></header><div class="empty">Out of his book. He's playing on his own now.</div></div><small>Out of book</small></div>
+      <div class="cell"><div class="card"><div class="avatar">L</div><div><div class="name">Le Quang Liem</div><div class="sub mono" style="font-family:'Red Hat Mono'">GM · 2100</div></div><span class="clock run">04:52</span></div><small>His card, his turn</small></div>
+    </div>
+
+    <h3>Screen</h3>
+    <div class="screens">
+      <div><small>Desktop</small><div class="frame desk" data-screen="C"></div></div>
+      <div><small>375 px</small><div class="frame phone" data-screen="C"></div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Position after 1.d4 Nf6 2.c4 e6 (White at the bottom).
+  const rows = ["rnbqkb.r", "pppp.ppp", "....pn..", "........", "..PP....", "........", "PP..PPPP", "RNBQKBNR"];
+  const glyph = { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟", K: "♚", Q: "♛", R: "♜", B: "♝", N: "♞", P: "♟" };
+  const hl = new Set(["2,4", "1,4"]);
+  function board() {
+    let h = '<div class="board">';
+    rows.forEach((r, y) => [...r].forEach((c, x) => {
+      const cls = ((x + y) % 2 ? "d" : "l") + (hl.has(y + "," + x) ? " hl" : "") + (c !== "." && c === c.toUpperCase() ? " w" : "");
+      h += `<span class="${cls}">${glyph[c] || ""}</span>`;
+    }));
+    return h + "</div>";
+  }
+  const you = '<div class="card"><div class="avatar">Y</div><div><div class="name">You</div><div class="sub">White</div></div><span class="clock">04:48</span></div>';
+  const screens = {
+    A: () => `<div class="row" style="margin-bottom:12px;align-items:center"><div class="seg"><button class="on">vs Liem</button><button>Two players</button></div><div class="seg"><button class="on">White</button><button>Black</button><button>Random</button></div><button class="button play">Start</button></div>
+      <div class="layout"><div>${board()}</div><div class="side">
+      <div class="card"><div class="avatar">L</div><div><div class="name">Le Quang Liem</div><div class="sub">GM · playing 2100</div></div><span class="clock run">04:52</span></div>
+      <div class="note"><h4>In his book</h4><p>After 1.d4 Nf6 2.c4 e6 he plays:</p><div class="mv played"><span>3.Nf3</span><div class="bar" style="width:100%"></div><span>188</span></div><div class="mv"><span>3.g3</span><div class="bar" style="width:46%"></div><span>87</span></div><div class="mv"><span>3.Nc3</span><div class="bar" style="width:20%"></div><span>37</span></div></div>
+      ${you}</div></div>`,
+    B: () => `<div class="modes" style="margin-bottom:12px"><a class="on" href="#B">vs Liem</a><a href="#B">Two players</a></div>
+      <div class="layout"><div class="overlay">${board()}<div class="dialog"><h4><span class="star">★</span>Challenge Le Quang Liem</h4><p>GM · Vietnam · 2732</p><div class="tiles"><div class="tile on"><span class="k">♔</span>White</div><div class="tile"><span class="k">♚</span>Black</div><div class="tile"><span class="k">?</span>Random</div></div><div class="level"><div class="top"><b>Strength</b><span class="elo">2100</span></div><div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div></div><div style="margin-top:16px"><button class="button play">Start game</button></div></div></div>
+      <div class="side"><div class="card"><div class="avatar">L</div><div><div class="name">Le Quang Liem</div><div class="sub"><span class="badge">★ Book · 312</span></div></div><span class="clock">05:00</span></div>${you}<button class="button">New game</button></div></div>`,
+    C: () => `<div class="row" style="margin-bottom:12px;align-items:center"><span class="chip on">vs Liem</span><span class="chip">Two players</span><span class="chip on">♔ White</span><span class="chip">♚ Black</span><span class="chip">Random</span><span class="sel">Strength: 2100 ▾</span><button class="button play">New game</button></div>
+      <div class="layout"><div>${board()}</div><div class="side">
+      <div class="card"><div class="avatar">L</div><div><div class="name">Le Quang Liem</div><div class="sub">GM · 2100</div></div><span class="clock run">04:52</span></div>
+      <div class="panel"><header>His book <div class="src"><button class="on">SLOW</button><button>ONLINE</button></div></header><table>
+      <tr class="top"><td>3.Nf3</td><td class="n mono">188</td><td><div class="wdl"><i class="w" style="width:38%">38</i><i class="dr" style="width:47%">47</i><i class="b" style="width:15%">15</i></div></td></tr>
+      <tr><td>3.g3</td><td class="n mono">87</td><td><div class="wdl"><i class="w" style="width:41%">41</i><i class="dr" style="width:45%">45</i><i class="b" style="width:14%">14</i></div></td></tr>
+      <tr><td>3.Nc3</td><td class="n mono">37</td><td><div class="wdl"><i class="w" style="width:30%">30</i><i class="dr" style="width:52%">52</i><i class="b" style="width:18%">18</i></div></td></tr></table></div>
+      ${you}</div></div>`,
+  };
+  document.querySelectorAll("[data-screen]").forEach(el => {
+    const d = el.dataset.screen;
+    el.innerHTML = `<div class="${d}">${screens[d]()}</div>`;
+  });
+</script>
+</body>
+</html>

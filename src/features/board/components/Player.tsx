@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { type ReactNode, useEffect, useRef, useState } from "react";
 
 import "./Player.css";
 import { useAppDispatch, useAppSelector } from "app/hooks";
@@ -24,10 +24,21 @@ interface Props {
   title: string | null;
   avatar: string | null;
   isWhite: boolean;
+  /** Extra lines under the name, such as his strength and Book badge. */
+  detail?: ReactNode;
 }
 
-/** The clock after entering `phase` at `now`. Returns `clock` itself when nothing changes. */
-export function clockForPhase(phase: ClockPhase, clock: ClockState, now: number): ClockState {
+/**
+ * The clock after entering `phase` at `now`. Returns `clock` itself when nothing changes.
+ * On a new game the clock goes back to the full time first.
+ */
+export function clockForPhase(
+  phase: ClockPhase,
+  clock: ClockState,
+  now: number,
+  newGame = false
+): ClockState {
+  if (newGame) return phase === "running" ? { remainingMs: TOTAL_MS, startedAt: now } : initialClock();
   if (phase === "running") return startClock(clock, now);
   if (phase === "paused") return pauseClock(clock, now);
   const isFresh = clock.startedAt === null && clock.remainingMs === TOTAL_MS;
@@ -39,8 +50,10 @@ export function msUntilNextTick(ms: number, interval: number): number {
   return (ms % interval) + 1;
 }
 
-export const Player = ({ name, title, avatar, isWhite }: Props) => {
-  const { history, pendingPromotion, isPlaying, gameOver } = useAppSelector((state) => state.board);
+export const Player = ({ name, title, avatar, isWhite, detail }: Props) => {
+  const { history, pendingPromotion, isPlaying, gameOver, gameId } = useAppSelector(
+    (state) => state.board
+  );
   const dispatch = useAppDispatch();
 
   const isActive = isWhite === isWhiteClockTurn(history.length, pendingPromotion !== null);
@@ -56,11 +69,19 @@ export const Player = ({ name, title, avatar, isWhite }: Props) => {
   const latestClock = useRef(clock);
   latestClock.current = clock;
 
+  // The game this clock last saw: a new id means a new game, so the time restarts.
+  const seenGameId = useRef(gameId);
+
   useEffect(() => {
     const t = Date.now();
-    setClock((prev) => clockForPhase(phase, prev, t));
+    const isNewGame = seenGameId.current !== gameId;
+    seenGameId.current = gameId;
+    // Set the ref too, so the timer effect below schedules from the new clock.
+    const next = clockForPhase(phase, latestClock.current, t, isNewGame);
+    latestClock.current = next;
+    setClock(next);
     setNow(t);
-  }, [phase]);
+  }, [phase, gameId]);
 
   // One timer per turn, replaced once at 10s; each tick lands where the digits change.
   useEffect(() => {
@@ -81,7 +102,7 @@ export const Player = ({ name, title, avatar, isWhite }: Props) => {
     };
     schedule();
     return () => clearTimeout(id);
-  }, [interval]); // keyed only on the interval (dispatch is stable)
+  }, [interval, gameId]); // a new game restarts the timer too, so the first tick lands on time (dispatch is stable)
 
   useEffect(() => {
     if (isPlaying && !gameContinues) {
@@ -96,6 +117,7 @@ export const Player = ({ name, title, avatar, isWhite }: Props) => {
         <div className="player__name">
           {title && <span className="player__title">{title}</span>}
           {name}
+          {detail != null && <div className="player__detail">{detail}</div>}
         </div>
       </div>
       <PlayerClock remainingMs={shownMs} isActive={isActive} playerName={name} />

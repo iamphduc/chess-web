@@ -5,6 +5,7 @@ import { DndProvider } from "react-dnd-multi-backend";
 import { HTML5toTouch } from "rdndmb-html5-to-touch";
 
 import "./index.css";
+import "./styles/liem.css";
 import reportWebVitals from "./reportWebVitals";
 import { App } from "./App";
 import { store } from "./app/store";

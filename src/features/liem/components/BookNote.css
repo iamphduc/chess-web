@@ -1,0 +1,52 @@
+/*
+ * Layout for the book note and his card's detail. The look itself (edges, bars,
+ * badge) is in src/styles/liem.css; colors here come only from its tokens.
+ */
+.book-note__title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.book-note__text {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: var(--liem-text-soft);
+}
+
+.book-note__text:last-child {
+  margin-bottom: 0;
+}
+
+.book-note__move {
+  white-space: nowrap;
+}
+
+.book-note__retry {
+  margin-top: 4px;
+}
+
+.liem-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 4px;
+}
+
+.liem-detail__sub {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--liem-text-soft);
+}
+
+.liem-detail__thinking {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--liem-text-soft);
+}
+
+/* Wider move column than the base row: labels such as "12...O-O-O" fit on one line. */
+.liem-note > .liem-note__row {
+  grid-template-columns: 5.5em 1fr 44px;
+}

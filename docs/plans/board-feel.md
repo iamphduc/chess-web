@@ -84,7 +84,7 @@ The human's pick: **"I will pick A"** (chess.com classic).
   - Legal dot and capture ring: `rgba(0, 0, 0, 0.14)`. The dot is 33% of the square, centered. The ring is a circle as big as the square, with a border 9% of the square.
   - Check: a radial gradient on the king's square, `radial-gradient(circle, #ff0000 0%, rgba(231, 0, 0, 0.9) 25%, rgba(169, 0, 0, 0) 89%)`.
   - Drag-over a legal square: an inset white edge, `rgba(255, 255, 255, 0.65)`, 6% of the square.
-  - Sound-on button: `#059862`, the app's Play green.
+  - Sound-on button: `#047A4F`, the app's Play green (was `#059862`; darkened on 2026-10-10 for 4.5:1 text contrast, see `docs/decisions.md`).
   - Focus ring: `#FFFFFF`, 3 px with a 2 px offset.
   - Unchanged: board light `rgb(234, 240, 206)`, board dark `rgb(187, 190, 100)`, page `#333333`.
 - **Type:** Quicksand 700 for the coordinates, Quicksand 500 at 16 px for text. Both fonts are unchanged.

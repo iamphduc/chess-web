@@ -23,11 +23,12 @@ const EXPECTED_DEPENDENCIES = [
   "react-dnd-multi-backend",
   "react-dom",
   "react-redux",
+  "stockfish",
   "typescript",
   "uuid",
   "web-vitals",
 ];
-const EXPECTED_DEV_DEPENDENCIES = ["@types/uuid", "@vitejs/plugin-react", "vite", "vitest", "yaml"];
+const EXPECTED_DEV_DEPENDENCIES = ["@types/uuid", "@vitejs/plugin-react", "chess.js", "tsx", "vite", "vitest", "yaml"];
 
 /** Resolves `request` as seen from inside the installed package `from` (or the app root), or null. */
 function resolveFrom(from: string | null, request: string): string | null {

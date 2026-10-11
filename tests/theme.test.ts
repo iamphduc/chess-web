@@ -1,8 +1,18 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const css = () => readFileSync(join(__dirname, "..", "src", "index.css"), "utf8");
+const SRC = join(__dirname, "..", "src");
+const css = () => readFileSync(join(SRC, "index.css"), "utf8");
+
+// Every .css file under a folder, recursively.
+function cssFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const path = join(dir, e.name);
+    if (e.isDirectory()) return cssFiles(path);
+    return e.name.endsWith(".css") ? [path] : [];
+  });
+}
 
 // The declarations inside the first top-level `:root { ... }` block.
 function rootBlock(source: string): string {
@@ -77,15 +87,41 @@ describe("theme", () => {
     expect(low).toBeLessThan(4.5);
   });
 
-  it("quicksand loads 500 and 700", () => {
-    const source = css();
-    const imports = [...source.matchAll(/@import\s+url\(["']?([^"')]+)["']?\)/g)].map((m) => m[1]);
-    expect(imports).toHaveLength(1);
-    const url = new URL(imports[0]);
-    expect(url.hostname).toBe("fonts.googleapis.com");
-    expect(url.searchParams.get("family")).toBe("Quicksand:wght@500;700");
-    expect(url.searchParams.get("display")).toBe("swap");
-    // @import must come before any other rule or the browser drops it
-    expect(source.trimStart().startsWith("@import")).toBe(true);
+  it("quicksand is served from the app", () => {
+    const source = css().replace(/\/\*[\s\S]*?\*\//g, "");
+    // no Google Fonts (or any other) @import
+    expect(source).not.toMatch(/@import/);
+    const faces = [...source.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]);
+    const prop = (body: string, name: string) =>
+      body.match(new RegExp(`(?:^|[;\\s])${name}\\s*:\\s*([^;]+);`))?.[1].trim();
+    const quicksand = faces.filter((f) => /^["']?Quicksand["']?$/.test(prop(f, "font-family") ?? ""));
+    const weights = quicksand.flatMap((f) => (prop(f, "font-weight") ?? "").split(/\s+/).map(Number));
+    // one face per weight, or one variable face whose range covers both
+    const covers = (w: number) =>
+      quicksand.some((f) => {
+        const [lo, hi = lo] = (prop(f, "font-weight") ?? "").split(/\s+/).map(Number);
+        return lo <= w && w <= hi;
+      });
+    expect(weights.length).toBeGreaterThan(0);
+    expect(covers(500), "500").toBe(true);
+    expect(covers(700), "700").toBe(true);
+    for (const face of quicksand) {
+      expect(prop(face, "font-display"), "font-display").toBe("swap");
+      const urls = [...(prop(face, "src") ?? "").matchAll(/url\(["']?([^"')]+)["']?\)/g)].map((m) => m[1]);
+      expect(urls.length, "src has a url()").toBeGreaterThan(0);
+      for (const url of urls) {
+        expect(url, "relative path").not.toMatch(/^([a-z]+:|\/\/)/i);
+        expect(url, "woff2").toMatch(/\.woff2$/);
+        const file = resolve(SRC, url);
+        expect(file.startsWith(join(SRC, "assets", "fonts")), `${url} under src/assets/fonts/`).toBe(true);
+        expect(existsSync(file), `${url} exists`).toBe(true);
+      }
+    }
+    expect(existsSync(join(SRC, "assets", "fonts", "OFL.txt")), "OFL licence committed").toBe(true);
+    // no CSS anywhere under src/ loads anything over http(s)
+    for (const file of cssFiles(SRC)) {
+      const text = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+      expect(text, file).not.toMatch(/https?:\/\//i);
+    }
   });
 });

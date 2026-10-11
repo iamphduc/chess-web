@@ -1,4 +1,19 @@
-@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap");
+/* Quicksand 500 and 700, latin, served from the app (SIL OFL 1.1, see assets/fonts/OFL.txt). */
+@font-face {
+  font-family: "Quicksand";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./assets/fonts/quicksand-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Quicksand";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./assets/fonts/quicksand-latin-700-normal.woff2") format("woff2");
+}
 
 :root {
   --background: #fff;
@@ -24,8 +39,22 @@
   --board-hint: rgba(0, 0, 0, 0.14); /* legal-move dot and capture ring */
   --board-check: radial-gradient(circle, #ff0000 0%, rgba(231, 0, 0, 0.9) 25%, rgba(169, 0, 0, 0) 89%);
   --board-drop-edge: rgba(255, 255, 255, 0.65); /* inset edge on a legal drag-over square */
-  --board-sound-on: #059862;
+  --board-sound-on: #047A4F;
   --board-focus: #FFFFFF;
+
+  /* vs-Liem (play-like-liem Look). src/styles/liem.css uses only these for color.
+     Red is for edges and underlines only, never text. White on --liem-start (the Play green) is 5.38:1. */
+  --liem-card: #1F1F1F;
+  --liem-note: #262626;
+  --liem-text: #FFFFFF;
+  --liem-text-soft: #B8B8B8;
+  --liem-red: #DA251D;
+  --liem-gold: #FFCD00;
+  --liem-gold-tint: #2F2A14;
+  --liem-badge-bg: #3A3214;
+  --liem-line: #474747;
+  --liem-start: #047A4F;
+  --book-bar: #BBBE64;
 }
 
 body {

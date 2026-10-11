@@ -22,6 +22,10 @@ export const Piece = ({ pieceType, y, x, isWhiteTurn }: Props) => {
   const inputOpen = useAppSelector(
     (state) => state.board.gameOver === GameOverType.Continue && !state.board.pendingPromotion
   );
+  // One layout id per piece per game: a new game's pieces have no earlier box to slide
+  // from, so they appear on their squares, while a move within a game still slides.
+  const gameId = useAppSelector((state) => state.board.gameId);
+  const layoutId = `${gameId}-${pieceType}`;
 
   const piece = pieceFactory.getPiece(pieceType);
   const image = piece.getImage();
@@ -53,8 +57,9 @@ export const Piece = ({ pieceType, y, x, isWhiteTurn }: Props) => {
           backgroundImage: `url(${image})`,
           opacity: isDragging ? 0.5 : 1,
         }}
-        layoutId={pieceType}
-        key={pieceType}
+        data-layout-id={layoutId}
+        layoutId={layoutId}
+        key={layoutId}
       />
     </>
   );

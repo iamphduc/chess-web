@@ -3,9 +3,14 @@
   user-select: none;
 }
 
+/*
+ * The squares sit in `.squares__grid` in every state. With the vs-Liem card open,
+ * the grid dims and the card shares its grid cell, so on a small board the card
+ * grows the box downward instead of being cut off.
+ */
 .squares {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: 1fr;
   position: relative;
 }
 
@@ -14,4 +19,105 @@
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
+}
+
+.squares__grid,
+.squares__overlay {
+  grid-area: 1 / 1;
+}
+
+.squares__grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  align-self: start;
+}
+
+.squares__grid.liem-dimmed {
+  pointer-events: none;
+}
+
+.squares__overlay {
+  /* Above the squares, whose pieces make their own stacking layers. */
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12px 12px 0;
+}
+
+@media only screen and (min-width: 768px) {
+  .squares__overlay {
+    padding: 8% 6% 0;
+  }
+}
+
+/* vs Liem in a game: his book note, as wide as the sidebar boxes. */
+.liem-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: calc(13px * 24);
+  margin: 8px 0;
+}
+
+@media only screen and (min-width: 768px) {
+  .liem-side {
+    width: calc(13px * 32);
+  }
+}
+@media only screen and (min-width: 1200px) {
+  .liem-side {
+    width: calc(13px * 36);
+  }
+}
+
+/*
+ * The cards above and below the board keep one height in every mode, so the
+ * board never moves on a tab switch. Two-player cards are 56 px (a 40 px avatar
+ * plus padding); his card fits the same by keeping its detail to one tight line.
+ */
+.board > .player {
+  height: 56px;
+  box-sizing: border-box;
+}
+
+.board > .player:has(.player__detail) .player__info,
+.board > .player:has(.player__detail) .player__name {
+  min-width: 0;
+}
+
+.board > .player:has(.player__detail) .player__name {
+  line-height: 1.2;
+}
+
+/* His name stays on one line (cut short on a narrow board), so his detail fits under it. */
+.board > .player .player__name:has(.liem-detail) {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.board > .player .liem-detail {
+  flex-wrap: nowrap;
+  margin-top: 1px;
+  line-height: 1.2;
+}
+
+/* On a narrow board the badge or "Thinking…" wins; his strength line is cut short. */
+.board > .player .liem-detail__sub {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board > .player .liem-badge,
+.board > .player .liem-detail__thinking {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.board > .player .liem-badge {
+  padding: 0 8px;
 }

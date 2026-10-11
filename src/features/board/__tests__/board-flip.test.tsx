@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { boardSlice, movePiece, selectPiece } from "../BoardSlice";
 import { toggleFlip, viewSlice } from "../viewSlice";
 import { Board } from "../Board";
+import { matchSlice } from "../../liem/matchSlice";
 import { Promotion } from "../components/Promotion";
 import { PieceType } from "../../../game/piece-type";
 import { players } from "../../../game/players";
@@ -18,7 +19,7 @@ type BoardState = ReturnType<typeof reducer>;
 
 function makeStore(board?: BoardState) {
   return configureStore({
-    reducer: { board: reducer, view: viewSlice.reducer },
+    reducer: { board: reducer, view: viewSlice.reducer, match: matchSlice.reducer },
     preloadedState: board ? { board } : undefined,
   });
 }

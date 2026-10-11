@@ -4,7 +4,15 @@ import { AnimatePresence, MotionConfig } from "framer-motion";
 import "./Board.css";
 import { SQUARE_SIZE_MD, SQUARE_SIZE_XL, SQUARE_SIZE_XS } from "../../constants";
 import { PlayerInfo, players } from "game/players";
-import { useAppSelector } from "app/hooks";
+import { useAppDispatch, useAppSelector } from "app/hooks";
+import type { PieceColor } from "game/engine/game-state";
+import { LIEM } from "game/opponent/players";
+import { ModeTabs } from "features/liem/components/ModeTabs";
+import { SetupCard } from "features/liem/components/SetupCard";
+import { BookNote } from "features/liem/components/BookNote";
+import { LiemCardDetail } from "features/liem/components/LiemCardDetail";
+import { newLiemGame } from "features/liem/liemActions";
+import { useLiemOpponent } from "features/liem/useLiemOpponent";
 import { Square } from "./components/Square";
 import { Player } from "./components/Player";
 import { BoardSidebar } from "./components/BoardSidebar";
@@ -28,12 +36,47 @@ const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
   />
 );
 
+/** His card: name, title and avatar from `LIEM.entry` only, with his strength and Book badge. */
+const renderLiem = (color: PieceColor) => {
+  const { name, title, avatar } = LIEM.entry;
+  return (
+    <Player
+      key={color}
+      name={name}
+      title={title}
+      avatar={avatar}
+      isWhite={color === "white"}
+      detail={<LiemCardDetail />}
+    />
+  );
+};
+
+const renderYou = (color: PieceColor) => (
+  <Player key={color} name="You" title={null} avatar={null} isWhite={color === "white"} />
+);
+
+const NewGameButton = () => {
+  const dispatch = useAppDispatch();
+  return (
+    <button type="button" className="button" onClick={() => dispatch(newLiemGame())}>
+      New game
+    </button>
+  );
+};
+
 export const Board = () => {
   const { history, possibleMoves, lastMoves, pieceAttackedKing } = useAppSelector(
     (state) => state.board
   );
   const flipped = useAppSelector((state) => state.view.flipped);
+  const humanColor = useAppSelector((state) => state.board.humanColor);
+  const match = useAppSelector((state) => state.match);
   useMoveSound();
+  const { retry } = useLiemOpponent();
+
+  const vsLiem = match.mode === "liem";
+  const setupOpen = vsLiem && match.setupOpen;
+  const liemHuman: PieceColor | null = vsLiem && !setupOpen ? humanColor : null;
 
   let squareSize = SQUARE_SIZE_XS;
   if (useMediaQuery("only screen and (min-width: 768px)")) squareSize = SQUARE_SIZE_MD;
@@ -76,28 +119,72 @@ export const Board = () => {
     return squares;
   }, [flipped, history, lastMoves, pieceAttackedKing, possibleMoves, squareSize]);
 
+  // The color shown at the top follows the flip, in every mode.
+  const [topColor, bottomColor]: PieceColor[] = flipped ? ["white", "black"] : ["black", "white"];
   const [white, black] = players;
-  const [top, bottom] = flipped ? [white, black] : [black, white];
+  let top: React.ReactNode;
+  let bottom: React.ReactNode;
+  if (!vsLiem) {
+    top = renderPlayer(topColor === "white" ? white : black);
+    bottom = renderPlayer(bottomColor === "white" ? white : black);
+  } else {
+    // In a game, your color; with the card open, the color picked so far (Random shows White).
+    const yours: PieceColor = liemHuman ?? (match.colorPick === "black" ? "black" : "white");
+    const cardFor = (c: PieceColor) => (c === yours ? renderYou(c) : renderLiem(c));
+    top = cardFor(topColor);
+    bottom = cardFor(bottomColor);
+  }
 
   return (
     <MotionConfig reducedMotion="user">
       <div className="board" style={{ width: squareSize * 8 }}>
-        {renderPlayer(top)}
-        <div key="squares" className="squares">
-          <AnimatePresence>{squaresToRender}</AnimatePresence>
-          <Promotion squareSize={squareSize} />
-          <GameOver />
+        <ModeTabs />
+        {top}
+        {/* One squares subtree in every state, so opening or closing the card never remounts a piece. */}
+        <div className="squares">
+          <div
+            className={`squares__grid${setupOpen ? " liem-dimmed" : ""}`}
+            aria-hidden={setupOpen || undefined}
+          >
+            <AnimatePresence>{squaresToRender}</AnimatePresence>
+          </div>
+          {setupOpen ? (
+            <div className="squares__overlay">
+              <SetupCard />
+            </div>
+          ) : (
+            <>
+              <Promotion squareSize={squareSize} />
+              <GameOver />
+            </>
+          )}
         </div>
-        {renderPlayer(bottom)}
+        {bottom}
       </div>
 
       <div className="sidebar">
+        {liemHuman && (
+          <div className="liem-side">
+            <BookNote onRetry={retry} />
+          </div>
+        )}
+
         <BoardSidebar title="">
           <div className="buttons">
-            <Button type={ButtonType.Play} />
-            <Button type={ButtonType.Reset} />
-            <Button type={ButtonType.Flip} />
-            <Button type={ButtonType.Sound} />
+            {vsLiem ? (
+              <>
+                {liemHuman && <NewGameButton />}
+                <Button type={ButtonType.Flip} />
+                <Button type={ButtonType.Sound} />
+              </>
+            ) : (
+              <>
+                <Button type={ButtonType.Play} />
+                <Button type={ButtonType.Reset} />
+                <Button type={ButtonType.Flip} />
+                <Button type={ButtonType.Sound} />
+              </>
+            )}
           </div>
         </BoardSidebar>
 

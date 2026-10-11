@@ -60,6 +60,32 @@ describe("production build", () => {
     expect(lines.filter((l) => l.includes("CommonJS") && l.includes("vite.config"))).toEqual([]);
   });
 
+  it("engine and books load lazily", () => {
+    expect(build.status, `${build.stdout}\n${build.stderr}`).toBe(0);
+    const html = readFileSync(join(outDir, "index.html"), "utf8");
+    const entries = [...html.matchAll(/<script\b[^>]*type="module"[^>]*src="\/chess-web\/([^"]+\.js)"/g)].map(
+      (m) => m[1],
+    );
+    expect(entries).toHaveLength(1);
+    const entry = readFileSync(join(outDir, entries[0]), "utf8");
+    expect(entry.toLowerCase()).not.toContain("stockfish");
+
+    // A few real position keys from each committed book (not the start position).
+    const booksDir = join(ROOT, "src", "game", "opponent", "players", "le-quang-liem");
+    for (const name of ["book-slow.json", "book-online.json"]) {
+      const book = JSON.parse(readFileSync(join(booksDir, name), "utf8")) as { positions: Record<string, unknown> };
+      const keys = Object.keys(book.positions).filter((k) => !k.startsWith("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP"));
+      expect(keys.length, `${name} has positions`).toBeGreaterThan(0);
+      for (const key of keys.slice(0, 3)) expect(entry, `entry has no ${name} key`).not.toContain(key);
+    }
+
+    const assets = readdirSync(join(outDir, "assets"));
+    expect(assets.filter((f) => /^stockfish-18-lite-single.*\.wasm$/.test(f))).toHaveLength(1);
+    expect(assets.filter((f) => /^stockfish-18-lite-single.*\.js$/.test(f))).toHaveLength(1);
+    expect(assets.filter((f) => /^book-slow.*\.json$/.test(f))).toHaveLength(1);
+    expect(assets.filter((f) => /^book-online.*\.json$/.test(f))).toHaveLength(1);
+  });
+
   it("svgs are emitted as files, never inlined as data URLs", () => {
     // Piece.tsx puts the URL in an unquoted CSS url(...); an inlined
     // data:image/svg+xml URL has quotes and spaces, so the piece renders blank.

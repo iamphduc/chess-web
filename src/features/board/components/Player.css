@@ -93,3 +93,9 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* A card with a detail line keeps the plain card's clock pill instead of stretching to its height. */
+.player:has(.player__detail) .player__time {
+  align-self: flex-start;
+  min-height: 40px;
+}
