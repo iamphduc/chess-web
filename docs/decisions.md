@@ -133,3 +133,8 @@ Consequences: To unflip on the switch to Two players, dispatch `setFlipped(false
 Context: vs Liem first put his card and yours in the sidebar, so the board had no card above it and jumped 56 px up on every switch from Two players (`.squares` top 100 px vs 44 px at 1400 px).
 Decision: The human chose to put the vs-Liem cards above and below the board, exactly where Two players puts them: his card on his color's side, yours on yours, following the flip, with the card open and in a game. The sidebar keeps the book note, then New game, Flip and Sound, Fallen Pieces and Notation.
 Consequences: Nothing around the board moves on a tab switch (`board-modes.test.tsx › the board's surroundings are the same in every mode`). His card keeps the plain card's 56 px height, so on a 312 px board his name and strength line are cut short.
+
+## 2026-10-11 — On phones, his card's long lines are cut with an ellipsis (agent default — override anytime)
+Context: With his card above the 312 px board, "Le Quang Liem" and "GM · playing 2100" don't fit beside the badge and clock, so they end in "…". Letting the card grow would move the board on phones when you switch tabs.
+Decision: Keep the card at the two-player card's 56 px height and cut long text with an ellipsis; the badge and "Thinking…" stay whole.
+Consequences: To show the strength line in full on phones, hide "GM · playing <elo>" under 600 px in `src/features/board/Board.css`, or let the card grow and accept a small board move on phones.
