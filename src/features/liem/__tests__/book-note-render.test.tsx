@@ -42,6 +42,8 @@ const render = (store: AppStore, node: React.ReactNode) =>
 
 const note = (store: AppStore) => render(store, <BookNote onRetry={() => {}} />);
 const detail = (store: AppStore) => render(store, <LiemCardDetail />);
+/** What a reader sees or hears: the markup without its tags. */
+const text = (html: string) => html.replace(/<[^>]+>/g, "");
 
 describe("BookNote and LiemCardDetail", () => {
   it("note and badge markup", () => {
@@ -49,7 +51,7 @@ describe("BookNote and LiemCardDetail", () => {
     const fresh = liemGame();
     expect(note(fresh)).toMatch(/class="liem-note"[^>]*data-book-state="waiting"/);
     expect(note(fresh)).not.toContain("data-uci");
-    expect(detail(fresh)).toContain("GM · playing about 2100");
+    expect(text(detail(fresh))).toContain("GM · playing about 2100");
     expect(detail(fresh)).not.toContain("liem-badge");
 
     // In book: rows with the smoke hooks, the played row marked.
@@ -73,8 +75,8 @@ describe("BookNote and LiemCardDetail", () => {
     const badge = detail(inBook);
     expect(badge).toMatch(/class="liem-badge" data-book-games="312"/);
     expect(badge).not.toContain("data-engine");
-    expect(badge).toContain("★ Book · 312");
-    expect(badge).toContain("GM · playing about 2100");
+    expect(text(badge)).toContain("★ Book · 312");
+    expect(text(badge)).toContain("GM · playing about 2100");
 
     // Out of book: the red edge and his words.
     const out = liemGame();
@@ -110,14 +112,39 @@ describe("BookNote and LiemCardDetail", () => {
     const store = createAppStore();
     store.dispatch(setMode("liem"));
     store.dispatch(setStrength("full"));
-    expect(detail(store)).toContain("GM · playing about 2732");
+    expect(text(detail(store))).toContain("GM · playing about 2732");
     store.dispatch(setStrength(1400));
-    expect(detail(store)).toContain("GM · playing about 1400");
+    expect(text(detail(store))).toContain("GM · playing about 1400");
   });
 
   it("his card says playing about the step", () => {
     const store = liemGame();
-    expect(detail(store)).toMatch(/class="liem-detail__sub"[^>]*>GM · playing about 2100</);
+    const sub = detail(store).match(/<span class="liem-detail__sub">(.*?<\/span>)<\/span>/)?.[1] ?? "";
+    expect(text(sub)).toBe("GM · playing about 2100");
+  });
+
+  // A narrow board can't fit "GM · playing about 2100" beside the badge, so the
+  // card hides parts of the line by width (Board.css); each part has its own span.
+  it("his strength line comes in parts a narrow card can drop", () => {
+    const store = liemGame();
+    expect(detail(store)).toContain(
+      '<span class="liem-detail__sub"><span class="liem-detail__lead">GM · playing </span>' +
+        '<span class="liem-detail__about">about </span><span class="liem-detail__elo">2100</span></span>'
+    );
+    // strength is picked before a game starts
+    const full = createAppStore();
+    full.dispatch(setMode("liem"));
+    full.dispatch(setStrength("full"));
+    expect(detail(full)).toContain('<span class="liem-detail__elo">2732</span>');
+  });
+
+  it("the book badge's count is its own part, so a phone can show just ★ Book", () => {
+    const store = liemGame();
+    heMoved(store, "book");
+    expect(detail(store)).toContain(
+      '<span class="liem-badge" data-book-games="312"><span class="liem-badge__text">★ Book' +
+        '<span class="liem-badge__count"> · 312</span></span></span>'
+    );
   });
 
   it("out of book shows the Stockfish pill and names Stockfish", () => {
@@ -127,7 +154,7 @@ describe("BookNote and LiemCardDetail", () => {
     expect(card).toContain(
       '<span class="liem-badge liem-badge--engine" data-engine="stockfish">Stockfish</span>'
     );
-    expect(card).not.toContain("★ Book");
+    expect(text(card)).not.toContain("★ Book");
     expect(card).not.toContain("data-book-games");
 
     const html = note(out);
