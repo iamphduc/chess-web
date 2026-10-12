@@ -33,7 +33,7 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     temperature: 5,
     slipChance: 0.05,
     slipMaxLoss: 15,
-    aheadMaxLoss: 4,
+    aheadMaxLoss: 2,
     forceMateIn: 2,
   },
   1700: {
@@ -42,7 +42,7 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     temperature: 4,
     slipChance: 0.04,
     slipMaxLoss: 12,
-    aheadMaxLoss: 3,
+    aheadMaxLoss: 1.5,
     forceMateIn: 3,
   },
   1900: {
@@ -51,7 +51,7 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     temperature: 3,
     slipChance: 0.03,
     slipMaxLoss: 10,
-    aheadMaxLoss: 2.5,
+    aheadMaxLoss: 1.25,
     forceMateIn: 4,
   },
   2100: {
@@ -60,7 +60,7 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     temperature: 2.2,
     slipChance: 0.02,
     slipMaxLoss: 8,
-    aheadMaxLoss: 2,
+    aheadMaxLoss: 1,
     forceMateIn: 6,
   },
   2300: {
@@ -69,7 +69,7 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     temperature: 1.5,
     slipChance: 0.015,
     slipMaxLoss: 6,
-    aheadMaxLoss: 1,
+    aheadMaxLoss: 0.75,
     forceMateIn: 10,
   },
   2500: {
