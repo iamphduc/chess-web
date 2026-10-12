@@ -45,7 +45,7 @@ Constraints: a static GitHub Pages site with no backend; single-thread Stockfish
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| human-moves | MultiPV engine output, the per-step move chooser with its safety rules, the calibration script and first table values, and the Stockfish disclosure in the UI and docs | active | — |
+| human-moves | MultiPV engine output, the per-step move chooser with its safety rules, the calibration script and first table values, and the Stockfish disclosure in the UI and docs | done | — |
 
 Status values: `planned` / `active` / `done`. The orchestrator only flips its row's Status — it does not rewrite Goal/Depends-on retroactively.
 

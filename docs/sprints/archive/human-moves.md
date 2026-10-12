@@ -1,6 +1,6 @@
 # Sprint: Human moves after his book
 
-_From plan: docs/plans/human-style-strength.md · Slug: human-moves · Status: active · Generated: 2026-10-11_
+_From plan: docs/plans/human-style-strength.md · Slug: human-moves · Status: done · Generated: 2026-10-11_
 <!-- autopilot-run: started=2026-10-12T06:48:42Z sprints=0 waves=3 -->
 
 ## Status board
@@ -11,7 +11,7 @@ _From plan: docs/plans/human-style-strength.md · Slug: human-moves · Status: a
 | 1 | L1 | Look: neutral "Stockfish" pill style | human-moves-L1 | #65 | done | high | — |
 | 2 | E1 | MultiPV engine output, wired into the opponent | human-moves-E1 | #66 | done | medium | H1 |
 | 2 | U1 | Stockfish disclosure, "about" labels, README | human-moves-U1 | #66 | done | medium | L1 |
-| 3 | K1 | Calibration script, first table values, play check | human-moves-K1 | — | in progress | — | H1, E1 |
+| 3 | K1 | Calibration script, first table values, play check | human-moves-K1 | #67 | done | medium | H1, E1 |
 
 Plan branch `human-style-strength`; wave heads `human-moves-w1`, `human-moves-w2`, `human-moves-w3`.
 
@@ -190,3 +190,17 @@ interface MoveEngine {
 - **Depends on:** H1, E1
 - **One-way door:** none
 - **Model:** opus
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date
+- **Slices shipped:** H1, L1, E1, U1, K1, plus the wave 2 fix
+- **Queue entries:** resolved 3, deferred 2: the phone text on his card ("~2100", "★ Book") and the 14 px setup line on phones, both "Needs your decision" in `docs/handoff-queue.md` (2026-10-12)
+- **Slice log:**
+  - H1: opus · medium · test-first yes · runtime unit tests on real `GameState`s (nothing called it yet) · 4 NOTEs · time lost none
+  - L1: opus · high · test-first yes · runtime pill injected in the dev page, computed styles read · 2 NOTEs · time lost none
+  - E1: opus · medium · test-first partly (the engine tests went red on a TypeError, not an assertion) · runtime preview at 1400 and Full, worker traffic logged · 8 NOTEs · time lost none
+  - U1: opus · medium · test-first partly (one guard test was never red) · runtime preview at 1400 and 375 px, in and out of book · 4 NOTEs · time lost none
+  - W2-fix: opus · medium · test-first yes · runtime preview at 375, 1000 and 1400 px in every card state · 2 NOTEs · time lost about 10 min measuring the 136 px column
+  - K1: opus · medium · test-first yes · runtime four calibration runs (about 46 min) and preview at every step on desktop and 375 px · 4 NOTEs · time lost the long runs; one quiet stretch of about 10 min during a run (not a stall)
+- **Agent context at hand-back:** 977,276 tokens, the sum of each agent's final context size, not tokens billed. That's the sprint-planner at 159,010, H1 111,425, L1 68,665, E1 176,039, U1 146,842, W2-fix 127,043 and K1 188,251.
