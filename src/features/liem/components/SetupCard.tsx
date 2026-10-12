@@ -154,6 +154,7 @@ export function SetupCard({ entry = LIEM.entry }: SetupCardProps) {
           </span>
           <span className="setup-card__value">
             {strength === "full" && <span className="setup-card__full">Full</span>}
+            <span className="setup-card__about">about</span>
             <span className="liem-elo">{elo}</span>
           </span>
         </div>
@@ -169,6 +170,10 @@ export function SetupCard({ entry = LIEM.entry }: SetupCardProps) {
           })}
         />
       </div>
+
+      <p className="liem-card__sub setup-card__engine">
+        Openings from his games, then standard Stockfish 18 at this strength.
+      </p>
 
       <div className="setup-card__actions">
         <button type="button" className="button button--play" onClick={() => dispatch(startLiemGame())}>
