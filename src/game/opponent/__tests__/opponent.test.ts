@@ -7,14 +7,18 @@ import {
 } from "../../engine/game-state";
 import { PieceType } from "../../piece-type";
 import { lookupBook } from "../book";
-import { EngineError, type MoveEngine } from "../engine/move-engine";
+import type { EngineLine, SearchLimits } from "../engine/lines";
+import { EngineError, type Analysis, type MoveEngine } from "../engine/move-engine";
+import { chooseHumanMove } from "../human-move";
 import { createOpponent, OpponentError } from "../opponent";
 import { positionKey, toFen, uciToMove } from "../position";
+import { STEP_PROFILES, type StepProfile } from "../step-profiles";
 import type { Book, BookMove, BookName } from "../types";
 
 const P = PieceType;
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-const SETTINGS = { elo: 2100, clock: null };
+const PROFILE = STEP_PROFILES[2100];
+const SETTINGS = { profile: PROFILE, clock: null };
 
 // ---- fixtures ---------------------------------------------------------------
 
@@ -72,17 +76,21 @@ function makeBooks(
 
 // ---- fake engine ------------------------------------------------------------
 
+/** A string or null is a bestmove with no lines. */
 type Answer =
   | string
   | null
+  | Analysis
   | Error
-  | ((signal: AbortSignal | undefined) => Promise<string | null>);
+  | ((signal: AbortSignal | undefined) => Promise<Analysis>);
 
-/** A scripted MoveEngine: each bestMove call takes the next answer. */
+const toAnalysis = (bestMove: string | null): Analysis => ({ lines: [], bestMove });
+
+/** A scripted MoveEngine: each analyse call takes the next answer. */
 function fakeEngine(...answers: Answer[]) {
   const calls: {
     fen: string;
-    opts: { elo: number; movetimeMs?: number };
+    limits: SearchLimits;
     signal: AbortSignal | undefined;
   }[] = [];
   let disposed = 0;
@@ -90,14 +98,15 @@ function fakeEngine(...answers: Answer[]) {
   /** What reached the engine, in order: "search", "abort", "newGame". */
   const events: string[] = [];
   const engine: MoveEngine = {
-    bestMove(fen, opts, signal) {
-      calls.push({ fen, opts, signal });
+    analyse(fen, limits, signal) {
+      calls.push({ fen, limits, signal });
       events.push("search");
       signal?.addEventListener("abort", () => events.push("abort"));
       const answer = answers.shift();
       if (answer === undefined) return Promise.reject(new Error("unscripted call"));
       if (typeof answer === "function") return answer(signal);
       if (answer instanceof Error) return Promise.reject(answer);
+      if (answer === null || typeof answer === "string") return Promise.resolve(toAnalysis(answer));
       return Promise.resolve(answer);
     },
     newGame() {
@@ -113,15 +122,15 @@ function fakeEngine(...answers: Answer[]) {
 
 /** An answer that waits until its search is aborted, then rejects `aborted`. */
 const untilAborted = (signal: AbortSignal | undefined) =>
-  new Promise<string | null>((_, reject) => {
+  new Promise<Analysis>((_, reject) => {
     signal?.addEventListener("abort", () => reject(new EngineError("aborted")));
   });
 
 /** An answer the test resolves by hand; it ignores the abort signal. */
 function deferred() {
-  let resolve!: (uci: string | null) => void;
-  const promise = new Promise<string | null>((r) => (resolve = r));
-  return { answer: () => promise, resolve };
+  let settle!: (a: Analysis) => void;
+  const promise = new Promise<Analysis>((r) => (settle = r));
+  return { answer: () => promise, resolve: (uci: string | null) => settle(toAnalysis(uci)) };
 }
 
 async function codeOf(p: Promise<unknown>): Promise<string> {
@@ -162,6 +171,8 @@ describe("book move first", () => {
     const second = await opponent.chooseMove(start, { ...SETTINGS, random: () => 0.8 });
     expect(second.uci).toBe("d2d4");
     expect(second.move).toEqual(uciToMove(start, "d2d4"));
+    expect("lines" in first).toBe(false);
+    expect("lines" in second).toBe(false);
     expect(fake.calls).toHaveLength(0);
   });
 
@@ -172,7 +183,7 @@ describe("book move first", () => {
     );
     const opponent = createOpponent({ books, engine: fakeEngine().engine });
     const blitz = { baseMs: 180_000, incrementMs: 2000 };
-    const choice = await opponent.chooseMove(start, { elo: 2100, clock: blitz });
+    const choice = await opponent.chooseMove(start, { profile: PROFILE, clock: blitz });
     expect(choice.uci).toBe("c2c4");
     expect(choice.lookup?.book).toBe("online");
   });
@@ -226,22 +237,23 @@ describe("illegal book moves are dropped", () => {
 });
 
 describe("engine move through legalMoves", () => {
-  it("sends toFen(state) and the elo, and returns our Move", async () => {
+  it("sends toFen(state) and the step's search, and returns our Move", async () => {
     const start = initialGameState();
     const fake = fakeEngine("g1f3");
     const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
 
-    const choice = await opponent.chooseMove(start, { elo: 1700, clock: null });
+    const choice = await opponent.chooseMove(start, { profile: STEP_PROFILES[1700], clock: null });
     expect(fake.calls).toHaveLength(1);
     expect(fake.calls[0].fen).toBe(toFen(start));
     expect(fake.calls[0].fen).toBe(START_FEN);
-    expect(fake.calls[0].opts).toEqual({ elo: 1700 });
+    expect(fake.calls[0].limits).toEqual(STEP_PROFILES[1700].search);
     expect(fake.calls[0].signal).toBeInstanceOf(AbortSignal);
     expect(choice).toEqual({
       move: { from: [7, 6], to: [5, 5] },
       uci: "g1f3",
       source: "engine",
       lookup: null,
+      lines: [],
     });
   });
 
@@ -276,6 +288,89 @@ describe("engine move through legalMoves", () => {
   });
 });
 
+describe("off book, the chooser picks among the lines", () => {
+  const start = initialGameState();
+  const line = (move: string, cp: number, depth = 7): EngineLine => ({ move, score: { cp }, depth });
+  /** No slips; every line here is within the limit, so one random() draw picks. */
+  const WIDE: StepProfile = {
+    search: { depth: 7, multiPv: 3, movetimeMs: 450 },
+    maxLoss: 10,
+    temperature: 5,
+    slipChance: 0,
+    slipMaxLoss: 10,
+    aheadMaxLoss: 10,
+    forceMateIn: 1,
+  };
+  const THREE = [line("e2e4", 30), line("d2d4", 28), line("g1f3", 20)];
+
+  it("off book, plays the chooser's pick from the step's search", async () => {
+    const fake = fakeEngine({ lines: THREE, bestMove: "e2e4" });
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const random = vi.fn(() => 0.99);
+
+    const choice = await opponent.chooseMove(start, { profile: WIDE, clock: null, random });
+    expect(fake.calls).toHaveLength(1);
+    expect(fake.calls[0].limits).toEqual({ depth: 7, multiPv: 3, movetimeMs: 450 });
+    expect(fake.calls[0].fen).toBe(START_FEN);
+    // the last line, not Stockfish's best move: the chooser drew 0.99
+    expect(choice.uci).toBe("g1f3");
+    expect(choice.uci).toBe(chooseHumanMove(THREE, start, WIDE, () => 0.99));
+    expect(choice.move).toEqual(uciToMove(start, "g1f3"));
+    expect(choice.source).toBe("engine");
+    expect(choice.lines).toEqual(THREE);
+    expect(random).toHaveBeenCalledTimes(1);
+  });
+
+  it("with a low draw, plays the first line", async () => {
+    const opponent = createOpponent({ books: makeBooks(), engine: fakeEngine({ lines: THREE, bestMove: "d2d4" }).engine });
+    const choice = await opponent.chooseMove(start, { profile: WIDE, clock: null, random: () => 0 });
+    expect(choice.uci).toBe("e2e4");
+  });
+
+  it("the chooser uses Math.random when no random is given", async () => {
+    const opponent = createOpponent({ books: makeBooks(), engine: fakeEngine({ lines: THREE, bestMove: "e2e4" }).engine });
+    const spy = vi.spyOn(Math, "random").mockReturnValue(0.99);
+    try {
+      expect((await opponent.chooseMove(start, { profile: WIDE, clock: null })).uci).toBe("g1f3");
+      expect(spy).toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("falls back to bestMove when the chooser has no pick", async () => {
+    for (const lines of [[], [line("e2e5", 40), line("junk", 30)]]) {
+      const fake = fakeEngine({ lines, bestMove: "g1f3" });
+      const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+      const choice = await opponent.chooseMove(start, { profile: WIDE, clock: null, random: () => 0.5 });
+      expect(choice.uci).toBe("g1f3");
+      expect(choice.source).toBe("engine");
+      expect(choice.lines).toEqual(lines);
+      expect(fake.calls).toHaveLength(1);
+    }
+  });
+
+  it("after a bad first answer, returns the second answer's lines", async () => {
+    const second = [line("d2d4", 25)];
+    const fake = fakeEngine({ lines: [line("e2e5", 10)], bestMove: "e2e5" }, { lines: second, bestMove: "d2d4" });
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const choice = await opponent.chooseMove(start, { profile: WIDE, clock: null, random: () => 0 });
+    expect(choice.uci).toBe("d2d4");
+    expect(choice.lines).toEqual(second);
+    expect(fake.calls).toHaveLength(2);
+  });
+
+  it("the book pick and the chooser share one random", async () => {
+    // every book move is illegal, so the chooser draws next
+    const books = makeBooks({ [positionKey(start)]: [bm("e2e5", 4)] });
+    const opponent = createOpponent({ books, engine: fakeEngine({ lines: THREE, bestMove: "e2e4" }).engine });
+    const random = vi.fn(() => 0.99);
+    const choice = await opponent.chooseMove(start, { profile: WIDE, clock: null, random });
+    expect(choice.uci).toBe("g1f3");
+    expect(random).toHaveBeenCalled();
+  });
+});
+
 describe("rejects engine moves not in legalMoves", () => {
   const start = initialGameState();
 
@@ -296,10 +391,15 @@ describe("rejects engine moves not in legalMoves", () => {
   });
 
   it("rejects illegal-engine-move after two bad answers, asking only twice", async () => {
+    const illegalLines: Analysis = {
+      lines: [{ move: "e2e5", score: { cp: 50 }, depth: 9 }],
+      bestMove: "e7e5",
+    };
     for (const pair of [
       ["e2e5", "e7e5"],
       [null, null],
       ["e2e4q", null],
+      [illegalLines, illegalLines],
     ] as const) {
       const fake = fakeEngine(...pair);
       const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
@@ -385,7 +485,7 @@ describe("repeats and engine failures", () => {
       [new EngineError("timeout"), "engine-timeout"],
       [new EngineError("failed"), "engine-failed"],
       [new EngineError("disposed"), "disposed"],
-      [new RangeError("bad elo"), "engine-failed"],
+      [new RangeError("bad depth"), "engine-failed"],
     ];
     for (const [error, code] of cases) {
       const fake = fakeEngine(error);
@@ -489,7 +589,7 @@ describe("new game", () => {
 
   it("an engine failure that lands after newGame reads superseded, not engine-failed", async () => {
     let fail!: (e: Error) => void;
-    const fake = fakeEngine(() => new Promise<string | null>((_, reject) => (fail = reject)));
+    const fake = fakeEngine(() => new Promise<Analysis>((_, reject) => (fail = reject)));
     const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
     const inFlight = codeOf(opponent.chooseMove(start, SETTINGS));
     await flush();
