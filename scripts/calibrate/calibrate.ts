@@ -254,6 +254,7 @@ export async function runCalibrate(argv: readonly string[], deps: CalibrateDeps)
     deps.log(USAGE);
     return 1;
   }
+  const { seed } = args;
   const rating = LIEM.entry.rating;
   const pairings = pairingsFor(args, rating);
   const plan = gamePlan(args.games, OPENINGS.length);
@@ -271,7 +272,7 @@ export async function runCalibrate(argv: readonly string[], deps: CalibrateDeps)
 
   async function playOne(job: (typeof jobs)[number]): Promise<void> {
     const { pairing, p, g } = job;
-    const key = `${args.seed}|${p}|${pairing.label}|${g.game}`;
+    const key = `${seed}|${p}|${pairing.label}|${g.game}`;
     const ours = stepPlayer(pairing.step, deps.startEngine(), seeded(hash(`${key}|a`)));
     const rival =
       pairing.rival.kind === "anchor"
