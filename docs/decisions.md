@@ -148,14 +148,16 @@ Consequences: To show the strength line in full on phones, hide "GM · playing <
 Context: The human played the old 1400 step (H1's guesses: depth 5, slips up to 25 win % points) and said it "doesn't play like 1400": strange one-move blunders, and too weak overall. K1 added `npm run calibrate` and set `STEP_PROFILES` from it.
 Runs (lite single-thread Stockfish 18, seed 1, 6 games at a time, 8 openings each played once per color):
 - **Run 1**, H1's guesses, `npm run calibrate -- --games 4`, anchors at 500 ms a move, 10.8 min. Every step scored 87.5 to 100 % against the anchors at its own Elo and 200 above, so 500 ms anchors play far below their number. Each step scored 0 to 37.5 % against the next step up. 1400's largest slip lost 24 win % points (about a piece in a level position).
-- **Run 2**, the new table below, same flags, anchors at 1000 ms, 16.0 min. Every step still won 4/4 against step − 200, step and step + 200. Against the next step up: 1400 25 %, 1700 25 %, 1900 25 %, 2100 12.5 %, 2300 50 % (four draws), 2500 25 %. Average loss per move: 0.8 (1400), 0.6–0.9 (1700), 0.5–0.8 (1900), 0.4 (2100), 0.2–0.3 (2300), 0.1 (2500), 0 (Full); largest single loss 12 points (1700), 9.6 at 1400. Slip rate 0 to 1.6 %. Average think time 30 ms (1400) to 920 ms (Full).
+- **Run 2**, the table below with the earlier ahead limits (4, 3, 2.5, 2, 1, 0.5), same flags, anchors at 1000 ms, 16.0 min. Every step still won 4/4 against step − 200, step and step + 200. Against the next step up: 1400 25 %, 1700 25 %, 1900 25 %, 2100 12.5 %, 2300 50 % (four draws), 2500 25 %. Average loss per move: 0.8 (1400), 0.6–0.9 (1700), 0.5–0.8 (1900), 0.4 (2100), 0.2–0.3 (2300), 0.1 (2500), 0 (Full); largest single loss 12 points (1700), 9.6 at 1400. Slip rate 0 to 1.6 %. Average think time 30 ms (1400) to 920 ms (Full).
 - **Run 3**, same table, `--games 4 --anchor-elos 2400,3190`, 15.1 min. Against SF 2400: 1400 75 %, 1700 50 %, every higher step 100 %. Against SF 3190: 0 % for 1400 to 1900 and 2300, 2100 25 %, 2500 50 %, Full 75 %. Against the next step up: 37.5 %, 25 %, 37.5 %, 12.5 %, 12.5 %, 50 %.
+- **Play check** (preview, 1400, out of book): already up a bishop and knight (+7), he answered a queen left en prise with Be7, not exf4. In win % terms the queen was worth only about 3 points there, inside the old ahead limit of 4. So the ahead limits were cut (below), which keeps him taking clear material when he is well ahead.
+- **Run 4**, the final table, `--games 4 --anchors none` (the step ladder only), 4.2 min. Against the next step up: 1400 25 %, 1700 12.5 %, 1900 25 %, 2100 12.5 %, 2300 0 %, 2500 25 %.
 Decision: Use these values (depth / movetime ms / maxLoss / temperature / slipChance / slipMaxLoss / aheadMaxLoss / forceMateIn; multiPv 4 throughout):
-- 1400: 8 / 400 / 10 / 5 / 0.05 / 15 / 4 / 2
-- 1700: 9 / 500 / 8 / 4 / 0.04 / 12 / 3 / 3
-- 1900: 10 / 600 / 6 / 3 / 0.03 / 10 / 2.5 / 4
-- 2100: 11 / 700 / 4.5 / 2.2 / 0.02 / 8 / 2 / 6
-- 2300: 12 / 800 / 3 / 1.5 / 0.015 / 6 / 1 / 10
+- 1400: 8 / 400 / 10 / 5 / 0.05 / 15 / 2 / 2
+- 1700: 9 / 500 / 8 / 4 / 0.04 / 12 / 1.5 / 3
+- 1900: 10 / 600 / 6 / 3 / 0.03 / 10 / 1.25 / 4
+- 2100: 11 / 700 / 4.5 / 2.2 / 0.02 / 8 / 1 / 6
+- 2300: 12 / 800 / 3 / 1.5 / 0.015 / 6 / 0.75 / 10
 - 2500: 14 / 900 / 1.5 / 0.75 / 0.01 / 4 / 0.5 / Infinity
 - Full: 18 / 1000 / 0 / 0 / 0 / 0 / 0 / Infinity (unchanged)
 Deeper search at the low steps removes the depth-5 tactical misses behind the "strange one-move blunders" and makes 1400 stronger; the slip limit falls from 25 to 15 points at 1400, so a slip costs about a pawn and a half at most, not a piece. In every run each step scored 50 % or less against the next step up, so the steps rise in strength.
