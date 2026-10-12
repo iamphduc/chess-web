@@ -9,3 +9,8 @@ export type StrengthStep = (typeof STRENGTH_STEPS)[number];
 export function strengthElo(step: StrengthStep, rating: number): number {
   return step === "full" ? rating : step;
 }
+
+/** The step as the UI shows it: `"about 1400"`; `"full"` is `"about <rating>"`. The steps are approximate. */
+export function strengthLabel(step: StrengthStep, rating: number): string {
+  return `about ${strengthElo(step, rating)}`;
+}
