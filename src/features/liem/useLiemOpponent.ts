@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import type { AppDispatch, RootState } from "app/store";
 import { playOpponentMove } from "features/board/BoardSlice";
-import { LIEM } from "game/opponent/players";
 import { liemTurn } from "./liemTurn";
 import { opponentMoved, setOpponentStatus } from "./matchSlice";
 import { createOpponentController, type LiemOpponent, type OpponentController } from "./opponentController";
@@ -43,7 +42,7 @@ export function syncLiemTurn(
   board: RootState["board"],
   match: RootState["match"]
 ): void {
-  const request = liemTurn(board, match, LIEM.entry.rating);
+  const request = liemTurn(board, match);
   if (request) controller.request(request);
   else controller.cancel();
 }

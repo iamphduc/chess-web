@@ -1,4 +1,5 @@
-import { EngineError, type EngineErrorCode, type MoveEngine } from "./move-engine";
+import type { EngineLine, Score, SearchLimits } from "./lines";
+import { EngineError, type Analysis, type EngineErrorCode, type MoveEngine } from "./move-engine";
 
 /** A line-based pipe to a UCI engine (a Web Worker, or Stockfish in Node). */
 export interface UciTransport {
@@ -13,24 +14,94 @@ export interface UciTimers {
   clearTimeout?: (id: ReturnType<typeof setTimeout>) => void;
 }
 
-export const ELO_MIN = 1320;
-export const ELO_MAX = 3190;
-export const DEFAULT_MOVETIME_MS = 1000;
 /** Extra time past movetime before a search counts as hung. */
 export const TIMEOUT_GRACE_MS = 5000;
+export const MAX_DEPTH = 30;
+export const MAX_MULTIPV = 6;
 
 interface Search {
   fen: string;
-  elo: number;
-  movetimeMs: number;
-  resolve(move: string | null): void;
+  limits: SearchLimits;
+  /** The latest scored line per multipv index, from this search's info lines. */
+  lines: Map<number, EngineLine>;
+  resolve(analysis: Analysis): void;
   reject(err: Error): void;
   done: boolean;
   cleanup(): void;
 }
 
-export function clampElo(elo: number): number {
-  return Math.min(ELO_MAX, Math.max(ELO_MIN, Math.round(elo)));
+/** The limits as sent (movetime rounded, at least 1), or a RangeError naming the first bad one. */
+function checkLimits(limits: SearchLimits): SearchLimits | RangeError {
+  const { depth, multiPv, movetimeMs } = limits;
+  if (!Number.isInteger(depth) || depth < 1 || depth > MAX_DEPTH) {
+    return new RangeError(`depth must be a whole number from 1 to ${MAX_DEPTH}, got ${depth}`);
+  }
+  if (!Number.isInteger(multiPv) || multiPv < 1 || multiPv > MAX_MULTIPV) {
+    return new RangeError(`multiPv must be a whole number from 1 to ${MAX_MULTIPV}, got ${multiPv}`);
+  }
+  if (!Number.isFinite(movetimeMs) || movetimeMs <= 0) {
+    return new RangeError(`movetimeMs must be a positive number, got ${movetimeMs}`);
+  }
+  return { depth, multiPv, movetimeMs: Math.max(1, Math.round(movetimeMs)) };
+}
+
+/** A whole number from UCI text, or NaN. */
+function wholeNumber(text: string | undefined): number {
+  return text !== undefined && /^-?\d+$/.test(text) ? Number(text) : NaN;
+}
+
+/**
+ * One `info` line's scored line and its multipv index (missing = 1), or null
+ * when it has no usable depth, exact cp/mate score or pv: `info string`,
+ * `currmove` updates and `lowerbound`/`upperbound` scores are all skipped.
+ */
+export function parseInfoLine(text: string): { index: number; line: EngineLine } | null {
+  const t = text.split(/\s+/);
+  if (t[0] !== "info") return null;
+  let depth = NaN;
+  let index = 1;
+  let score: Score | null = null;
+  let move: string | undefined;
+  for (let i = 1; i < t.length; i++) {
+    switch (t[i]) {
+      case "string":
+      case "lowerbound":
+      case "upperbound":
+        return null;
+      case "depth":
+        depth = wholeNumber(t[++i]);
+        break;
+      case "multipv":
+        index = wholeNumber(t[++i]);
+        break;
+      case "score": {
+        const kind = t[++i];
+        const value = wholeNumber(t[++i]);
+        if (Number.isNaN(value)) return null;
+        if (kind === "cp") score = { cp: value };
+        else if (kind === "mate") score = { mate: value };
+        else return null;
+        break;
+      }
+      case "pv":
+        move = t[i + 1];
+        i = t.length;
+        break;
+    }
+  }
+  if (!(depth >= 1) || !(index >= 1) || score === null || !move) return null;
+  return { index, line: { move, score, depth } };
+}
+
+/** The collected lines in multipv order, each first move kept once (at its first index). */
+function linesOf(collected: Map<number, EngineLine>): EngineLine[] {
+  const seen = new Set<string>();
+  const ordered = Array.from(collected.entries()).sort(([a], [b]) => a - b).map(([, line]) => line);
+  return ordered.filter((line) => {
+    if (seen.has(line.move)) return false;
+    seen.add(line.move);
+    return true;
+  });
 }
 
 /**
@@ -50,20 +121,20 @@ export function createUciEngine(transport: UciTransport, timers: UciTimers = {})
   let readyoksOwed = 0;
   let staleBestmoves = 0;
   let newGamePending = false;
-  let lastElo: number | null = null;
+  let lastMultiPv: number | null = null;
   let active: Search | null = null;
   let queue: Search[] = [];
 
   const busy = () => awaitingUciok || readyoksOwed > 0 || staleBestmoves > 0 || active !== null;
 
-  function settle(search: Search, outcome: { move: string | null } | { error: Error }) {
+  function settle(search: Search, outcome: { analysis: Analysis } | { error: Error }) {
     if (search.done) return;
     search.done = true;
     search.cleanup();
     if (active === search) active = null;
     queue = queue.filter((s) => s !== search);
     if ("error" in outcome) search.reject(outcome.error);
-    else search.resolve(outcome.move);
+    else search.resolve(outcome.analysis);
   }
 
   // Ends a search early. If the engine is already thinking on it, tell it to
@@ -91,12 +162,13 @@ export function createUciEngine(transport: UciTransport, timers: UciTimers = {})
     }
     queue.shift();
     active = next;
-    if (next.elo !== lastElo) {
-      transport.send(`setoption name UCI_Elo value ${next.elo}`);
-      lastElo = next.elo;
+    const { depth, multiPv, movetimeMs } = next.limits;
+    if (multiPv !== lastMultiPv) {
+      transport.send(`setoption name MultiPV value ${multiPv}`);
+      lastMultiPv = multiPv;
     }
     transport.send(`position fen ${next.fen}`);
-    transport.send(`go movetime ${next.movetimeMs}`);
+    transport.send(`go depth ${depth} movetime ${movetimeMs}`);
   }
 
   function onLine(line: string) {
@@ -104,20 +176,26 @@ export function createUciEngine(transport: UciTransport, timers: UciTimers = {})
     if (line === "uciok") {
       if (!awaitingUciok) return;
       awaitingUciok = false;
-      transport.send("setoption name UCI_LimitStrength value true");
       transport.send("isready");
       readyoksOwed += 1;
     } else if (line === "readyok") {
       if (awaitingUciok || readyoksOwed === 0) return;
       readyoksOwed -= 1;
       pump();
+    } else if (line.startsWith("info ")) {
+      // Only the running search's lines count: never while a stale bestmove is owed.
+      if (!active || staleBestmoves > 0) return;
+      const parsed = parseInfoLine(line);
+      if (parsed && parsed.index <= active.limits.multiPv) active.lines.set(parsed.index, parsed.line);
     } else if (line === "bestmove" || line.startsWith("bestmove ")) {
       if (staleBestmoves > 0) {
         staleBestmoves -= 1;
         pump();
       } else if (active) {
         const move = line.split(/\s+/)[1];
-        settle(active, { move: !move || move === "(none)" ? null : move });
+        const bestMove = !move || move === "(none)" ? null : move;
+        const lines = bestMove === null ? [] : linesOf(active.lines);
+        settle(active, { analysis: { lines, bestMove } });
         pump();
       }
     }
@@ -141,21 +219,21 @@ export function createUciEngine(transport: UciTransport, timers: UciTimers = {})
   transport.send("uci");
 
   return {
-    bestMove(fen, opts, signal) {
+    analyse(fen, limits, signal) {
       if (dead) return Promise.reject(new EngineError(dead));
-      if (Number.isNaN(opts.elo)) return Promise.reject(new RangeError("elo is NaN"));
+      const checked = checkLimits(limits);
+      if (checked instanceof RangeError) return Promise.reject(checked);
       if (signal?.aborted) return Promise.reject(new EngineError("aborted"));
 
-      const movetimeMs = Math.max(1, Math.round(opts.movetimeMs ?? DEFAULT_MOVETIME_MS));
-      return new Promise<string | null>((resolve, reject) => {
+      return new Promise<Analysis>((resolve, reject) => {
         const onAbort = () => cancel(search, "aborted");
         // The limit counts from the call, so no call can wait forever, even
         // behind a handshake or a stale answer that never comes.
-        const timer = setTimer(() => cancel(search, "timeout"), movetimeMs + TIMEOUT_GRACE_MS);
+        const timer = setTimer(() => cancel(search, "timeout"), checked.movetimeMs + TIMEOUT_GRACE_MS);
         const search: Search = {
           fen,
-          elo: clampElo(opts.elo),
-          movetimeMs,
+          limits: checked,
+          lines: new Map(),
           resolve,
           reject,
           done: false,

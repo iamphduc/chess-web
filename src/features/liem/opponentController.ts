@@ -42,10 +42,10 @@ function outcomeOf(error: unknown): Outcome {
     case "no-legal-moves":
       return "silent";
     case "illegal-engine-move":
-    case "engine-timeout":
       return "retry-same";
     default:
-      // engine-failed, or anything unknown: the opponent may be broken, so drop it.
+      // engine-failed, engine-timeout (a hung search may never end), or
+      // anything unknown: the opponent may be broken, so drop it.
       return "retry-fresh";
   }
 }
