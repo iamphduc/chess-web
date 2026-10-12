@@ -68,7 +68,17 @@ describe("production build", () => {
     );
     expect(entries).toHaveLength(1);
     const entry = readFileSync(join(outDir, entries[0]), "utf8");
-    expect(entry.toLowerCase()).not.toContain("stockfish");
+    // The UI names Stockfish, so check for engine code instead of the word.
+    expect(entry, "entry has no Stockfish build").not.toContain("stockfish-18-lite-single");
+    expect(entry, "entry has no UCI protocol code").not.toContain("uciok");
+    // Those strings are in the lazy chunks, so the check above would see them if they moved.
+    const lazy = jsFiles(outDir)
+      .filter((f) => !f.endsWith(entries[0].split("/").pop()!))
+      .map((f) => readFileSync(f, "utf8"))
+      .join("
+");
+    expect(lazy).toContain("stockfish-18-lite-single");
+    expect(lazy).toContain("uciok");
 
     // A few real position keys from each committed book (not the start position).
     const booksDir = join(ROOT, "src", "game", "opponent", "players", "le-quang-liem");
