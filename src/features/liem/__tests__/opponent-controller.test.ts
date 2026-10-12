@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { initialGameState } from "game/engine/game-state";
 import { type MoveChoice, OpponentError, type OpponentErrorCode } from "game/opponent/opponent";
 import { uciToMove } from "game/opponent/position";
+import { STEP_PROFILES } from "game/opponent/step-profiles";
 import type { TurnRequest } from "../liemTurn";
 import { createOpponentController, type LiemOpponent, type OpponentMove } from "../opponentController";
 import type { OpponentStatus } from "../matchSlice";
@@ -35,7 +36,7 @@ const e2e4 = uciToMove(start, "e2e4");
 if (e2e4 === null) throw new Error("e2e4 must be legal");
 const CHOICE: MoveChoice = { move: e2e4, uci: "e2e4", source: "book", lookup: null };
 
-const SETTINGS = { elo: 2100, clock: { baseMs: 600_000, incrementMs: 0 } };
+const SETTINGS = { profile: STEP_PROFILES[2100], clock: { baseMs: 600_000, incrementMs: 0 } };
 const req = (gameId: number, ply: number): TurnRequest => ({ gameId, ply, state: start, settings: SETTINGS });
 
 /** An opponent whose every `chooseMove` waits until the test settles it. */
@@ -345,7 +346,29 @@ describe("failures and retry", () => {
     expect(t.a.opponent.dispose).toHaveBeenCalledTimes(1);
   });
 
-  it.each<OpponentErrorCode>(["illegal-engine-move", "engine-timeout"])(
+  it("engine-timeout → failed, retry loads a fresh opponent", async () => {
+    // A hung search can't be trusted to end, so the engine is replaced.
+    const t = await loaded();
+    const b = fakeOpponent("b", t.log);
+    t.controller.request(req(1, 0));
+    await flush();
+    t.a.last().reject(err("engine-timeout"));
+    await flush();
+    expect(t.lastStatus()).toBe("failed");
+    expect(t.a.opponent.dispose).toHaveBeenCalledTimes(1);
+    t.controller.retry();
+    expect(t.load).toHaveBeenCalledTimes(2);
+    t.loads[1].resolve(b.opponent);
+    await flush();
+    expect(t.a.opponent.chooseMove).toHaveBeenCalledTimes(1);
+    expect(b.opponent.chooseMove).toHaveBeenCalledTimes(1);
+    b.last().resolve(CHOICE);
+    await flush();
+    expect(t.moves).toEqual([{ gameId: 1, ply: 0, choice: CHOICE }]);
+    expect(t.lastStatus()).toBe("idle");
+  });
+
+  it.each<OpponentErrorCode>(["illegal-engine-move"])(
     "%s → failed, retry re-asks the same opponent",
     async (code) => {
       const t = await loaded();

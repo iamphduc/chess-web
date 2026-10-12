@@ -3,11 +3,10 @@ import { describe, expect, it } from "vitest";
 import { applyMove } from "game/engine/engine";
 import { initialGameState, type GameState } from "game/engine/game-state";
 import { uciToMove } from "game/opponent/position";
+import { STEP_PROFILES } from "game/opponent/step-profiles";
 import { GameOverType } from "features/board/components/GameOver";
 import { liemTurn, type LiemTurnBoard } from "../liemTurn";
 import { matchSlice, type MatchState } from "../matchSlice";
-
-const RATING = 2732;
 
 function play(state: GameState, ...ucis: string[]): GameState {
   return ucis.reduce((s, uci) => {
@@ -40,30 +39,32 @@ function match(over: Partial<MatchState> = {}): MatchState {
 
 describe("his turn only", () => {
   it("returns the request on his turn", () => {
-    expect(liemTurn(board(), match(), RATING)).toEqual({
+    expect(liemTurn(board(), match())).toEqual({
       gameId: 3,
       ply: 1,
       state: afterE4,
-      settings: { elo: 2100, clock: { baseMs: 600_000, incrementMs: 0 } },
+      settings: { profile: STEP_PROFILES[2100], clock: { baseMs: 600_000, incrementMs: 0 } },
     });
   });
 
   it("returns the last state by reference and ply = plies played", () => {
     const afterE5 = play(afterE4, "e7e5");
     const afterNf3 = play(afterE5, "g1f3");
-    const turn = liemTurn(board({ engineHistory: [start, afterE4, afterE5, afterNf3] }), match(), RATING);
+    const turn = liemTurn(board({ engineHistory: [start, afterE4, afterE5, afterNf3] }), match());
     expect(turn?.ply).toBe(3);
     expect(turn?.state).toBe(afterNf3);
   });
 
   it("plays White's first move when the human is Black (ply 0)", () => {
-    const turn = liemTurn(board({ engineHistory: [start], humanColor: "black" }), match(), RATING);
+    const turn = liemTurn(board({ engineHistory: [start], humanColor: "black" }), match());
     expect(turn).toMatchObject({ gameId: 3, ply: 0, state: start });
   });
 
-  it("maps the strength step to an Elo, full being his rating", () => {
-    expect(liemTurn(board(), match({ strength: 1400 }), RATING)?.settings.elo).toBe(1400);
-    expect(liemTurn(board(), match({ strength: "full" }), RATING)?.settings.elo).toBe(2732);
+  it("maps the strength step to its profile", () => {
+    expect(liemTurn(board(), match({ strength: 1400 }))?.settings.profile).toBe(STEP_PROFILES[1400]);
+    expect(liemTurn(board(), match({ strength: 2500 }))?.settings.profile).toBe(STEP_PROFILES[2500]);
+    expect(liemTurn(board(), match({ strength: "full" }))?.settings.profile).toBe(STEP_PROFILES.full);
+    expect(liemTurn(board(), match())?.settings).not.toHaveProperty("elo");
   });
 
   it.each<[string, Partial<LiemTurnBoard>, Partial<MatchState>]>([
@@ -78,6 +79,6 @@ describe("his turn only", () => {
     ["human to move", { humanColor: "black" }, {}],
     ["human to move at the start", { engineHistory: [start] }, {}],
   ])("returns null when %s", (_name, b, m) => {
-    expect(liemTurn(board(b), match(m), RATING)).toBeNull();
+    expect(liemTurn(board(b), match(m))).toBeNull();
   });
 });
