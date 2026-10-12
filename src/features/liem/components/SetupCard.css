@@ -37,14 +37,25 @@
   color: var(--liem-gold);
 }
 
+.setup-card__about {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--liem-text-soft);
+}
+
+/* The Stockfish line: liem-card__sub text, under the steps and above Start game. */
+.setup-card__engine {
+  margin: 12px 0 0;
+}
+
 .setup-card__actions {
   margin-top: 16px;
 }
 
 /*
- * Below the 600 px breakpoint the board is 312 px and the overlay leaves 300 px under its
- * 12 px top padding: tighter spacing, a one-line title, shorter tiles. Text stays 14 px or
- * more and tap targets 40 px or more.
+ * Up to 767 px wide the board is 312 px and the overlay leaves 300 px under its
+ * 12 px top padding: tighter spacing, a one-line title, shorter tiles and a 14 px Stockfish
+ * line. Text stays 14 px or more and tap targets 40 px or more.
  */
 @media only screen and (max-width: 767px) {
   .setup-card {
@@ -57,11 +68,18 @@
   }
 
   .setup-card .liem-card__sub {
-    margin: 2px 0 10px;
+    margin: 2px 0 8px;
+  }
+
+  /* 14 px keeps the Stockfish line to two lines; the steps' 15 px bottom padding is its gap. */
+  .setup-card .setup-card__engine {
+    margin: 0;
+    font-size: 14px;
+    line-height: 18px;
   }
 
   .setup-card .liem-tile {
-    padding: 6px 4px;
+    padding: 4px;
   }
 
   .setup-card .liem-tile__glyph {
@@ -70,7 +88,7 @@
   }
 
   .setup-card .setup-card__strength {
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
   .setup-card .liem-elo {

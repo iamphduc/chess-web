@@ -33,6 +33,13 @@ function textsWithRole(html: string, role: string): string[] {
   return Array.from(html.matchAll(re), (m) => m[1].replace(/<[^>]+>/g, ""));
 }
 
+/** The strength value's text, tags stripped and spaces squeezed. */
+function valueText(html: string): string {
+  const m = html.match(/<span class="setup-card__value">(.*?)<\/span><\/div>/);
+  expect(m, "the strength value").not.toBeNull();
+  return m![1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 describe("mode tabs", () => {
   it("renders a tablist with vs Liem and Two players", () => {
     const html = render(createAppStore(), <ModeTabs />);
@@ -114,6 +121,35 @@ describe("setup card markup", () => {
       "2500",
       "Full (2732)",
     ]);
+  });
+
+  it("shows about before the Elo", () => {
+    const store = liemStore();
+    expect(valueText(render(store, <SetupCard />))).toBe("about 2100");
+    store.dispatch(setStrength(1400));
+    expect(valueText(render(store, <SetupCard />))).toBe("about 1400");
+    store.dispatch(setStrength("full"));
+    const full = valueText(render(store, <SetupCard />));
+    expect(full).toMatch(/^Full/);
+    expect(full).toMatch(/about 2732$/);
+  });
+
+  it("shows the Stockfish line under the steps, above Start game", () => {
+    const LINE = "Openings from his games, then standard Stockfish 18 at this strength.";
+    const html = render(liemStore(), <SetupCard />);
+    const line = html.match(/<p class="([^"]*)">([^<]*)<\/p>/g)?.find((p) => p.includes("Stockfish"));
+    expect(line).toBeDefined();
+    expect(line).toMatch(new RegExp(`^<p class="[^"]*\\bliem-card__sub\\b[^"]*">${LINE}</p>$`));
+    const steps = html.indexOf('aria-label="Full (2732)"');
+    const at = html.indexOf(LINE);
+    const start = html.indexOf(">Start game</button>");
+    expect(steps).toBeGreaterThan(-1);
+    expect(at).toBeGreaterThan(steps);
+    expect(start).toBeGreaterThan(at);
+    // The line names the engine at every step, Full included.
+    const store = liemStore();
+    store.dispatch(setStrength("full"));
+    expect(render(store, <SetupCard />)).toContain(LINE);
   });
 
   it("renders the green Start game button", () => {

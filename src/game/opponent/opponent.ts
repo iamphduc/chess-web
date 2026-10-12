@@ -3,14 +3,18 @@ import type { Move } from "../engine/engine";
 import type { GameState } from "../engine/game-state";
 import { hasAnyLegalMove } from "../engine/game-status";
 import { lookupBook, pickBookMove, type GameClock } from "./book";
-import { EngineError, type MoveEngine } from "./engine/move-engine";
+import type { EngineLine } from "./engine/lines";
+import { EngineError, type Analysis, type MoveEngine } from "./engine/move-engine";
+import { chooseHumanMove } from "./human-move";
 import { moveToUci, toFen, uciToMove } from "./position";
+import type { StepProfile } from "./step-profiles";
 import type { Book, BookName } from "./types";
 
 export interface OpponentSettings {
-  elo: number;
+  /** How hard the engine searches and how he picks among its lines. */
+  profile: StepProfile;
   clock: GameClock | null;
-  /** Returns a number in [0, 1) for the weighted book pick. Default `Math.random`. */
+  /** Returns a number in [0, 1) for the book pick and the line pick. Default `Math.random`. */
   random?: () => number;
 }
 
@@ -20,6 +24,8 @@ export interface MoveChoice {
   source: "book" | "engine";
   /** The book lookup at the position, kept even when the engine moved. */
   lookup: ReturnType<typeof lookupBook>;
+  /** The analysis behind an engine move; absent for a book move. */
+  lines?: readonly EngineLine[];
 }
 
 export interface Opponent {
@@ -58,8 +64,10 @@ function fromEngineError(error: unknown): OpponentError {
 }
 
 /**
- * The opponent: his book move when the position is in book, else the engine's
- * move. Every move it returns is one of `legalMoves`.
+ * The opponent: his book move when the position is in book, else a move a
+ * human of the step's strength would pick from the engine's top lines (the
+ * engine's own best move when none of them is legal). Every move it returns is
+ * one of `legalMoves`.
  */
 export function createOpponent(deps: {
   books: Record<BookName, Book>;
@@ -81,27 +89,31 @@ export function createOpponent(deps: {
     turn: AbortController
   ): Promise<MoveChoice> {
     if (!hasAnyLegalMove(state)) throw new OpponentError("no-legal-moves");
+    const { profile, random = Math.random } = settings;
 
     const lookup = lookupBook(books, state, settings.clock);
     if (lookup !== null) {
       const legal = lookup.moves.filter((m) => uciToMove(state, m[0]) !== null);
-      const pick = pickBookMove(legal, settings.random);
+      const pick = pickBookMove(legal, random);
       const move = pick === null ? null : uciToMove(state, pick[0]);
       if (move !== null) return { move, uci: moveToUci(move), source: "book", lookup };
     }
 
     const fen = toFen(state);
     for (let ask = 0; ask < ENGINE_ASKS; ask++) {
-      let answer: string | null;
+      let analysis: Analysis;
       try {
-        answer = await engine.bestMove(fen, { elo: settings.elo }, turn.signal);
+        analysis = await engine.analyse(fen, profile.search, turn.signal);
       } catch (error) {
         ensureCurrent(turn);
         throw fromEngineError(error);
       }
       ensureCurrent(turn);
-      const move = answer === null ? null : uciToMove(state, answer);
-      if (move !== null) return { move, uci: moveToUci(move), source: "engine", lookup };
+      const pick = chooseHumanMove(analysis.lines, state, profile, random) ?? analysis.bestMove;
+      const move = pick === null ? null : uciToMove(state, pick);
+      if (move !== null) {
+        return { move, uci: moveToUci(move), source: "engine", lookup, lines: analysis.lines };
+      }
     }
     throw new OpponentError("illegal-engine-move");
   }

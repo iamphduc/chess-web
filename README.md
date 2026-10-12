@@ -17,6 +17,14 @@ This project was inspired by [chess.com](https://www.chess.com/)
 
 [https://iamphduc.github.io/chess-web](https://iamphduc.github.io/chess-web/)
 
+## How he plays
+
+In **vs Liem** mode you play against Le Quang Liem's openings, then a chess engine.
+
+- **His openings:** while the position is in his book, he plays the moves he played in his own games, picked by how often he played each one.
+- **After his book:** standard [Stockfish](https://stockfishchess.org/) 18 plays the rest of the game. It isn't fine-tuned or trained on his games. At each move it looks at its top few moves and picks one that loses no more than the strength step allows.
+- **Strength steps:** "about 1400" up to "about 2500", plus Full (his rating). The steps are approximate. They aren't Lichess or Chess.com ratings.
+
 ## Licence
 
 Chess Web is free software under the GNU General Public License, version 3 or (at your option) any later version. See [LICENSE](LICENSE). The app ships the Stockfish engine, which is GPL v3, so the whole app is offered under the GPL.
