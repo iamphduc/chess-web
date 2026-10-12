@@ -145,7 +145,7 @@ Decision: Keep the card at the two-player card's 56 px height and cut long text 
 Consequences: To show the strength line in full on phones, hide "GM · playing <elo>" under 600 px in `src/features/board/Board.css`, or let the card grow and accept a small board move on phones.
 
 ## 2026-10-12 — Strength step table set from the first calibration runs (agent default — override anytime)
-Context: The human played the old 1400 step (H1's guesses: depth 5, slips up to 25 win % points) and said it "doesn't play like 1400": strange one-move blunders, and too weak overall. K1 added `npm run calibrate` and set `STEP_PROFILES` from it.
+Context: The human played the old 1400 step (Stockfish's `UCI_Elo` 1400) and said it "doesn't play like 1400": strange one-move blunders, and too weak overall. K1 added `npm run calibrate` and set `STEP_PROFILES` from it.
 Runs (lite single-thread Stockfish 18, seed 1, 6 games at a time, 8 openings each played once per color):
 - **Run 1**, H1's guesses, `npm run calibrate -- --games 4`, anchors at 500 ms a move, 10.8 min. Every step scored 87.5 to 100 % against the anchors at its own Elo and 200 above, so 500 ms anchors play far below their number. Each step scored 0 to 37.5 % against the next step up. 1400's largest slip lost 24 win % points (about a piece in a level position).
 - **Run 2**, the table below with the earlier ahead limits (4, 3, 2.5, 2, 1, 0.5), same flags, anchors at 1000 ms, 16.0 min. Every step still won 4/4 against step − 200, step and step + 200. Against the next step up: 1400 25 %, 1700 25 %, 1900 25 %, 2100 12.5 %, 2300 50 % (four draws), 2500 25 %. Average loss per move: 0.8 (1400), 0.6–0.9 (1700), 0.5–0.8 (1900), 0.4 (2100), 0.2–0.3 (2300), 0.1 (2500), 0 (Full); largest single loss 12 points (1700), 9.6 at 1400. Slip rate 0 to 1.6 %. Average think time 30 ms (1400) to 920 ms (Full).
@@ -162,3 +162,22 @@ Decision: Use these values (depth / movetime ms / maxLoss / temperature / slipCh
 - Full: 18 / 1000 / 0 / 0 / 0 / 0 / 0 / Infinity (unchanged)
 Deeper search at the low steps removes the depth-5 tactical misses behind the "strange one-move blunders" and makes 1400 stronger; the slip limit falls from 25 to 15 points at 1400, so a slip costs about a pawn and a half at most, not a piece. In every run each step scored 50 % or less against the next step up, so the steps rise in strength.
 Consequences: Stockfish's `UCI_Elo` anchors in this build are not on a human scale (1400 beat SF 2400 three times in four), so the runs rank the steps against each other but don't pin their numbers; the step names stay "about N", with no rating claim. Four games per pairing is ±12.5 % a game, so single cells are noise; read the ladder. Next tuning should come from the human's play feel, then a rerun with more games (`--games 8` or more) on the steps that change.
+
+## 2026-10-12 — On phones, his card reads "~2100" and "★ Book" (agent default — override anytime)
+Context: On a 312 px board, his name column is only 136 px wide, so "GM · playing about 2100" next to "★ Book · N", the "Stockfish" pill or "Thinking…" was cut to "GM · …".
+Decision: Below 768 px, the line reads "~2100" and the badge reads "★ Book" without its count. From 768 to 1199 px the line reads "about 2100", and from 1200 px it reads "GM · playing about 2100". Screen readers always get the full text. The book note below the board still shows the count.
+To change: `src/features/liem/components/LiemCardDetail.tsx` and the narrow rules in `src/features/board/Board.css`. To show the count on phones, something else has to shrink: the avatar, the clock or the card height.
+
+## 2026-10-12 — The setup card's Stockfish line is 14 px on phones (agent default — override anytime)
+Context: The Look sets the line at 16/500. At 16 px on a 312 px board, it wraps to 3 lines, and the card ran 38 px past the bottom of the board.
+Decision: 14 px with an 18 px line height below 768 px, and 16/500 on desktop.
+To change: `.setup-card .setup-card__engine` in `src/features/liem/components/SetupCard.css`.
+
+## 2026-10-12 — The 1400 step may now feel stronger than 1400 (agent default — override anytime)
+Context: The old 1400 made strange blunders and was too weak. The new table removes the blunders, but:
+- In calibration, 1400 beat Stockfish's own `UCI_Elo` 2400 in 3 of 4 games.
+- 1400 loses about 0.8 win % points per move on average, and its slip rate is 0–1.6 %.
+- In the reviewer's self-play probe, only 13 of 511 moves at 1400 dropped 200 cp or more.
+At depth 8 with 4 lines, a line 10–15 points below the best is rare, so the 5 % slip seldom has a move to slip to.
+Decision: Keep the calibrated table. Tune from the human's own play.
+To change: in `STEP_PROFILES` (`src/game/opponent/step-profiles.ts`), lower 1400's `search.depth`, or raise its `maxLoss`, `temperature` or `slipChance`. Keep `step-profiles.test.ts` green; it requires depth never to fall and loss limits never to rise going up the steps. Then check with `npm run calibrate -- --games 4 --anchors none`.

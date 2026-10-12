@@ -1,6 +1,6 @@
 # Plan: Human-style strength for the Liem opponent
 
-_Generated: 2026-10-11 · Status: active · Grilled-with: grilling (fast)_
+_Generated: 2026-10-11 · Status: archived · Grilled-with: grilling (fast)_
 
 ## Goal
 Make each strength step play like a person at that level, not like Stockfish with random noise. After his book, Stockfish at full strength lists its top moves with scores, and the opponent picks one within the step's loss limit, favouring better moves. The app says plainly that these moves come from Stockfish.
