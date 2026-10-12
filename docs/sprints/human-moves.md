@@ -1,7 +1,7 @@
 # Sprint: Human moves after his book
 
 _From plan: docs/plans/human-style-strength.md · Slug: human-moves · Status: active · Generated: 2026-10-11_
-<!-- autopilot-run: started=2026-10-12T06:48:42Z sprints=0 waves=2 -->
+<!-- autopilot-run: started=2026-10-12T06:48:42Z sprints=0 waves=3 -->
 
 ## Status board
 
@@ -9,9 +9,9 @@ _From plan: docs/plans/human-style-strength.md · Slug: human-moves · Status: a
 |------|-------|-------|--------|----|--------|------------|------------|
 | 1 | H1 | Move chooser, material check and step table | human-moves-H1 | #65 | done | medium | — |
 | 1 | L1 | Look: neutral "Stockfish" pill style | human-moves-L1 | #65 | done | high | — |
-| 2 | E1 | MultiPV engine output, wired into the opponent | human-moves-E1 | — | in progress | — | H1 |
-| 2 | U1 | Stockfish disclosure, "about" labels, README | human-moves-U1 | — | in progress | — | L1 |
-| 3 | K1 | Calibration script, first table values, play check | human-moves-K1 | — | pending | — | H1, E1 |
+| 2 | E1 | MultiPV engine output, wired into the opponent | human-moves-E1 | #66 | done | medium | H1 |
+| 2 | U1 | Stockfish disclosure, "about" labels, README | human-moves-U1 | #66 | done | medium | L1 |
+| 3 | K1 | Calibration script, first table values, play check | human-moves-K1 | — | in progress | — | H1, E1 |
 
 Plan branch `human-style-strength`; wave heads `human-moves-w1`, `human-moves-w2`, `human-moves-w3`.
 
