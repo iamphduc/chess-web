@@ -131,8 +131,11 @@ describe("BookNote and LiemCardDetail", () => {
       '<span class="liem-detail__sub"><span class="liem-detail__lead">GM · playing </span>' +
         '<span class="liem-detail__about">about </span><span class="liem-detail__elo">2100</span></span>'
     );
-    store.dispatch(setStrength("full"));
-    expect(detail(store)).toContain('<span class="liem-detail__elo">2732</span>');
+    // strength is picked before a game starts
+    const full = createAppStore();
+    full.dispatch(setMode("liem"));
+    full.dispatch(setStrength("full"));
+    expect(detail(full)).toContain('<span class="liem-detail__elo">2732</span>');
   });
 
   it("the book badge's count is its own part, so a phone can show just ★ Book", () => {
