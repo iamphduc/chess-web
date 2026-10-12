@@ -9,7 +9,7 @@ import { LIEM } from "../../src/game/opponent/players";
 import { STEP_PROFILES } from "../../src/game/opponent/step-profiles";
 import { STRENGTH_STEPS, strengthElo, type StrengthStep } from "../../src/game/opponent/strength";
 import type { Book, BookName } from "../../src/game/opponent/types";
-import { createAnchor, defaultAnchors, DEFAULT_ANCHOR_OFFSETS, spawnStockfish } from "./anchor";
+import { clampAnchorElo, createAnchor, defaultAnchors, DEFAULT_ANCHOR_OFFSETS, spawnStockfish } from "./anchor";
 import {
   gamePlan,
   OPENINGS,
@@ -31,6 +31,8 @@ export interface CalibrateArgs {
   steps: StrengthStep[];
   /** Anchor offsets from each step's Elo. */
   anchors: number[];
+  /** When set, these anchor Elos for every step instead of the offsets. */
+  anchorElos: number[] | null;
   games: number;
   seed: number;
   /** Games played at once. */
@@ -47,7 +49,7 @@ export interface CalibrateDeps {
 
 const USAGE =
   "usage: npm run calibrate -- [--steps 1400,1700,...,full] [--anchors -200,0,200|none] " +
-  "[--games N (even)] [--seed N] [--jobs N]";
+  "[--anchor-elos 1800,2400] [--games N (even)] [--seed N] [--jobs N]";
 
 const defaultJobs = () => Math.max(1, Math.min(6, availableParallelism() - 2));
 
@@ -62,6 +64,7 @@ export function parseArgs(argv: readonly string[]): CalibrateArgs | { error: str
   const out: CalibrateArgs = {
     steps: [...STRENGTH_STEPS],
     anchors: [...DEFAULT_ANCHOR_OFFSETS],
+    anchorElos: null,
     games: 4,
     seed: 1,
     jobs: defaultJobs(),
@@ -74,7 +77,7 @@ export function parseArgs(argv: readonly string[]): CalibrateArgs | { error: str
       value = flag.slice(eq + 1);
       flag = flag.slice(0, eq);
     }
-    if (!["--steps", "--anchors", "--games", "--seed", "--jobs"].includes(flag)) {
+    if (!["--steps", "--anchors", "--anchor-elos", "--games", "--seed", "--jobs"].includes(flag)) {
       return { error: `unknown flag "${flag}"` };
     }
     if (value === undefined) {
@@ -106,6 +109,12 @@ export function parseArgs(argv: readonly string[]): CalibrateArgs | { error: str
         const list = wholeList(value);
         if (list === null) return { error: `--anchors needs whole-number offsets like -200,0,200, got "${value}"` };
         out.anchors = [...new Set(list)].sort((a, b) => a - b);
+        break;
+      }
+      case "--anchor-elos": {
+        const list = wholeList(value);
+        if (list === null) return { error: `--anchor-elos needs whole-number Elos like 1800,2400, got "${value}"` };
+        out.anchorElos = [...new Set(list.map(clampAnchorElo))].sort((a, b) => a - b);
         break;
       }
       case "--games": {
@@ -191,7 +200,7 @@ interface Pairing {
 function pairingsFor(args: CalibrateArgs, rating: number): Pairing[] {
   const pairings: Pairing[] = [];
   for (const step of args.steps) {
-    for (const elo of defaultAnchors(step, rating, args.anchors)) {
+    for (const elo of args.anchorElos ?? defaultAnchors(step, rating, args.anchors)) {
       pairings.push({ step, rival: { kind: "anchor", elo }, label: `SF ${elo}` });
     }
     const next = STRENGTH_STEPS[STRENGTH_STEPS.indexOf(step) + 1];
@@ -251,7 +260,7 @@ export async function runCalibrate(argv: readonly string[], deps: CalibrateDeps)
   const jobs = pairings.flatMap((pairing, p) => plan.map((g) => ({ pairing, p, g })));
   deps.log(
     `Calibrating steps ${args.steps.join(", ")}: ${pairings.length} pairings x ${args.games} games ` +
-      `= ${jobs.length} games, ${args.jobs} at a time, seed ${args.seed}, anchors ${args.anchors.join(",") || "none"} ` +
+      `= ${jobs.length} games, ${args.jobs} at a time, seed ${args.seed}, anchors ${args.anchorElos ? `at ${args.anchorElos.join(",")}` : args.anchors.join(",") || "none"} ` +
       `at ${ANCHOR_MOVETIME_MS} ms a move`
   );
 
