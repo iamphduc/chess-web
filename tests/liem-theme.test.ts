@@ -98,6 +98,7 @@ const CONTRACT_CLASSES = [
   "liem-step--lit",
   "liem-elo",
   "liem-badge",
+  "liem-badge--engine",
   "liem-note",
   "liem-note--out",
   "liem-note__row",
@@ -169,6 +170,57 @@ describe("liem theme", () => {
 
     // the stylesheet is loaded by the app
     expect(read("index.tsx")).toMatch(/import\s+["']\.\/styles\/liem\.css["']/);
+  });
+
+  it("engine pill uses the neutral tokens", () => {
+    const all = rules(liemCss());
+    const pill = all.filter((r) => r.selector === ".liem-badge--engine");
+    expect(pill, ".liem-badge--engine defined once").toHaveLength(1);
+    const d = declarations(pill[0].body);
+    expect(d).toContainEqual(["color", "var(--liem-text-soft)"]);
+    expect(d).toContainEqual(["background-color", "var(--liem-note)"]);
+    expect(d.find(([p]) => p === "border")?.[1]).toMatch(/^1px solid var\(--liem-line\)$/);
+    // only those three tokens paint it: gold stays for his book
+    for (const [prop, value] of d) {
+      if (!COLOR_PROPS.test(prop)) continue;
+      for (const m of value.matchAll(/var\((--[\w-]+)\)/g)) {
+        expect(["--liem-text-soft", "--liem-note", "--liem-line"], `${prop}: ${value}`).toContain(m[1]);
+      }
+    }
+    // it comes after .liem-badge, so it wins when both classes are on the pill
+    const at = (sel: string) => all.findIndex((r) => r.selector === sel);
+    expect(at(".liem-badge--engine")).toBeGreaterThan(at(".liem-badge"));
+  });
+
+  it("engine pill keeps the badge's shape and size", () => {
+    const all = rules(liemCss());
+    const decl = (sel: string) => declarations(all.filter((r) => r.selector === sel).map((r) => r.body).join(";"));
+    const badge = decl(".liem-badge");
+    const pill = decl(".liem-badge--engine");
+    expect(pill.length, ".liem-badge--engine has declarations").toBeGreaterThan(0);
+    const px = (v: string | undefined) => (v ?? "").split(/\s+/).map((x) => parseFloat(x));
+    const get = (d: [string, string][], p: string) => d.find(([k]) => k === p)?.[1];
+    // the pill adds a border, so its padding shrinks by the border width: the outer box stays the same
+    const border = parseFloat(get(pill, "border") ?? "0");
+    const [bv, bh] = px(get(badge, "padding"));
+    const [pv, ph] = px(get(pill, "padding") ?? get(badge, "padding"));
+    expect(pv + border, "vertical size").toBe(bv);
+    expect(ph + border, "horizontal size").toBe(bh);
+    // nothing else about the shape or type changes
+    for (const p of ["display", "font-size", "font-weight", "border-radius", "gap", "align-items"]) {
+      expect(get(pill, p), `${p} not overridden`).toBeUndefined();
+    }
+  });
+
+  it("engine pill text meets 4.5:1", () => {
+    const pill = rules(liemCss()).find((r) => r.selector === ".liem-badge--engine");
+    const d = declarations(pill?.body ?? "");
+    const tokenOf = (p: string) => d.find(([k]) => k === p)?.[1].match(/^var\((--[\w-]+)\)$/)?.[1];
+    const fg = tokenOf("color");
+    const bg = tokenOf("background-color");
+    expect(fg, "pill text is a token").toBeDefined();
+    expect(bg, "pill background is a token").toBeDefined();
+    expect(contrast(token(fg!), token(bg!))).toBeGreaterThanOrEqual(4.5);
   });
 
   it("red is never a text color", () => {
