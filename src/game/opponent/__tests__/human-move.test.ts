@@ -179,7 +179,7 @@ describe("chooseHumanMove", () => {
       const move = chooseHumanMove(lines, START, p, random);
       seen.set(move, (seen.get(move) ?? 0) + 1);
     }
-    expect([...seen.keys()].sort()).toEqual(["d2d4", "e2e4"]);
+    expect(Array.from(seen.keys()).sort()).toEqual(["d2d4", "e2e4"]);
     expect(seen.get("e2e4")).toBeGreaterThan(400);
     expect(seen.get("d2d4")).toBeGreaterThan(400);
   });
