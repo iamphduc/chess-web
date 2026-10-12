@@ -8,12 +8,15 @@ describe("calibrate CLI", () => {
       steps: [...STRENGTH_STEPS],
       anchors: [-200, 0, 200],
       games: 4,
+      anchorElos: null,
       seed: 1,
       jobs: expect.any(Number),
     });
     expect(
       parseArgs(["--steps", "1400,full,1900", "--anchors", "0,-200", "--games", "6", "--seed", "42", "--jobs", "2"])
-    ).toEqual({ steps: [1400, 1900, "full"], anchors: [-200, 0], games: 6, seed: 42, jobs: 2 });
+    ).toEqual({ steps: [1400, 1900, "full"], anchors: [-200, 0], anchorElos: null, games: 6, seed: 42, jobs: 2 });
+    // --anchor-elos: the same anchors for every step, clamped to Stockfish's range.
+    expect(parseArgs(["--anchor-elos", "2400,1000,3500,2400"])).toMatchObject({ anchorElos: [1320, 2400, 3190] });
     // The same step twice runs once; --anchors none leaves only the next-step pairing.
     expect(parseArgs(["--steps", "1400,1400"])).toMatchObject({ steps: [1400] });
     expect(parseArgs(["--anchors", "none"])).toMatchObject({ anchors: [] });
@@ -33,6 +36,7 @@ describe("calibrate CLI", () => {
     expect(error(["--steps", ""])).toMatch(/--steps/);
     expect(error(["--anchors", "0,abc"])).toMatch(/--anchors/);
     expect(error(["--seed", "1.5"])).toMatch(/--seed/);
+    expect(error(["--anchor-elos", "2400,x"])).toMatch(/--anchor-elos/);
     expect(error(["--jobs", "0"])).toMatch(/--jobs/);
     expect(error(["--games"])).toMatch(/--games needs a value/);
     expect(error(["--fast"])).toMatch(/unknown flag "--fast"/);
