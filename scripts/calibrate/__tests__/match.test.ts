@@ -132,7 +132,7 @@ describe("playGame", () => {
         return shuffler("x").move(state);
       },
     };
-    const mixed = await playMatch({ a: shuffler("A"), b: flaky, games: 2, maxPlies: 6 });
+    const mixed = await playMatch({ a: shuffler("A"), b: flaky, games: 2, openings: [START], maxPlies: 6 });
     expect(mixed).toMatchObject({ wins: 0, draws: 1, losses: 0, errors: 1, played: 1, score: 0.5 });
   });
 
@@ -225,7 +225,7 @@ describe("playMatch", () => {
     expect(even.eloGap).toBeCloseTo(0, 6);
 
     // Draws score half: four ply-cap draws are 50 percent.
-    const drawn = await playMatch({ a: shuffler("A"), b: shuffler("B"), games: 4, maxPlies: 4 });
+    const drawn = await playMatch({ a: shuffler("A"), b: shuffler("B"), games: 4, openings: [START], maxPlies: 4 });
     expect(drawn).toMatchObject({ wins: 0, draws: 4, losses: 0, score: 0.5 });
   });
 
