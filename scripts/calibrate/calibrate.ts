@@ -20,8 +20,12 @@ import {
   type PairingResult,
 } from "./match";
 
-/** How long an anchor thinks per move. */
-export const ANCHOR_MOVETIME_MS = 500;
+/**
+ * How long an anchor thinks per move. Stockfish's UCI_Elo scale was set at
+ * about 60 s + 0.6 s a game; at 500 ms its anchors played far below their
+ * number (first run, docs/decisions.md 2026-10-12).
+ */
+export const ANCHOR_MOVETIME_MS = 1000;
 
 export interface CalibrateArgs {
   steps: StrengthStep[];

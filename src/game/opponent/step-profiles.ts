@@ -22,44 +22,44 @@ export interface StepProfile {
 }
 
 /**
- * Starting guesses, to be replaced by the calibration run (sprint K1). Going
- * up the steps, depth never falls and the loss limits, slip chance, slip limit
- * and temperature never rise.
+ * Set from `npm run calibrate` (docs/decisions.md, 2026-10-12). Going up the
+ * steps, depth never falls and the loss limits, slip chance, slip limit and
+ * temperature never rise.
  */
 export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
   1400: {
-    search: { depth: 5, multiPv: 4, movetimeMs: 400 },
-    maxLoss: 12,
-    temperature: 6,
-    slipChance: 0.08,
-    slipMaxLoss: 25,
-    aheadMaxLoss: 5,
+    search: { depth: 8, multiPv: 4, movetimeMs: 400 },
+    maxLoss: 10,
+    temperature: 5,
+    slipChance: 0.05,
+    slipMaxLoss: 15,
+    aheadMaxLoss: 4,
     forceMateIn: 2,
   },
   1700: {
-    search: { depth: 6, multiPv: 4, movetimeMs: 500 },
-    maxLoss: 9,
-    temperature: 4.5,
-    slipChance: 0.06,
-    slipMaxLoss: 20,
-    aheadMaxLoss: 4,
+    search: { depth: 9, multiPv: 4, movetimeMs: 500 },
+    maxLoss: 8,
+    temperature: 4,
+    slipChance: 0.04,
+    slipMaxLoss: 12,
+    aheadMaxLoss: 3,
     forceMateIn: 3,
   },
   1900: {
-    search: { depth: 8, multiPv: 4, movetimeMs: 600 },
-    maxLoss: 7,
-    temperature: 3.5,
-    slipChance: 0.04,
-    slipMaxLoss: 15,
-    aheadMaxLoss: 3,
+    search: { depth: 10, multiPv: 4, movetimeMs: 600 },
+    maxLoss: 6,
+    temperature: 3,
+    slipChance: 0.03,
+    slipMaxLoss: 10,
+    aheadMaxLoss: 2.5,
     forceMateIn: 4,
   },
   2100: {
-    search: { depth: 10, multiPv: 4, movetimeMs: 700 },
-    maxLoss: 5,
-    temperature: 2.5,
-    slipChance: 0.03,
-    slipMaxLoss: 12,
+    search: { depth: 11, multiPv: 4, movetimeMs: 700 },
+    maxLoss: 4.5,
+    temperature: 2.2,
+    slipChance: 0.02,
+    slipMaxLoss: 8,
     aheadMaxLoss: 2,
     forceMateIn: 6,
   },
@@ -67,8 +67,8 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     search: { depth: 12, multiPv: 4, movetimeMs: 800 },
     maxLoss: 3,
     temperature: 1.5,
-    slipChance: 0.02,
-    slipMaxLoss: 8,
+    slipChance: 0.015,
+    slipMaxLoss: 6,
     aheadMaxLoss: 1,
     forceMateIn: 10,
   },
