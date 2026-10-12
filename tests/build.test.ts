@@ -75,8 +75,7 @@ describe("production build", () => {
     const lazy = jsFiles(outDir)
       .filter((f) => !f.endsWith(entries[0].split("/").pop()!))
       .map((f) => readFileSync(f, "utf8"))
-      .join("
-");
+      .join("\n");
     expect(lazy).toContain("stockfish-18-lite-single");
     expect(lazy).toContain("uciok");
 
