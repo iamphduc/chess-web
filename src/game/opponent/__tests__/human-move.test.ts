@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { applyMove } from "../../engine/engine";
-import { GameState, initialGameState } from "../../engine/game-state";
+import { EngineSquare, GameState, initialGameState } from "../../engine/game-state";
+import { PieceType } from "../../piece-type";
 import { Score } from "../engine/lines";
 import { AHEAD_WIN, chooseHumanMove, winPercent } from "../human-move";
 import { uciToMove } from "../position";
-import { StepProfile } from "../step-profiles";
+import { STEP_PROFILES, StepProfile } from "../step-profiles";
 
 /** A small seeded random (mulberry32), so runs repeat exactly. */
 function seeded(seed: number): () => number {
@@ -321,5 +322,211 @@ describe("chooseHumanMove", () => {
   it("a draw outside [0, 1) falls to the last candidate", () => {
     const lines = linesAt(50, 49, 48);
     expect(chooseHumanMove(lines, START, profile(), () => 1)).toBe(MOVES[2]);
+  });
+});
+
+/** A custom position from `{ e1: piece, ... }`, no castling rights. */
+function board(
+  pieces: Record<string, PieceType>,
+  overrides: Partial<GameState> = {}
+): GameState {
+  const grid: EngineSquare[][] = Array.from({ length: 8 }, () =>
+    Array.from({ length: 8 }, () => null as EngineSquare)
+  );
+  for (const [sq, piece] of Object.entries(pieces)) {
+    grid[8 - Number(sq[1])]["abcdefgh".indexOf(sq[0])] = piece;
+  }
+  return {
+    ...initialGameState(),
+    squares: grid,
+    castling: {
+      white: { kingSide: false, queenSide: false },
+      black: { kingSide: false, queenSide: false },
+    },
+    ...overrides,
+  };
+}
+
+/** How often each move is picked over `n` seeded runs. */
+function tally(
+  lines: { move: string; score: Score }[],
+  state: GameState,
+  p: StepProfile,
+  seed: number,
+  n = 500
+): Map<string | null, number> {
+  const random = seeded(seed);
+  const counts = new Map<string | null, number>();
+  for (let i = 0; i < n; i++) {
+    const move = chooseHumanMove(lines, state, p, random);
+    counts.set(move, (counts.get(move) ?? 0) + 1);
+  }
+  return counts;
+}
+
+// 1.e3 e5 2.Qf3 Nc6 3.Qf4: exf4 wins the queen for a pawn (9 - 1 = 8).
+const QUEEN_EN_PRISE = play(START, "e2e3", "e7e5", "d1f3", "b8c6", "f3f4");
+
+describe("chooseHumanMove: free material", () => {
+  it("never skips a free queen when far ahead (the 1400 play check)", () => {
+    // Already well ahead, win % is flat: Be7 loses only about 3.3 points,
+    // inside the old 1400 ahead limit of 4, and 240 cp, under the cp cap.
+    const lines = [
+      { move: "e5f4", score: { cp: 1000 } },
+      { move: "f8e7", score: { cp: 760 } },
+      { move: "g8f6", score: { cp: 750 } },
+    ];
+    const old1400 = { ...STEP_PROFILES[1400], aheadMaxLoss: 4 };
+    expect(tally(lines, QUEEN_EN_PRISE, old1400, 11)).toEqual(new Map([["e5f4", 500]]));
+    // And at today's 1400, where Be7 is inside the 2-point limit.
+    const flat = [
+      { move: "e5f4", score: { cp: 1200 } },
+      { move: "f8e7", score: { cp: 1000 } },
+    ];
+    expect(tally(flat, QUEEN_EN_PRISE, STEP_PROFILES[1400], 12)).toEqual(
+      new Map([["e5f4", 500]])
+    );
+  });
+
+  it("never skips a free capture on a slip", () => {
+    // Not ahead: Be7 sits in the slip band (loss about 17.6).
+    const lines = [
+      { move: "e5f4", score: { cp: 200 } },
+      { move: "f8e7", score: { cp: 0 } },
+    ];
+    const p = profile({ maxLoss: 10, slipChance: 1, slipMaxLoss: 20, temperature: 6 });
+    expect(tally(lines, QUEEN_EN_PRISE, p, 13)).toEqual(new Map([["e5f4", 500]]));
+  });
+
+  it("takes the capture over a line the engine rates the same", () => {
+    const lines = [
+      { move: "f8e7", score: { cp: 900 } },
+      { move: "e5f4", score: { cp: 900 } },
+    ];
+    expect(tally(lines, QUEEN_EN_PRISE, profile({ temperature: 10 }), 14)).toEqual(
+      new Map([["e5f4", 500]])
+    );
+  });
+
+  it("may skip it for a line the engine rates better", () => {
+    const lines = [
+      { move: "f8e7", score: { cp: 330 } },
+      { move: "e5f4", score: { cp: 300 } },
+    ];
+    const counts = tally(lines, QUEEN_EN_PRISE, profile({ temperature: 10 }), 15);
+    expect(counts.get("f8e7")).toBeGreaterThan(100);
+    expect(counts.get("e5f4")).toBeGreaterThan(100);
+  });
+
+  it("a free piece (exactly 3) counts", () => {
+    // 1.e4 e5 2.Nf3 Nc6 3.Ng5: Qxg5 wins a knight, and nothing takes back.
+    const state = play(START, "e2e4", "e7e5", "g1f3", "b8c6", "f3g5");
+    const lines = [
+      { move: "d8g5", score: { cp: 330 } },
+      { move: "g8f6", score: { cp: 300 } },
+    ];
+    expect(tally(lines, state, profile({ temperature: 10 }), 16)).toEqual(
+      new Map([["d8g5", 500]])
+    );
+  });
+
+  it("a capture that nets under 3 doesn't force", () => {
+    // 1.e4 e5 2.Nf3 Nc6 3.d4: exd4 wins a pawn; Nxd4 can take back.
+    const state = play(START, "e2e4", "e7e5", "g1f3", "b8c6", "d2d4");
+    const lines = [
+      { move: "e5d4", score: { cp: 40 } },
+      { move: "g8f6", score: { cp: 20 } },
+    ];
+    const counts = tally(lines, state, profile({ temperature: 10 }), 17);
+    expect(counts.get("g8f6")).toBeGreaterThan(100);
+  });
+
+  it("a smaller free capture doesn't stand in for a bigger one", () => {
+    // Black to move: exf4 wins the queen (9); Rxa5 wins a knight (3).
+    const P = PieceType;
+    const state = board(
+      { e1: P.WhiteKing, f4: P.WhiteQueen, a5: P.WhiteKingKnight,
+        h8: P.BlackKing, e5: P.BlackPawnE, a8: P.BlackQueenRook },
+      { turn: "black" }
+    );
+    const lines = [
+      { move: "e5f4", score: { cp: 400 } },
+      { move: "a8a5", score: { cp: 380 } },
+      { move: "h8g8", score: { cp: 370 } },
+    ];
+    expect(tally(lines, state, profile({ temperature: 10 }), 18)).toEqual(
+      new Map([["e5f4", 500]])
+    );
+  });
+
+  it("a seen mate still comes first", () => {
+    const lines = [
+      { move: "e5f4", score: { cp: 1000 } },
+      { move: "f8e7", score: { mate: 2 } },
+    ];
+    const p = profile({ forceMateIn: 2 });
+    expect(chooseHumanMove(lines, QUEEN_EN_PRISE, p, noRandom)).toBe("f8e7");
+  });
+});
+
+describe("chooseHumanMove: drops of a piece in centipawns", () => {
+  it("far behind, never drops a piece more on a normal pick", () => {
+    // At -800, a -1100 line loses only about 3.3 win % points.
+    const lines = [
+      { move: "e2e4", score: { cp: -800 } },
+      { move: "d2d4", score: { cp: -1100 } },
+      { move: "g1f3", score: { cp: -2000 } },
+      { move: "c2c4", score: { cp: -1099 } },
+    ];
+    const counts = tally(lines, START, STEP_PROFILES[1400], 19, 1000);
+    expect(counts.has("d2d4")).toBe(false);
+    expect(counts.has("g1f3")).toBe(false);
+    // A drop just under a piece still counts by win %.
+    expect(counts.get("c2c4")).toBeGreaterThan(100);
+    expect(counts.get("e2e4")).toBeGreaterThan(100);
+  });
+
+  it("far behind, a slip never drops a piece either", () => {
+    // From -400: -650 is in the slip band and 250 cp down; -700 is 300 down.
+    const lines = [
+      { move: "e2e4", score: { cp: -400 } },
+      { move: "d2d4", score: { cp: -650 } },
+      { move: "g1f3", score: { cp: -700 } },
+    ];
+    const p = profile({ maxLoss: 10, slipChance: 1, slipMaxLoss: 15, temperature: 5 });
+    expect(tally(lines, START, p, 20)).toEqual(new Map([["d2d4", 500]]));
+  });
+
+  it("far ahead, never drops a piece within the ahead limit", () => {
+    // At +1500, +1200 loses only about 0.8 win % points.
+    const lines = [
+      { move: "e2e4", score: { cp: 1500 } },
+      { move: "d2d4", score: { cp: 1200 } },
+      { move: "g1f3", score: { cp: 1250 } },
+    ];
+    const counts = tally(lines, START, STEP_PROFILES[1400], 21, 1000);
+    expect(counts.has("d2d4")).toBe(false);
+    expect(counts.get("g1f3")).toBeGreaterThan(100);
+  });
+
+  it("the cap is skipped when the best line is a mate", () => {
+    // Mate in 5 is past 1400's forceMateIn; +1200 is 1.2 points down.
+    const lines = [
+      { move: "e2e4", score: { mate: 5 } },
+      { move: "d2d4", score: { cp: 1200 } },
+    ];
+    const counts = tally(lines, START, STEP_PROFILES[1400], 22, 1000);
+    expect(counts.get("d2d4")).toBeGreaterThan(100);
+  });
+
+  it("level positions are unchanged: a 1400 slip still reaches the band", () => {
+    // From 0: -100 (9.1 points) is within; -150 (13.4 points) is a slip.
+    const lines = [
+      { move: "e2e4", score: { cp: 0 } },
+      { move: "d2d4", score: { cp: -100 } },
+      { move: "g1f3", score: { cp: -150 } },
+    ];
+    const p = { ...STEP_PROFILES[1400], slipChance: 1 };
+    expect(tally(lines, START, p, 23)).toEqual(new Map([["g1f3", 500]]));
   });
 });
