@@ -173,7 +173,11 @@ Context: The Look sets the line at 16/500. At 16 px on a 312 px board, it wraps 
 Decision: 14 px with an 18 px line height below 768 px, and 16/500 on desktop.
 To change: `.setup-card .setup-card__engine` in `src/features/liem/components/SetupCard.css`.
 
-## 2026-10-12 — The 1400 step may now feel stronger than 1400 (agent default — override anytime)
+## 2026-10-12 — The 1400 step plays like 1400 (confirmed by the human)
+Context: The calibrated table had a risk that 1400 would play too strong (see the entry below). The human played it in `npm run dev` and said: "It feels like 1400 now".
+Decision: Keep the calibrated `STEP_PROFILES` as they are. The human's play check is the test for the steps, ahead of the Stockfish `UCI_Elo` anchors.
+
+## 2026-10-12 — The 1400 step may now feel stronger than 1400 (superseded by the human's play check above)
 Context: The old 1400 made strange blunders and was too weak. The new table removes the blunders, but:
 - In calibration, 1400 beat Stockfish's own `UCI_Elo` 2400 in 3 of 4 games.
 - 1400 loses about 0.8 win % points per move on average, and its slip rate is 0–1.6 %.
