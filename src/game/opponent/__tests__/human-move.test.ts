@@ -461,8 +461,7 @@ describe("chooseHumanMove: free material", () => {
 
   it("a free capture far below a tied best line still returns a move", () => {
     // Both are exactly 100 win % (from about +10000 cp), so the capture ties
-    // Be7 and Be7 is dropped,
-    // yet the capture is 400 cp below it.
+    // Be7 and Be7 is dropped, yet the capture is 400 cp below it.
     const lines = [
       { move: "f8e7", score: { cp: 10500 } },
       { move: "e5f4", score: { cp: 10100 } },

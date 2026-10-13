@@ -149,14 +149,17 @@ export function chooseHumanMove(
   // 5. Never skip free material: drop a line that wins less than a capture
   // netting FREE_CAPTURE or more, unless the engine rates it better. The
   // biggest such capture always stays, and so does a line at the best win %.
+  // Losses and drops are measured from the top line that stays: it has the
+  // best win %, and its own drop is 0, so the pick is never empty.
   const free = candidates.filter((c) => c.net >= FREE_CAPTURE);
   candidates = candidates.filter((c) => !free.some((g) => g.net > c.net && g.win >= c.win));
+  const top = firstBest(candidates, (a, b) => a.win > b.win);
   const withLoss = candidates
-    .filter((c) => dropCp(best.score, c.score) < MAX_DROP_CP)
-    .map((c) => ({ c, loss: best.win - c.win }));
+    .filter((c) => dropCp(top.score, c.score) < MAX_DROP_CP)
+    .map((c) => ({ c, loss: top.win - c.win }));
 
   // 6. Well ahead: a tighter limit and no slips.
-  const ahead = best.win >= AHEAD_WIN;
+  const ahead = top.win >= AHEAD_WIN;
   const limit = ahead ? profile.aheadMaxLoss : profile.maxLoss;
 
   // 7. A rare slip, only when there is a line to slip to.
