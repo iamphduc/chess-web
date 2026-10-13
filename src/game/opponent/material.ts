@@ -44,14 +44,12 @@ function moveGain(state: GameState, move: Move): number {
 }
 
 /**
- * Whether `move` leaves material for the opponent to take for nothing, one
- * exchange deep. After `move`, each legal capture by the other side gains the
- * captured value, less the capturer's value when the mover then has a legal
- * capture back on that square. The move hangs material when the biggest such
- * gain, less what `move` itself won, is 2 or more: a lone pawn is allowed, a
- * piece for nothing or a rook for a minor piece is not.
+ * The material `move` wins, one exchange deep: what it takes (plus a
+ * promotion's gain), less the opponent's best reply capture. Each legal
+ * capture by the other side gains the captured value, less the capturer's
+ * value when the mover then has a legal capture back on that square.
  */
-export function hangsMaterial(state: GameState, move: Move): boolean {
+export function materialNet(state: GameState, move: Move): number {
   const after = applyMove(state, move);
   let biggest = 0;
   for (const reply of allLegalMoves(after)) {
@@ -65,5 +63,19 @@ export function hangsMaterial(state: GameState, move: Move): boolean {
     const gain = canTakeBack ? taken - valueAt(afterReply, reply.to) : taken;
     biggest = Math.max(biggest, gain);
   }
-  return biggest - moveGain(state, move) >= HANG_THRESHOLD;
+  return moveGain(state, move) - biggest;
+}
+
+/**
+ * Whether `move` leaves material for the opponent to take for nothing: its
+ * `materialNet` is -2 or less. A lone pawn is allowed, a piece for nothing or
+ * a rook for a minor piece is not.
+ */
+export function hangsMaterial(state: GameState, move: Move): boolean {
+  return isHanging(materialNet(state, move));
+}
+
+/** Whether a `materialNet` value hangs material. */
+export function isHanging(net: number): boolean {
+  return -net >= HANG_THRESHOLD;
 }

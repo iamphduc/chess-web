@@ -264,7 +264,7 @@ describe("chooseHumanMove", () => {
     const lines = [
       { move: "f1c4", score: { cp: 30 } },
       { move: "f3g5", score: { cp: 25 } },
-      { move: "d2d3", score: { cp: -400 } },
+      { move: "d2d3", score: { cp: -250 } },
     ];
     const random = seeded(7);
     const loose = profile({ maxLoss: 10, temperature: 100 });
