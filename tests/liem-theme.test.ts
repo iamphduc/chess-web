@@ -98,6 +98,7 @@ const CONTRACT_CLASSES = [
   "liem-step--lit",
   "liem-elo",
   "liem-badge",
+  "liem-badge--engine",
   "liem-note",
   "liem-note--out",
   "liem-note__row",
@@ -171,6 +172,57 @@ describe("liem theme", () => {
     expect(read("index.tsx")).toMatch(/import\s+["']\.\/styles\/liem\.css["']/);
   });
 
+  it("engine pill uses the neutral tokens", () => {
+    const all = rules(liemCss());
+    const pill = all.filter((r) => r.selector === ".liem-badge--engine");
+    expect(pill, ".liem-badge--engine defined once").toHaveLength(1);
+    const d = declarations(pill[0].body);
+    expect(d).toContainEqual(["color", "var(--liem-text-soft)"]);
+    expect(d).toContainEqual(["background-color", "var(--liem-note)"]);
+    expect(d.find(([p]) => p === "border")?.[1]).toMatch(/^1px solid var\(--liem-line\)$/);
+    // only those three tokens paint it: gold stays for his book
+    for (const [prop, value] of d) {
+      if (!COLOR_PROPS.test(prop)) continue;
+      for (const m of value.matchAll(/var\((--[\w-]+)\)/g)) {
+        expect(["--liem-text-soft", "--liem-note", "--liem-line"], `${prop}: ${value}`).toContain(m[1]);
+      }
+    }
+    // it comes after .liem-badge, so it wins when both classes are on the pill
+    const at = (sel: string) => all.findIndex((r) => r.selector === sel);
+    expect(at(".liem-badge--engine")).toBeGreaterThan(at(".liem-badge"));
+  });
+
+  it("engine pill keeps the badge's shape and size", () => {
+    const all = rules(liemCss());
+    const decl = (sel: string) => declarations(all.filter((r) => r.selector === sel).map((r) => r.body).join(";"));
+    const badge = decl(".liem-badge");
+    const pill = decl(".liem-badge--engine");
+    expect(pill.length, ".liem-badge--engine has declarations").toBeGreaterThan(0);
+    const px = (v: string | undefined) => (v ?? "").split(/\s+/).map((x) => parseFloat(x));
+    const get = (d: [string, string][], p: string) => d.find(([k]) => k === p)?.[1];
+    // the pill adds a border, so its padding shrinks by the border width: the outer box stays the same
+    const border = parseFloat(get(pill, "border") ?? "0");
+    const [bv, bh] = px(get(badge, "padding"));
+    const [pv, ph] = px(get(pill, "padding") ?? get(badge, "padding"));
+    expect(pv + border, "vertical size").toBe(bv);
+    expect(ph + border, "horizontal size").toBe(bh);
+    // nothing else about the shape or type changes
+    for (const p of ["display", "font-size", "font-weight", "border-radius", "gap", "align-items"]) {
+      expect(get(pill, p), `${p} not overridden`).toBeUndefined();
+    }
+  });
+
+  it("engine pill text meets 4.5:1", () => {
+    const pill = rules(liemCss()).find((r) => r.selector === ".liem-badge--engine");
+    const d = declarations(pill?.body ?? "");
+    const tokenOf = (p: string) => d.find(([k]) => k === p)?.[1].match(/^var\((--[\w-]+)\)$/)?.[1];
+    const fg = tokenOf("color");
+    const bg = tokenOf("background-color");
+    expect(fg, "pill text is a token").toBeDefined();
+    expect(bg, "pill background is a token").toBeDefined();
+    expect(contrast(token(fg!), token(bg!))).toBeGreaterThanOrEqual(4.5);
+  });
+
   it("red is never a text color", () => {
     for (const { selector, body } of rules(liemCss())) {
       for (const [prop, value] of declarations(body)) {
@@ -226,5 +278,125 @@ describe("liem theme", () => {
         /inherit|Quicksand/
       );
     }
+  });
+});
+
+// His player card on the board: src/features/board/Board.css.
+const boardCss = () => stripComments(read("features", "board", "Board.css"));
+
+// The bodies of the `@media` blocks whose condition matches `when`, joined.
+function mediaBlocks(source: string, when: RegExp): string {
+  let out = "";
+  for (const m of source.matchAll(/@media([^{]*)\{/g)) {
+    if (!when.test(m[1])) continue;
+    let depth = 1;
+    let i = m.index! + m[0].length;
+    const start = i;
+    for (; i < source.length && depth > 0; i++) {
+      if (source[i] === "{") depth++;
+      else if (source[i] === "}") depth--;
+    }
+    out += source.slice(start, i - 1) + "\n";
+  }
+  return out;
+}
+
+// The source with every `@media` block taken out.
+function outsideMedia(source: string): string {
+  let out = source;
+  for (;;) {
+    const m = out.match(/@media[^{]*\{/);
+    if (!m) return out;
+    let depth = 1;
+    let i = m.index! + m[0].length;
+    for (; i < out.length && depth > 0; i++) {
+      if (out[i] === "{") depth++;
+      else if (out[i] === "}") depth--;
+    }
+    out = out.slice(0, m.index) + out.slice(i);
+  }
+}
+
+// Declarations of every rule that names `selector` (alone or in a comma list), in order.
+function declsFor(source: string, selector: string): [string, string][] {
+  return declarations(
+    rules(source)
+      .filter((r) => r.selector.split(",").map((s) => s.trim()).includes(selector))
+      .map((r) => r.body)
+      .join(";")
+  );
+}
+
+// Hidden from sight but still read out: the full line stays for screen readers.
+function visuallyHidden(d: [string, string][]): boolean {
+  const has = (p: string, v: string) => d.some(([k, x]) => k === p && x === v);
+  return (
+    has("position", "absolute") &&
+    has("width", "1px") &&
+    has("height", "1px") &&
+    has("overflow", "hidden") &&
+    has("clip-path", "inset(50%)") &&
+    has("white-space", "nowrap")
+  );
+}
+
+describe("his card on the board", () => {
+  const card = ".board > .player";
+  const PARTS = [".liem-detail__lead", ".liem-detail__about", ".liem-badge__count"];
+
+  it("a wide board shows his whole line: GM · playing about 2100 and ★ Book · N", () => {
+    const wide = outsideMedia(boardCss());
+    for (const part of PARTS) {
+      expect(visuallyHidden(declsFor(wide, `${card} ${part}`)), `${part} shows outside the narrow rules`).toBe(false);
+    }
+    expect(declsFor(wide, `${card} .liem-detail__elo::before`), "no ~ outside the narrow rules").toEqual([]);
+  });
+
+  it("below 1200 px the line drops 'GM · playing ' (the GM tag sits by his name)", () => {
+    const mid = mediaBlocks(boardCss(), /max-width:\s*1199px/);
+    expect(visuallyHidden(declsFor(mid, `${card} .liem-detail__lead`)), "lead hidden below 1200 px").toBe(true);
+    expect(visuallyHidden(declsFor(mid, `${card} .liem-detail__about`)), "about stays from 768 px").toBe(false);
+  });
+
+  it("below 768 px the line reads ~2100 and the badge ★ Book", () => {
+    const phone = mediaBlocks(boardCss(), /max-width:\s*767px/);
+    expect(visuallyHidden(declsFor(phone, `${card} .liem-detail__about`)), "about hidden on phones").toBe(true);
+    expect(visuallyHidden(declsFor(phone, `${card} .liem-badge__count`)), "count hidden on phones").toBe(true);
+    const tilde = declsFor(phone, `${card} .liem-detail__elo::before`).find(([p]) => p === "content")?.[1];
+    // shown as "~", read as nothing: "about" is still read out
+    expect(tilde).toBe('"~" / ""');
+    // the line keeps body type; nothing drops below 14 px
+    for (const [p, v] of declarations(phone.replace(/[^{}]+\{|\}/g, ";"))) {
+      if (p === "font-size") expect(parseFloat(v), `font-size ${v}`).toBeGreaterThanOrEqual(14);
+    }
+  });
+
+  it("the Stockfish pill is the badge's outer size inside a player card", () => {
+    const board = outsideMedia(boardCss());
+    const all = rules(liemCss());
+    const base = (sel: string) =>
+      declarations(all.filter((r) => r.selector === sel).map((r) => r.body).join(";"));
+    // the cascade for each: liem.css first, then the card rules (more specific) in Board.css order
+    const badge = [...base(".liem-badge"), ...declsFor(board, `${card} .liem-badge`)];
+    const pill = [
+      ...base(".liem-badge"),
+      ...base(".liem-badge--engine"),
+      ...declsFor(board, `${card} .liem-badge`),
+      ...declsFor(board, `${card} .liem-badge--engine`),
+    ];
+    const last = (d: [string, string][], p: string) => [...d].reverse().find(([k]) => k === p)?.[1];
+    const pad = (d: [string, string][]) => {
+      const v = (last(d, "padding") ?? "0").split(/\s+/).map((x) => parseFloat(x));
+      return { v: v[0], h: v[1] ?? v[0] };
+    };
+    const border = (d: [string, string][]) => parseFloat(last(d, "border") ?? "0") || 0;
+    // outer height: a set height when the border sits inside it, else the line plus padding and border
+    const outerHeight = (d: [string, string][]) => {
+      const h = last(d, "height");
+      if (h && last(d, "box-sizing") === "border-box") return h;
+      return `line + ${2 * pad(d).v + 2 * border(d)}px`;
+    };
+    expect(outerHeight(pill), "same outer height").toBe(outerHeight(badge));
+    expect(pad(pill).h + border(pill), "same outer width per side").toBe(pad(badge).h + border(badge));
   });
 });

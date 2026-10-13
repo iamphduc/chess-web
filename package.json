@@ -28,7 +28,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "book:import": "tsx scripts/book/import-book.ts"
+    "book:import": "tsx scripts/book/import-book.ts",
+    "calibrate": "tsx scripts/calibrate/calibrate.ts"
   },
   "devDependencies": {
     "@types/uuid": "^9.0.0",

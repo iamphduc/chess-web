@@ -45,7 +45,7 @@ function Body({ view, onRetry }: { view: BookNoteView; onRetry: () => void }) {
       return (
         <>
           <h3 className="book-note__title">Out of his book</h3>
-          <p className="book-note__text">No game of his reaches this position. He's on his own from here.</p>
+          <p className="book-note__text">Standard Stockfish 18 plays from here. It isn't trained on his games.</p>
         </>
       );
     case "failed":

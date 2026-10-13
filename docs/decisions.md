@@ -66,8 +66,13 @@ Confirmed by the user 2026-10-06.
 
 ## 2026-10-09 — Stockfish lite WASM, single thread, in a Web Worker, behind `MoveEngine`
 Context: The Liem opponent needs moves once the game leaves his book, at strengths from 1400 to his 2732 rating. The options (our own TypeScript search, Maia, a personal model) are compared in `docs/ideas/opponent-engine-options.md`.
-Decision: Use the `stockfish` npm package (nmrugg), pinned to an exact version (`18.0.8`), and run its lite single-thread WASM build (`stockfish-18-lite-single.js` + `.wasm`) in a Web Worker. Single thread needs no cross-origin isolation headers, so it works on GitHub Pages. Vite copies both files into the build under the app's base path (`?url` imports in `src/game/opponent/engine/stockfish-worker.ts`); they never load from a CDN. Strength uses `UCI_LimitStrength` and `UCI_Elo`, clamped to 1320–3190. All UCI rules (handshake, Elo, abort, timeout, failure, dispose) live in `createUciEngine` over a line transport, so they are tested with a fake transport, and a Node test runs the real engine through the same code. The opponent only sees the `MoveEngine` interface in `move-engine.ts`.
+Decision: Use the `stockfish` npm package (nmrugg), pinned to an exact version (`18.0.8`), and run its lite single-thread WASM build (`stockfish-18-lite-single.js` + `.wasm`) in a Web Worker. Single thread needs no cross-origin isolation headers, so it works on GitHub Pages. Vite copies both files into the build under the app's base path (`?url` imports in `src/game/opponent/engine/stockfish-worker.ts`); they never load from a CDN. Strength used `UCI_LimitStrength` and `UCI_Elo`, clamped to 1320–3190; that part is replaced by "He picks among Stockfish's top lines instead of using `UCI_Elo`" (2026-10-12). All UCI rules (handshake, search limits, abort, timeout, failure, dispose) live in `createUciEngine` over a line transport, so they are tested with a fake transport, and a Node test runs the real engine through the same code. The opponent only sees the `MoveEngine` interface in `move-engine.ts`.
 Consequences: Stockfish is GPL v3, so the repo becomes GPL v3 (the `LICENSE` file lands in `liem-opponent`). The lite single-thread WASM in 18.0.8 is about 7.3 MB (5.6 MB gzipped), not the 1.7 MB the plan assumed, so the app must load it only when a vs-Liem game starts. `package.json` declares `"engines": { "node": ">=22.12" }`. To swap engines, write another `MoveEngine` and pass it to `createOpponent`; to drop Stockfish, remove the package and the `engine/` adapter.
+
+## 2026-10-12 — He picks among Stockfish's top lines instead of using `UCI_Elo`
+Context: At the 1400 step he made strange one-move blunders no person would make and was too weak overall. At low `UCI_Elo`, Stockfish's skill mode searches about 1 ply and adds a large random push to its pick ([research](research/human-style-strength.md)).
+Decision: The app never sends `UCI_LimitStrength` or `UCI_Elo`. Each search sends `setoption name MultiPV value N` (only when N changes), `position fen …` and `go depth D movetime T`, with D, N and T from the step's `STEP_PROFILES` entry (`src/game/opponent/step-profiles.ts`); T is a backstop, and the search still times out at T + 5000 ms. `MoveEngine.analyse` returns the scored lines (latest exact cp or mate score per multipv index, distinct first moves) and the best move. The opponent passes the lines to `chooseHumanMove`, which plays a seen mate, avoids walking into mate and hanging material, and picks by loss within the step's limit with rare sized slips; if it has no legal pick, he plays Stockfish's best move. An `engine-timeout` now drops the engine and Try again loads a fresh one, since a hung search may never end.
+Consequences: Steps are approximate until calibrated (sprint K1 sets the table values). Stronger steps search deeper with several lines, so replies are slower than `go movetime` alone was, up to each step's `movetimeMs`. To go back to skill mode, restore `UCI_Elo` in `uci-engine.ts` and `bestMove` in `MoveEngine`.
 
 ## 2026-10-09 — Two books, split by the game's clock
 Context: Liem's openings differ between slow over-the-board games and fast online games, and the vs-Liem game has a clock.
@@ -138,3 +143,45 @@ Consequences: Nothing around the board moves on a tab switch (`board-modes.test.
 Context: With his card above the 312 px board, "Le Quang Liem" and "GM · playing 2100" don't fit beside the badge and clock, so they end in "…". Letting the card grow would move the board on phones when you switch tabs.
 Decision: Keep the card at the two-player card's 56 px height and cut long text with an ellipsis; the badge and "Thinking…" stay whole.
 Consequences: To show the strength line in full on phones, hide "GM · playing <elo>" under 600 px in `src/features/board/Board.css`, or let the card grow and accept a small board move on phones.
+
+## 2026-10-12 — Strength step table set from the first calibration runs (agent default — override anytime)
+Context: The human played the old 1400 step (Stockfish's `UCI_Elo` 1400) and said it "doesn't play like 1400": strange one-move blunders, and too weak overall. K1 added `npm run calibrate` and set `STEP_PROFILES` from it.
+Runs (lite single-thread Stockfish 18, seed 1, 6 games at a time, 8 openings each played once per color):
+- **Run 1**, H1's guesses, `npm run calibrate -- --games 4`, anchors at 500 ms a move, 10.8 min. Every step scored 87.5 to 100 % against the anchors at its own Elo and 200 above, so 500 ms anchors play far below their number. Each step scored 0 to 37.5 % against the next step up. 1400's largest slip lost 24 win % points (about a piece in a level position).
+- **Run 2**, the table below with the earlier ahead limits (4, 3, 2.5, 2, 1, 0.5), same flags, anchors at 1000 ms, 16.0 min. Every step still won 4/4 against step − 200, step and step + 200. Against the next step up: 1400 25 %, 1700 25 %, 1900 25 %, 2100 12.5 %, 2300 50 % (four draws), 2500 25 %. Average loss per move: 0.8 (1400), 0.6–0.9 (1700), 0.5–0.8 (1900), 0.4 (2100), 0.2–0.3 (2300), 0.1 (2500), 0 (Full); largest single loss 12 points (1700), 9.6 at 1400. Slip rate 0 to 1.6 %. Average think time 30 ms (1400) to 920 ms (Full).
+- **Run 3**, same table, `--games 4 --anchor-elos 2400,3190`, 15.1 min. Against SF 2400: 1400 75 %, 1700 50 %, every higher step 100 %. Against SF 3190: 0 % for 1400 to 1900 and 2300, 2100 25 %, 2500 50 %, Full 75 %. Against the next step up: 37.5 %, 25 %, 37.5 %, 12.5 %, 12.5 %, 50 %.
+- **Play check** (preview, 1400, out of book): already up a bishop and knight (+7), he answered a queen left en prise with Be7, not exf4. In win % terms the queen was worth only about 3 points there, inside the old ahead limit of 4. So the ahead limits were cut (below), which keeps him taking clear material when he is well ahead.
+- **Run 4**, the final table, `--games 4 --anchors none` (the step ladder only), 4.2 min. Against the next step up: 1400 25 %, 1700 12.5 %, 1900 25 %, 2100 12.5 %, 2300 0 %, 2500 25 %.
+Decision: Use these values (depth / movetime ms / maxLoss / temperature / slipChance / slipMaxLoss / aheadMaxLoss / forceMateIn; multiPv 4 throughout):
+- 1400: 8 / 400 / 10 / 5 / 0.05 / 15 / 2 / 2
+- 1700: 9 / 500 / 8 / 4 / 0.04 / 12 / 1.5 / 3
+- 1900: 10 / 600 / 6 / 3 / 0.03 / 10 / 1.25 / 4
+- 2100: 11 / 700 / 4.5 / 2.2 / 0.02 / 8 / 1 / 6
+- 2300: 12 / 800 / 3 / 1.5 / 0.015 / 6 / 0.75 / 10
+- 2500: 14 / 900 / 1.5 / 0.75 / 0.01 / 4 / 0.5 / Infinity
+- Full: 18 / 1000 / 0 / 0 / 0 / 0 / 0 / Infinity (unchanged)
+Deeper search at the low steps removes the depth-5 tactical misses behind the "strange one-move blunders" and makes 1400 stronger; the slip limit falls from 25 to 15 points at 1400, so a slip costs about a pawn and a half at most, not a piece. In every run each step scored 50 % or less against the next step up, so the steps rise in strength.
+Consequences: Stockfish's `UCI_Elo` anchors in this build are not on a human scale (1400 beat SF 2400 three times in four), so the runs rank the steps against each other but don't pin their numbers; the step names stay "about N", with no rating claim. Four games per pairing is ±12.5 % a game, so single cells are noise; read the ladder. Next tuning should come from the human's play feel, then a rerun with more games (`--games 8` or more) on the steps that change.
+
+## 2026-10-12 — On phones, his card reads "~2100" and "★ Book" (agent default — override anytime)
+Context: On a 312 px board, his name column is only 136 px wide, so "GM · playing about 2100" next to "★ Book · N", the "Stockfish" pill or "Thinking…" was cut to "GM · …".
+Decision: Below 768 px, the line reads "~2100" and the badge reads "★ Book" without its count. From 768 to 1199 px the line reads "about 2100", and from 1200 px it reads "GM · playing about 2100". Screen readers always get the full text. The book note below the board still shows the count.
+To change: `src/features/liem/components/LiemCardDetail.tsx` and the narrow rules in `src/features/board/Board.css`. To show the count on phones, something else has to shrink: the avatar, the clock or the card height.
+
+## 2026-10-12 — The setup card's Stockfish line is 14 px on phones (agent default — override anytime)
+Context: The Look sets the line at 16/500. At 16 px on a 312 px board, it wraps to 3 lines, and the card ran 38 px past the bottom of the board.
+Decision: 14 px with an 18 px line height below 768 px, and 16/500 on desktop.
+To change: `.setup-card .setup-card__engine` in `src/features/liem/components/SetupCard.css`.
+
+## 2026-10-12 — The 1400 step plays like 1400 (confirmed by the human)
+Context: The calibrated table had a risk that 1400 would play too strong (see the entry below). The human played it in `npm run dev` and said: "It feels like 1400 now".
+Decision: Keep the calibrated `STEP_PROFILES` as they are. The human's play check is the test for the steps, ahead of the Stockfish `UCI_Elo` anchors.
+
+## 2026-10-12 — The 1400 step may now feel stronger than 1400 (superseded by the human's play check above)
+Context: The old 1400 made strange blunders and was too weak. The new table removes the blunders, but:
+- In calibration, 1400 beat Stockfish's own `UCI_Elo` 2400 in 3 of 4 games.
+- 1400 loses about 0.8 win % points per move on average, and its slip rate is 0–1.6 %.
+- In the reviewer's self-play probe, only 13 of 511 moves at 1400 dropped 200 cp or more.
+At depth 8 with 4 lines, a line 10–15 points below the best is rare, so the 5 % slip seldom has a move to slip to.
+Decision: Keep the calibrated table. Tune from the human's own play.
+To change: in `STEP_PROFILES` (`src/game/opponent/step-profiles.ts`), lower 1400's `search.depth`, or raise its `maxLoss`, `temperature` or `slipChance`. Keep `step-profiles.test.ts` green; it requires depth never to fall and loss limits never to rise going up the steps. Then check with `npm run calibrate -- --games 4 --anchors none`.

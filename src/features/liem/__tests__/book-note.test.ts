@@ -195,9 +195,21 @@ describe("rows", () => {
 
 describe("liemBadge", () => {
   it("badge follows the note", () => {
-    expect(liemBadge(bookNoteView(board(), match()))).toEqual({ games: 320 });
-    expect(liemBadge(bookNoteView(board(), match({ lastChoice: choice({ source: "engine" }) })))).toBeNull();
+    expect(liemBadge(bookNoteView(board(), match()))).toEqual({ kind: "book", games: 320 });
+    expect(liemBadge(bookNoteView(board(), match({ lastChoice: choice({ source: "engine" }) })))).toEqual({
+      kind: "engine",
+    });
+    // A book choice with no lookup is out of book too.
+    expect(liemBadge(bookNoteView(board(), match({ lastChoice: choice({ lookup: null }) })))).toEqual({
+      kind: "engine",
+    });
     expect(liemBadge(bookNoteView(board(), match({ lastChoice: null })))).toBeNull();
     expect(liemBadge(bookNoteView(board(), match({ opponentStatus: "failed" })))).toBeNull();
+    // A failure wins over an engine move: no pill while he can't move.
+    expect(
+      liemBadge(
+        bookNoteView(board(), match({ lastChoice: choice({ source: "engine" }), opponentStatus: "failed" }))
+      )
+    ).toBeNull();
   });
 });
