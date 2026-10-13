@@ -2,12 +2,25 @@
 import { Move } from "../engine/engine";
 import { GameState } from "../engine/game-state";
 import { Score } from "./engine/lines";
-import { hangsMaterial } from "./material";
+import { isHanging, materialNet } from "./material";
 import { uciToMove } from "./position";
 import type { StepProfile } from "./step-profiles";
 
 /** When the best line's win % is this or more, he is "well ahead". */
 export const AHEAD_WIN = 85;
+
+/**
+ * A capture whose `materialNet` is this or more (a minor piece) is never
+ * skipped for a line that wins less, unless the engine rates that line better.
+ */
+export const FREE_CAPTURE = 3;
+
+/**
+ * A line this many centipawns or more below the best (a minor piece) is
+ * outside every loss limit. Win % flattens when one side is far ahead: at
+ * -800 cp, falling to -2000 costs only about 5 points.
+ */
+export const MAX_DROP_CP = 300;
 
 /**
  * The side to move's chance to win, 0 to 100, from an engine score (the
@@ -23,6 +36,8 @@ interface Candidate {
   readonly move: Move;
   readonly score: Score;
   readonly win: number;
+  /** What the move wins, one exchange deep (`materialNet`). */
+  readonly net: number;
 }
 
 function mateOf(score: Score): number | null {
@@ -33,6 +48,11 @@ function mateOf(score: Score): number | null {
 function isMated(score: Score): boolean {
   const mate = mateOf(score);
   return mate !== null && mate <= 0;
+}
+
+/** How far `c` falls below `best` in centipawns; 0 when either is a mate. */
+function dropCp(best: Score, c: Score): number {
+  return "cp" in best && "cp" in c ? best.cp - c.cp : 0;
 }
 
 /** The first candidate for which `better(c, best)` never beat it. */
@@ -79,9 +99,11 @@ function weightedPick(
  * `lines`, or `null` when no line is legal in `state`. In order: drop illegal
  * lines; play the shortest seen mate within `forceMateIn`; avoid lines that
  * get him mated (or, when all do, play the longest mate); drop lines other
- * than the best that hang material; then, unless well ahead, maybe slip to a
- * line between `maxLoss` and `slipMaxLoss`; else pick a line within the loss
- * limit by `exp(-loss / temperature)`.
+ * than the best that hang material; drop lines that skip a free capture
+ * (`FREE_CAPTURE`); then, unless well ahead, maybe slip to a line between
+ * `maxLoss` and `slipMaxLoss`; else pick a line within the loss limit by
+ * `exp(-loss / temperature)`. A line `MAX_DROP_CP` or more below the best is
+ * outside both limits.
  */
 export function chooseHumanMove(
   lines: readonly { move: string; score: Score }[],
@@ -94,7 +116,13 @@ export function chooseHumanMove(
   for (const line of lines) {
     const move = uciToMove(state, line.move);
     if (move === null) continue;
-    candidates.push({ uci: line.move, move, score: line.score, win: winPercent(line.score) });
+    candidates.push({
+      uci: line.move,
+      move,
+      score: line.score,
+      win: winPercent(line.score),
+      net: materialNet(state, move),
+    });
   }
   if (candidates.length === 0) return null;
 
@@ -116,14 +144,25 @@ export function chooseHumanMove(
 
   // 4. Keep the best line; drop any other that hangs material.
   const best = firstBest(candidates, (a, b) => a.win > b.win);
-  candidates = candidates.filter((c) => c === best || !hangsMaterial(state, c.move));
-  const withLoss = candidates.map((c) => ({ c, loss: best.win - c.win }));
+  candidates = candidates.filter((c) => c === best || !isHanging(c.net));
 
-  // 5. Well ahead: a tighter limit and no slips.
-  const ahead = best.win >= AHEAD_WIN;
+  // 5. Never skip free material: drop a line that wins less than a capture
+  // netting FREE_CAPTURE or more, unless the engine rates it better. The
+  // biggest such capture always stays, and so does a line at the best win %.
+  // Losses and drops are measured from the top line that stays: it has the
+  // best win %, and its own drop is 0, so the pick is never empty.
+  const free = candidates.filter((c) => c.net >= FREE_CAPTURE);
+  candidates = candidates.filter((c) => !free.some((g) => g.net > c.net && g.win >= c.win));
+  const top = firstBest(candidates, (a, b) => a.win > b.win);
+  const withLoss = candidates
+    .filter((c) => dropCp(top.score, c.score) < MAX_DROP_CP)
+    .map((c) => ({ c, loss: top.win - c.win }));
+
+  // 6. Well ahead: a tighter limit and no slips.
+  const ahead = top.win >= AHEAD_WIN;
   const limit = ahead ? profile.aheadMaxLoss : profile.maxLoss;
 
-  // 6. A rare slip, only when there is a line to slip to.
+  // 7. A rare slip, only when there is a line to slip to.
   if (!ahead && profile.slipChance > 0) {
     const band = withLoss.filter(
       (x) => x.loss > profile.maxLoss && x.loss <= profile.slipMaxLoss
@@ -133,7 +172,7 @@ export function chooseHumanMove(
     }
   }
 
-  // 7. The normal pick, within the limit (the best line always is).
+  // 8. The normal pick, within the limit (a line at the best win % always is).
   const within = withLoss.filter((x) => x.loss <= limit);
   return weightedPick(within, profile.temperature, random).uci;
 }

@@ -24,7 +24,10 @@ export interface StepProfile {
 /**
  * Set from `npm run calibrate` (docs/decisions.md, 2026-10-12). Going up the
  * steps, depth never falls and the loss limits, slip chance, slip limit and
- * temperature never rise.
+ * temperature never rise. A search stops at its depth or its `movetimeMs`,
+ * whichever comes first. Full's real limit is time: at 1000 ms it stops at
+ * depth 13 to 16 and never reaches 18, yet still plays Stockfish's best move.
+ * The 1 s limit stays so phones answer quickly.
  */
 export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
   1400: {

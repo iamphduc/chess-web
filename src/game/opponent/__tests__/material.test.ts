@@ -5,7 +5,7 @@ import {
   initialGameState,
 } from "../../engine/game-state";
 import { PieceType } from "../../piece-type";
-import { hangsMaterial } from "../material";
+import { hangsMaterial, materialNet } from "../material";
 import { uciToMove } from "../position";
 
 const P = PieceType;
@@ -125,3 +125,26 @@ describe("hangsMaterial", () => {
     }
   });
 });
+
+describe("materialNet", () => {
+  it("is what the move takes, less the best capture back", () => {
+    // Black to move: exf4 takes the queen, and only a pawn is lost back.
+    const state = board(
+      { e1: P.WhiteKing, f4: P.WhiteQueen, e3: P.WhitePawnE, a5: P.WhiteKingKnight,
+        h8: P.BlackKing, e5: P.BlackPawnE, a8: P.BlackQueenRook },
+      { turn: "black" }
+    );
+    const net = (uci: string) => {
+      const move = uciToMove(state, uci);
+      if (move === null) throw new Error(`illegal test move ${uci}`);
+      return materialNet(state, move);
+    };
+    expect(net("e5f4")).toBe(8);
+    // Rxa5 takes a knight, but leaves e5 to the queen: Qxe5+ Rxe5 is a loss
+    // for White, so nothing is lost back.
+    expect(net("a8a5")).toBe(3);
+    // A quiet move takes nothing and leaves the pawn: Qxe5+ wins it.
+    expect(net("h8g8")).toBe(-1);
+  });
+});
+
