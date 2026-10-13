@@ -459,6 +459,20 @@ describe("chooseHumanMove: free material", () => {
     );
   });
 
+  it("a free capture far below a tied best line still returns a move", () => {
+    // Both are exactly 100 win % (from about +10000 cp), so the capture ties
+    // Be7 and Be7 is dropped,
+    // yet the capture is 400 cp below it.
+    const lines = [
+      { move: "f8e7", score: { cp: 10500 } },
+      { move: "e5f4", score: { cp: 10100 } },
+    ];
+    expect(lines.map((l) => winPercent(l.score))).toEqual([100, 100]);
+    for (const p of [profile(), STEP_PROFILES[1400], STEP_PROFILES.full]) {
+      expect(chooseHumanMove(lines, QUEEN_EN_PRISE, p, seeded(24))).toBe("e5f4");
+    }
+  });
+
   it("a seen mate still comes first", () => {
     const lines = [
       { move: "e5f4", score: { cp: 1000 } },
