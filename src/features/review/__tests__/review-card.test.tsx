@@ -204,6 +204,31 @@ describe("review components", () => {
     expect(buttons(summary)).toEqual([]);
   });
 
+  it("reopened card with every moment done shows the summary", () => {
+    // Back to game, then Review game, mounts the card again: all done → the summary, not the last reveal.
+    const reopened = card(model(THREE), { active: 52, moments: { 24: "found", 38: "skipped", 52: "found" } });
+    expect(reopened).toContain('data-moment-status="summary"');
+    expect(text(reopened)).toContain("Review done");
+    expect(text(reopened)).toContain("2 of 3 found");
+    expect(buttons(reopened)).toEqual([]);
+    // One moment: found it, reopen → "1 of 1 found".
+    const single = card(model([moment(2)]), { active: 2, moments: { 2: "found" } });
+    expect(single).toContain('data-moment-status="summary"');
+    expect(text(single)).toContain("1 of 1 found");
+    // Still analysing with every moment so far done: the summary keeps the progress bar.
+    const analysing = card(model(THREE, 40), { status: "analysing", active: 52, moments: { 24: "found", 38: "skipped", 52: "revealed" } });
+    expect(analysing).toContain('data-moment-status="summary"');
+    expect(analysing).toContain('role="progressbar"');
+    // A moment not done: reopening shows the active moment as today.
+    const open = card(model(THREE), { active: 38, moments: { 24: "found", 38: "found" } });
+    expect(open).toContain('data-moment-status="found"');
+    expect(buttons(open)).toEqual(["Next moment"]);
+    // No moment opened yet: the intro.
+    expect(card(model(THREE), {})).toContain('data-moment-status="intro"');
+    // No moments yet while analysing: waiting, not an empty summary.
+    expect(card(model([], 27), { status: "analysing" })).toContain('data-moment-status="waiting"');
+  });
+
   it("bottom sheet", () => {
     const sheet = (open: boolean, low: boolean) =>
       renderToStaticMarkup(
