@@ -10,9 +10,9 @@ _From plan: docs/plans/post-game-review.md · Slug: game-review · Status: activ
 | 1 | M1 | Review model: moves, grades, accuracy, his book, key moments, found rule | game-review-M1 | #70 | done | high | — |
 | 1 | A1 | Analysis runner and review searches on his engine | game-review-A1 | #70 | done | medium | — |
 | 1 | R1 | Review state (store key `review`) | game-review-R1 | #70 | done | high | — |
-| 2 | U1 | Graph, move list, accuracy, book note, step buttons | game-review-U1 | — | in progress | — | L1, M1, R1 |
-| 2 | U2 | Review board, key-moment card, phone bottom sheet | game-review-U2 | — | in progress | — | L1, M1, R1 |
-| 3 | W1 | Wire the review into the board, speed check, docs | game-review-W1 | — | pending | — | A1, M1, R1, U1, U2 |
+| 2 | U1 | Graph, move list, accuracy, book note, step buttons | game-review-U1 | #71 | done | medium | L1, M1, R1 |
+| 2 | U2 | Review board, key-moment card, phone bottom sheet | game-review-U2 | #71 | done | medium | L1, M1, R1 |
+| 3 | W1 | Wire the review into the board, speed check, docs | game-review-W1 | — | in progress | — | A1, M1, R1, U1, U2 |
 
 Plan branch `post-game-review`; wave heads `game-review-w1` to `game-review-w3`. The queue item "`{match && <ModeTabs />}` in Board.tsx" is already fixed (`Board.tsx:141` reads `<ModeTabs />`), so no slice carries it; the orchestrator can resolve it.
 
