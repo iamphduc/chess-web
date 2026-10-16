@@ -3,7 +3,7 @@ import type { Move } from "../engine/engine";
 import type { GameState } from "../engine/game-state";
 import { hasAnyLegalMove } from "../engine/game-status";
 import { lookupBook, pickBookMove, type GameClock } from "./book";
-import type { EngineLine } from "./engine/lines";
+import type { EngineLine, SearchLimits } from "./engine/lines";
 import { EngineError, type Analysis, type MoveEngine } from "./engine/move-engine";
 import { chooseHumanMove } from "./human-move";
 import { moveToUci, toFen, uciToMove } from "./position";
@@ -30,7 +30,13 @@ export interface MoveChoice {
 
 export interface Opponent {
   chooseMove(state: GameState, settings: OpponentSettings): Promise<MoveChoice>;
-  /** Starts a new game: the move in flight rejects `superseded`, and the engine resets. */
+  /**
+   * A review search on his engine: `fen` searched with `limits`, the analysis
+   * as the engine gives it. It runs beside his moves (`chooseMove` doesn't
+   * abort it); `signal`, `newGame` and `dispose` do.
+   */
+  analyse(fen: string, limits: SearchLimits, signal?: AbortSignal): Promise<Analysis>;
+  /** Starts a new game: the move and review searches in flight reject `superseded`, and the engine resets. */
   newGame(): void;
   /** Stops the opponent and its engine for good. */
   dispose(): void;
@@ -63,6 +69,14 @@ function fromEngineError(error: unknown): OpponentError {
   return new OpponentError(mapped, { cause: error });
 }
 
+/** A review search's error: as for his moves, except an aborted search reads `superseded`. */
+function fromReviewError(error: unknown): OpponentError {
+  if (error instanceof EngineError && error.code === "aborted") {
+    return new OpponentError("superseded", { cause: error });
+  }
+  return fromEngineError(error);
+}
+
 /**
  * The opponent: his book move when the position is in book, else a move a
  * human of the step's strength would pick from the engine's top lines (the
@@ -75,7 +89,42 @@ export function createOpponent(deps: {
 }): Opponent {
   const { books, engine } = deps;
   let current: AbortController | null = null;
+  /** The review searches in flight, each with its own abort. */
+  const reviews = new Set<AbortController>();
   let disposed = false;
+
+  function abortReviews(): void {
+    reviews.forEach((review) => review.abort());
+    reviews.clear();
+  }
+
+  async function review(fen: string, limits: SearchLimits, signal?: AbortSignal): Promise<Analysis> {
+    if (disposed) throw new OpponentError("disposed");
+    if (signal?.aborted) throw new OpponentError("superseded");
+    const own = new AbortController();
+    const onAbort = () => own.abort();
+    signal?.addEventListener("abort", onAbort);
+    reviews.add(own);
+    /** Disposed or aborted wins over whatever the engine said, as for his moves. */
+    const ensureLive = () => {
+      if (disposed) throw new OpponentError("disposed");
+      if (own.signal.aborted) throw new OpponentError("superseded");
+    };
+    try {
+      let analysis: Analysis;
+      try {
+        analysis = await engine.analyse(fen, limits, own.signal);
+      } catch (error) {
+        ensureLive();
+        throw fromReviewError(error);
+      }
+      ensureLive();
+      return analysis;
+    } finally {
+      reviews.delete(own);
+      signal?.removeEventListener("abort", onAbort);
+    }
+  }
 
   /** Throws when this call has been replaced by a newer one or disposed. */
   function ensureCurrent(turn: AbortController): void {
@@ -131,10 +180,13 @@ export function createOpponent(deps: {
       }
     },
 
+    analyse: review,
+
     newGame() {
       if (disposed) return;
       current?.abort();
       current = null;
+      abortReviews();
       engine.newGame();
     },
 
@@ -143,6 +195,7 @@ export function createOpponent(deps: {
       disposed = true;
       current?.abort();
       current = null;
+      abortReviews();
       engine.dispose();
     },
   };

@@ -5,13 +5,19 @@ import { createOpponent, type Opponent } from "game/opponent/opponent";
 import { bookUrl } from "game/opponent/players/book-urls";
 import { LIEM } from "game/opponent/players/index";
 import { createBookLoader } from "game/opponent/players/load-books";
+import type { Book, BookName } from "game/opponent/types";
 
 const books = createBookLoader({ fetch: (url) => fetch(url), url: bookUrl });
+
+/** His two books, from the same cached loader his opponent uses (a failure fetches again next time). */
+export function loadLiemBooks(): Promise<Record<BookName, Book>> {
+  return books.load(LIEM.entry);
+}
 
 /** A new opponent each call; the books load once and stay cached. It owns its engine. */
 export async function loadLiemOpponent(): Promise<Opponent> {
   const [liemBooks, worker] = await Promise.all([
-    books.load(LIEM.entry),
+    loadLiemBooks(),
     import("game/opponent/engine/stockfish-worker"),
   ]);
   return createOpponent({ books: liemBooks, engine: worker.createStockfishWorkerEngine() });
