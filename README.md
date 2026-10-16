@@ -25,6 +25,16 @@ In **vs Liem** mode you play against Le Quang Liem's openings, then a chess engi
 - **After his book:** standard [Stockfish](https://stockfishchess.org/) 18 plays the rest of the game. It isn't fine-tuned or trained on his games. At each move it looks at its top few moves and picks one that loses no more than the strength step allows.
 - **Strength steps:** "about 1400" up to "about 2500", plus Full (his rating). The steps are approximate. They aren't Lichess or Chess.com ratings.
 
+## Game review
+
+After a game against Liem ends (checkmate, stalemate or time), press **Review game**.
+
+- **Analysis:** Stockfish 18 at full strength checks every position of the game, about half a second each, on the same engine he plays with. A progress bar shows how far it has got, and you can start on the key moments before it finishes.
+- **Grades:** each of your moves gets a drop in win % from your side. A drop of 10 points or more is an inaccuracy (?!), 20 a mistake (?) and 30 a blunder (??). Win % and the per-move accuracy use the public Lichess formulas, and your accuracy for the game is the average. A move that keeps the game in his book is never marked.
+- **Key moments:** your three biggest drops. At each one the board shows the position before your move, and you try to find a better one. A move counts as found if it's Stockfish's move or loses less than 10 points. Then you see what you played, Stockfish's move and, when the position is in his book, what Liem played there. Each found move fills a gold star.
+- **The rest:** a win % graph (tap it to jump to a move), the move list with the marks, where the game left his book, and step buttons or the arrow keys to go through the game. **Back to game** returns to the finished board, and **New game** starts a new one. On a phone the key-moment card opens as a sheet from the bottom.
+- Only the game that just ended can be reviewed. Reloading the page loses it.
+
 ## Licence
 
 Chess Web is free software under the GNU General Public License, version 3 or (at your option) any later version. See [LICENSE](LICENSE). The app ships the Stockfish engine, which is GPL v3, so the whole app is offered under the GPL.
