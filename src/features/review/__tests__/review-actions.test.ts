@@ -20,6 +20,7 @@ import {
   keyStep,
   openReview,
   passStart,
+  reviewModel,
   selectPosition,
   tryMove,
 } from "../reviewActions";
@@ -285,5 +286,25 @@ describe("stepping in the review", () => {
     store.dispatch(selectPosition(3, MODEL)); // after ply 2, the blunder
     expect(store.getState().review.cursor).toBe(3);
     expect(store.getState().review.sheetOpen).toBe(true);
+  });
+});
+
+describe("the review model", () => {
+  it("is built from the game, and is null instead of throwing on a broken game", () => {
+    const store = liemGame("white", FOOLS_MATE);
+    const positions = store.getState().board.engineHistory;
+    const input = {
+      positions,
+      humanColor: "white" as const,
+      evals: positions.map(() => null),
+      books: null,
+      locked: [],
+    };
+    const model = reviewModel(input);
+    expect(model?.total).toBe(5);
+    expect(model?.moves.map((m) => m.uci)).toEqual(FOOLS_MATE);
+
+    // Positions that aren't one move apart.
+    expect(reviewModel({ ...input, positions: [positions[0], positions[2]], evals: [null, null] })).toBeNull();
   });
 });
