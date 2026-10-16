@@ -60,17 +60,27 @@ function sample(over: Partial<ReviewModel> = {}): ReviewModel {
 
 const graph = (model: ReviewModel, cursor: number, side: "you" | "white" = "you") =>
   renderToStaticMarkup(
-    <ReviewGraph model={model} humanColor="white" side={side} cursor={cursor} onSelect={noop} onSide={noop} />
+    <ReviewGraph
+      model={model}
+      humanColor="white"
+      side={side}
+      cursor={cursor}
+      onSelect={noop}
+      onSide={noop}
+    />
   );
 
 /** The `d` of every line path in the markup. */
-const linePaths = (html: string) => [...html.matchAll(/class="review-graph__line" d="([^"]*)"/g)].map((m) => m[1]);
+const linePaths = (html: string) =>
+  Array.from(html.matchAll(/class="review-graph__line" d="([^"]*)"/g)).map((m) => m[1]);
 const pointCount = (d: string) => (d.match(/[ML]/g) ?? []).length;
 
 describe("graph", () => {
   it("draws a point at each graded ply's resulting position, colored by grade", () => {
     const html = graph(sample(), 0);
-    const points = [...html.matchAll(/class="review-graph__dot[^"]*"[^>]*data-ply="(\d+)" data-grade="(\w+)"/g)];
+    const points = Array.from(
+      html.matchAll(/class="review-graph__dot[^"]*"[^>]*data-ply="(\d+)" data-grade="(\w+)"/g)
+    );
     expect(points.map((m) => [m[1], m[2]])).toEqual([
       ["4", "mistake"],
       ["6", "blunder"],
@@ -100,7 +110,10 @@ describe("graph", () => {
   });
 
   it("draws no line for unanalysed positions", () => {
-    const partial = sample({ whiteWin: [52, 52, 53, null, null, null, null, null, null], analysed: 3 });
+    const partial = sample({
+      whiteWin: [52, 52, 53, null, null, null, null, null, null],
+      analysed: 3,
+    });
     const paths = linePaths(graph(partial, 0));
     expect(paths).toHaveLength(1);
     expect(pointCount(paths[0])).toBe(3);
@@ -113,7 +126,14 @@ describe("graph", () => {
     expect(you).toMatch(/aria-checked="true"[^>]*>You</);
     expect(you).toMatch(/aria-checked="false"[^>]*>White</);
     const asBlack = renderToStaticMarkup(
-      <ReviewGraph model={sample()} humanColor="black" side="you" cursor={0} onSelect={noop} onSide={noop} />
+      <ReviewGraph
+        model={sample()}
+        humanColor="black"
+        side="you"
+        cursor={0}
+        onSelect={noop}
+        onSide={noop}
+      />
     );
     // White's 28 % at position 5 is Black's 72 %: 28 % down from the top.
     expect(asBlack).toMatch(/data-ply="4"[^>]*top:28%/);
@@ -127,8 +147,12 @@ describe("move list", () => {
 
   it("marks grades inside the move buttons", () => {
     const html = list(sample(), 0);
-    expect(html).toMatch(/data-ply="4" data-grade="mistake"[^>]*>Bc4<span class="review-grade--mistake"[^>]*>\?</);
-    expect(html).toMatch(/data-ply="6" data-grade="blunder"[^>]*>Ng5<span class="review-grade--blunder"[^>]*>\?\?</);
+    expect(html).toMatch(
+      /data-ply="4" data-grade="mistake"[^>]*>Bc4<span class="review-grade--mistake"[^>]*>\?</
+    );
+    expect(html).toMatch(
+      /data-ply="6" data-grade="blunder"[^>]*>Ng5<span class="review-grade--blunder"[^>]*>\?\?</
+    );
     expect(html).not.toMatch(/data-ply="5"[^>]*data-grade/);
   });
 
@@ -156,7 +180,9 @@ describe("move list", () => {
   });
 
   it("marks the selected move, and none at the start", () => {
-    expect(list(sample(), 7)).toMatch(/class="review-move review-move--selected"[^>]*data-ply="6"[^>]*aria-current="true"/);
+    expect(list(sample(), 7)).toMatch(
+      /class="review-move review-move--selected"[^>]*data-ply="6"[^>]*aria-current="true"/
+    );
     expect(list(sample(), 0)).not.toContain("review-move--selected");
   });
 
@@ -193,13 +219,21 @@ describe("accuracy", () => {
 
   it("shows each grade's count, and the book moves", () => {
     const html = panel(sample());
-    expect(html).toMatch(/data-count="inaccuracy".*Inaccuracies.*<dd>0<\/dd>/);
-    expect(html).toMatch(/data-count="mistake".*Mistakes.*<dd>1<\/dd>/);
-    expect(html).toMatch(/data-count="blunder".*Blunders.*<dd>1<\/dd>/);
-    expect(html).toMatch(/data-count="book".*Book moves.*<dd>2<\/dd>/);
-    expect(panel(sample({ moves: sample().moves.map((m) => ({ ...m, bookGames: null })) }))).not.toContain(
-      'data-count="book"'
+    expect(html).toMatch(
+      /data-count="inaccuracy">(?:(?!data-count).)*Inaccuracies<\/(?:span><\/)?dt><dd>0<\/dd>/
     );
+    expect(html).toMatch(
+      /data-count="mistake">(?:(?!data-count).)*Mistakes<\/(?:span><\/)?dt><dd>1<\/dd>/
+    );
+    expect(html).toMatch(
+      /data-count="blunder">(?:(?!data-count).)*Blunders<\/(?:span><\/)?dt><dd>1<\/dd>/
+    );
+    expect(html).toMatch(
+      /data-count="book">(?:(?!data-count).)*Book moves<\/(?:span><\/)?dt><dd>2<\/dd>/
+    );
+    expect(
+      panel(sample({ moves: sample().moves.map((m) => ({ ...m, bookGames: null })) }))
+    ).not.toContain('data-count="book"');
   });
 });
 
@@ -216,14 +250,18 @@ describe("left his book note", () => {
   });
 
   it("names the move for a Black ply and copes with no moves of his there", () => {
-    const html = note(sample({ leftBook: { ply: 1, played: { uci: "e7e5", label: "1...e5" }, his: [] } }));
+    const html = note(
+      sample({ leftBook: { ply: 1, played: { uci: "e7e5", label: "1...e5" }, his: [] } })
+    );
     expect(html).toContain("Left his book at move 1");
     expect(html).toContain("You played 1...e5. He has no games from this position.");
     expect(html).not.toContain("liem-note__bar");
   });
 
   it("says when the game stayed in his book", () => {
-    expect(note(sample({ leftBook: null, bookPlies: 8 }))).toContain("Stayed in his book the whole game");
+    expect(note(sample({ leftBook: null, bookPlies: 8 }))).toContain(
+      "Stayed in his book the whole game"
+    );
   });
 
   it("shows nothing without his books", () => {
@@ -255,10 +293,15 @@ describe("step keys", () => {
 
   it("disables the buttons at the ends, and all of them when locked", () => {
     const disabledOf = (html: string) =>
-      [...html.matchAll(/<button[^>]*aria-label="([^"]+)"([^>]*)>/g)].map((m) => [m[1], m[2].includes("disabled")]);
+      Array.from(html.matchAll(/<button[^>]*aria-label="([^"]+)"([^>]*)>/g)).map((m) => [
+        m[1],
+        m[2].includes("disabled"),
+      ]);
     const at = (cursor: number, last: number, disabled = false) =>
       disabledOf(
-        renderToStaticMarkup(<StepButtons cursor={cursor} last={last} disabled={disabled} onStep={noop} />)
+        renderToStaticMarkup(
+          <StepButtons cursor={cursor} last={last} disabled={disabled} onStep={noop} />
+        )
       );
     expect(at(0, 8)).toEqual([
       ["First move", true],

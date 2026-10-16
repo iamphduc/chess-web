@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { graphPoints, lineRuns, moveTicks, nearestPosition, positionX, sideWin } from "../graphGeometry";
+import {
+  graphPoints,
+  lineRuns,
+  moveTicks,
+  nearestPosition,
+  positionX,
+  sideWin,
+} from "../graphGeometry";
 
 const WHITE_WIN = [50, 100, 0, null, 25];
 
@@ -14,7 +21,12 @@ describe("points", () => {
   });
 
   it("maps White's win % to the height, 100 at the top and 0 at the bottom", () => {
-    const points = graphPoints(WHITE_WIN, { side: "white", humanColor: "black", width: 400, height: 100 });
+    const points = graphPoints(WHITE_WIN, {
+      side: "white",
+      humanColor: "black",
+      width: 400,
+      height: 100,
+    });
     expect(points.map((p) => p && [p.index, p.x, p.y, p.win])).toEqual([
       [0, 0, 50, 50],
       [1, 100, 0, 100],
@@ -25,13 +37,34 @@ describe("points", () => {
   });
 
   it("flips to the human's side when he plays Black", () => {
-    const points = graphPoints(WHITE_WIN, { side: "you", humanColor: "black", width: 400, height: 150 });
-    expect(points.map((p) => p && [p.y, p.win])).toEqual([[75, 50], [150, 0], [0, 100], null, [37.5, 75]]);
+    const points = graphPoints(WHITE_WIN, {
+      side: "you",
+      humanColor: "black",
+      width: 400,
+      height: 150,
+    });
+    expect(points.map((p) => p && [p.y, p.win])).toEqual([
+      [75, 50],
+      [150, 0],
+      [0, 100],
+      null,
+      [37.5, 75],
+    ]);
   });
 
   it("is White's view from the human's side when he plays White", () => {
-    const you = graphPoints(WHITE_WIN, { side: "you", humanColor: "white", width: 400, height: 100 });
-    const white = graphPoints(WHITE_WIN, { side: "white", humanColor: "white", width: 400, height: 100 });
+    const you = graphPoints(WHITE_WIN, {
+      side: "you",
+      humanColor: "white",
+      width: 400,
+      height: 100,
+    });
+    const white = graphPoints(WHITE_WIN, {
+      side: "white",
+      humanColor: "white",
+      width: 400,
+      height: 100,
+    });
     expect(you).toEqual(white);
   });
 
@@ -52,9 +85,11 @@ describe("points", () => {
       [0, 1],
       [5, 6, 7],
     ]);
-    expect(lineRuns(graphPoints([null, null], { side: "white", humanColor: "white", width: 1, height: 1 }))).toEqual(
-      []
-    );
+    expect(
+      lineRuns(
+        graphPoints([null, null], { side: "white", humanColor: "white", width: 1, height: 1 })
+      )
+    ).toEqual([]);
   });
 
   it("moveTicks labels move 1, every 10th move and the last move at White's move", () => {
@@ -78,7 +113,9 @@ describe("points", () => {
 
 describe("nearest", () => {
   it("picks the closest position for an x", () => {
-    expect([0, 49, 50, 151, 249, 400].map((x) => nearestPosition(x, 4, 400))).toEqual([0, 0, 1, 2, 2, 4]);
+    expect([0, 49, 50, 151, 249, 400].map((x) => nearestPosition(x, 4, 400))).toEqual([
+      0, 0, 1, 2, 2, 4,
+    ]);
   });
 
   it("clamps past both ends", () => {
