@@ -160,3 +160,61 @@
     content: "~" / "";
   }
 }
+
+/*
+ * The game review (plan post-game-review, ## Look). Its root adds no box, so the
+ * graph, the board and the sidebar stay items of `.app`: the graph runs full
+ * width above the other two (App.css wraps the row), and below 992 px all three
+ * stack. The sidebar holds the card, the accuracy, the move list, the book note
+ * and the buttons; below 768 px the card is in the bottom sheet instead.
+ */
+.review {
+  display: contents;
+}
+
+.review-top {
+  box-sizing: border-box;
+  width: calc(13px * 24);
+  max-width: 100%;
+}
+
+.review-board-steps {
+  margin-top: 10px;
+}
+
+.review-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: calc(13px * 24);
+  margin: 8px 0;
+}
+
+.review-side > .board-sidebar {
+  margin: 0;
+  min-height: 0;
+}
+
+@media only screen and (min-width: 768px) {
+  .review-top,
+  .review-side {
+    width: calc(13px * 32);
+  }
+}
+
+@media only screen and (min-width: 992px) {
+  .review-top {
+    flex: 0 0 100%;
+    width: 100%;
+  }
+
+  .review-side {
+    margin-top: 0;
+  }
+}
+
+@media only screen and (min-width: 1200px) {
+  .review-side {
+    width: calc(13px * 36);
+  }
+}

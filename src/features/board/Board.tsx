@@ -13,6 +13,26 @@ import { BookNote } from "features/liem/components/BookNote";
 import { LiemCardDetail } from "features/liem/components/LiemCardDetail";
 import { newLiemGame } from "features/liem/liemActions";
 import { useLiemOpponent } from "features/liem/useLiemOpponent";
+import { ReviewGraph } from "features/review/components/ReviewGraph";
+import { ReviewBoard } from "features/review/components/ReviewBoard";
+import { StepButtons } from "features/review/components/StepButtons";
+import { KeyMomentCard } from "features/review/components/KeyMomentCard";
+import { BottomSheet } from "features/review/components/BottomSheet";
+import { AccuracyPanel } from "features/review/components/AccuracyPanel";
+import { MoveList } from "features/review/components/MoveList";
+import { LeftBookNote } from "features/review/components/LeftBookNote";
+import { keyMomentView } from "features/review/keyMomentView";
+import { backToGame, canOpenReview, openReview, selectPosition, steppingLocked } from "features/review/reviewActions";
+import {
+  analysisRetried,
+  answerShown,
+  momentOpened,
+  momentSkipped,
+  setGraphSide,
+  sheetClosed,
+} from "features/review/reviewSlice";
+import { selectReview, useGameReview } from "features/review/useGameReview";
+import type { ReviewModel } from "game/review/types";
 import { Square } from "./components/Square";
 import { Player } from "./components/Player";
 import { BoardSidebar } from "./components/BoardSidebar";
@@ -55,6 +75,42 @@ const renderYou = (color: PieceColor) => (
   <Player key={color} name="You" title={null} avatar={null} isWhite={color === "white"} />
 );
 
+const ReviewGameButton = () => {
+  const dispatch = useAppDispatch();
+  return (
+    <button type="button" className="button button--play" onClick={() => dispatch(openReview())}>
+      Review game
+    </button>
+  );
+};
+
+const BackToGameButton = () => {
+  const dispatch = useAppDispatch();
+  return (
+    <button type="button" className="button button--play" onClick={() => dispatch(backToGame())}>
+      Back to game
+    </button>
+  );
+};
+
+/** The key-moment card, wired to the review's actions. */
+const ReviewCard = ({ model, humanColor }: { model: ReviewModel; humanColor: PieceColor }) => {
+  const dispatch = useAppDispatch();
+  const review = useAppSelector(selectReview);
+  return (
+    <KeyMomentCard
+      model={model}
+      review={review}
+      humanColor={humanColor}
+      onStart={(ply) => dispatch(momentOpened(ply))}
+      onShowAnswer={(ply) => dispatch(answerShown(ply))}
+      onSkip={(ply) => dispatch(momentSkipped(ply))}
+      onNext={(ply) => dispatch(momentOpened(ply))}
+      onRetry={() => dispatch(analysisRetried())}
+    />
+  );
+};
+
 const NewGameButton = () => {
   const dispatch = useAppDispatch();
   return (
@@ -71,16 +127,23 @@ export const Board = () => {
   const flipped = useAppSelector((state) => state.view.flipped);
   const humanColor = useAppSelector((state) => state.board.humanColor);
   const match = useAppSelector((state) => state.match);
+  const review = useAppSelector(selectReview);
+  const engineHistory = useAppSelector((state) => state.board.engineHistory);
+  const reviewable = useAppSelector((state) => canOpenReview(state.board, state.match));
+  const dispatch = useAppDispatch();
   useMoveSound();
-  const { retry } = useLiemOpponent();
+  const { retry, analyse } = useLiemOpponent();
+  const { model, onTry } = useGameReview(analyse);
 
   const vsLiem = match.mode === "liem";
   const setupOpen = vsLiem && match.setupOpen;
   const liemHuman: PieceColor | null = vsLiem && !setupOpen ? humanColor : null;
 
+  const wide = useMediaQuery("only screen and (min-width: 768px)");
+  const extraWide = useMediaQuery("only screen and (min-width: 1200px)");
   let squareSize = SQUARE_SIZE_XS;
-  if (useMediaQuery("only screen and (min-width: 768px)")) squareSize = SQUARE_SIZE_MD;
-  if (useMediaQuery("only screen and (min-width: 1200px)")) squareSize = SQUARE_SIZE_XL;
+  if (wide) squareSize = SQUARE_SIZE_MD;
+  if (extraWide) squareSize = SQUARE_SIZE_XL;
 
   const squaresToRender = useMemo(() => {
     const current = history[history.length - 1];
@@ -135,6 +198,70 @@ export const Board = () => {
     bottom = cardFor(bottomColor);
   }
 
+  if (liemHuman !== null && review.open && model !== null) {
+    const card = keyMomentView({ model, review, humanColor: liemHuman, summary: false });
+    const select = (n: number) => dispatch(selectPosition(n, model));
+    const cursor = Math.min(review.cursor, engineHistory.length - 1);
+    const last = engineHistory.length - 1;
+    const reviewCard = <ReviewCard model={model} humanColor={liemHuman} />;
+    return (
+      <MotionConfig reducedMotion="user">
+        <div className="review" data-review-state={review.status}>
+          <div className="review-top">
+            <ReviewGraph
+              model={model}
+              humanColor={liemHuman}
+              side={review.graphSide}
+              cursor={cursor}
+              onSelect={select}
+              onSide={(side) => dispatch(setGraphSide(side))}
+            />
+          </div>
+
+          <div className="board" style={{ width: squareSize * 8 }}>
+            <ModeTabs />
+            {top}
+            <div className="squares">
+              <ReviewBoard
+                state={engineHistory[cursor]}
+                flipped={flipped}
+                size={squareSize}
+                highlight={cursor > 0 ? model.moves[cursor - 1].uci : null}
+                interactive={card.state === "trying"}
+                onMove={onTry}
+              />
+            </div>
+            {bottom}
+            <div className="review-board-steps">
+              <StepButtons cursor={cursor} last={last} disabled={steppingLocked(review)} onStep={select} />
+            </div>
+          </div>
+
+          <div className="sidebar review-side">
+            {wide && reviewCard}
+            <AccuracyPanel model={model} />
+            <MoveList model={model} cursor={cursor} onSelect={select} />
+            <LeftBookNote model={model} />
+            <BoardSidebar title="">
+              <div className="buttons">
+                <BackToGameButton />
+                <NewGameButton />
+                <Button type={ButtonType.Flip} />
+                <Button type={ButtonType.Sound} />
+              </div>
+            </BoardSidebar>
+          </div>
+
+          {!wide && (
+            <BottomSheet open={review.sheetOpen} low={card.low} onClose={() => dispatch(sheetClosed())}>
+              {reviewCard}
+            </BottomSheet>
+          )}
+        </div>
+      </MotionConfig>
+    );
+  }
+
   return (
     <MotionConfig reducedMotion="user">
       <div className="board" style={{ width: squareSize * 8 }}>
@@ -173,6 +300,7 @@ export const Board = () => {
           <div className="buttons">
             {vsLiem ? (
               <>
+                {liemHuman && reviewable && <ReviewGameButton />}
                 {liemHuman && <NewGameButton />}
                 <Button type={ButtonType.Flip} />
                 <Button type={ButtonType.Sound} />
