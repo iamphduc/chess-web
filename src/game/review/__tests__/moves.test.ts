@@ -117,7 +117,7 @@ describe("moveLabel writes SAN", () => {
     expect(moveLabel(rooks, "a1a3", 20)).toBe("11.R1a3");
     const queens = board({
       a1: P.WhiteQueen, a3: P.WhiteQueenPromoted1, c1: P.WhiteQueenPromoted2,
-      e1: P.WhiteKing, h8: P.BlackKing,
+      e1: P.WhiteKing, h7: P.BlackKing,
     });
     expect(moveLabel(queens, "a1b2", 20)).toBe("11.Qa1b2");
   });
