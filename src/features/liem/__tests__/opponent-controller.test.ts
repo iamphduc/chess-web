@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { initialGameState } from "game/engine/game-state";
+import type { SearchLimits } from "game/opponent/engine/lines";
+import type { Analysis } from "game/opponent/engine/move-engine";
 import { type MoveChoice, OpponentError, type OpponentErrorCode } from "game/opponent/opponent";
 import { uciToMove } from "game/opponent/position";
 import { STEP_PROFILES } from "game/opponent/step-profiles";
@@ -39,9 +41,14 @@ const CHOICE: MoveChoice = { move: e2e4, uci: "e2e4", source: "book", lookup: nu
 const SETTINGS = { profile: STEP_PROFILES[2100], clock: { baseMs: 600_000, incrementMs: 0 } };
 const req = (gameId: number, ply: number): TurnRequest => ({ gameId, ply, state: start, settings: SETTINGS });
 
-/** An opponent whose every `chooseMove` waits until the test settles it. */
+/**
+ * An opponent whose every `chooseMove` and `analyse` waits until the test
+ * settles it. Like the real one, an aborted review search rejects `superseded`,
+ * and `dispose` rejects everything in flight with `disposed`.
+ */
 function fakeOpponent(name: string, log: string[]) {
   const asks: Deferred<MoveChoice>[] = [];
+  const searches: { d: Deferred<Analysis>; signal?: AbortSignal }[] = [];
   const opponent = {
     chooseMove: vi.fn((..._args: unknown[]): Promise<MoveChoice> => {
       log.push(`${name}.chooseMove`);
@@ -49,14 +56,32 @@ function fakeOpponent(name: string, log: string[]) {
       asks.push(d);
       return d.promise;
     }),
+    analyse: vi.fn((_fen: string, _limits: SearchLimits, signal?: AbortSignal): Promise<Analysis> => {
+      log.push(`${name}.analyse`);
+      const d = deferred<Analysis>();
+      searches.push({ d, signal });
+      signal?.addEventListener("abort", () => {
+        log.push(`${name}.abort`);
+        d.reject(new OpponentError("superseded"));
+      });
+      return d.promise;
+    }),
     newGame: vi.fn(() => {
       log.push(`${name}.newGame`);
     }),
     dispose: vi.fn(() => {
       log.push(`${name}.dispose`);
+      for (const a of asks) a.reject(new OpponentError("disposed"));
+      for (const s of searches) s.d.reject(new OpponentError("disposed"));
     }),
   } satisfies LiemOpponent;
-  return { opponent, asks, last: () => asks[asks.length - 1] };
+  return {
+    opponent,
+    asks,
+    searches,
+    last: () => asks[asks.length - 1],
+    search: () => searches[searches.length - 1],
+  };
 }
 
 /** A controller over a queue of loads the test settles one by one. */
@@ -555,5 +580,299 @@ describe("no added delay", () => {
     await flush();
     expect(moves).toEqual([{ gameId: 1, ply: 0, choice: CHOICE }]);
     expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+// ---- review searches ---------------------------------------------------------
+
+const FEN = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1";
+const LIMITS: SearchLimits = { depth: 18, multiPv: 1, movetimeMs: 500 };
+const ANALYSIS: Analysis = { lines: [{ move: "e7e5", score: { cp: -30 }, depth: 18 }], bestMove: "e7e5" };
+
+/** The settled state of a promise, without waiting for it. */
+function track<T>(p: Promise<T>) {
+  const t: { value?: T; error?: unknown; settled: boolean } = { settled: false };
+  p.then(
+    (v) => Object.assign(t, { value: v, settled: true }),
+    (e) => Object.assign(t, { error: e, settled: true })
+  );
+  return t;
+}
+
+const codeOf = (e: unknown) => (e instanceof OpponentError ? e.code : e);
+
+describe("analyse loads quietly", () => {
+  it("loads him on first use, passes the search through, and never reports a status", async () => {
+    const t = setup();
+    const a = fakeOpponent("a", t.log);
+    const result = track(t.controller.analyse(FEN, LIMITS));
+    expect(t.load).toHaveBeenCalledTimes(1);
+    t.loads[0].resolve(a.opponent);
+    await flush();
+    expect(a.opponent.analyse).toHaveBeenCalledTimes(1);
+    expect(a.opponent.analyse.mock.calls[0][0]).toBe(FEN);
+    expect(a.opponent.analyse.mock.calls[0][1]).toEqual(LIMITS);
+    a.search().d.resolve(ANALYSIS);
+    await flush();
+    expect(result.value).toEqual(ANALYSIS);
+
+    // Loaded: the next search uses the same opponent.
+    void t.controller.analyse(FEN, LIMITS);
+    await flush();
+    expect(t.load).toHaveBeenCalledTimes(1);
+    expect(a.opponent.analyse).toHaveBeenCalledTimes(2);
+    expect(t.statuses).toEqual([]);
+  });
+
+  it("a cancel while it loads him quietly doesn't report loading", async () => {
+    const t = setup();
+    const a = fakeOpponent("a", t.log);
+    void t.controller.analyse(FEN, LIMITS);
+    t.controller.cancel();
+    t.loads[0].resolve(a.opponent);
+    await flush();
+    t.controller.cancel();
+    expect(t.statuses).not.toContain("loading");
+  });
+
+  it("shares the load with a preload, and the preload still reports its own statuses", async () => {
+    const t = setup();
+    const a = fakeOpponent("a", t.log);
+    t.controller.preload();
+    void t.controller.analyse(FEN, LIMITS);
+    t.loads[0].resolve(a.opponent);
+    await flush();
+    expect(t.load).toHaveBeenCalledTimes(1);
+    expect(a.opponent.analyse).toHaveBeenCalledTimes(1);
+    expect(t.statuses).toEqual(["loading", "idle"]);
+  });
+
+  it("a failed load rejects with its error, reports nothing, and the next use loads again", async () => {
+    const t = setup();
+    const a = fakeOpponent("a", t.log);
+    const failure = new Error("network");
+    const result = track(t.controller.analyse(FEN, LIMITS));
+    t.loads[0].reject(failure);
+    await flush();
+    expect(result.error).toBe(failure);
+    expect(t.statuses).toEqual([]);
+    void t.controller.analyse(FEN, LIMITS);
+    t.loads[1].resolve(a.opponent);
+    await flush();
+    expect(a.opponent.analyse).toHaveBeenCalledTimes(1);
+  });
+
+  it("the caller's signal aborts it, while loading or searching: superseded", async () => {
+    const t = setup();
+    const a = fakeOpponent("a", t.log);
+    const early = new AbortController();
+    const whileLoading = track(t.controller.analyse(FEN, LIMITS, early.signal));
+    early.abort();
+    await flush();
+    expect(codeOf(whileLoading.error)).toBe("superseded");
+    t.loads[0].resolve(a.opponent);
+    await flush();
+    expect(a.opponent.analyse).not.toHaveBeenCalled();
+
+    const late = new AbortController();
+    const searching = track(t.controller.analyse(FEN, LIMITS, late.signal));
+    await flush();
+    late.abort();
+    await flush();
+    expect(codeOf(searching.error)).toBe("superseded");
+    expect(a.opponent.dispose).not.toHaveBeenCalled();
+  });
+
+  it("rejects disposed after dispose, in flight and later, with no load", async () => {
+    const t = await loaded();
+    const inFlight = track(t.controller.analyse(FEN, LIMITS));
+    await flush();
+    const before = t.statuses.length;
+    t.controller.dispose();
+    await flush();
+    expect(codeOf(inFlight.error)).toBe("disposed");
+    const later = track(t.controller.analyse(FEN, LIMITS));
+    await flush();
+    expect(codeOf(later.error)).toBe("disposed");
+    expect(t.load).toHaveBeenCalledTimes(1);
+    expect(t.statuses.length).toBe(before);
+  });
+
+  it("a search waiting on the load when the controller is disposed rejects disposed", async () => {
+    const t = setup();
+    const a = fakeOpponent("a", t.log);
+    const waiting = track(t.controller.analyse(FEN, LIMITS));
+    t.controller.dispose();
+    t.loads[0].resolve(a.opponent);
+    await flush();
+    expect(codeOf(waiting.error)).toBe("disposed");
+    expect(a.opponent.analyse).not.toHaveBeenCalled();
+    expect(a.opponent.dispose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("his turn stops review searches", () => {
+  it("request aborts every review search before asking him; they reject superseded", async () => {
+    const t = await loaded();
+    const one = track(t.controller.analyse(FEN, LIMITS));
+    const two = track(t.controller.analyse(FEN, LIMITS));
+    await flush();
+    t.controller.request(req(1, 1));
+    await flush();
+    expect(t.log.filter((l) => l.startsWith("a."))).toEqual([
+      "a.analyse",
+      "a.analyse",
+      "a.abort",
+      "a.abort",
+      "a.chooseMove",
+    ]);
+    expect(codeOf(one.error)).toBe("superseded");
+    expect(codeOf(two.error)).toBe("superseded");
+    // His turn plays on, and the opponent is kept.
+    t.a.last().resolve(CHOICE);
+    await flush();
+    expect(t.moves).toHaveLength(1);
+    expect(t.a.opponent.dispose).not.toHaveBeenCalled();
+    expect(t.statuses).not.toContain("failed");
+  });
+
+  it("a review search still waiting on the load is dropped too and never reaches him", async () => {
+    const t = setup();
+    const a = fakeOpponent("a", t.log);
+    const waiting = track(t.controller.analyse(FEN, LIMITS));
+    t.controller.request(req(1, 1));
+    t.loads[0].resolve(a.opponent);
+    await flush();
+    expect(codeOf(waiting.error)).toBe("superseded");
+    expect(a.opponent.analyse).not.toHaveBeenCalled();
+    expect(a.opponent.chooseMove).toHaveBeenCalledTimes(1);
+  });
+
+  it("a repeated request aborts searches started since", async () => {
+    const t = await loaded();
+    t.controller.request(req(1, 1));
+    await flush();
+    const later = track(t.controller.analyse(FEN, LIMITS));
+    await flush();
+    t.controller.request(req(1, 1));
+    await flush();
+    expect(codeOf(later.error)).toBe("superseded");
+    expect(t.a.opponent.chooseMove).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("a broken review search replaces the engine", () => {
+  it.each<OpponentErrorCode>(["engine-failed", "engine-timeout"])(
+    "%s drops him, reports no status, and the next use loads fresh",
+    async (code) => {
+      const t = await loaded();
+      const b = fakeOpponent("b", t.log);
+      const before = t.statuses.length;
+      const broken = track(t.controller.analyse(FEN, LIMITS));
+      await flush();
+      t.a.search().d.reject(err(code));
+      await flush();
+      expect(codeOf(broken.error)).toBe(code);
+      expect(t.a.opponent.dispose).toHaveBeenCalledTimes(1);
+      expect(t.statuses.length).toBe(before);
+
+      const next = track(t.controller.analyse(FEN, LIMITS));
+      expect(t.load).toHaveBeenCalledTimes(2);
+      t.loads[1].resolve(b.opponent);
+      await flush();
+      b.search().d.resolve(ANALYSIS);
+      await flush();
+      expect(next.value).toEqual(ANALYSIS);
+
+      // His next turn uses the fresh one too.
+      t.controller.request(req(1, 1));
+      await flush();
+      expect(b.opponent.chooseMove).toHaveBeenCalledTimes(1);
+      expect(t.a.opponent.chooseMove).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each<OpponentErrorCode>(["superseded", "disposed"])("%s keeps him", async (code) => {
+    const t = await loaded();
+    const p = track(t.controller.analyse(FEN, LIMITS));
+    await flush();
+    t.a.search().d.reject(err(code));
+    await flush();
+    expect(codeOf(p.error)).toBe(code);
+    expect(t.a.opponent.dispose).not.toHaveBeenCalled();
+  });
+
+  it("a late failure from a replaced opponent doesn't drop the new one", async () => {
+    const t = await loaded();
+    const b = fakeOpponent("b", t.log);
+    // A real opponent might still answer after dispose; this fake's dispose rejects, so fake the late one by hand.
+    let lateFail!: (e: unknown) => void;
+    t.a.opponent.analyse.mockImplementationOnce(() => new Promise<Analysis>((_, reject) => (lateFail = reject)));
+    void t.controller.analyse(FEN, LIMITS).catch(() => {});
+    void t.controller.analyse(FEN, LIMITS).catch(() => {});
+    await flush();
+    t.a.search().d.reject(err("engine-failed"));
+    await flush();
+    expect(t.a.opponent.dispose).toHaveBeenCalledTimes(1);
+    void t.controller.analyse(FEN, LIMITS);
+    t.loads[1].resolve(b.opponent);
+    await flush();
+    lateFail(err("engine-timeout"));
+    await flush();
+    expect(b.opponent.dispose).not.toHaveBeenCalled();
+  });
+
+  it("his move in flight on the dropped opponent fails visibly, and retry asks a fresh one", async () => {
+    const t = await loaded();
+    const b = fakeOpponent("b", t.log);
+    // A review search started during his turn (only request aborts them).
+    t.controller.request(req(1, 1));
+    await flush();
+    void t.controller.analyse(FEN, LIMITS).catch(() => {});
+    await flush();
+    t.a.search().d.reject(err("engine-failed"));
+    await flush();
+    expect(t.lastStatus()).toBe("failed");
+    expect(t.moves).toEqual([]);
+    t.controller.retry();
+    t.loads[1].resolve(b.opponent);
+    await flush();
+    expect(b.opponent.chooseMove).toHaveBeenCalledTimes(1);
+    b.last().resolve(CHOICE);
+    await flush();
+    expect(t.moves).toEqual([{ gameId: 1, ply: 1, choice: CHOICE }]);
+  });
+});
+
+describe("cancel leaves review searches", () => {
+  it("cancel doesn't abort a review search", async () => {
+    const t = await loaded();
+    const p = track(t.controller.analyse(FEN, LIMITS));
+    await flush();
+    t.controller.cancel();
+    t.controller.cancel();
+    await flush();
+    expect(t.a.search().signal?.aborted).toBe(false);
+    t.a.search().d.resolve(ANALYSIS);
+    await flush();
+    expect(p.value).toEqual(ANALYSIS);
+  });
+
+  it("retry doesn't abort a review search", async () => {
+    const t = await loaded();
+    t.controller.request(req(1, 1));
+    await flush();
+    t.a.last().reject(err("illegal-engine-move"));
+    await flush();
+    expect(t.lastStatus()).toBe("failed");
+    const p = track(t.controller.analyse(FEN, LIMITS));
+    await flush();
+    t.controller.retry();
+    await flush();
+    expect(t.a.opponent.chooseMove).toHaveBeenCalledTimes(2);
+    expect(t.a.search().signal?.aborted).toBe(false);
+    t.a.search().d.resolve(ANALYSIS);
+    await flush();
+    expect(p.value).toEqual(ANALYSIS);
   });
 });

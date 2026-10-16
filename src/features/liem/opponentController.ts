@@ -1,4 +1,6 @@
 import type { GameState } from "game/engine/game-state";
+import type { SearchLimits } from "game/opponent/engine/lines";
+import type { Analysis } from "game/opponent/engine/move-engine";
 import { type MoveChoice, OpponentError, type OpponentSettings } from "game/opponent/opponent";
 import type { TurnRequest } from "./liemTurn";
 import type { OpponentStatus } from "./matchSlice";
@@ -6,7 +8,9 @@ import type { OpponentStatus } from "./matchSlice";
 /** The opponent the controller drives. `loadLiemOpponent`'s result fits it by shape. */
 export interface LiemOpponent {
   chooseMove(state: GameState, settings: OpponentSettings): Promise<MoveChoice>;
-  /** Starts a fresh game: aborts any choice in flight and resets the engine. */
+  /** A review search on his engine (`Opponent.analyse`). */
+  analyse(fen: string, limits: SearchLimits, signal?: AbortSignal): Promise<Analysis>;
+  /** Starts a fresh game: aborts any choice and review search in flight and resets the engine. */
   newGame(): void;
   dispose(): void;
 }
@@ -21,12 +25,23 @@ export interface OpponentMove {
 export interface OpponentController {
   /** Starts loading the opponent if it isn't loaded or loading. */
   preload(): void;
-  /** Asks for his move. A repeat of the latest `(gameId, ply)` is ignored. */
+  /**
+   * Asks for his move. It first aborts every review search (they reject
+   * `superseded`), so none runs into his turn. A repeat of the latest
+   * `(gameId, ply)` is ignored.
+   */
   request(req: TurnRequest): void;
-  /** Drops the latest request, so nothing in flight reaches `onMove`. */
+  /** Drops the latest request, so nothing in flight reaches `onMove`. Review searches go on. */
   cancel(): void;
-  /** After a failure, asks again (on a freshly loaded opponent when the old one broke). */
+  /** After a failure, asks again (on a freshly loaded opponent when the old one broke). Review searches go on. */
   retry(): void;
+  /**
+   * A review search on his engine, loading him first if needed, with no status
+   * change. A load failure rejects with its error; an aborted search rejects
+   * `superseded`; after dispose, `disposed`. A search failing `engine-failed`
+   * or `engine-timeout` drops him, so the next use loads a fresh one.
+   */
+  analyse(fen: string, limits: SearchLimits, signal?: AbortSignal): Promise<Analysis>;
   /** Disposes the opponent for good. Later calls do nothing. */
   dispose(): void;
 }
@@ -64,7 +79,11 @@ export function createOpponentController(deps: {
 
   let disposed = false;
   let loading: Promise<LiemOpponent> | null = null;
+  /** Whether the load in flight was reported (`loading`); a review search's own load isn't. */
+  let loadShown = false;
   let opponent: LiemOpponent | null = null;
+  /** The review searches in flight, each with its own abort. */
+  const reviews = new Set<AbortController>();
 
   /** The latest request still waiting for an answer, by identity. */
   let latest: { req: TurnRequest } | null = null;
@@ -107,14 +126,60 @@ export function createOpponentController(deps: {
       }
     );
     loading = attempt;
+    loadShown = false;
     return attempt;
+  }
+
+  function abortReviews(): void {
+    reviews.forEach((review) => review.abort());
+    reviews.clear();
+  }
+
+  async function review(fen: string, limits: SearchLimits, signal?: AbortSignal): Promise<Analysis> {
+    if (disposed) throw new OpponentError("disposed");
+    if (signal?.aborted) throw new OpponentError("superseded");
+    const own = new AbortController();
+    const onAbort = () => own.abort();
+    signal?.addEventListener("abort", onAbort);
+    reviews.add(own);
+    const aborted = new Promise<never>((_, reject) => {
+      own.signal.addEventListener("abort", () => reject(new OpponentError("superseded")));
+    });
+    aborted.catch(() => {});
+    /** Disposed wins over any other answer, then an abort. */
+    const ensureLive = () => {
+      if (disposed) throw new OpponentError("disposed");
+      if (own.signal.aborted) throw new OpponentError("superseded");
+    };
+    try {
+      let current: LiemOpponent;
+      try {
+        current = await Promise.race([getOpponent(), aborted]);
+      } catch (error) {
+        ensureLive();
+        throw error;
+      }
+      ensureLive();
+      try {
+        return await current.analyse(fen, limits, own.signal);
+      } catch (error) {
+        if (outcomeOf(error) === "retry-fresh" && opponent === current && !disposed) dropOpponent();
+        ensureLive();
+        throw error;
+      }
+    } finally {
+      reviews.delete(own);
+      signal?.removeEventListener("abort", onAbort);
+    }
   }
 
   /** Loads with no request waiting: loading, then idle or failed. */
   function startPreload(): void {
-    if (opponent !== null || loading !== null) return;
+    if (opponent !== null || (loading !== null && loadShown)) return;
     setStatus("loading");
-    getOpponent().then(
+    const pending = getOpponent();
+    loadShown = true;
+    pending.then(
       () => {
         if (latest === null && failed === null) setStatus("idle");
       },
@@ -136,7 +201,9 @@ export function createOpponentController(deps: {
     setStatus(opponent === null ? "loading" : "thinking");
     let current: LiemOpponent;
     try {
-      current = await getOpponent();
+      const pending = getOpponent();
+      if (opponent === null) loadShown = true;
+      current = await pending;
     } catch {
       if (!isCurrent()) return;
       latest = null;
@@ -159,7 +226,9 @@ export function createOpponentController(deps: {
       if (!isCurrent()) return;
       latest = null;
       const outcome = outcomeOf(error);
-      if (outcome === "silent") {
+      // Dropped under this turn (a review search broke it): his move must not vanish.
+      const dropped = opponent !== current;
+      if (outcome === "silent" && !dropped) {
         setStatus("idle");
         return;
       }
@@ -182,6 +251,7 @@ export function createOpponentController(deps: {
 
     request(req) {
       if (disposed) return;
+      abortReviews();
       if (lastKey !== null && lastKey.gameId === req.gameId && lastKey.ply === req.ply) return;
       if (lastGameId !== null && lastGameId !== req.gameId) newGamePending = true;
       lastGameId = req.gameId;
@@ -193,7 +263,7 @@ export function createOpponentController(deps: {
       latest = null;
       lastKey = null;
       failed = null;
-      setStatus(loading !== null && opponent === null ? "loading" : "idle");
+      setStatus(loading !== null && opponent === null && loadShown ? "loading" : "idle");
     },
 
     retry() {
@@ -204,11 +274,14 @@ export function createOpponentController(deps: {
       else void run(again);
     },
 
+    analyse: review,
+
     dispose() {
       if (disposed) return;
       disposed = true;
       latest = null;
       failed = null;
+      abortReviews();
       dropOpponent();
     },
   };

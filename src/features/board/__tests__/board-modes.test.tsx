@@ -14,6 +14,8 @@ import { setColorPick } from "features/liem/matchSlice";
 import { toggleFlip } from "../viewSlice";
 import type { LiemOpponent } from "features/liem/opponentController";
 import { createLiemController, liemGameId, syncLiemTurn } from "features/liem/useLiemOpponent";
+import { backToGame, openReview } from "features/review/reviewActions";
+import { clickSquare, playOpponentMove } from "../BoardSlice";
 import { Board } from "../Board";
 import { avatarSrc } from "../components/avatar";
 import { players } from "../../../game/players";
@@ -97,6 +99,33 @@ function liemGameAs(color: "white" | "black"): Store {
   store.dispatch(setColorPick(color));
   store.dispatch(startLiemGame());
   return store;
+}
+
+const sq = (name: string) => ({ y: 8 - Number(name[1]), x: "abcdefgh".indexOf(name[0]) });
+
+/** You on White lose to Fool's mate: you click your moves, he plays his. */
+function finishedLiemGame(): Store {
+  const store = liemGameAs("white");
+  for (const uci of ["f2f3", "e7e5", "g2g4", "d8h4"]) {
+    const { board } = store.getState();
+    const ply = board.engineHistory.length - 1;
+    const state = board.engineHistory[ply];
+    if (state.turn === board.humanColor) {
+      store.dispatch(clickSquare(sq(uci.slice(0, 2))));
+      store.dispatch(clickSquare(sq(uci.slice(2, 4))));
+    } else {
+      store.dispatch(playOpponentMove({ gameId: board.gameId, ply, move: uciToMove(state, uci)! }));
+    }
+  }
+  return store;
+}
+
+/** The markup from the top of the board through the end of its `.squares` box. */
+function boardTop(html: string): string {
+  const board = divWithClass(html, "board");
+  const m = SQUARES_RE.exec(board);
+  if (!m) throw new Error("no .squares");
+  return board.slice(0, m.index);
 }
 
 function expectHisCard(card: string) {
@@ -235,17 +264,32 @@ describe("board modes", () => {
     const flippedSetup = createAppStore();
     flippedSetup.dispatch(toggleFlip());
     flippedSetup.dispatch(switchMode("liem"));
+    const finished = finishedLiemGame();
+    const reviewed = finishedLiemGame();
+    reviewed.dispatch(openReview());
+    reviewed.dispatch(backToGame());
     const states: [string, Store][] = [
       ["two players", createAppStore()],
       ["vs Liem, card open", setup],
       ["vs Liem, card open, flipped", flippedSetup],
       ["vs Liem as White", liemGameAs("white")],
       ["vs Liem as Black", liemGameAs("black")],
+      ["vs Liem, game over", finished],
+      ["vs Liem, back from the review", reviewed],
     ];
     for (const [name, store] of states) {
-      const { above, below } = cardsAround(render(store));
+      const html = render(store);
+      const { above, below } = cardsAround(html);
       expect({ name, above: above.length, below: below.length }).toEqual({ name, above: 1, below: 1 });
+      // Nothing extra above the board: the tabs and one card, as in every mode.
+      expect({ name, top: boardTop(html).match(/role="tablist"/g)?.length }).toEqual({ name, top: 1 });
+      expect({ name, graph: /data-review-graph/.test(html) }).toEqual({ name, graph: false });
+      expect({ name, review: /data-review-state=/.test(html) }).toEqual({ name, review: false });
     }
+
+    // A finished game keeps the game's layout, with Review game added to the row.
+    expect(buttonLabels(render(finished))).toEqual(["Review game", "New game", "Flip board", "Sound"]);
+    expect(render(reviewed)).toBe(render(finishedLiemGame()));
   });
 });
 
@@ -254,6 +298,7 @@ function fakeOpponent() {
   const pending: ((choice: MoveChoice) => void)[] = [];
   const opponent: LiemOpponent = {
     chooseMove: vi.fn(() => new Promise<MoveChoice>((resolve) => pending.push(resolve))),
+    analyse: vi.fn(() => new Promise<never>(() => {})),
     newGame: vi.fn(),
     dispose: vi.fn(),
   };

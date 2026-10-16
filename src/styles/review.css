@@ -1,0 +1,329 @@
+/*
+ * Game review look (plan post-game-review, ## Look). Colors come only from the
+ * --grade-*, --review-* and --liem-* tokens in src/index.css (plus --board-focus
+ * for the ring). Flag red marks edges only, never text or fills.
+ * UI slices add their own layout CSS; these are the shared base classes.
+ */
+
+/* The key-moment card. The top edge says where the review is:
+   red on a moment, gold when found, olive while waiting. */
+.review-card {
+  padding: 16px 18px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--liem-text);
+  background-color: var(--liem-card);
+  border-top: 4px solid var(--liem-red);
+  border-radius: 10px;
+}
+
+.review-card--red {
+  border-top-color: var(--liem-red);
+}
+
+.review-card--gold {
+  border-top-color: var(--liem-gold);
+}
+
+.review-card--olive {
+  border-top-color: var(--grade-book);
+}
+
+.review-card__title {
+  margin: 6px 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Grade marks as text (?!, ?, ??, and the best and book labels). */
+.review-grade--inaccuracy,
+.review-grade--mistake,
+.review-grade--blunder,
+.review-grade--best,
+.review-grade--book {
+  font-weight: 700;
+}
+
+.review-grade--inaccuracy {
+  color: var(--grade-inaccuracy);
+}
+
+.review-grade--mistake {
+  color: var(--grade-mistake);
+}
+
+.review-grade--blunder {
+  color: var(--grade-blunder);
+}
+
+.review-grade--best {
+  color: var(--grade-best);
+}
+
+.review-grade--book {
+  color: var(--grade-book);
+}
+
+/* Grade chips: ink on the grade color. */
+.review-chip--inaccuracy,
+.review-chip--mistake,
+.review-chip--blunder,
+.review-chip--best,
+.review-chip--book {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--grade-ink);
+  border-radius: 999px;
+}
+
+.review-chip--inaccuracy {
+  background-color: var(--grade-inaccuracy);
+}
+
+.review-chip--mistake {
+  background-color: var(--grade-mistake);
+}
+
+.review-chip--blunder {
+  background-color: var(--grade-blunder);
+}
+
+.review-chip--best {
+  background-color: var(--grade-best);
+}
+
+.review-chip--book {
+  background-color: var(--grade-book);
+}
+
+/* A move in the list. Selected, it turns white with ink, and its mark becomes a chip,
+   because grade text on white or gray fails contrast. */
+.review-move {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 2px 8px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--liem-text);
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.review-move:hover {
+  background-color: var(--liem-line);
+}
+
+.review-move--selected,
+.review-move--selected:hover {
+  color: var(--grade-ink);
+  background-color: var(--liem-text);
+}
+
+.review-move--selected .review-grade--inaccuracy,
+.review-move--selected .review-grade--mistake,
+.review-move--selected .review-grade--blunder,
+.review-move--selected .review-grade--best,
+.review-move--selected .review-grade--book {
+  margin-left: 4px;
+  padding: 0 5px;
+  color: var(--grade-ink);
+  border-radius: 999px;
+}
+
+.review-move--selected .review-grade--inaccuracy {
+  background-color: var(--grade-inaccuracy);
+}
+
+.review-move--selected .review-grade--mistake {
+  background-color: var(--grade-mistake);
+}
+
+.review-move--selected .review-grade--blunder {
+  background-color: var(--grade-blunder);
+}
+
+.review-move--selected .review-grade--best {
+  background-color: var(--grade-best);
+}
+
+.review-move--selected .review-grade--book {
+  background-color: var(--grade-book);
+}
+
+/* Stars: one per key moment, gold when the move was found. */
+.review-star {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--liem-line);
+}
+
+.review-star--found {
+  color: var(--liem-gold);
+}
+
+/* Step buttons under the board (an icon inside, drawn with currentColor). */
+.review-step {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--liem-text);
+  background-color: var(--liem-card);
+  border: 1px solid var(--liem-line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.review-step:hover {
+  background-color: var(--liem-line);
+}
+
+.review-step:active {
+  background-color: var(--liem-note);
+}
+
+.review-step:disabled,
+.review-step:disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.4;
+  background-color: var(--liem-card);
+}
+
+/* Analysis progress: an 8 px olive bar; the component sets the bar's width. */
+.review-progress {
+  height: 8px;
+  overflow: hidden;
+  background-color: var(--liem-line);
+  border-radius: 4px;
+}
+
+.review-progress__bar {
+  height: 100%;
+  background-color: var(--grade-book);
+  border-radius: 4px;
+  transition: width 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-progress__bar {
+    transition: none;
+  }
+}
+
+/* The game accuracy number. */
+.review-accuracy {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--liem-text);
+}
+
+/* The phone bottom sheet that holds the key-moment card, with the scrim behind it. */
+.review-sheet {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 8px 20px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--liem-text);
+  background-color: var(--liem-card);
+  border-top: 4px solid var(--liem-red);
+  border-radius: 16px 16px 0 0;
+}
+
+/* While trying a move the sheet sits low, so the board stays usable. */
+.review-sheet--low {
+  max-height: 40vh;
+}
+
+.review-sheet .review-card__title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* The grab bar is 4 px tall; the padding keeps it easy to tap. */
+.review-sheet__grab {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 40px;
+  height: 20px;
+  margin: 0;
+  margin-inline: auto;
+  margin-bottom: 2px;
+  padding: 8px 0;
+  font: inherit;
+  background-color: var(--liem-line);
+  background-clip: content-box;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.review-sheet__close {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--liem-text-soft);
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.review-sheet__close:hover {
+  color: var(--liem-text);
+  background-color: var(--liem-note);
+}
+
+.review-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background-color: var(--review-scrim);
+}
+
+/* Focus ring for every review control. */
+.review-move:focus-visible,
+.review-step:focus-visible,
+.review-sheet__grab:focus-visible,
+.review-sheet__close:focus-visible {
+  outline: 3px solid var(--board-focus);
+  outline-offset: 2px;
+}

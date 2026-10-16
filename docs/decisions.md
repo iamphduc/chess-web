@@ -193,3 +193,26 @@ Decision: Two rules in `chooseHumanMove` (`src/game/opponent/human-move.ts`), fo
 - **Piece-sized drops (`MAX_DROP_CP` = 300):** a line 300 cp or more below the best line is outside the normal limit, the slip band and the ahead limit. When either score is a mate, only win % counts. This was picked over a tighter limit when the best line is at 15 win % or less, because one rule covers both far ahead and far behind, and it is in the same unit as a piece. Between about −300 cp and +470 cp, 1400's limits already stay under 300 cp, so level play is unchanged.
 Runs (`npm run calibrate -- --games 8 --anchors none`, seed 1, the table unchanged; before is `origin/main`, after is this change; 5.7 min each). Score against the next step up, before → after: 1400 18.8 % → 12.5 %, 1700 18.8 % → 31.3 %, 1900 18.8 % → 12.5 %, 2100 25.0 % → 18.8 %, 2300 18.8 % → 18.8 %, 2500 43.8 % → 31.3 %. Every step still scores 50 % or less against the next one up, so the ladder holds and the table stays. 1400: average loss per move 1.0 → 0.9 win % points, largest loss 13.6 → 11.0, slip rate 0.4 % → 0.2 %, average 33 → 30 ms a move. The before run shared the machine with a test run for part of its games.
 Consequences: 1400 still slips inside its band in level positions, but no longer gives away free material when far ahead or drops a piece more when far behind. To change: the two constants in `human-move.ts`; `human-move.test.ts` › `free material` and `drops of a piece in centipawns` hold the rules.
+
+## 2026-10-16 — Grade levels are 10/20/30 win-% points (chosen by the human)
+Grade levels are 10/20/30 win-% points (chosen by the human, 2026-10-16) — stricter than needed at club level would bury the big lessons; Lichess's own levels are 5/10/15 (0.1/0.2/0.3 winning chances, lila modules/tree/src/main/Advice.scala).
+To change: `INACCURACY`, `MISTAKE` and `BLUNDER` in `src/game/review/grade.ts` (the found rule uses `INACCURACY` too).
+
+## 2026-10-16 — The review searches on his engine worker
+Context: The app has one Stockfish worker, the one he plays with. After the game it's idle.
+Decision: The review's analysis pass and the checks of tried moves run on his worker, through `OpponentController.analyse` (exposed by `useLiemOpponent`). There is no second worker. His next turn (`request()`) aborts every review search first, and closing the review or starting a new game stops the pass. A review search that fails or times out drops the engine, so his next use loads a fresh one.
+Consequences: No extra download or memory for the review. A review and his play can never search at the same time.
+
+## 2026-10-16 — Review searches stop at 500 ms or depth 18 (agent default — override anytime)
+Context: The plan set about 0.5 s a position with a depth cap of 18, to be checked on desktop and on a phone.
+Speed check (`npm run preview`, Chrome through `chrome-devtools-axi`, games against the 1400 step played by random clicks; the times run from pressing Review game to `data-review-state="done"`):
+- Desktop (1400 px, no throttling): a 27-move game, 55 positions, took 20.9 s (380 ms a position). The first key moment was ready after 7.5 s.
+- Phone emulation (375 px, mobile, CPU throttled 4×): a 13-move game, 27 positions, took 12.8 s (473 ms a position). The first key moment was ready after 5.8 s.
+On desktop many searches reach depth 18 before 500 ms; throttled, nearly every search runs to the time limit. So a 40-move game (81 positions) takes about 30 s on desktop and about 40 s on a slow phone. A real phone wasn't at hand, and CDP's CPU throttling may not slow the Web Worker as much as a real phone would.
+Decision: `REVIEW_LIMITS` in `src/features/review/reviewLimits.ts` is `{ depth: 18, multiPv: 1, movetimeMs: 500 }`. The progress bar and key moments that show as soon as their moves are analysed make the wait usable.
+To change: `movetimeMs` there (`review-actions.test.ts › review limits` keeps it from 100 to 1000 ms). Lower it if a real phone is too slow; scores get noisier below about 300 ms.
+
+## 2026-10-16 — The move list shows your move while you look for a better one (agent default — override anytime)
+Context: At a key moment the card says "Your move is hidden", but the move list beside it (or under the phone sheet) still shows the move you played with its mark, for example `2. g4 ??`. The better move, which is the answer, stays hidden. Raised by the reviewer of PR #73.
+Decision: Keep showing it. You already know what you played, and the mark only says it was a mistake.
+To change: hide the played move's row (or its mark) in `MoveList` while the active moment is `trying`, and reword the card's "Your move is hidden" if needed.
