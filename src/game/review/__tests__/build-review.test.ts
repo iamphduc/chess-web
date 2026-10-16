@@ -247,6 +247,18 @@ describe("game accuracy", () => {
     expect(model.counts).toEqual({ inaccuracy: 1, mistake: 0, blunder: 0 });
   });
 
+  it("starts from Lichess's fixed +15 cp, not the engine's eval of the start", () => {
+    const at = (cp: number) => {
+      const evals = evalsFrom(FLAT);
+      evals[0] = { score: { cp }, best: null };
+      return buildReview(input({ evals }));
+    };
+    const engine = at(200);
+    expect(engine.accuracy).toBeCloseTo(at(15).accuracy!, 9);
+    // The graph still shows the engine's eval of the start.
+    expect(engine.whiteWin[0]).toBeGreaterThan(65);
+  });
+
   it("is null while a book move of the human lacks its evals", () => {
     const wins: (number | null)[] = [...FLAT];
     wins[1] = null;
