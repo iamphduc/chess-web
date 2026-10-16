@@ -153,12 +153,13 @@ describe("review components", () => {
     expect(buttons(found)).toEqual(["Next moment"]);
     expect(count(found, /review-star--found/g)).toBe(1);
 
-    // Revealed with Liem: his move and games; one game reads singular.
-    const withLiem = [moment(24, { liem: { uci: "c3e2", label: "13.Ne2", games: 11 }, played: { uci: "c3d5", label: "13.Nd5" }, best: { uci: "c3e2", label: "13.Ne2" } })];
+    // Revealed with Liem: his move and games; one game reads singular. A later
+    // moment stays open, so a fresh card shows the reveal, not the summary.
+    const withLiem = [moment(24, { liem: { uci: "c3e2", label: "13.Ne2", games: 11 }, played: { uci: "c3d5", label: "13.Nd5" }, best: { uci: "c3e2", label: "13.Ne2" } }), moment(52)];
     const revealed = card(model(withLiem), { active: 24, moments: { 24: "revealed" } });
     expect(text(revealed)).toContain("You played 13.Nd5 · Stockfish: 13.Ne2 · Liem played 13.Ne2 in 11 games");
     expect(count(revealed, /review-star--found/g)).toBe(0);
-    const oneGame = [moment(24, { liem: { uci: "c3e2", label: "13.Ne2", games: 1 } })];
+    const oneGame = [moment(24, { liem: { uci: "c3e2", label: "13.Ne2", games: 1 } }), moment(52)];
     expect(text(card(model(oneGame), { active: 24, moments: { 24: "skipped" } }))).toContain("in 1 game");
     // The played move carries its grade color; Stockfish's the best color; Liem's the book color.
     expect(revealed).toMatch(/review-grade--mistake[^>]*>13\.Nd5/);
