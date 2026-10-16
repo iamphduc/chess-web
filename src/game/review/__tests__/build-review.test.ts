@@ -223,16 +223,45 @@ describe("left his book", () => {
 });
 
 describe("game accuracy", () => {
-  it("is the plain average of the human plies, book = 100", () => {
-    // Ply 0 is a book move with a big drop; ply 4 drops 11; the rest hold.
+  it("is Lichess's game accuracy, with book moves at their real accuracy", () => {
+    // Ply 0 is a book move with a 30-point drop; ply 4 drops 11; the rest hold.
     const wins = [50, 20, 20, 20, 40, 29, 29, 29, 29, 29, 29];
     const books = booksAt({ 1: [bm("e7e5", 9)] });
     const model = buildReview(input({ evals: evalsFrom(wins), books }));
-    const ply4 = moveAccuracy(40, 29);
-    const flat = moveAccuracy(29, 29);
-    const ply2 = moveAccuracy(20, 20);
-    expect(model.accuracy).toBeCloseTo((100 + ply2 + ply4 + flat + flat) / 5, 6);
+    // The per-move numbers don't change: the book move still shows 100.
+    expect(model.moves[0]).toMatchObject({ accuracy: 100, grade: null });
+    expect(model.moves[4].accuracy).toBeCloseTo(moveAccuracy(40, 29), 6);
+    // 10 plies → windows of 2; White's win % is the human's here.
+    const acc = (drop: number) =>
+      Math.min(100, 103.1668100711649 * Math.exp(-0.04354415386753951 * drop) - 3.166924740191411 + 1);
+    const plies = [
+      { acc: acc(30), w: 12 }, // 50 → 20, sd 15 clamped
+      { acc: 100, w: 0.5 }, // 20 → 20
+      { acc: acc(11), w: 5.5 }, // 40 → 29
+      { acc: 100, w: 0.5 },
+      { acc: 100, w: 0.5 },
+    ];
+    const weighted = plies.reduce((s, p) => s + p.acc * p.w, 0) / plies.reduce((s, p) => s + p.w, 0);
+    const harmonic = plies.length / plies.reduce((s, p) => s + 1 / p.acc, 0);
+    expect(model.accuracy).toBeCloseTo((weighted + harmonic) / 2, 6);
     expect(model.counts).toEqual({ inaccuracy: 1, mistake: 0, blunder: 0 });
+  });
+
+  it("is null while a book move of the human lacks its evals", () => {
+    const wins: (number | null)[] = [...FLAT];
+    wins[1] = null;
+    const books = booksAt({ 1: [bm("e7e5", 9)] });
+    expect(buildReview(input({ evals: evalsFrom(wins), books })).accuracy).toBeNull();
+  });
+
+  it("scores a lost game well below the plain average", () => {
+    // Steady small losses with one collapse: the plain average hides it.
+    const wins = [50, 47, 44, 41, 38, 35, 32, 29, 26, 5, 5];
+    const model = buildReview(input({ evals: evalsFrom(wins) }));
+    const human = model.moves.filter((m) => m.byHuman);
+    const plain = human.reduce((s, m) => s + (m.accuracy ?? 0), 0) / human.length;
+    expect(model.accuracy).not.toBeNull();
+    expect(model.accuracy!).toBeLessThan(plain - 10);
   });
 
   it("is null while any human ply lacks its evals", () => {
