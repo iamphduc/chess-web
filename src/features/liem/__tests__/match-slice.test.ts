@@ -149,10 +149,10 @@ describe("resolveColor edges", () => {
 });
 
 describe("createAppStore", () => {
-  it("returns independent stores with board, view and match", () => {
+  it("returns independent stores with board, view, match and review", () => {
     const a = createAppStore();
     const b = createAppStore();
-    expect(Object.keys(a.getState()).sort()).toEqual(["board", "match", "view"]);
+    expect(Object.keys(a.getState()).sort()).toEqual(["board", "match", "review", "view"]);
     a.dispatch(setMode("liem"));
     expect(a.getState().match.mode).toBe("liem");
     expect(b.getState().match.mode).toBe("two-player");
