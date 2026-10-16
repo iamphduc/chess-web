@@ -202,13 +202,14 @@ To change: `INACCURACY`, `MISTAKE` and `BLUNDER` in `src/game/review/grade.ts` (
 Context: The plan's default (`docs/plans/post-game-review.md`, "Game accuracy is the plain average of the human's per-move accuracy", book moves at 100) showed 91 % for a lost game. On a similar game the plain average gave 95.6 % and Lichess's formula 91.0 %.
 Decision: Game accuracy follows lila `modules/analyse/src/main/AccuracyPercent.scala` (fetched 2026-10-16), in `src/game/review/game-accuracy.ts`:
 - Win % for game accuracy is scalachess `WinPercent`: cp clamped to ±1000, a mate counted as ±1000 cp.
+- The list of White's win % always starts from scalachess `Score.initial` (+15 cp for White, `LICHESS_START_WIN`), as Lichess's does, not from the engine's eval of the start position. The graph and the per-move grades still use the engine's eval there.
 - Per-move accuracy is 100 when the mover's win % holds or rises, else `103.1668100711649 * exp(-0.04354415386753951 * drop) - 3.166924740191411`, plus Lichess's +1 "uncertainty bonus", clamped to 0–100.
-- Each ply's weight is the population standard deviation of its window of White's win % (start position included), clamped to [0.5, 12]. The window is clamp(floor(plies / 10), 2, 8) positions; the first window counts (window − 2) extra times, then every sliding window follows.
+- Each ply's weight is the population standard deviation of its window of White's win % (the +15 cp start included), clamped to [0.5, 12]. The window is clamp(floor(plies / 10), 2, 8) positions; the first window counts (window − 2) extra times, then every sliding window follows.
 - Game accuracy = (weighted mean + harmonic mean) / 2 over the human's plies; the harmonic mean is unweighted and floors each accuracy at 1.
 - Book moves count at their real accuracy, as on Lichess (it has no book skip). "Book moves are never flagged" is about grades, and they still get none.
-- It stays `null` while any human ply, book moves included, lacks the eval before or after it. A missing win % elsewhere (his last ply) is left out of the windows.
-Consequences: The number matches Lichess for the same evals, and a lost game scores lower than before. The per-move accuracy in `ReviewMove.accuracy` (the plan's formula with no bonus, book moves at 100) and the 10/20/30 grade levels don't change. The app's own engine evals differ from Lichess's, so the two sites can still show different numbers for the same game.
-To change: `src/game/review/game-accuracy.ts`; `buildReview` passes it White's win % per position.
+- It stays `null` while any human ply, book moves included, lacks the eval before or after it (the start never does: it is always +15 cp). A missing win % elsewhere (after his last ply) is left out of the windows.
+Consequences: Given the same evals for every position after the start, the number matches Lichess's, and a lost game scores lower than before. The per-move accuracy in `ReviewMove.accuracy` (the plan's formula with no bonus, book moves at 100) and the 10/20/30 grade levels don't change. The app's own engine evals differ from Lichess's, so the two sites can still show different numbers for the same game.
+To change: `src/game/review/game-accuracy.ts`; `buildReview` passes it White's win % per position, with `LICHESS_START_WIN` first.
 
 ## 2026-10-16 — The review searches on his engine worker
 Context: The app has one Stockfish worker, the one he plays with. After the game it's idle.

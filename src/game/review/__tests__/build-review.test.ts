@@ -234,8 +234,10 @@ describe("game accuracy", () => {
     // 10 plies → windows of 2; White's win % is the human's here.
     const acc = (drop: number) =>
       Math.min(100, 103.1668100711649 * Math.exp(-0.04354415386753951 * drop) - 3.166924740191411 + 1);
+    // Lichess starts from +15 cp, whatever the engine said about position 0.
+    const start = 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * 15)) - 1);
     const plies = [
-      { acc: acc(30), w: 12 }, // 50 → 20, sd 15 clamped
+      { acc: acc(start - 20), w: 12 }, // start → 20, sd above 12 clamped
       { acc: 100, w: 0.5 }, // 20 → 20
       { acc: acc(11), w: 5.5 }, // 40 → 29
       { acc: 100, w: 0.5 },

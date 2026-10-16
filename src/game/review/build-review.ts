@@ -3,7 +3,7 @@ import type { GameState } from "../engine/game-state";
 import { lookupBook, type GameClock } from "../opponent/book";
 import { uciToMove } from "../opponent/position";
 import { moveGames, type Book, type BookMove, type BookName } from "../opponent/types";
-import { gameAccuracy, lichessWinPercent } from "./game-accuracy";
+import { gameAccuracy, LICHESS_START_WIN, lichessWinPercent } from "./game-accuracy";
 import { gradeMove, winFor } from "./grade";
 import { gameMoves, moveLabel } from "./moves";
 import type {
@@ -184,6 +184,7 @@ export function buildReview(input: BuildReviewInput): ReviewModel {
     total: positions.length,
     accuracy: gameAccuracy(
       positions.map((p, i) => {
+        if (i === 0) return LICHESS_START_WIN;
         const e = evalAt(i);
         return e === null ? null : lichessWinPercent(e.score, p.turn);
       }),

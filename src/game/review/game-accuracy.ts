@@ -19,6 +19,13 @@ export function lichessWinPercent(score: Score, sideToMove: PieceColor): number 
 }
 
 /**
+ * White's win % at the start of every game for game accuracy. Lichess starts
+ * its list from scalachess `Score.initial` (+15 cp for White), never from the
+ * engine's eval of the start position.
+ */
+export const LICHESS_START_WIN = lichessWinPercent({ cp: 15 }, "white");
+
+/**
  * Lichess's per-move accuracy from the mover's win % before and after, with
  * its +1 "uncertainty bonus", clamped to 0..100. 100 when the mover's win %
  * holds or rises.
