@@ -630,3 +630,118 @@ describe("no added delay", () => {
     await settlesWithoutTimers(retried.chooseMove(start, SETTINGS));
   });
 });
+
+describe("review searches", () => {
+  const start = initialGameState();
+  const LIMITS: SearchLimits = { depth: 18, multiPv: 1, movetimeMs: 500 };
+  const ANALYSIS: Analysis = { lines: [{ move: "e2e4", score: { cp: 30 }, depth: 18 }], bestMove: "e2e4" };
+
+  it("passes the fen and limits through and returns the engine's analysis", async () => {
+    const fake = fakeEngine(ANALYSIS);
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    expect(await opponent.analyse(START_FEN, LIMITS)).toEqual(ANALYSIS);
+    expect(fake.calls).toHaveLength(1);
+    expect(fake.calls[0].fen).toBe(START_FEN);
+    expect(fake.calls[0].limits).toEqual(LIMITS);
+  });
+
+  it("searches even a position in his book", async () => {
+    const books = makeBooks({ [positionKey(start)]: [bm("e2e4", 3)] });
+    const fake = fakeEngine(ANALYSIS);
+    const opponent = createOpponent({ books, engine: fake.engine });
+    expect(await opponent.analyse(toFen(start), LIMITS)).toEqual(ANALYSIS);
+    expect(fake.calls).toHaveLength(1);
+  });
+
+  it("maps engine errors: aborted → superseded, timeout, disposed, anything else → engine-failed", async () => {
+    const cases: [Error, string][] = [
+      [new EngineError("aborted"), "superseded"],
+      [new EngineError("timeout"), "engine-timeout"],
+      [new EngineError("disposed"), "disposed"],
+      [new EngineError("failed"), "engine-failed"],
+      [new RangeError("bad depth"), "engine-failed"],
+    ];
+    for (const [error, code] of cases) {
+      const opponent = createOpponent({ books: makeBooks(), engine: fakeEngine(error).engine });
+      const p = opponent.analyse(START_FEN, LIMITS);
+      expect(await codeOf(p)).toBe(code);
+      await p.catch((e) => expect((e as OpponentError).cause).toBe(error));
+    }
+  });
+
+  it("the caller's signal aborts it: superseded; an already aborted one never reaches the engine", async () => {
+    const fake = fakeEngine(untilAborted);
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const controller = new AbortController();
+    const p = codeOf(opponent.analyse(START_FEN, LIMITS, controller.signal));
+    await flush();
+    controller.abort();
+    expect(fake.calls[0].signal?.aborted).toBe(true);
+    expect(await p).toBe("superseded");
+
+    expect(await codeOf(opponent.analyse(START_FEN, LIMITS, controller.signal))).toBe("superseded");
+    expect(fake.calls).toHaveLength(1);
+  });
+
+  it("newGame aborts it (superseded, even if the engine answers anyway), then resets the engine", async () => {
+    const late = deferred();
+    const fake = fakeEngine(untilAborted, late.answer);
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const a = codeOf(opponent.analyse(START_FEN, LIMITS));
+    const b = codeOf(opponent.analyse(START_FEN, LIMITS));
+    await flush();
+    opponent.newGame();
+    expect(fake.calls.map((c) => c.signal?.aborted)).toEqual([true, true]);
+    late.resolve("e2e4");
+    expect(await a).toBe("superseded");
+    expect(await b).toBe("superseded");
+    expect(fake.events).toEqual(["search", "search", "abort", "abort", "newGame"]);
+  });
+
+  it("dispose aborts it with disposed, and later calls reject disposed without the engine", async () => {
+    const fake = fakeEngine(untilAborted);
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const inFlight = codeOf(opponent.analyse(START_FEN, LIMITS));
+    await flush();
+    opponent.dispose();
+    expect(fake.calls[0].signal?.aborted).toBe(true);
+    expect(await inFlight).toBe("disposed");
+    expect(await codeOf(opponent.analyse(START_FEN, LIMITS))).toBe("disposed");
+    expect(fake.calls).toHaveLength(1);
+  });
+
+  it("chooseMove leaves a review search running, and a review search leaves chooseMove alone", async () => {
+    const review = deferred();
+    const fake = fakeEngine(review.answer, "d2d4", ANALYSIS);
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const searching = opponent.analyse(START_FEN, LIMITS);
+    await flush();
+    const move = opponent.chooseMove(start, SETTINGS);
+    expect(fake.calls[0].signal?.aborted).toBe(false);
+    expect((await move).uci).toBe("d2d4");
+    review.resolve("e2e4");
+    expect((await searching).bestMove).toBe("e2e4");
+
+    // A review search started during his move doesn't supersede it.
+    const slow = deferred();
+    const fake2 = fakeEngine(slow.answer, ANALYSIS);
+    const opponent2 = createOpponent({ books: makeBooks(), engine: fake2.engine });
+    const move2 = opponent2.chooseMove(start, SETTINGS);
+    await flush();
+    await opponent2.analyse(START_FEN, LIMITS);
+    expect(fake2.calls[0].signal?.aborted).toBe(false);
+    slow.resolve("g1f3");
+    expect((await move2).uci).toBe("g1f3");
+  });
+
+  it("one review search ending does not stop another", async () => {
+    const first = deferred();
+    const fake = fakeEngine(first.answer, ANALYSIS);
+    const opponent = createOpponent({ books: makeBooks(), engine: fake.engine });
+    const a = opponent.analyse(START_FEN, LIMITS);
+    await opponent.analyse(START_FEN, LIMITS);
+    expect(fake.calls[0].signal?.aborted).toBe(false);
+    first.resolve("e2e4");
+    expect((await a).bestMove).toBe("e2e4");
+  });
+});
