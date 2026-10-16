@@ -204,7 +204,7 @@
 
 @media only screen and (min-width: 992px) {
   .review-top {
-    flex: 0 0 100%;
+    grid-column: 1 / -1;
     width: 100%;
   }
 
