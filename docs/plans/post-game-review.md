@@ -47,7 +47,7 @@ Constraints:
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| game-review | The analysis pass with progress and the speed check, grading, the book check and key moments as pure tested code, then the review screen (A's coach card, B's big graph, C's bottom sheet on phones) with Find the better move | planned | — |
+| game-review | The analysis pass with progress and the speed check, grading, the book check and key moments as pure tested code, then the review screen (A's coach card, B's big graph, C's bottom sheet on phones) with Find the better move | active | — |
 
 Status values: `planned` / `active` / `done`. The orchestrator only flips its row's Status — it does not rewrite Goal/Depends-on retroactively.
 
