@@ -6,6 +6,9 @@ import { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import type { AppDispatch, RootState } from "app/store";
 import { playOpponentMove } from "features/board/BoardSlice";
+import type { SearchLimits } from "game/opponent/engine/lines";
+import type { Analysis } from "game/opponent/engine/move-engine";
+import { OpponentError } from "game/opponent/opponent";
 import { liemTurn } from "./liemTurn";
 import { opponentMoved, setOpponentStatus } from "./matchSlice";
 import { createOpponentController, type LiemOpponent, type OpponentController } from "./opponentController";
@@ -50,9 +53,13 @@ export function syncLiemTurn(
 /**
  * Drives his moves while the board is mounted. Each mount makes its own
  * controller and disposes it on unmount, so StrictMode's second mount gets a
- * fresh one. Returns `retry` for the book note's Try again.
+ * fresh one. Returns `retry` for the book note's Try again, and `analyse`, a
+ * review search on his engine (the current controller's; `disposed` with none).
  */
-export function useLiemOpponent(): { retry: () => void } {
+export function useLiemOpponent(): {
+  retry: () => void;
+  analyse: (fen: string, limits: SearchLimits, signal?: AbortSignal) => Promise<Analysis>;
+} {
   const dispatch = useAppDispatch();
   const board = useAppSelector((state) => state.board);
   const match = useAppSelector((state) => state.match);
@@ -77,5 +84,12 @@ export function useLiemOpponent(): { retry: () => void } {
   }, [board, match]);
 
   const retry = useCallback(() => controller.current?.retry(), []);
-  return { retry };
+  const analyse = useCallback(
+    (fen: string, limits: SearchLimits, signal?: AbortSignal) =>
+      controller.current
+        ? controller.current.analyse(fen, limits, signal)
+        : Promise.reject(new OpponentError("disposed")),
+    []
+  );
+  return { retry, analyse };
 }

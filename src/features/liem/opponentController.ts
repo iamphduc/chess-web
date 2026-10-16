@@ -8,11 +8,8 @@ import type { OpponentStatus } from "./matchSlice";
 /** The opponent the controller drives. `loadLiemOpponent`'s result fits it by shape. */
 export interface LiemOpponent {
   chooseMove(state: GameState, settings: OpponentSettings): Promise<MoveChoice>;
-  /**
-   * A review search on his engine (`Opponent.analyse`). Optional only so older
-   * test fakes still fit; the real opponent always has it.
-   */
-  analyse?(fen: string, limits: SearchLimits, signal?: AbortSignal): Promise<Analysis>;
+  /** A review search on his engine (`Opponent.analyse`). */
+  analyse(fen: string, limits: SearchLimits, signal?: AbortSignal): Promise<Analysis>;
   /** Starts a fresh game: aborts any choice and review search in flight and resets the engine. */
   newGame(): void;
   dispose(): void;
@@ -163,7 +160,6 @@ export function createOpponentController(deps: {
         throw error;
       }
       ensureLive();
-      if (!current.analyse) throw new OpponentError("engine-failed");
       try {
         return await current.analyse(fen, limits, own.signal);
       } catch (error) {

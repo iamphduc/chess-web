@@ -153,12 +153,13 @@ describe("review components", () => {
     expect(buttons(found)).toEqual(["Next moment"]);
     expect(count(found, /review-star--found/g)).toBe(1);
 
-    // Revealed with Liem: his move and games; one game reads singular.
-    const withLiem = [moment(24, { liem: { uci: "c3e2", label: "13.Ne2", games: 11 }, played: { uci: "c3d5", label: "13.Nd5" }, best: { uci: "c3e2", label: "13.Ne2" } })];
+    // Revealed with Liem: his move and games; one game reads singular. A later
+    // moment stays open, so a fresh card shows the reveal, not the summary.
+    const withLiem = [moment(24, { liem: { uci: "c3e2", label: "13.Ne2", games: 11 }, played: { uci: "c3d5", label: "13.Nd5" }, best: { uci: "c3e2", label: "13.Ne2" } }), moment(52)];
     const revealed = card(model(withLiem), { active: 24, moments: { 24: "revealed" } });
     expect(text(revealed)).toContain("You played 13.Nd5 · Stockfish: 13.Ne2 · Liem played 13.Ne2 in 11 games");
     expect(count(revealed, /review-star--found/g)).toBe(0);
-    const oneGame = [moment(24, { liem: { uci: "c3e2", label: "13.Ne2", games: 1 } })];
+    const oneGame = [moment(24, { liem: { uci: "c3e2", label: "13.Ne2", games: 1 } }), moment(52)];
     expect(text(card(model(oneGame), { active: 24, moments: { 24: "skipped" } }))).toContain("in 1 game");
     // The played move carries its grade color; Stockfish's the best color; Liem's the book color.
     expect(revealed).toMatch(/review-grade--mistake[^>]*>13\.Nd5/);
@@ -202,6 +203,31 @@ describe("review components", () => {
     expect(text(summary)).toContain("2 of 3 found");
     expect(count(summary, /review-star--found/g)).toBe(2);
     expect(buttons(summary)).toEqual([]);
+  });
+
+  it("reopened card with every moment done shows the summary", () => {
+    // Back to game, then Review game, mounts the card again: all done → the summary, not the last reveal.
+    const reopened = card(model(THREE), { active: 52, moments: { 24: "found", 38: "skipped", 52: "found" } });
+    expect(reopened).toContain('data-moment-status="summary"');
+    expect(text(reopened)).toContain("Review done");
+    expect(text(reopened)).toContain("2 of 3 found");
+    expect(buttons(reopened)).toEqual([]);
+    // One moment: found it, reopen → "1 of 1 found".
+    const single = card(model([moment(2)]), { active: 2, moments: { 2: "found" } });
+    expect(single).toContain('data-moment-status="summary"');
+    expect(text(single)).toContain("1 of 1 found");
+    // Still analysing with every moment so far done: the summary keeps the progress bar.
+    const analysing = card(model(THREE, 40), { status: "analysing", active: 52, moments: { 24: "found", 38: "skipped", 52: "revealed" } });
+    expect(analysing).toContain('data-moment-status="summary"');
+    expect(analysing).toContain('role="progressbar"');
+    // A moment not done: reopening shows the active moment as today.
+    const open = card(model(THREE), { active: 38, moments: { 24: "found", 38: "found" } });
+    expect(open).toContain('data-moment-status="found"');
+    expect(buttons(open)).toEqual(["Next moment"]);
+    // No moment opened yet: the intro.
+    expect(card(model(THREE), {})).toContain('data-moment-status="intro"');
+    // No moments yet while analysing: waiting, not an empty summary.
+    expect(card(model([], 27), { status: "analysing" })).toContain('data-moment-status="waiting"');
   });
 
   it("bottom sheet", () => {
