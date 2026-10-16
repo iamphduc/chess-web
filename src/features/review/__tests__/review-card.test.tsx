@@ -21,11 +21,16 @@ function play(start: GameState, ucis: readonly string[]): GameState {
 }
 
 /** What a reader sees or hears: the markup without its tags. */
-const text = (html: string) => html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
+const text = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, "")
+    .replace(/&#x27;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ");
 const count = (html: string, pattern: RegExp) => (html.match(pattern) ?? []).length;
 /** The visible labels of the buttons, in order. */
 const buttons = (html: string) =>
-  [...html.matchAll(/<button[^>]*>(.*?)<\/button>/g)].map((m) => text(m[1]).trim());
+  Array.from(html.matchAll(/<button[^>]*>(.*?)<\/button>/g)).map((m) => text(m[1]).trim());
 
 const noop = () => {};
 
@@ -39,7 +44,7 @@ describe("review components", () => {
 
     // Unflipped: a8 first, h1 last; every square named, 32 pieces drawn.
     const plain = board();
-    const squares = [...plain.matchAll(/data-square="([a-h][1-8])"/g)].map((m) => m[1]);
+    const squares = Array.from(plain.matchAll(/data-square="([a-h][1-8])"/g)).map((m) => m[1]);
     expect(squares).toHaveLength(64);
     expect(squares[0]).toBe("a8");
     expect(squares[63]).toBe("h1");
@@ -48,7 +53,7 @@ describe("review components", () => {
 
     // Flipped: h1 first, a8 last, labels still on the left and bottom edges.
     const flipped = board({ flipped: true });
-    const flippedSquares = [...flipped.matchAll(/data-square="([a-h][1-8])"/g)].map((m) => m[1]);
+    const flippedSquares = Array.from(flipped.matchAll(/data-square="([a-h][1-8])"/g)).map((m) => m[1]);
     expect(flippedSquares[0]).toBe("h1");
     expect(flippedSquares[63]).toBe("a8");
     expect(count(flipped, /square__label--rank/g)).toBe(8);
@@ -121,7 +126,7 @@ describe("review components", () => {
     expect(text(trying)).toContain("White to play. Your move is hidden. Make a move on the board.");
     expect(buttons(trying)).toEqual(["Show answer", "Skip"]);
     // Stars: one per moment, filled per found, and the count for screen readers.
-    expect([...trying.matchAll(/data-found="(true|false)"/g)].map((m) => m[1])).toEqual(["true", "false", "false"]);
+    expect(Array.from(trying.matchAll(/data-found="(true|false)"/g)).map((m) => m[1])).toEqual(["true", "false", "false"]);
     expect(count(trying, /review-star--found/g)).toBe(1);
     expect(trying).toContain('aria-label="1 of 3 found"');
 

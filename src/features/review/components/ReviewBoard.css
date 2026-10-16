@@ -1,0 +1,57 @@
+/* The review board: the game board's squares, click to try a move. */
+.review-board {
+  position: relative;
+  user-select: none;
+}
+
+.review-board__grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+}
+
+.review-board--interactive .square {
+  cursor: pointer;
+}
+
+.review-board--interactive .square:focus-visible {
+  z-index: 4;
+  outline: 3px solid var(--board-focus);
+  outline-offset: -3px;
+}
+
+/* The promotion picker: four pieces beside the target square. */
+.review-board__promotion {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background-color: var(--liem-card);
+  border: 1px solid var(--liem-line);
+  border-radius: 8px;
+}
+
+.review-board__promote {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 80%;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.review-board__promote:hover {
+  background-color: var(--liem-line);
+}
+
+.review-board__promote:focus-visible {
+  outline: 3px solid var(--board-focus);
+  outline-offset: 1px;
+}
