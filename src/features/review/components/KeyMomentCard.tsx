@@ -4,7 +4,7 @@ import "features/board/components/Button.css";
 import "./KeyMomentCard.css";
 import type { PieceColor } from "game/engine/game-state";
 import type { ReviewModel } from "game/review/types";
-import type { ReviewState } from "../reviewSlice";
+import { isMomentDone, type ReviewState } from "../reviewSlice";
 import { keyMomentView, type KeyMomentView, type MomentDetail } from "../keyMomentView";
 
 interface Handlers {
@@ -204,12 +204,18 @@ export const KeyMomentCardBody = ({ view, ...handlers }: BodyHandlers & { view: 
   );
 };
 
+/** Every key moment so far is done (and there is at least one). */
+const allMomentsDone = ({ keyMoments }: ReviewModel, { moments }: Props["review"]) =>
+  keyMoments.length > 0 &&
+  keyMoments.every((m) => moments[m.ply] !== undefined && isMomentDone(moments[m.ply]));
+
 /**
  * A's key-moment card. Next moment opens the next moment not done; with none
- * left it shows the summary (kept here, as it's only about this card).
+ * left it shows the summary (kept here, as it's only about this card). A card
+ * mounted with every moment done (the review reopened) starts on the summary.
  */
 export const KeyMomentCard = ({ model, review, humanColor, ...handlers }: Props) => {
-  const [summary, setSummary] = useState(false);
+  const [summary, setSummary] = useState(() => allMomentsDone(model, review));
   const view = keyMomentView({ model, review, humanColor, summary });
   const onNext = (ply: number | null) => {
     if (ply === null) setSummary(true);
