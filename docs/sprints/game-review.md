@@ -6,12 +6,12 @@ _From plan: docs/plans/post-game-review.md · Slug: game-review · Status: activ
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | L1 | Look: grade tokens and review base styles | game-review-L1 | — | pending | — | — |
-| 1 | M1 | Review model: moves, grades, accuracy, his book, key moments, found rule | game-review-M1 | — | pending | — | — |
-| 1 | A1 | Analysis runner and review searches on his engine | game-review-A1 | — | pending | — | — |
-| 1 | R1 | Review state (store key `review`) | game-review-R1 | — | pending | — | — |
-| 2 | U1 | Graph, move list, accuracy, book note, step buttons | game-review-U1 | — | pending | — | L1, M1, R1 |
-| 2 | U2 | Review board, key-moment card, phone bottom sheet | game-review-U2 | — | pending | — | L1, M1, R1 |
+| 1 | L1 | Look: grade tokens and review base styles | game-review-L1 | #70 | done | medium | — |
+| 1 | M1 | Review model: moves, grades, accuracy, his book, key moments, found rule | game-review-M1 | #70 | done | high | — |
+| 1 | A1 | Analysis runner and review searches on his engine | game-review-A1 | #70 | done | medium | — |
+| 1 | R1 | Review state (store key `review`) | game-review-R1 | #70 | done | high | — |
+| 2 | U1 | Graph, move list, accuracy, book note, step buttons | game-review-U1 | — | in progress | — | L1, M1, R1 |
+| 2 | U2 | Review board, key-moment card, phone bottom sheet | game-review-U2 | — | in progress | — | L1, M1, R1 |
 | 3 | W1 | Wire the review into the board, speed check, docs | game-review-W1 | — | pending | — | A1, M1, R1, U1, U2 |
 
 Plan branch `post-game-review`; wave heads `game-review-w1` to `game-review-w3`. The queue item "`{match && <ModeTabs />}` in Board.tsx" is already fixed (`Board.tsx:141` reads `<ModeTabs />`), so no slice carries it; the orchestrator can resolve it.
@@ -162,7 +162,7 @@ UI slices use these, their own layout CSS and only tokens; they never edit L1's 
   - `evalReceived`/`analysisFinished`/`analysisFailed`: ignored for another `gameId` or an index out of range; a repeat overwrites. `analysisRetried` turns `failed` into `analysing`.
   - Cursor: `stepTo`/`stepBy` clamp to `0..n`; both are ignored while the active moment is `trying`, `checking`, `wrong` or `check-failed`.
   - `momentOpened(ply)`: `active = ply`, cursor = `ply`, `sheetOpen = true`, status `trying` unless already done (then unchanged). `moveTried` → `checking`; `tryChecked` → `found` or `wrong`; `checkFailed` → `check-failed`; `answerShown` → `revealed`; `momentSkipped` → `skipped`. Each only applies to the active ply in a matching status; a done moment never changes again.
-- **Files owned:** `src/features/review/reviewSlice.ts` (new), `src/app/store.ts`, `src/features/review/__tests__/review-slice.test.ts` (new)
+- **Files owned:** `src/features/review/reviewSlice.ts` (new), `src/app/store.ts`, `src/features/review/__tests__/review-slice.test.ts` (new), `src/features/liem/__tests__/match-slice.test.ts` (added by the orchestrator: gate-1 exception)
 - **Success criteria:**
   - `[test] opening a new game's review starts fresh — review-slice.test.ts › opening a new review`
   - `[test] closing and reopening the same game keeps evals, moments and cursor, and resumes a stopped pass — review-slice.test.ts › back to game and review again`
