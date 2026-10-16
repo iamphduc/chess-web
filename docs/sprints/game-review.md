@@ -12,7 +12,7 @@ _From plan: docs/plans/post-game-review.md · Slug: game-review · Status: activ
 | 1 | R1 | Review state (store key `review`) | game-review-R1 | #70 | done | high | — |
 | 2 | U1 | Graph, move list, accuracy, book note, step buttons | game-review-U1 | #71 | done | medium | L1, M1, R1 |
 | 2 | U2 | Review board, key-moment card, phone bottom sheet | game-review-U2 | #71 | done | medium | L1, M1, R1 |
-| 3 | W1 | Wire the review into the board, speed check, docs | game-review-W1 | — | in progress | — | A1, M1, R1, U1, U2 |
+| 3 | W1 | Wire the review into the board, speed check, docs | game-review-W1 | — | done | medium | A1, M1, R1, U1, U2 |
 
 Plan branch `post-game-review`; wave heads `game-review-w1` to `game-review-w3`. The queue item "`{match && <ModeTabs />}` in Board.tsx" is already fixed (`Board.tsx:141` reads `<ModeTabs />`), so no slice carries it; the orchestrator can resolve it.
 
