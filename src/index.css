@@ -55,6 +55,18 @@
   --liem-line: #474747;
   --liem-start: #047A4F;
   --book-bar: #BBBE64;
+
+  /* Game review (post-game-review Look). src/styles/review.css uses only tokens for color.
+     Each grade color is 4.5:1 or more as text on #1F1F1F, #262626 and #333333;
+     chips put --grade-ink on the grade color. --grade-book is the --book-bar olive. */
+  --grade-inaccuracy: #6CB4EE;
+  --grade-mistake: #FF9F43;
+  --grade-blunder: #FF7A70;
+  --grade-best: #4CC38A;
+  --grade-book: #BBBE64;
+  --grade-ink: #1F1F1F;
+  --review-page: #333333;
+  --review-scrim: rgba(0, 0, 0, 0.35);
 }
 
 body {
