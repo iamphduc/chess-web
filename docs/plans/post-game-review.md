@@ -1,6 +1,6 @@
 # Plan: Post-game review against Liem
 
-_Generated: 2026-10-13 · Status: active · Grilled-with: grilling (fast)_
+_Generated: 2026-10-13 · Status: archived · Grilled-with: grilling (fast)_
 
 ## Goal
 After a vs-Liem game ends, the human can open a review that teaches. Stockfish at full strength grades each of the human's moves, the review marks the inaccuracies, mistakes and blunders, and it walks the human through their 3 biggest drops. At each one the human first tries to find the better move, then sees what they played, Stockfish's move and, when the position is in his book, what Liem played.

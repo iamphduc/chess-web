@@ -211,3 +211,8 @@ Speed check (`npm run preview`, Chrome through `chrome-devtools-axi`, games agai
 On desktop many searches reach depth 18 before 500 ms; throttled, nearly every search runs to the time limit. So a 40-move game (81 positions) takes about 30 s on desktop and about 40 s on a slow phone. A real phone wasn't at hand, and CDP's CPU throttling may not slow the Web Worker as much as a real phone would.
 Decision: `REVIEW_LIMITS` in `src/features/review/reviewLimits.ts` is `{ depth: 18, multiPv: 1, movetimeMs: 500 }`. The progress bar and key moments that show as soon as their moves are analysed make the wait usable.
 To change: `movetimeMs` there (`review-actions.test.ts › review limits` keeps it from 100 to 1000 ms). Lower it if a real phone is too slow; scores get noisier below about 300 ms.
+
+## 2026-10-16 — The move list shows your move while you look for a better one (agent default — override anytime)
+Context: At a key moment the card says "Your move is hidden", but the move list beside it (or under the phone sheet) still shows the move you played with its mark, for example `2. g4 ??`. The better move, which is the answer, stays hidden. Raised by the reviewer of PR #73.
+Decision: Keep showing it. You already know what you played, and the mark only says it was a mistake.
+To change: hide the played move's row (or its mark) in `MoveList` while the active moment is `trying`, and reword the card's "Your move is hidden" if needed.
