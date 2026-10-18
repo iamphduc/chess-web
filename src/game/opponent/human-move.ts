@@ -23,6 +23,18 @@ export const FREE_CAPTURE = 3;
 export const MAX_DROP_CP = 300;
 
 /**
+ * The band edges, in win % points lost. They equal `MISTAKE` and `BLUNDER`
+ * in `review/grade.ts` (a test holds them equal), so a band pick is graded a
+ * mistake or a blunder in the review. They are not imported: `grade.ts`
+ * imports this file.
+ */
+export const MISTAKE_LOSS = 20;
+export const BLUNDER_LOSS = 30;
+
+/** A band line's pick weight is `exp(-(loss - least) / BAND_TEMPERATURE)`. */
+export const BAND_TEMPERATURE = 10;
+
+/**
  * The side to move's chance to win, 0 to 100, from an engine score (the
  * Lichess formula). A mate for him is 100; a mate against him is 0.
  */
@@ -76,14 +88,25 @@ function weightedPick(
   random: () => number
 ): Candidate {
   const least = Math.min(...candidates.map((x) => x.loss));
-  const weighted = candidates
-    .map(({ c, loss }) => {
-      const extra = loss - least;
-      const weight =
-        temperature > 0 ? Math.exp(-extra / temperature) : extra === 0 ? 1 : 0;
-      return { c, weight };
-    })
-    .filter((x) => x.weight > 0);
+  const weighted = candidates.map(({ c, loss }) => {
+    const extra = loss - least;
+    const weight = temperature > 0 ? Math.exp(-extra / temperature) : extra === 0 ? 1 : 0;
+    return { c, weight };
+  });
+  return pickByWeight(weighted, random)!;
+}
+
+/**
+ * With `r = random()`, in order, the first candidate whose running share of
+ * the weight passes `r`; a draw outside [0, 1) falls to the last one with
+ * weight. `null`, with no draw, when no candidate has weight.
+ */
+function pickByWeight(
+  candidates: readonly { c: Candidate; weight: number }[],
+  random: () => number
+): Candidate | null {
+  const weighted = candidates.filter((x) => x.weight > 0);
+  if (weighted.length === 0) return null;
   const total = weighted.reduce((sum, x) => sum + x.weight, 0);
   const r = random();
   let running = 0;
@@ -95,10 +118,62 @@ function weightedPick(
 }
 
 /**
+ * Maybe a mistake or a blunder, from the lines that don't get him mated.
+ * Only when a band has a chance and he isn't well ahead is one `random()`
+ * drawn (the roll); otherwise nothing is drawn, so play is as without bands.
+ * `r < blunderChance` takes the blunder band (loss ≥ `BLUNDER_LOSS`, and
+ * under `blunderMaxCp` below the top when both are cp); the next
+ * `mistakeChance` of the roll takes the mistake band (`MISTAKE_LOSS` ≤ loss
+ * < `BLUNDER_LOSS`, under `MAX_DROP_CP`). Loss is from the top safe line,
+ * before the hang and free-capture rules, which don't apply here. A band
+ * line's weight is `exp(-(loss - least) / BAND_TEMPERATURE)`, times
+ * `hangWeight` when it hangs material. `null` (the normal pick follows) on
+ * no roll, a roll past both chances, or an empty band.
+ */
+function bandPick(
+  safe: readonly Candidate[],
+  profile: StepProfile,
+  random: () => number
+): Candidate | null {
+  const mistakeChance = profile.mistakeChance ?? 0;
+  const blunderChance = profile.blunderChance ?? 0;
+  const top = firstBest(safe, (a, b) => a.win > b.win);
+  if (!(mistakeChance + blunderChance > 0) || top.win >= AHEAD_WIN) return null;
+
+  const r = random();
+  const blunderMaxCp = profile.blunderMaxCp ?? 0;
+  let inBand: (c: Candidate, loss: number) => boolean;
+  if (r < blunderChance) {
+    inBand = (c, loss) =>
+      loss >= BLUNDER_LOSS &&
+      (!("cp" in top.score && "cp" in c.score) || dropCp(top.score, c.score) < blunderMaxCp);
+  } else if (r < blunderChance + mistakeChance) {
+    inBand = (c, loss) =>
+      loss >= MISTAKE_LOSS && loss < BLUNDER_LOSS && dropCp(top.score, c.score) < MAX_DROP_CP;
+  } else {
+    return null;
+  }
+
+  const band = safe
+    .map((c) => ({ c, loss: top.win - c.win }))
+    .filter(({ c, loss }) => inBand(c, loss));
+  if (band.length === 0) return null;
+  const least = Math.min(...band.map((x) => x.loss));
+  const hangWeight = profile.hangWeight ?? 0;
+  const weighted = band.map(({ c, loss }) => ({
+    c,
+    weight: Math.exp(-(loss - least) / BAND_TEMPERATURE) * (isHanging(c.net) ? hangWeight : 1),
+  }));
+  return pickByWeight(weighted, random);
+}
+
+/**
  * Picks the move a human of `profile`'s strength would play from the engine's
  * `lines`, or `null` when no line is legal in `state`. In order: drop illegal
  * lines; play the shortest seen mate within `forceMateIn`; avoid lines that
- * get him mated (or, when all do, play the longest mate); drop lines other
+ * get him mated (or, when all do, play the longest mate); maybe play a
+ * mistake or a blunder (`bandPick`, which draws one extra `random()` only
+ * when a band has a chance and he isn't well ahead); drop lines other
  * than the best that hang material; drop lines that skip a free capture
  * (`FREE_CAPTURE`); then, unless well ahead, maybe slip to a line between
  * `maxLoss` and `slipMaxLoss`; else pick a line within the loss limit by
@@ -141,6 +216,10 @@ export function chooseHumanMove(
     return firstBest(candidates, (a, b) => -mateOf(a.score)! > -mateOf(b.score)!).uci;
   }
   candidates = safe;
+
+  // Maybe a mistake or a blunder (the bands draw only when they may play).
+  const slip = bandPick(candidates, profile, random);
+  if (slip !== null) return slip.uci;
 
   // 4. Keep the best line; drop any other that hangs material.
   const best = firstBest(candidates, (a, b) => a.win > b.win);

@@ -29,7 +29,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "book:import": "tsx scripts/book/import-book.ts",
-    "calibrate": "tsx scripts/calibrate/calibrate.ts"
+    "calibrate": "tsx scripts/calibrate/calibrate.ts",
+    "baseline": "tsx scripts/ladder/baseline.ts"
   },
   "devDependencies": {
     "@types/uuid": "^9.0.0",

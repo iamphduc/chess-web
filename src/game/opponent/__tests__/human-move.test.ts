@@ -3,7 +3,14 @@ import { applyMove } from "../../engine/engine";
 import { EngineSquare, GameState, initialGameState } from "../../engine/game-state";
 import { PieceType } from "../../piece-type";
 import { Score } from "../engine/lines";
-import { AHEAD_WIN, chooseHumanMove, winPercent } from "../human-move";
+import { BLUNDER, MISTAKE } from "../../review/grade";
+import {
+  AHEAD_WIN,
+  BLUNDER_LOSS,
+  MISTAKE_LOSS,
+  chooseHumanMove,
+  winPercent,
+} from "../human-move";
 import { uciToMove } from "../position";
 import { STEP_PROFILES, StepProfile } from "../step-profiles";
 
@@ -51,6 +58,10 @@ function profile(over: Partial<StepProfile> = {}): StepProfile {
     slipMaxLoss: 10,
     aheadMaxLoss: 10,
     forceMateIn: Infinity,
+    mistakeChance: 0,
+    blunderChance: 0,
+    blunderMaxCp: 0,
+    hangWeight: 0,
     ...over,
   };
 }
@@ -541,5 +552,280 @@ describe("chooseHumanMove: drops of a piece in centipawns", () => {
     ];
     const p = { ...STEP_PROFILES[1400], slipChance: 1 };
     expect(tally(lines, START, p, 23)).toEqual(new Map([["g1f3", 500]]));
+  });
+});
+
+/**
+ * The cp score whose win % is `win`, found by bisection: exactly `win` in
+ * floating point when one exists (so band edges can be tested at their exact
+ * value), else the closest. Tests that need the exact edge assert it.
+ */
+function exactCp(win: number): Score {
+  let lo = -5000;
+  let hi = 5000;
+  for (let i = 0; i < 200; i++) {
+    const mid = (lo + hi) / 2;
+    if (winPercent({ cp: mid }) < win) lo = mid;
+    else hi = mid;
+  }
+  const off = (cp: number) => Math.abs(winPercent({ cp }) - win);
+  return { cp: off(lo) <= off(hi) ? lo : hi };
+}
+
+/** A random whose draws come from `values` in order, then from `rest`. */
+function scripted(values: number[], rest: () => number = noRandom): () => number {
+  let i = 0;
+  return () => (i < values.length ? values[i++] : rest());
+}
+
+/** The set of moves picked over `n` seeded runs. */
+function seen(
+  lines: { move: string; score: Score }[],
+  state: GameState,
+  p: StepProfile,
+  seed: number,
+  n = 2000
+): Set<string | null> {
+  return new Set(tally(lines, state, p, seed, n).keys());
+}
+
+describe("chooseHumanMove: mistake and blunder bands", () => {
+  it("band edges match the review", () => {
+    expect(MISTAKE_LOSS).toBe(MISTAKE);
+    expect(BLUNDER_LOSS).toBe(BLUNDER);
+    expect([MISTAKE_LOSS, BLUNDER_LOSS]).toEqual([20, 30]);
+  });
+
+  it("mistake band", () => {
+    // From a top line at exactly 50: losses 0, 20 (in), 19 (out), 30 (out),
+    // 23 (in, about 270 cp down).
+    const lines = [
+      { move: MOVES[0], score: { cp: 0 } },
+      { move: MOVES[1], score: exactCp(30) },
+      { move: MOVES[2], score: exactCp(31) },
+      { move: MOVES[3], score: exactCp(20) },
+      { move: MOVES[4], score: exactCp(27) },
+    ];
+    expect(lines.map((l) => 50 - winPercent(l.score))).toEqual([0, 20, 19, 30, 23]);
+    const p = profile({ mistakeChance: 1, hangWeight: 1 });
+    expect(seen(lines, START, p, 31)).toEqual(new Set([MOVES[1], MOVES[4]]));
+    // A roll exactly at blunderChance picks the mistake band.
+    const at = profile({
+      mistakeChance: 0.5,
+      blunderChance: 0.25,
+      blunderMaxCp: 1000,
+      hangWeight: 1,
+    });
+    for (const pickDraw of [0, 0.3, 0.6, 0.99]) {
+      const move = chooseHumanMove(lines, START, at, scripted([0.25, pickDraw]));
+      expect([MOVES[1], MOVES[4]]).toContain(move);
+    }
+    // A mistake 300 cp or more below the top is out (MAX_DROP_CP).
+    const cpCap = [
+      { move: MOVES[0], score: { cp: 100 } },
+      { move: MOVES[1], score: { cp: -200 } },
+      { move: MOVES[2], score: { cp: -199 } },
+    ];
+    const capLoss = cpCap.map((l) => winPercent(cpCap[0].score) - winPercent(l.score));
+    expect(capLoss[1]).toBeGreaterThanOrEqual(20);
+    expect(capLoss[1]).toBeLessThan(30);
+    expect(seen(cpCap, START, p, 32)).toEqual(new Set([MOVES[2]]));
+  });
+
+  it("blunder band", () => {
+    // From a top line at exactly 50: losses 0, 30 (in, 376 cp down),
+    // 29 (out), and lines 450, 399 and 400 cp down (all past 30).
+    const lines = [
+      { move: MOVES[0], score: { cp: 0 } },
+      { move: MOVES[1], score: exactCp(20) },
+      { move: MOVES[2], score: exactCp(21) },
+      { move: MOVES[3], score: { cp: -450 } },
+      { move: MOVES[4], score: { cp: -399 } },
+      { move: MOVES[5], score: { cp: -400 } },
+    ];
+    expect(50 - winPercent(lines[1].score)).toBe(30);
+    expect(50 - winPercent(lines[2].score)).toBeCloseTo(29, 9);
+    const p = profile({ blunderChance: 1, blunderMaxCp: 400, hangWeight: 1 });
+    expect(seen(lines, START, p, 33)).toEqual(new Set([MOVES[1], MOVES[4]]));
+    // A roll just under blunderChance picks the blunder band.
+    const split = profile({
+      mistakeChance: 0.5,
+      blunderChance: 0.25,
+      blunderMaxCp: 400,
+      hangWeight: 1,
+    });
+    const move = chooseHumanMove(lines, START, split, scripted([0.2499, 0.5]));
+    expect([MOVES[1], MOVES[4]]).toContain(move);
+    // blunderMaxCp 0 lets no blunder through: the band is empty.
+    const none = profile({ blunderChance: 1, blunderMaxCp: 0, hangWeight: 1, maxLoss: 10 });
+    expect(seen(lines, START, none, 34)).toEqual(new Set([MOVES[0]]));
+  });
+
+  it("empty band", () => {
+    // Losses 0, 5 (within maxLoss) and 40: no line in either band.
+    const lines = [
+      { move: MOVES[0], score: { cp: 0 } },
+      { move: MOVES[1], score: exactCp(45) },
+      { move: MOVES[2], score: exactCp(10) },
+    ];
+    const p = profile({ mistakeChance: 1, temperature: 4, maxLoss: 10, hangWeight: 1 });
+    const plain = profile({ temperature: 4, maxLoss: 10 });
+    for (const pickDraw of [0, 0.4, 0.7, 0.99]) {
+      const rec = recorded(scripted([0.5, pickDraw]));
+      const move = chooseHumanMove(lines, START, p, rec.random);
+      // One roll, then the normal pick's single draw: no further band draw.
+      expect(rec.draws).toHaveLength(2);
+      expect(move).toBe(chooseHumanMove(lines, START, plain, scripted([pickDraw])));
+    }
+    // A band whose every weight is 0 (only a hanging line, hangWeight 0)
+    // falls to the normal pick the same way.
+    const state = play(START, "e2e4", "e7e5", "g1f3", "b8c6");
+    const hanging = [
+      { move: "f1c4", score: { cp: 0 } },
+      { move: "f3g5", score: exactCp(30) },
+      { move: "d2d3", score: { cp: -20 } },
+    ];
+    const zero = profile({ mistakeChance: 1, hangWeight: 0, maxLoss: 10 });
+    const plainHang = profile({ maxLoss: 10 });
+    for (const pickDraw of [0, 0.5, 0.99]) {
+      const rec = recorded(scripted([0.1, pickDraw]));
+      const move = chooseHumanMove(hanging, state, zero, rec.random);
+      expect(rec.draws).toHaveLength(2);
+      expect(move).toBe(chooseHumanMove(hanging, state, plainHang, scripted([pickDraw])));
+    }
+  });
+
+  it("mate before roll", () => {
+    const lines = [
+      { move: MOVES[0], score: { cp: 0 } },
+      { move: MOVES[1], score: { mate: 2 } },
+      { move: MOVES[2], score: exactCp(30) },
+      { move: MOVES[3], score: exactCp(20) },
+    ];
+    const p = profile({
+      forceMateIn: 2,
+      mistakeChance: 0.5,
+      blunderChance: 0.5,
+      blunderMaxCp: 1000,
+      hangWeight: 1,
+    });
+    expect(chooseHumanMove(lines, START, p, noRandom)).toBe(MOVES[1]);
+  });
+
+  it("band never walks into mate", () => {
+    const lines = [
+      { move: MOVES[0], score: { cp: 0 } },
+      { move: MOVES[1], score: { mate: -1 } },
+      { move: MOVES[2], score: { mate: 0 } },
+      { move: MOVES[3], score: exactCp(28) },
+      { move: MOVES[4], score: exactCp(18) },
+      { move: MOVES[5], score: { mate: -3 } },
+    ];
+    const p = profile({
+      mistakeChance: 0.5,
+      blunderChance: 0.5,
+      blunderMaxCp: 100_000,
+      hangWeight: 1,
+    });
+    expect(seen(lines, START, p, 35, 5000)).toEqual(new Set([MOVES[3], MOVES[4]]));
+    // Only mated lines past the top: both bands are empty.
+    const onlyMated = [lines[0], lines[1], lines[2], lines[5]];
+    expect(seen(onlyMated, START, p, 36)).toEqual(new Set([MOVES[0]]));
+  });
+
+  it("no roll draws nothing", () => {
+    // Zero chances: one draw (the normal pick), as before.
+    const lines = [
+      { move: MOVES[0], score: { cp: 0 } },
+      { move: MOVES[1], score: exactCp(45) },
+      { move: MOVES[2], score: exactCp(28) },
+    ];
+    const zero = profile({ maxLoss: 10, temperature: 4 });
+    const rec = recorded(seeded(37));
+    for (let i = 0; i < 300; i++) {
+      const before = rec.draws.length;
+      chooseHumanMove(lines, START, zero, rec.random);
+      expect(rec.draws.length - before).toBe(1);
+    }
+    // Fields missing (older profiles) behave as zero.
+    const legacy: StepProfile = { ...zero };
+    delete legacy.mistakeChance;
+    delete legacy.blunderChance;
+    delete legacy.blunderMaxCp;
+    delete legacy.hangWeight;
+    expect(tally(lines, START, legacy, 38, 1000)).toEqual(tally(lines, START, zero, 38, 1000));
+
+    // Well ahead (top at exactly AHEAD_WIN, and above): no roll, and the
+    // same picks draw for draw as with zero chances.
+    const keen = profile({
+      maxLoss: 10,
+      aheadMaxLoss: 10,
+      temperature: 4,
+      mistakeChance: 0.5,
+      blunderChance: 0.5,
+      blunderMaxCp: 100_000,
+      hangWeight: 1,
+    });
+    const calm = { ...keen, mistakeChance: 0, blunderChance: 0 };
+    for (const topWin of [AHEAD_WIN, 90]) {
+      const ahead = [
+        { move: MOVES[0], score: exactCp(topWin) },
+        { move: MOVES[1], score: exactCp(topWin - 4) },
+        { move: MOVES[2], score: exactCp(topWin - 22) },
+        { move: MOVES[3], score: exactCp(topWin - 35) },
+      ];
+      const a = recorded(seeded(39));
+      const b = recorded(seeded(39));
+      for (let i = 0; i < 300; i++) {
+        expect(chooseHumanMove(ahead, START, keen, a.random)).toBe(
+          chooseHumanMove(ahead, START, calm, b.random)
+        );
+      }
+      expect(a.draws).toEqual(b.draws);
+      expect(a.draws).toHaveLength(300);
+    }
+    // Just under AHEAD_WIN the roll is drawn: one extra draw.
+    const under = [
+      { move: MOVES[0], score: exactCp(84) },
+      { move: MOVES[1], score: exactCp(80) },
+    ];
+    const once = recorded(scripted([0.99, 0.5]));
+    chooseHumanMove(under, START, keen, once.random);
+    expect(once.draws).toHaveLength(2);
+  });
+
+  it("hang weight", () => {
+    // After 1.e4 e5 2.Nf3 Nc6, Ng5 hangs the knight. Ng5 loses 20, d3 22.
+    const state = play(START, "e2e4", "e7e5", "g1f3", "b8c6");
+    const lines = [
+      { move: "f1c4", score: { cp: 0 } },
+      { move: "f3g5", score: exactCp(30) },
+      { move: "d2d3", score: exactCp(28) },
+    ];
+    const never = tally(lines, state, profile({ mistakeChance: 1, hangWeight: 0 }), 40, 2000);
+    expect(never).toEqual(new Map([["d2d3", 2000]]));
+    // Weights exp(-(loss - least)/10), times hangWeight for Ng5.
+    const n = 10_000;
+    for (const hangWeight of [1, 0.5]) {
+      const counts = tally(lines, state, profile({ mistakeChance: 1, hangWeight }), 41, n);
+      const g5 = hangWeight;
+      const d3 = Math.exp(-2 / 10);
+      expect(Math.abs((counts.get("f3g5") ?? 0) / n - g5 / (g5 + d3))).toBeLessThan(0.02);
+      expect((counts.get("f3g5") ?? 0) + (counts.get("d2d3") ?? 0)).toBe(n);
+    }
+  }, 30_000);
+
+  it("band skips free capture", () => {
+    // exf4 wins the queen; on a mistake roll Be7 (loss 20) is still picked.
+    const lines = [
+      { move: "e5f4", score: { cp: 0 } },
+      { move: "f8e7", score: exactCp(30) },
+    ];
+    const p = profile({ mistakeChance: 1, hangWeight: 1 });
+    expect(tally(lines, QUEEN_EN_PRISE, p, 42)).toEqual(new Map([["f8e7", 500]]));
+    // Without a roll the capture is never skipped.
+    expect(tally(lines, QUEEN_EN_PRISE, profile({ maxLoss: 30 }), 43)).toEqual(
+      new Map([["e5f4", 500]])
+    );
   });
 });

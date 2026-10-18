@@ -3,9 +3,11 @@ import { winPercent } from "../../opponent/human-move";
 import {
   BLUNDER,
   gradeForDrop,
+  gradeForDropAt,
   gradeMove,
   INACCURACY,
   isFound,
+  LICHESS_LEVELS,
   MISTAKE,
   moveAccuracy,
   moveDrop,
@@ -22,6 +24,59 @@ const theirs = (e: PositionEval): PositionEval =>
 describe("grade levels", () => {
   it("are 10, 20 and 30 win % points", () => {
     expect([INACCURACY, MISTAKE, BLUNDER]).toEqual([10, 20, 30]);
+  });
+});
+
+describe("grade levels argument", () => {
+  it("Lichess's levels are 5, 10 and 15", () => {
+    expect(LICHESS_LEVELS).toEqual([5, 10, 15]);
+  });
+
+  it("with no levels grades as today", () => {
+    for (const n of [-30, -100, -200, -400, -700, -1000, -2000]) {
+      const g = gradeMove(cp(0), theirs(cp(n)));
+      expect(gradeMove(cp(0), theirs(cp(n)), [INACCURACY, MISTAKE, BLUNDER])).toEqual(g);
+      expect(g.grade).toBe(gradeForDrop(g.drop));
+    }
+  });
+
+  it("with LICHESS_LEVELS a 12-point drop is a mistake", () => {
+    // Find the cp after the move that loses 12 win % points from 50.
+    let n = 0;
+    while (gradeMove(cp(0), theirs(cp(n))).drop < 12) n -= 1;
+    const g = gradeMove(cp(0), theirs(cp(n)), LICHESS_LEVELS);
+    expect(g.drop).toBeGreaterThanOrEqual(12);
+    expect(g.drop).toBeLessThan(12.2);
+    expect(g.grade).toBe("mistake");
+    expect(gradeMove(cp(0), theirs(cp(n))).grade).toBe("inaccuracy");
+  });
+
+  it("levels are inclusive edges, like the review's", () => {
+    expect(gradeForDropAt(5, LICHESS_LEVELS)).toBe("inaccuracy");
+    expect(gradeForDropAt(4.99, LICHESS_LEVELS)).toBeNull();
+    expect(gradeForDropAt(10, LICHESS_LEVELS)).toBe("mistake");
+    expect(gradeForDropAt(15, LICHESS_LEVELS)).toBe("blunder");
+    expect(gradeForDropAt(14.99, LICHESS_LEVELS)).toBe("mistake");
+  });
+
+  it("the mate rules are the same at every level set", () => {
+    const pairs: [PositionEval, PositionEval][] = [
+      [mate(3), theirs(cp(1200))],
+      [mate(3), theirs(cp(800))],
+      [mate(3), theirs(cp(300))],
+      [mate(3), theirs(mate(-2))],
+      [mate(3), theirs(mate(2))],
+      [cp(-1200), theirs(mate(-2))],
+      [cp(-800), theirs(mate(-2))],
+      [cp(0), theirs(mate(-2))],
+      [mate(-3), theirs(mate(-1))],
+      [mate(1), { score: { mate: 0 }, best: null }],
+    ];
+    for (const [b, a] of pairs) {
+      expect(gradeMove(b, a, LICHESS_LEVELS).grade).toBe(gradeMove(b, a).grade);
+    }
+    // A mate rule wins over the drop: 800 cp after a seen mate is a mistake, not a blunder.
+    expect(gradeMove(mate(3), theirs(cp(800)), LICHESS_LEVELS).grade).toBe("mistake");
   });
 });
 

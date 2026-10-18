@@ -167,6 +167,20 @@
   border-radius: 999px;
 }
 
+/* Sparring bot's avatar: a ♞ glyph in the 40 x 40 box his photo fills (plan sparring-ladder, ## Look). */
+.liem-sparring-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--liem-text);
+  background-color: var(--liem-card);
+  user-select: none;
+}
+
 /* "Stockfish" pill out of book: neutral tones so gold stays for his book.
    The 1px border comes out of the padding, so the pill keeps the badge's size. */
 .liem-badge--engine {

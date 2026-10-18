@@ -5,7 +5,7 @@ import type { StrengthStep } from "./strength";
 
 /** How one strength step searches and picks among Stockfish's lines. */
 export interface StepProfile {
-  /** Depth 1–20, multiPv 1–6, movetimeMs 100–1000 (the backstop). */
+  /** Depth 1–20, multiPv 1–10, movetimeMs 100–1000 (the backstop). */
   search: SearchLimits;
   /** Normal loss limit, in win % points, ≥ 0. */
   maxLoss: number;
@@ -19,6 +19,19 @@ export interface StepProfile {
   aheadMaxLoss: number;
   /** Always plays a seen mate in ≤ this many moves; Infinity = any; 0 = never forced. */
   forceMateIn: number;
+  /*
+   * The mistake and blunder bands (see `chooseHumanMove`). Every entry in
+   * STEP_PROFILES sets them; they are optional only so older hand-built
+   * profiles still type-check, and a missing one counts as 0.
+   */
+  /** 0–1, the chance per move of a mistake (a line losing 20 to 30 win %). */
+  mistakeChance?: number;
+  /** 0–1, the chance per move of a blunder (losing 30 or more); with `mistakeChance` ≤ 1. */
+  blunderChance?: number;
+  /** cp ≥ 0: a blunder falls less than this many centipawns below the best line. */
+  blunderMaxCp?: number;
+  /** 0–1, the pick weight of a band line that hangs material (1 = like any other). */
+  hangWeight?: number;
 }
 
 /**
@@ -38,6 +51,10 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     slipMaxLoss: 15,
     aheadMaxLoss: 2,
     forceMateIn: 2,
+    mistakeChance: 0,
+    blunderChance: 0,
+    blunderMaxCp: 0,
+    hangWeight: 0,
   },
   1700: {
     search: { depth: 9, multiPv: 4, movetimeMs: 500 },
@@ -47,6 +64,10 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     slipMaxLoss: 12,
     aheadMaxLoss: 1.5,
     forceMateIn: 3,
+    mistakeChance: 0,
+    blunderChance: 0,
+    blunderMaxCp: 0,
+    hangWeight: 0,
   },
   1900: {
     search: { depth: 10, multiPv: 4, movetimeMs: 600 },
@@ -56,6 +77,10 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     slipMaxLoss: 10,
     aheadMaxLoss: 1.25,
     forceMateIn: 4,
+    mistakeChance: 0,
+    blunderChance: 0,
+    blunderMaxCp: 0,
+    hangWeight: 0,
   },
   2100: {
     search: { depth: 11, multiPv: 4, movetimeMs: 700 },
@@ -65,6 +90,10 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     slipMaxLoss: 8,
     aheadMaxLoss: 1,
     forceMateIn: 6,
+    mistakeChance: 0,
+    blunderChance: 0,
+    blunderMaxCp: 0,
+    hangWeight: 0,
   },
   2300: {
     search: { depth: 12, multiPv: 4, movetimeMs: 800 },
@@ -74,6 +103,10 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     slipMaxLoss: 6,
     aheadMaxLoss: 0.75,
     forceMateIn: 10,
+    mistakeChance: 0,
+    blunderChance: 0,
+    blunderMaxCp: 0,
+    hangWeight: 0,
   },
   2500: {
     search: { depth: 14, multiPv: 4, movetimeMs: 900 },
@@ -83,6 +116,10 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     slipMaxLoss: 4,
     aheadMaxLoss: 0.5,
     forceMateIn: Infinity,
+    mistakeChance: 0,
+    blunderChance: 0,
+    blunderMaxCp: 0,
+    hangWeight: 0,
   },
   full: {
     search: { depth: 18, multiPv: 4, movetimeMs: 1000 },
@@ -92,5 +129,9 @@ export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
     slipMaxLoss: 0,
     aheadMaxLoss: 0,
     forceMateIn: Infinity,
+    mistakeChance: 0,
+    blunderChance: 0,
+    blunderMaxCp: 0,
+    hangWeight: 0,
   },
 };

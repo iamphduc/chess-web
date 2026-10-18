@@ -17,7 +17,7 @@ export interface UciTimers {
 /** Extra time past movetime before a search counts as hung. */
 export const TIMEOUT_GRACE_MS = 5000;
 export const MAX_DEPTH = 30;
-export const MAX_MULTIPV = 6;
+export const MAX_MULTIPV = 10;
 
 interface Search {
   fen: string;
