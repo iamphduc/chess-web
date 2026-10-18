@@ -1,0 +1,200 @@
+{
+  "format": 1,
+  "generated": "2026-10-18",
+  "source": "Lichess public API, no login: rated standard blitz and rapid games with Lichess computer analysis, from players in recent finished arenas; both players inside the rating band; graded with the review's gradeMove from skipPlies on.",
+  "skipPlies": 10,
+  "levels": {
+    "1400": {
+      "ratingMin": 1300,
+      "ratingMax": 1500,
+      "games": 150,
+      "droppedGames": 0,
+      "speeds": {
+        "blitz": 103,
+        "rapid": 47
+      },
+      "lowSample": false,
+      "rates": {
+        "games": 150,
+        "sides": 300,
+        "gradedMoves": 8794,
+        "per40": {
+          "review": {
+            "inaccuracy": 3.2022,
+            "mistake": 1.3327,
+            "blunder": 1.4601
+          },
+          "lichess": {
+            "inaccuracy": 4.2711,
+            "mistake": 2.1424,
+            "blunder": 3.4933
+          },
+          "hung": 0.7369,
+          "missedCapture": 0.3775
+        },
+        "avgLoss": 4.5467,
+        "accuracy": 75.92
+      }
+    },
+    "1700": {
+      "ratingMin": 1600,
+      "ratingMax": 1800,
+      "games": 150,
+      "droppedGames": 0,
+      "speeds": {
+        "blitz": 127,
+        "rapid": 23
+      },
+      "lowSample": false,
+      "rates": {
+        "games": 150,
+        "sides": 300,
+        "gradedMoves": 8140,
+        "per40": {
+          "review": {
+            "inaccuracy": 2.6978,
+            "mistake": 1.027,
+            "blunder": 1.4251
+          },
+          "lichess": {
+            "inaccuracy": 4.3538,
+            "mistake": 1.7887,
+            "blunder": 3.1204
+          },
+          "hung": 0.5995,
+          "missedCapture": 0.2801
+        },
+        "avgLoss": 4.3081,
+        "accuracy": 77.3733
+      }
+    },
+    "1900": {
+      "ratingMin": 1800,
+      "ratingMax": 2000,
+      "games": 150,
+      "droppedGames": 0,
+      "speeds": {
+        "blitz": 141,
+        "rapid": 9
+      },
+      "lowSample": false,
+      "rates": {
+        "games": 150,
+        "sides": 300,
+        "gradedMoves": 8895,
+        "per40": {
+          "review": {
+            "inaccuracy": 2.6802,
+            "mistake": 1.0838,
+            "blunder": 1.0343
+          },
+          "lichess": {
+            "inaccuracy": 4.0112,
+            "mistake": 1.8347,
+            "blunder": 2.7161
+          },
+          "hung": 0.4767,
+          "missedCapture": 0.1439
+        },
+        "avgLoss": 3.7932,
+        "accuracy": 79.78
+      }
+    },
+    "2100": {
+      "ratingMin": 2000,
+      "ratingMax": 2200,
+      "games": 150,
+      "droppedGames": 0,
+      "speeds": {
+        "blitz": 131,
+        "rapid": 19
+      },
+      "lowSample": false,
+      "rates": {
+        "games": 150,
+        "sides": 300,
+        "gradedMoves": 9641,
+        "per40": {
+          "review": {
+            "inaccuracy": 2.2861,
+            "mistake": 0.9045,
+            "blunder": 0.863
+          },
+          "lichess": {
+            "inaccuracy": 3.5349,
+            "mistake": 1.5393,
+            "blunder": 2.3649
+          },
+          "hung": 0.307,
+          "missedCapture": 0.1701
+        },
+        "avgLoss": 3.3731,
+        "accuracy": 82.2833
+      }
+    },
+    "2300": {
+      "ratingMin": 2200,
+      "ratingMax": 2400,
+      "games": 150,
+      "droppedGames": 0,
+      "speeds": {
+        "blitz": 143,
+        "rapid": 7
+      },
+      "lowSample": false,
+      "rates": {
+        "games": 150,
+        "sides": 300,
+        "gradedMoves": 9380,
+        "per40": {
+          "review": {
+            "inaccuracy": 2.0299,
+            "mistake": 0.7846,
+            "blunder": 0.8273
+          },
+          "lichess": {
+            "inaccuracy": 3.3689,
+            "mistake": 1.3689,
+            "blunder": 2.1365
+          },
+          "hung": 0.3241,
+          "missedCapture": 0.1151
+        },
+        "avgLoss": 3.2133,
+        "accuracy": 81.9
+      }
+    },
+    "2500": {
+      "ratingMin": 2400,
+      "ratingMax": 2600,
+      "games": 150,
+      "droppedGames": 0,
+      "speeds": {
+        "blitz": 148,
+        "rapid": 2
+      },
+      "lowSample": false,
+      "rates": {
+        "games": 150,
+        "sides": 300,
+        "gradedMoves": 10696,
+        "per40": {
+          "review": {
+            "inaccuracy": 2.1952,
+            "mistake": 0.8078,
+            "blunder": 0.8227
+          },
+          "lichess": {
+            "inaccuracy": 3.1414,
+            "mistake": 1.537,
+            "blunder": 2.199
+          },
+          "hung": 0.374,
+          "missedCapture": 0.258
+        },
+        "avgLoss": 3.2929,
+        "accuracy": 82.1533
+      }
+    }
+  }
+}
