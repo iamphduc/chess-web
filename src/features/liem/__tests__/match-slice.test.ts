@@ -16,7 +16,10 @@ import {
 } from "../matchSlice";
 
 const reducer = matchSlice.reducer;
-const initial = (): MatchState => reducer(undefined, { type: "@@init" });
+/** The state the page opens with: vs Liem, card open. */
+const pageLoad = (): MatchState => reducer(undefined, { type: "@@init" });
+/** Two players, after one click on its tab. */
+const initial = (): MatchState => reducer(pageLoad(), setMode("two-player"));
 
 const CHOICE: LastChoice = { gameId: 1, ply: 1, uci: "e7e5", source: "book", lookup: null };
 
@@ -29,7 +32,22 @@ function inGame(): MatchState {
 }
 
 describe("setMode", () => {
-  it("has the contract defaults", () => {
+  it("opens on vs Liem", () => {
+    expect(pageLoad()).toEqual({
+      mode: "liem",
+      setupOpen: true,
+      colorPick: "white",
+      strength: 2100,
+      lastChoice: null,
+      opponentStatus: "idle",
+    });
+    // The picks work at once, with no tab click.
+    let s = reducer(pageLoad(), setColorPick("black"));
+    s = reducer(s, setStrength(1400));
+    expect(s).toMatchObject({ mode: "liem", setupOpen: true, colorPick: "black", strength: 1400 });
+  });
+
+  it("two players after one click keeps the contract defaults", () => {
     expect(initial()).toEqual({
       mode: "two-player",
       setupOpen: false,
@@ -38,6 +56,11 @@ describe("setMode", () => {
       lastChoice: null,
       opponentStatus: "idle",
     });
+  });
+
+  it("the vs Liem tab at page load keeps the state as is", () => {
+    const load = pageLoad();
+    expect(reducer(load, setMode("liem"))).toBe(load);
   });
 
   it("keeps the same state object for the same mode", () => {
@@ -153,9 +176,9 @@ describe("createAppStore", () => {
     const a = createAppStore();
     const b = createAppStore();
     expect(Object.keys(a.getState()).sort()).toEqual(["board", "match", "review", "view"]);
-    a.dispatch(setMode("liem"));
-    expect(a.getState().match.mode).toBe("liem");
-    expect(b.getState().match.mode).toBe("two-player");
+    a.dispatch(setMode("two-player"));
+    expect(a.getState().match.mode).toBe("two-player");
+    expect(b.getState().match.mode).toBe("liem");
     expect(b.getState().board).toEqual(createAppStore().getState().board);
   });
 });

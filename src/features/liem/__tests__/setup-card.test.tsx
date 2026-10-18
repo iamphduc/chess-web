@@ -49,13 +49,16 @@ describe("mode tabs", () => {
   });
 
   it("aria-selected follows match.mode", () => {
-    const two = tagsWithRole(render(createAppStore(), <ModeTabs />), "tab");
+    // The page opens on vs Liem.
+    const load = tagsWithRole(render(createAppStore(), <ModeTabs />), "tab");
+    expect(load[0]).toContain('aria-selected="true"');
+    expect(load[1]).toContain('aria-selected="false"');
+
+    const store = createAppStore();
+    store.dispatch(switchMode("two-player"));
+    const two = tagsWithRole(render(store, <ModeTabs />), "tab");
     expect(two[0]).toContain('aria-selected="false"');
     expect(two[1]).toContain('aria-selected="true"');
-
-    const liem = tagsWithRole(render(liemStore(), <ModeTabs />), "tab");
-    expect(liem[0]).toContain('aria-selected="true"');
-    expect(liem[1]).toContain('aria-selected="false"');
   });
 
   it("only the selected tab is in the tab order", () => {
@@ -98,15 +101,16 @@ describe("setup card markup", () => {
     expect(html).not.toMatch(/>Full</);
   });
 
-  it("full strength shows 2732 and the word Full, all steps lit", () => {
+  it("the Liem step lights every step and shows ★ Liem in gold", () => {
     const store = liemStore();
     store.dispatch(setStrength("full"));
     const html = render(store, <SetupCard />);
     const steps = tagsWithRole(html, "radio").filter((t) => t.includes("liem-step"));
     expect(steps.every((t) => t.includes("liem-step--lit"))).toBe(true);
     expect(steps[6]).toContain('aria-checked="true"');
-    expect(html).toMatch(/class="liem-elo"[^>]*>2732</);
-    expect(html).toMatch(/>Full</);
+    expect(html).toMatch(/class="liem-elo"[^>]*>★ Liem</);
+    expect(html).not.toMatch(/>Full</);
+    expect(html).not.toMatch(/class="liem-elo"[^>]*>2732</);
   });
 
   it("each step has an accessible name", () => {
@@ -119,7 +123,7 @@ describe("setup card markup", () => {
       "2100",
       "2300",
       "2500",
-      "Full (2732)",
+      "Liem (2732)",
     ]);
   });
 
@@ -129,27 +133,48 @@ describe("setup card markup", () => {
     store.dispatch(setStrength(1400));
     expect(valueText(render(store, <SetupCard />))).toBe("about 1400");
     store.dispatch(setStrength("full"));
-    const full = valueText(render(store, <SetupCard />));
-    expect(full).toMatch(/^Full/);
-    expect(full).toMatch(/about 2732$/);
+    expect(valueText(render(store, <SetupCard />))).toBe("★ Liem");
   });
 
-  it("shows the Stockfish line under the steps, above Start game", () => {
-    const LINE = "Openings from his games, then standard Stockfish 18 at this strength.";
+  it("shows the engine line under the steps, above Start game", () => {
+    const LINE = "A sparring bot plays his openings, then Stockfish at about 2100.";
     const html = render(liemStore(), <SetupCard />);
     const line = html.match(/<p class="([^"]*)">([^<]*)<\/p>/g)?.find((p) => p.includes("Stockfish"));
     expect(line).toBeDefined();
     expect(line).toMatch(new RegExp(`^<p class="[^"]*\\bliem-card__sub\\b[^"]*">${LINE}</p>$`));
-    const steps = html.indexOf('aria-label="Full (2732)"');
+    const steps = html.indexOf('aria-label="Liem (2732)"');
     const at = html.indexOf(LINE);
     const start = html.indexOf(">Start game</button>");
     expect(steps).toBeGreaterThan(-1);
     expect(at).toBeGreaterThan(steps);
     expect(start).toBeGreaterThan(at);
-    // The line names the engine at every step, Full included.
+  });
+
+  it("setup card per level", () => {
     const store = liemStore();
+    const engineLine = (html: string) => html.match(/class="[^"]*setup-card__engine[^"]*">([^<]*)</)?.[1];
+    const stepLabels = (html: string) =>
+      tagsWithRole(html, "radio")
+        .filter((t) => t.includes("liem-step"))
+        .map((t) => t.match(/aria-label="([^"]+)"/)?.[1]);
+
+    for (const n of [1400, 1700, 1900, 2100, 2300, 2500] as const) {
+      store.dispatch(setStrength(n));
+      const html = render(store, <SetupCard />);
+      expect(valueText(html)).toBe(`about ${n}`);
+      expect(engineLine(html)).toBe(`A sparring bot plays his openings, then Stockfish at about ${n}.`);
+      expect(html).not.toContain("★ Liem");
+      // The dialog stays his challenge at every level.
+      expect(tagsWithRole(html, "dialog")[0]).toContain('aria-label="Challenge Le Quang Liem"');
+    }
+
     store.dispatch(setStrength("full"));
-    expect(render(store, <SetupCard />)).toContain(LINE);
+    const html = render(store, <SetupCard />);
+    expect(valueText(html)).toBe("★ Liem");
+    expect(html).not.toMatch(/class="setup-card__about"/);
+    expect(stepLabels(html)[6]).toBe("Liem (2732)");
+    expect(engineLine(html)).toBe("Le Quang Liem: his openings, then full-strength Stockfish 18.");
+    expect(tagsWithRole(html, "dialog")[0]).toContain('aria-label="Challenge Le Quang Liem"');
   });
 
   it("renders the green Start game button", () => {

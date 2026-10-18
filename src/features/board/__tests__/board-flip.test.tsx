@@ -9,7 +9,8 @@ import { describe, expect, it } from "vitest";
 import { boardSlice, movePiece, selectPiece } from "../BoardSlice";
 import { toggleFlip, viewSlice } from "../viewSlice";
 import { Board } from "../Board";
-import { matchSlice } from "../../liem/matchSlice";
+import { matchSlice, setMode } from "../../liem/matchSlice";
+import { reviewSlice } from "../../review/reviewSlice";
 import { Promotion } from "../components/Promotion";
 import { PieceType } from "../../../game/piece-type";
 import { players } from "../../../game/players";
@@ -17,10 +18,12 @@ import { players } from "../../../game/players";
 const { reducer } = boardSlice;
 type BoardState = ReturnType<typeof reducer>;
 
+/** Two players (one click on its tab; the page opens on vs Liem), seeded with `board`. */
 function makeStore(board?: BoardState) {
+  const match = matchSlice.reducer(undefined, setMode("two-player"));
   return configureStore({
-    reducer: { board: reducer, view: viewSlice.reducer, match: matchSlice.reducer },
-    preloadedState: board ? { board } : undefined,
+    reducer: { board: reducer, view: viewSlice.reducer, match: matchSlice.reducer, review: reviewSlice.reducer },
+    preloadedState: board ? { board, match } : { match },
   });
 }
 type TestStore = ReturnType<typeof makeStore>;

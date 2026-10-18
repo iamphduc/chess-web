@@ -6,12 +6,13 @@ import { SQUARE_SIZE_MD, SQUARE_SIZE_XL, SQUARE_SIZE_XS } from "../../constants"
 import { PlayerInfo, players } from "game/players";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import type { PieceColor } from "game/engine/game-state";
-import { LIEM } from "game/opponent/players";
+import type { StrengthStep } from "game/opponent/strength";
 import { ModeTabs } from "features/liem/components/ModeTabs";
 import { SetupCard } from "features/liem/components/SetupCard";
 import { BookNote } from "features/liem/components/BookNote";
 import { LiemCardDetail } from "features/liem/components/LiemCardDetail";
 import { newLiemGame } from "features/liem/liemActions";
+import { levelView } from "features/liem/levelView";
 import { useLiemOpponent } from "features/liem/useLiemOpponent";
 import { ReviewGraph } from "features/review/components/ReviewGraph";
 import { ReviewBoard } from "features/review/components/ReviewBoard";
@@ -56,15 +57,23 @@ const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
   />
 );
 
-/** His card: name, title and avatar from `LIEM.entry` only, with his strength and Book badge. */
-const renderLiem = (color: PieceColor) => {
-  const { name, title, avatar } = LIEM.entry;
+/** His card at the picked level: a sparring bot's ♞ card, or his own with photo, GM and star. */
+const renderLiem = (color: PieceColor, strength: StrengthStep) => {
+  const view = levelView(strength);
   return (
     <Player
       key={color}
-      name={name}
-      title={title}
-      avatar={avatar}
+      name={view.name}
+      title={view.title}
+      avatar={view.avatar}
+      glyph={view.glyph ?? undefined}
+      nameMark={
+        view.star ? (
+          <span className="liem-star" aria-hidden="true">
+            ★
+          </span>
+        ) : undefined
+      }
       isWhite={color === "white"}
       detail={<LiemCardDetail />}
     />
@@ -193,7 +202,7 @@ export const Board = () => {
   } else {
     // In a game, your color; with the card open, the color picked so far (Random shows White).
     const yours: PieceColor = liemHuman ?? (match.colorPick === "black" ? "black" : "white");
-    const cardFor = (c: PieceColor) => (c === yours ? renderYou(c) : renderLiem(c));
+    const cardFor = (c: PieceColor) => (c === yours ? renderYou(c) : renderLiem(c, match.strength));
     top = cardFor(topColor);
     bottom = cardFor(bottomColor);
   }

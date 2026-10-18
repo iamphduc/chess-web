@@ -23,6 +23,10 @@ interface Props {
   name: string;
   title: string | null;
   avatar: string | null;
+  /** A glyph shown in place of the avatar image, such as the sparring bot's ♞. */
+  glyph?: string;
+  /** Something between the title and the name, such as his gold star. */
+  nameMark?: ReactNode;
   isWhite: boolean;
   /** Extra lines under the name, such as his strength and Book badge. */
   detail?: ReactNode;
@@ -50,7 +54,7 @@ export function msUntilNextTick(ms: number, interval: number): number {
   return (ms % interval) + 1;
 }
 
-export const Player = ({ name, title, avatar, isWhite, detail }: Props) => {
+export const Player = ({ name, title, avatar, glyph, nameMark, isWhite, detail }: Props) => {
   const { history, pendingPromotion, isPlaying, gameOver, gameId } = useAppSelector(
     (state) => state.board
   );
@@ -113,9 +117,16 @@ export const Player = ({ name, title, avatar, isWhite, detail }: Props) => {
   return (
     <div className="player">
       <div className="player__info">
-        <img className="player__avatar" src={getAvatarSrc(avatar)} alt="Avatar" width={40} height={40} />
+        {glyph ? (
+          <span className="liem-sparring-avatar" aria-hidden="true">
+            {glyph}
+          </span>
+        ) : (
+          <img className="player__avatar" src={getAvatarSrc(avatar)} alt="Avatar" width={40} height={40} />
+        )}
         <div className="player__name">
           {title && <span className="player__title">{title}</span>}
+          {nameMark}
           {name}
           {detail != null && <div className="player__detail">{detail}</div>}
         </div>
