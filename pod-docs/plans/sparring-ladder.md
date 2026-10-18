@@ -1,6 +1,7 @@
 # Plan: Sparring ladder to Liem
 
 _Generated: 2026-10-17 · Status: active · Grilled-with: grilling (fast)_
+<!-- autopilot-run: started=2026-10-18T10:31:18Z sprints=0 waves=1 -->
 
 ## Goal
 Turn the strength steps into a ladder that builds toward beating GM Le Quang Liem. Levels 1400 to 2500 become sparring bots: each one plays Liem's openings from his real games, then plays at its level with that level's real mistakes. Liem himself is the final boss. The page opens on the vs Liem tab.
@@ -60,7 +61,7 @@ Constraints: a static GitHub Pages site with no backend; single-thread Stockfish
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| ladder | Human baselines per level, the measurement in `npm run calibrate`, a chooser that makes level-true mistakes with a calibrated table, and the sparring and Liem labels with vs Liem as the default tab | planned | — |
+| ladder | Human baselines per level, the measurement in `npm run calibrate`, a chooser that makes level-true mistakes with a calibrated table, and the sparring and Liem labels with vs Liem as the default tab | active | — |
 
 Status values: `planned` / `active` / `done`. The orchestrator only flips its row's Status — it does not rewrite Goal/Depends-on retroactively.
 
