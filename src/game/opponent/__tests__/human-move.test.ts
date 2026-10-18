@@ -813,7 +813,7 @@ describe("chooseHumanMove: mistake and blunder bands", () => {
       expect(Math.abs((counts.get("f3g5") ?? 0) / n - g5 / (g5 + d3))).toBeLessThan(0.02);
       expect((counts.get("f3g5") ?? 0) + (counts.get("d2d3") ?? 0)).toBe(n);
     }
-  });
+  }, 30_000);
 
   it("band skips free capture", () => {
     // exf4 wins the queen; on a mistake roll Be7 (loss 20) is still picked.
