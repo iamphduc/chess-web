@@ -2,8 +2,9 @@ import React, { useRef } from "react";
 
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import { LIEM } from "game/opponent/players";
-import { STRENGTH_STEPS, strengthElo, type StrengthStep } from "game/opponent/strength";
+import { STRENGTH_STEPS, type StrengthStep } from "game/opponent/strength";
 import type { PlayerEntry } from "game/opponent/types";
+import { levelView } from "../levelView";
 import { startLiemGame } from "../liemActions";
 import { type ColorPick, setColorPick, setStrength } from "../matchSlice";
 import "./SetupCard.css";
@@ -116,7 +117,7 @@ export function SetupCard({ entry = LIEM.entry }: SetupCardProps) {
 
   const title = `Challenge ${entry.name}`;
   const stepIndex = STRENGTH_STEPS.indexOf(strength);
-  const elo = strengthElo(strength, entry.rating);
+  const level = levelView(strength, entry);
 
   return (
     <div className="liem-card setup-card" role="dialog" aria-label={title}>
@@ -153,9 +154,8 @@ export function SetupCard({ entry = LIEM.entry }: SetupCardProps) {
             Strength
           </span>
           <span className="setup-card__value">
-            {strength === "full" && <span className="setup-card__full">Full</span>}
-            <span className="setup-card__about">about</span>
-            <span className="liem-elo">{elo}</span>
+            {level.valueLead && <span className="setup-card__about">{level.valueLead}</span>}
+            <span className="liem-elo">{level.valueMain}</span>
           </span>
         </div>
         <RadioGroup<StrengthStep>
@@ -166,14 +166,12 @@ export function SetupCard({ entry = LIEM.entry }: SetupCardProps) {
           onPick={(step) => dispatch(setStrength(step))}
           renderOption={(step, index) => ({
             className: index <= stepIndex ? "liem-step liem-step--lit" : "liem-step",
-            ariaLabel: step === "full" ? `Full (${entry.rating})` : String(step),
+            ariaLabel: levelView(step, entry).stepLabel,
           })}
         />
       </div>
 
-      <p className="liem-card__sub setup-card__engine">
-        Openings from his games, then standard Stockfish 18 at this strength.
-      </p>
+      <p className="liem-card__sub setup-card__engine">{level.engineLine}</p>
 
       <div className="setup-card__actions">
         <button type="button" className="button button--play" onClick={() => dispatch(startLiemGame())}>

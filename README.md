@@ -17,17 +17,19 @@ This project was inspired by [chess.com](https://www.chess.com/)
 
 [https://iamphduc.github.io/chess-web](https://iamphduc.github.io/chess-web/)
 
-## How he plays
+## The ladder
 
-In **vs Liem** mode you play against Le Quang Liem's openings, then a chess engine.
+The page opens on **vs Liem**, a ladder that builds toward beating GM Le Quang Liem. Pick a level on the challenge card, then press **Start game**. **Two players** is one tab click away.
 
-- **His openings:** while the position is in his book, he plays the moves he played in his own games, picked by how often he played each one.
-- **After his book:** standard [Stockfish](https://stockfishchess.org/) 18 plays the rest of the game. It isn't fine-tuned or trained on his games. At each move it looks at its top few moves and picks one that loses no more than the strength step allows.
-- **Strength steps:** "about 1400" up to "about 2500", plus Full (his rating). The steps are approximate. They aren't Lichess or Chess.com ratings.
+- **Sparring levels:** "about 1400" up to "about 2500". Each is a sparring bot (the ♞ card, "Sparring · 1400") that plays Liem's openings, then plays at its level.
+- **Liem:** the last step, "★ Liem", is the final boss: his photo and "GM · 2732" on the card, his openings, then full-strength Stockfish 18.
+- **His openings:** at every level, while the position is in his book, the moves come from his own games, picked by how often he played each one.
+- **After his book:** standard [Stockfish](https://stockfishchess.org/) 18 plays the rest of the game. It isn't fine-tuned or trained on his games. At each move it looks at its top few moves and picks one a player of that level would play.
+- The levels are approximate. They aren't Lichess or Chess.com ratings.
 
 ## Game review
 
-After a game against Liem ends (checkmate, stalemate or time), press **Review game**.
+After a vs-Liem game ends at any level (checkmate, stalemate or time), press **Review game**.
 
 - **Analysis:** Stockfish 18 at full strength checks every position of the game, about half a second each, on the same engine he plays with. A progress bar shows how far it has got, and you can start on the key moments before it finishes.
 - **Grades:** each of your moves gets a drop in win % from your side. A drop of 10 points or more is an inaccuracy (?!), 20 a mistake (?) and 30 a blunder (??). Win % and the per-move accuracy use the public Lichess formulas, and your accuracy for the game is the average. A move that keeps the game in his book is never marked.

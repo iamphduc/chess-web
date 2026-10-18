@@ -99,7 +99,7 @@ Context: Stockfish's lite WASM is about 7.3 MB and the two books about 400 KB. M
 Decision: Nothing from Stockfish and no book JSON is in the entry bundle. `useLiemOpponent.ts` imports `liemOpponent.ts` with a dynamic `import()`, and calls it (`preload`) only once a vs-Liem game has started; the books are fetched by URL and the worker module is its own chunk. One controller per mount loads him once and keeps him for later games. `tests/build.test.ts › engine and books load lazily` checks the entry chunk has no "stockfish" and no book position key, and that the `.wasm`, its worker JS and both books are separate assets.
 Consequences: The first vs-Liem game waits for the download (his card says "Thinking…" meanwhile); a failed download shows the note's Try again. To load earlier (for example on hovering the tab), call the controller's `preload` there.
 
-## 2026-10-10 — The page opens in Two players
+## 2026-10-10 — The page opens in Two players (superseded by "The page opens on vs Liem", 2026-10-18)
 Context: The app was a two-player board until now, and its smoke recipe and tests start from that board.
 Decision: `match.mode` starts as `"two-player"` and isn't saved, so every load opens in Two players with the old layout. The `vs Liem` tab switches mode, which resets the board and opens the setup card.
 Consequences: Players who want him click the tab each visit. To open in vs Liem, change the `matchSlice` default (and the smoke recipe's first steps); to remember the last mode, save it like the Sound setting.
@@ -220,3 +220,18 @@ To change: hide the played move's row (or its mark) in `MoveList` while the acti
 ## 2026-10-17 — browser: chrome-devtools-axi
 
 Agents check pages with `npx -y chrome-devtools-axi` (`open`, then `eval`), each in its own session. `agent-browser` is installed, but its `open` hung again and again in the post-game-review run (see `pod-docs/known-issues/agent-browser-batch-hang.md`), while chrome-devtools-axi worked every time. (human, 2026-10-17)
+
+## 2026-10-18 — The page opens on vs Liem (chosen by the human, plan sparring-ladder)
+Context: The app is practice for beating GM Le Quang Liem, so his ladder is the main screen. This replaces "The page opens in Two players".
+Decision: `match.mode` starts as `"liem"` with `setupOpen: true` (`src/features/liem/matchSlice.ts`), and it isn't saved, so every load opens on the challenge card over the dimmed board. Nothing loads Stockfish or a book before Start game. **Two players** is one tab click away and works as before. Clicking the vs Liem tab at load changes nothing.
+Consequences: Tests that start from a fresh store are in vs Liem with the card open; a two-player test switches mode first (`switchMode("two-player")`). To remember the last mode, save it like the Sound setting.
+
+## 2026-10-18 — Sparring and Liem labels (plan sparring-ladder ## Look; the words are a default — override anytime)
+Context: Levels 1400 to 2500 are sparring bots that play his openings; the last step is Liem himself. The cards and the setup card must say which is which.
+Decision: `src/features/liem/levelView.ts` holds every text a level shows, and the components add no words of their own:
+- **Sparring card:** the ♞ glyph (`.liem-sparring-avatar`) in place of a photo, "Sparring · 1400", "Plays Liem's openings" ("Liem's openings" below 768 px). No GM tag and no star.
+- **Liem card:** his photo, the GM tag, a gold star by his name and "GM · 2732" (no "playing about"). Below 768 px the line reads "2732", since the GM tag already sits by his name.
+- **Both cards** keep "★ Book · N", the Stockfish pill and "Thinking…". Long lines end in an ellipsis (2026-10-11), and screen readers get the whole line.
+- **Setup card:** still "Challenge Le Quang Liem". Sparring steps read "about N" (`aria-label` "N"); the last step reads "★ Liem" in the gold Elo style (`aria-label` "Liem (2732)"). The line under the steps reads "A sparring bot plays his openings, then Stockfish at about N." or "Le Quang Liem: his openings, then full-strength Stockfish 18."
+- **Out of book:** "Stockfish at about N plays from here. It isn't trained on his games.", or "Full-strength Stockfish 18 plays from here. It isn't trained on his games." at the Liem level.
+Consequences: Liem's short name ("Liem") is the last word of `player.json`'s `name`. On a phone the sparring line next to "★ Book" ends as "Liem's …". To change a word, edit `levelView.ts` and `src/features/liem/__tests__/level-view.test.ts` together.
