@@ -141,7 +141,7 @@ describe("setup card markup", () => {
     const html = render(liemStore(), <SetupCard />);
     const line = html.match(/<p class="([^"]*)">([^<]*)<\/p>/g)?.find((p) => p.includes("Stockfish"));
     expect(line).toBeDefined();
-    expect(line).toMatch(new RegExp(`^<p class="[^"]*\bliem-card__sub\b[^"]*">${LINE}</p>$`));
+    expect(line).toMatch(new RegExp(`^<p class="[^"]*\\bliem-card__sub\\b[^"]*">${LINE}</p>$`));
     const steps = html.indexOf('aria-label="Liem (2732)"');
     const at = html.indexOf(LINE);
     const start = html.indexOf(">Start game</button>");

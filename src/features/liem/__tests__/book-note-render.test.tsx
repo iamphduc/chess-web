@@ -43,7 +43,7 @@ const render = (store: AppStore, node: React.ReactNode) =>
 const note = (store: AppStore) => render(store, <BookNote onRetry={() => {}} />);
 const detail = (store: AppStore) => render(store, <LiemCardDetail />);
 /** What a reader sees or hears: the markup without its tags. */
-const text = (html: string) => html.replace(/<[^>]+>/g, "");
+const text = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'");
 
 describe("BookNote and LiemCardDetail", () => {
   it("note and badge markup", () => {
