@@ -51,7 +51,9 @@ const NOT_TRAINED = "It isn't trained on his games.";
 export function levelView(step: StrengthStep, entry: PlayerEntry = LIEM.entry): LevelView {
   const short = shortName(entry);
   if (step === "full") {
-    const detail = `${entry.title} · ${entry.rating}`;
+    // On phones the title is left out: it already sits by his name.
+    const detailLead = `${entry.title} · `;
+    const shortDetail = String(entry.rating);
     return {
       sparring: false,
       name: entry.name,
@@ -59,9 +61,9 @@ export function levelView(step: StrengthStep, entry: PlayerEntry = LIEM.entry): 
       star: true,
       glyph: null,
       avatar: entry.avatar,
-      detail,
-      shortDetail: detail,
-      detailLead: "",
+      detail: detailLead + shortDetail,
+      shortDetail,
+      detailLead,
       value: `★ ${short}`,
       valueLead: null,
       valueMain: `★ ${short}`,
