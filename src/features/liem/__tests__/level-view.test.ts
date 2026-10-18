@@ -36,8 +36,9 @@ describe("levelView", () => {
       glyph: null,
       avatar: LIEM.entry.avatar,
       detail: "GM · 2732",
-      shortDetail: "GM · 2732",
-      detailLead: "",
+      // The GM tag sits by his name, so phones keep just the rating.
+      shortDetail: "2732",
+      detailLead: "GM · ",
       value: "★ Liem",
       valueLead: null,
       valueMain: "★ Liem",

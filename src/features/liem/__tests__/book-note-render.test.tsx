@@ -132,10 +132,13 @@ describe("BookNote and LiemCardDetail", () => {
       '<span class="liem-detail__sub"><span class="liem-detail__lead">Plays </span>' +
         '<span class="liem-detail__short">Liem&#x27;s openings</span></span>'
     );
-    // His own line is short already: one part.
+    // His own line drops "GM · " on phones: the GM tag sits by his name.
     const full = createAppStore();
     full.dispatch(setStrength("full"));
-    expect(detail(full)).toContain('<span class="liem-detail__sub"><span class="liem-detail__short">GM · 2732</span></span>');
+    expect(detail(full)).toContain(
+      '<span class="liem-detail__sub"><span class="liem-detail__lead">GM · </span>' +
+        '<span class="liem-detail__short">2732</span></span>'
+    );
   });
 
   it("badge on a sparring card", () => {
