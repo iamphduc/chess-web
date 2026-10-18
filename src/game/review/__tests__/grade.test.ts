@@ -3,6 +3,7 @@ import { winPercent } from "../../opponent/human-move";
 import {
   BLUNDER,
   gradeForDrop,
+  gradeForDropAt,
   gradeMove,
   INACCURACY,
   isFound,
@@ -51,11 +52,11 @@ describe("grade levels argument", () => {
   });
 
   it("levels are inclusive edges, like the review's", () => {
-    expect(gradeForDrop(5, LICHESS_LEVELS)).toBe("inaccuracy");
-    expect(gradeForDrop(4.99, LICHESS_LEVELS)).toBeNull();
-    expect(gradeForDrop(10, LICHESS_LEVELS)).toBe("mistake");
-    expect(gradeForDrop(15, LICHESS_LEVELS)).toBe("blunder");
-    expect(gradeForDrop(14.99, LICHESS_LEVELS)).toBe("mistake");
+    expect(gradeForDropAt(5, LICHESS_LEVELS)).toBe("inaccuracy");
+    expect(gradeForDropAt(4.99, LICHESS_LEVELS)).toBeNull();
+    expect(gradeForDropAt(10, LICHESS_LEVELS)).toBe("mistake");
+    expect(gradeForDropAt(15, LICHESS_LEVELS)).toBe("blunder");
+    expect(gradeForDropAt(14.99, LICHESS_LEVELS)).toBe("mistake");
   });
 
   it("the mate rules are the same at every level set", () => {

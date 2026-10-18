@@ -58,10 +58,16 @@ export function moveAccuracy(before: number, after: number): number {
 }
 
 /** The grade for a win % drop: 30 blunder, 20 mistake, 10 inaccuracy. */
-export function gradeForDrop(drop: number, _levels: GradeLevels = REVIEW_LEVELS): Grade | null {
-  if (drop >= BLUNDER) return "blunder";
-  if (drop >= MISTAKE) return "mistake";
-  if (drop >= INACCURACY) return "inaccuracy";
+export function gradeForDrop(drop: number): Grade | null {
+  return gradeForDropAt(drop, REVIEW_LEVELS);
+}
+
+/** The grade for a win % drop at the given levels. */
+export function gradeForDropAt(drop: number, levels: GradeLevels): Grade | null {
+  const [inaccuracy, mistake, blunder] = levels;
+  if (drop >= blunder) return "blunder";
+  if (drop >= mistake) return "mistake";
+  if (drop >= inaccuracy) return "inaccuracy";
   return null;
 }
 
@@ -88,11 +94,12 @@ function mateGrade(before: View, after: View): Grade | null | undefined {
 /**
  * One human move, from the eval before it (the human to move) and the eval
  * after it (the opponent to move): the drop, the accuracy and the grade.
+ * `levels` sets the drop levels; the mate rules are the same at every level set.
  */
 export function gradeMove(
   before: PositionEval,
   after: PositionEval,
-  _levels: GradeLevels = REVIEW_LEVELS
+  levels: GradeLevels = REVIEW_LEVELS
 ): { drop: number; accuracy: number; grade: Grade | null } {
   // The views only care whether the eval's side is the viewer's.
   const b = viewOf(before, "white", "white");
@@ -104,7 +111,7 @@ export function gradeMove(
   return {
     drop,
     accuracy: moveAccuracy(winBefore, winAfter),
-    grade: mate === undefined ? gradeForDrop(drop) : mate,
+    grade: mate === undefined ? gradeForDropAt(drop, levels) : mate,
   };
 }
 

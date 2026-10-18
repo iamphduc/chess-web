@@ -11,7 +11,7 @@ import {
 import type { LichessClient, LichessGame } from "../lichess";
 
 const LEVEL_KEYS = ["droppedGames", "games", "lowSample", "rates", "ratingMax", "ratingMin", "speeds"];
-const RATE_KEYS = ["accuracy", "avgLoss", "gradedMoves", "games", "per40", "sides"];
+const RATE_KEYS = ["accuracy", "avgLoss", "games", "gradedMoves", "per40", "sides"];
 const GRADES = ["blunder", "inaccuracy", "mistake"];
 
 const sorted = (o: object) => Object.keys(o).sort();
@@ -63,7 +63,7 @@ function game(white: [string, number], black: [string, number], speed = "rapid")
   };
 }
 
-const NAMES = ["Zed_Player", "Quux77", "MaryLou", "Grand_K", "Lowly1"];
+const NAMES = ["Zed_Player", "Quux77", "MaryLou", "Grand_K", "Lowly1", "Top_Gun", "Ace_X"];
 
 function fakeLichess(): { client: LichessClient; urls: string[] } {
   const urls: string[] = [];
@@ -71,8 +71,10 @@ function fakeLichess(): { client: LichessClient; urls: string[] } {
     Zed_Player: [game(["Zed_Player", 1400], ["Quux77", 1420]), game(["Zed_Player", 1405], ["Lowly1", 1100])],
     Quux77: [game(["Quux77", 1390], ["MaryLou", 1380], "blitz")],
     MaryLou: [game(["MaryLou", 1395], ["Zed_Player", 1430])],
-    Grand_K: [game(["Grand_K", 2490], ["Quux77", 2510])],
+    Grand_K: [game(["Grand_K", 2490], ["Quux77", 2510]), game(["Top_Gun", 2480], ["Grand_K", 2495])],
     Lowly1: [],
+    // Never in an arena: found as Grand_K's opponent.
+    Top_Gun: [game(["Ace_X", 2520], ["Top_Gun", 2470], "blitz")],
   };
   const client: LichessClient = {
     get: async (url) => {
@@ -140,7 +142,7 @@ describe("file shape has no personal data", () => {
     expect(parsed.skipPlies).toBe(10);
 
     // 1400: three games with both players in ±100 → under 30, widened, low sample.
-    const l1400 = parsed.levels["1400"];
+    const l1400 = parsed.levels["1400"]!;
     expect(l1400.games).toBe(3);
     expect([l1400.ratingMin, l1400.ratingMax]).toEqual([1250, 1550]);
     expect(l1400.lowSample).toBe(true);
@@ -149,7 +151,9 @@ describe("file shape has no personal data", () => {
     // Plies 10..13 graded, both sides: 4 per game.
     expect(l1400.rates.gradedMoves).toBe(12);
     expect(l1400.rates.per40.review.blunder).toBeGreaterThan(0);
-    expect(parsed.levels["2500"].games).toBe(1);
+    // 2500: one arena player, then the opponents met in his games.
+    expect(parsed.levels["2500"]!.games).toBe(3);
+    expect(urls.some((u) => u.includes("/api/games/user/Top_Gun"))).toBe(true);
     // No candidates near 1700: no baseline for it.
     expect(parsed.levels["1700"]).toBeUndefined();
 
