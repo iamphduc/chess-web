@@ -10,8 +10,8 @@ _From plan: pod-docs/plans/sparring-ladder.md · Slug: ladder · Status: active 
 | 1 | L1 | Look: sparring avatar style and token checks | ladder-L1 | #76 | merged | medium | — |
 | 1 | H1 | Human baselines: rates module, `npm run baseline`, committed numbers | ladder-H1 | #76 | merged | medium | — |
 | 1 | C1 | Chooser: mistake and blunder bands, new profile fields at zero | ladder-C1 | #76 | merged | medium | — |
-| 2 | U1 | Sparring and Liem labels, page opens on vs Liem | ladder-U1 | — | pending | — | L1 |
-| 2 | M1 | `npm run calibrate -- --measure`: self-play from his book, graded | ladder-M1 | — | pending | — | H1, C1 |
+| 2 | U1 | Sparring and Liem labels, page opens on vs Liem | ladder-U1 | — | done | medium | L1 |
+| 2 | M1 | `npm run calibrate -- --measure`: self-play from his book, graded | ladder-M1 | — | done | high | H1, C1 |
 | 3 | T1 | Tune the step table to 75 % of human rates; docs and results | ladder-T1 | — | pending | — | C1, H1, M1 |
 
 ## Shared contract
