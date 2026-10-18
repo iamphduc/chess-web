@@ -11,6 +11,14 @@ export const INACCURACY = 10;
 export const MISTAKE = 20;
 export const BLUNDER = 30;
 
+/** Inaccuracy, mistake and blunder levels, in win % points lost. */
+export type GradeLevels = readonly [number, number, number];
+
+/** The review's levels. */
+export const REVIEW_LEVELS: GradeLevels = [INACCURACY, MISTAKE, BLUNDER];
+/** Lichess's own levels, for comparing with its numbers. */
+export const LICHESS_LEVELS: GradeLevels = [5, 10, 15];
+
 /** A score from one side's view: a mate for or against, or centipawns. */
 type View = { mate: "for" | "against" } | { cp: number };
 
@@ -50,7 +58,7 @@ export function moveAccuracy(before: number, after: number): number {
 }
 
 /** The grade for a win % drop: 30 blunder, 20 mistake, 10 inaccuracy. */
-export function gradeForDrop(drop: number): Grade | null {
+export function gradeForDrop(drop: number, _levels: GradeLevels = REVIEW_LEVELS): Grade | null {
   if (drop >= BLUNDER) return "blunder";
   if (drop >= MISTAKE) return "mistake";
   if (drop >= INACCURACY) return "inaccuracy";
@@ -83,7 +91,8 @@ function mateGrade(before: View, after: View): Grade | null | undefined {
  */
 export function gradeMove(
   before: PositionEval,
-  after: PositionEval
+  after: PositionEval,
+  _levels: GradeLevels = REVIEW_LEVELS
 ): { drop: number; accuracy: number; grade: Grade | null } {
   // The views only care whether the eval's side is the viewer's.
   const b = viewOf(before, "white", "white");
