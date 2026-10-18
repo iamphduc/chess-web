@@ -55,7 +55,7 @@ function divWithClass(html: string, cls: string): string {
 function playerNames(html: string): string[] {
   return Array.from(
     html.matchAll(
-      /class="player__name">(?:<span class="player__title">[^<]*<\/span>)?(?:<span class="liem-star"[^>]*>[^<]*<\/span>)?([^<]*)/g
+      /class="player__name">(?:<span class="player__title">[^<]*<\/span>)?([^<]*)/g
     ),
     (m) => m[1].trim()
   );
@@ -156,12 +156,15 @@ function expectSparringCard(card: string, elo: number) {
   expect(detailText(card)).toBe("Plays Liem's openings");
 }
 
-/** His own card: his photo, the GM tag, the gold star and "GM · 2732". */
+/** His own card: his photo, the GM tag and "GM · 2732". No star before his name, so it fits on a phone. */
 function expectLiemCard(card: string) {
   expect(playerNames(card)).toEqual([LIEM.entry.name]);
   expect(card).toContain(`<span class="player__title">${LIEM.entry.title}</span>`);
   expect(card).toContain(`src="${avatarSrc(LIEM.entry.avatar)}"`);
-  expect(card).toMatch(/<span class="liem-star" aria-hidden="true">★<\/span>/);
+  expect(card).not.toContain("liem-star");
+  expect(card).toContain(
+    `<div class="player__name"><span class="player__title">${LIEM.entry.title}</span>${LIEM.entry.name}<div class="player__detail">`
+  );
   expect(card).not.toContain("liem-sparring-avatar");
   expect(detailText(card)).toBe(`${LIEM.entry.title} · ${LIEM.entry.rating}`);
 }

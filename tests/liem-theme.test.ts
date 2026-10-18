@@ -374,11 +374,6 @@ describe("his card on the board", () => {
     }
   });
 
-  it("his star sits in the name line at its size", () => {
-    const d = declsFor(outsideMedia(boardCss()), `${card} .liem-star`);
-    expect(d.find(([p]) => p === "font-size")?.[1]).toBe("inherit");
-  });
-
   it("the Stockfish pill is the badge's outer size inside a player card", () => {
     const board = outsideMedia(boardCss());
     const all = rules(liemCss());
