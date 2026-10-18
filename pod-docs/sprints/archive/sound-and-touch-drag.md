@@ -1,6 +1,6 @@
 # Sprint: Sound and touch drag
 
-_From plan: docs/plans/board-feel.md · Slug: sound-and-touch-drag · Status: archived · Generated: 2026-10-06_
+_From plan: pod-docs/plans/board-feel.md · Slug: sound-and-touch-drag · Status: archived · Generated: 2026-10-06_
 
 <!-- autopilot-run: started=2026-10-06T11:36:12Z sprints=1 waves=3 -->
 
@@ -11,11 +11,11 @@ _From plan: docs/plans/board-feel.md · Slug: sound-and-touch-drag · Status: ar
 | 1 | S1 | Move sounds, Sound toggle, and the plan's closing docs | sound-and-touch-drag-S1 | https://github.com/iamphduc/chess-web/pull/54 | done | medium | — |
 | 1 | T1 | Touch drag through `react-dnd-multi-backend` | sound-and-touch-drag-T1 | https://github.com/iamphduc/chess-web/pull/54 | done | medium | — |
 
-Why this split: sound and touch drag share no files and no state, so they run side by side in one wave, with at most two dev servers at once. Sound stays one slice: the rules, the setting, the player and the button are small, and the button and the hook can't be built without the other three. The plan's closing docs go in S1, which owns `docs/codebase-structure.md`. The Look foundation is already in place from `board-interaction` (L1), so this sprint has no `L1`.
+Why this split: sound and touch drag share no files and no state, so they run side by side in one wave, with at most two dev servers at once. Sound stays one slice: the rules, the setting, the player and the button are small, and the button and the hook can't be built without the other three. The plan's closing docs go in S1, which owns `pod-docs/codebase-structure.md`. The Look foundation is already in place from `board-interaction` (L1), so this sprint has no `L1`.
 
 ## Shared contract
 
-**Board coordinates, `pickUp`, `clickSquare` and `movePiece` are unchanged** (see `docs/sprints/archive/board-interaction.md` → Shared contract). Neither slice changes their behavior. T1 doesn't edit `Piece.tsx` or `Square.tsx`.
+**Board coordinates, `pickUp`, `clickSquare` and `movePiece` are unchanged** (see `pod-docs/sprints/archive/board-interaction.md` → Shared contract). Neither slice changes their behavior. T1 doesn't edit `Piece.tsx` or `Square.tsx`.
 
 **Sound kinds** (S1, `src/features/board/sound.ts`): `type SoundKind = "game-end" | "check" | "promote" | "castle" | "capture" | "move"`.
 - `pickSound({ gameEnd, check, promotion, castle, capture }: boolean flags) → SoundKind` returns the first true flag in the order game end > check > promotion > castle > capture, and `"move"` when none is true.
@@ -48,7 +48,7 @@ Why this split: sound and touch drag share no files and no state, so they run si
 - The tree keeps a single `react-dnd` and `dnd-core` copy. Mouse uses the HTML5 backend as before. The first `touchstart` switches to the touch backend.
 - A touch-only drag preview draws the dragged piece at the square size. Desktop shows none.
 
-**Feature rows** (the orchestrator writes them in `docs/features.md`):
+**Feature rows** (the orchestrator writes them in `pod-docs/features.md`):
 - **Move sounds:** drive with `npx vitest run src/features/board/__tests__/sound.test.ts src/features/board/__tests__/move-sound.test.ts`, and in the browser read `document.documentElement.dataset.lastSound` after each kind of move. To prove mute, toggle Sound, reload, and read `localStorage['chess-web.sound']`.
 - **Touch drag:** drive with T1's CDP touch run.
 
@@ -69,12 +69,12 @@ Why this split: sound and touch drag share no files and no state, so they run si
     - Use only the existing tokens and follow the plan's `## Look`: no new colors, and no change to Play, Reset, Flip or the `.button--icon` size.
   - Don't edit `src/index.tsx`, `Piece.tsx` or `Square.tsx` (T1 owns `index.tsx`), and don't add an npm dependency.
   - **Docs:**
-    - Update `docs/codebase-structure.md`:
+    - Update `pod-docs/codebase-structure.md`:
       - **Layout:** the sound modules, `soundOn` in `viewSlice.ts`, and the `index.tsx` provider. That's `react-dnd-multi-backend`'s `DndProvider` with the `HTML5toTouch` preset plus a touch-only drag preview. Name T1's preview file in prose, not as a backticked `src/` path, because `tests/docs.test.ts › layout paths exist` runs on this branch without T1's files.
       - **Stack & conventions:** sounds live in `public/sounds/` with `CREDITS.md`.
       - **Smoke recipe, "What you see":** add the Sound button.
       - **Smoke recipe, new "Sound" step:** give one real-gesture click first (the tool's `click`, since page-JS clicks don't unlock audio), then play a move, a capture, castling, a check, a promotion and a mate, reading `data-last-sound` after each. Toggle Sound off, play a move and see `data-last-sound` unchanged, then reload and see `aria-pressed="false"`.
-      - **Phone step:** add a pointer to the touch drag run in `docs/known-issues/browser-smoke-touch.md`.
+      - **Phone step:** add a pointer to the touch drag run in `pod-docs/known-issues/browser-smoke-touch.md`.
     - Update `docs/roadmap.md`: add a **Done** section with "Move to Vite" and "Better board feel". Remove them from "Up next" and "Approved, order not set", and renumber "Up next".
 - **Files owned:**
   - `src/features/board/sound.ts` (new)
@@ -94,7 +94,7 @@ Why this split: sound and touch drag share no files and no state, so they run si
   - `src/features/board/__tests__/sound-button.test.tsx` (new)
   - `src/features/board/__tests__/view-slice.test.ts`
   - `tests/sound-files.test.ts` (new)
-  - `docs/codebase-structure.md`
+  - `pod-docs/codebase-structure.md`
   - `docs/roadmap.md`
 - **Success criteria:**
   - `[test]` Each flag alone gives its kind, no flags give `"move"`, and every pair of flags gives the higher-priority kind (all 15 pairs) — `sound.test.ts` › `pickSound follows the priority`
@@ -124,7 +124,7 @@ Why this split: sound and touch drag share no files and no state, so they run si
 
 ### T1: Touch drag through `react-dnd-multi-backend`
 - **Scope:**
-  - Build the contract's Touch drag section from T1's findings in `docs/research/touch-drag.md` (What the next sprint needs).
+  - Build the contract's Touch drag section from T1's findings in `pod-docs/research/touch-drag.md` (What the next sprint needs).
   - Install `react-dnd-multi-backend` and `rdndmb-html5-to-touch` with plain `npm install`. They're the plan's one allowed runtime dependency (with its preset). Change no other package's version. `react-dnd-html5-backend` stays.
   - In `src/index.tsx`, swap the provider. Inside it, render a touch-only `PieceDragPreview` that uses `usePreview` (or `Preview`) from `react-dnd-multi-backend`.
     - Its drawing is a plain exported component, `PieceDragImage({ pieceType, size, style })`. It's a `div` with the piece image as its background, `size` × `size` px, `pointer-events: none`, and the preview's position `style` merged in.
@@ -132,7 +132,7 @@ Why this split: sound and touch drag share no files and no state, so they run si
     - The piece image comes from `pieceFactory`, as in `Piece.tsx`.
   - Don't add `touch-action` CSS. The research found it isn't needed. If the touch run shows the page scrolling during a piece drag, log a `PENDING` entry and don't fix it here.
   - Don't edit `Piece.tsx`, `Square.tsx`, `Board.tsx` or the board CSS. Drag start already selects through `pickUp`.
-  - Update `docs/known-issues/browser-smoke-touch.md` with the touch-drag smoke run. Say which `docs/research/touch-drag.md` scenarios to run and what each should show, now that touch drag is in the app.
+  - Update `pod-docs/known-issues/browser-smoke-touch.md` with the touch-drag smoke run. Say which `pod-docs/research/touch-drag.md` scenarios to run and what each should show, now that touch drag is in the app.
   - Use only existing tokens and images, and follow the plan's `## Look`. The preview is the piece image alone, with no shadow, no tint and no scale.
 - **Files owned:**
   - `package.json`
@@ -141,13 +141,13 @@ Why this split: sound and touch drag share no files and no state, so they run si
   - `src/features/board/components/PieceDragPreview.tsx` (new)
   - `src/features/board/__tests__/piece-drag-preview.test.tsx` (new)
   - `tests/touch-dnd.test.ts` (new)
-  - `docs/known-issues/browser-smoke-touch.md`
+  - `pod-docs/known-issues/browser-smoke-touch.md`
 - **Success criteria:**
   - `[test]` `package.json` has `react-dnd-multi-backend` and `rdndmb-html5-to-touch` at major 9. `react-dnd` is still major 16, and no other dependency was added — `tests/touch-dnd.test.ts` › `touch drag deps match the plan`
   - `[test]` `react-dnd`, resolved from inside `react-dnd-multi-backend`, `react-dnd-preview` and the app root, is one file path, and so is `dnd-core` (a single copy) — `tests/touch-dnd.test.ts` › `one react-dnd copy`
   - `[test]` `PieceDragImage` for `WhiteKnightKing` (or any piece) at size 48 renders the piece image URL (`svg-mock`), `width:48px`, `height:48px`, `pointer-events:none`, and the passed `transform` — `piece-drag-preview.test.tsx` › `drag image draws the piece at the square size`
   - `[test]` The size picker returns XS, MD and XL at 375, 768 and 1200 px widths (a pure helper given the two media-query results) — `piece-drag-preview.test.tsx` › `preview size follows the board breakpoints`
-  - `[manual]` CDP touch run at 375 px (`docs/research/touch-drag.md` script): touch drag e2–e4 and g1–f3 play `1. e4` and `1. Nf3`, the dots show during the drag, and the piece image follows the finger.
+  - `[manual]` CDP touch run at 375 px (`pod-docs/research/touch-drag.md` script): touch drag e2–e4 and g1–f3 play `1. e4` and `1. Nf3`, the dots show during the drag, and the piece image follows the finger.
   - `[manual]` CDP touch run: a tap on e2 and then e4 still plays `1. e4`. A piece drag keeps `scrollY` steady on a 500 px tall page. A touch drag on the flipped board lands on the named square. The console shows no errors.
   - `[manual]` Desktop mouse drag (the tool's `drag`, or the CDP `mousedrag` scenario) still plays e2–e4 with the HTML5 drag image and no touch preview. Click-to-move still works.
   - `[manual]` Look at 375 px mid-drag: the preview is the plain piece at square size, with no box, shadow or tint, and the source piece is faded on its square as before.

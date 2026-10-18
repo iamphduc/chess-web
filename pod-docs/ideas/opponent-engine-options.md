@@ -1,8 +1,12 @@
 # Idea: change the engine behind the Liem opponent
 
+Status: parked
+
 _Noted: 2026-10-09 · From: the `play-like-liem` plan interview · Research: [play-like-player](../research/play-like-player.md)_
 
-The first build uses **Stockfish lite WASM** after the opening book, limited by `UCI_Elo`. These are the other options. Revisit them when one of the reasons below changes.
+## The idea
+
+The first build uses **Stockfish lite WASM** after the opening book, limited by `UCI_Elo`. These are the other options.
 
 | Option | Good | Bad | Revisit when |
 |--------|------|-----|--------------|
@@ -11,6 +15,12 @@ The first build uses **Stockfish lite WASM** after the opening book, limited by 
 | **Maia neural net** (Maia-2 MIT code, Maia-3 ONNX AGPLv3) | Plays human-like moves for a given rating | Files 6.7–156 MB; doesn't reach 2700; Maia-3 is AGPL | We care more about human-like mistakes than top strength, or a small high-Elo model appears |
 | **Personalized model** trained on his games (Transfer Maia, Maia4All) | The real "plays like him" | Needed about 5,000 games; GM attempts were "less successful"; Maia4All has no code we found | Maia4All (or similar) ships code that works from a few hundred games |
 
-## How to switch
+**How to switch:** keep the engine behind one small interface, for example `chooseMove(position, settings) → Promise<move>`, so the book and the UI don't know which engine runs. Then a switch is a new adapter plus a licence check.
 
-Keep the engine behind one small interface, for example `chooseMove(position, settings) → Promise<move>`, so the book and the UI don't know which engine runs. Then a switch is a new adapter plus a licence check.
+## Why it's on hold
+
+Stockfish lite WASM covers every level up to his strength today, and each other option costs size, licence freedom or strength.
+
+## What would make it worth building
+
+One of the "Revisit when" reasons in the table comes true.

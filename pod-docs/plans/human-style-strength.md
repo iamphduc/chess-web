@@ -59,7 +59,7 @@ The existing look from [play-like-liem](play-like-liem.md) `## Look`. No new scr
 - **Rules out:** new colors, a new screen, and a per-move badge in the notation.
 
 ## Key decisions
-- **Pick among Stockfish's top moves instead of using `UCI_Elo`.** Skill mode's random push at low levels likely causes the odd blunders. Re-ranking Stockfish's own lines lets each step make sized, human-looking mistakes. — [research](../research/human-style-strength.md). Add a `docs/decisions.md` entry that replaces the `UCI_Elo` part of "Stockfish lite WASM, single thread, in a Web Worker, behind `MoveEngine`".
+- **Pick among Stockfish's top moves instead of using `UCI_Elo`.** Skill mode's random push at low levels likely causes the odd blunders. Re-ranking Stockfish's own lines lets each step make sized, human-looking mistakes. — [research](../research/human-style-strength.md). Add a `pod-docs/decisions.md` entry that replaces the `UCI_Elo` part of "Stockfish lite WASM, single thread, in a Web Worker, behind `MoveEngine`".
 - **Stockfish is not fine-tuned or trained on his games.** It stays standard Stockfish 18, and only the openings are his. The UI and README say so.
 - **Compare moves in win %, not centipawns** (Lichess formula `50 + 50*(2/(1+exp(-0.00368208*cp))-1)`); 100 cp is about 59% and 300 cp about 75%. — research
 - **Low steps make rare, human-sized slips, but never give material away for nothing.** Real 1400s make mistakes; the strange ones the human saw are the ones to remove. (default)
@@ -94,7 +94,7 @@ The existing look from [play-like-liem](play-like-liem.md) `## Look`. No new scr
   - It never gives material away for nothing.
   - It picks closer to the best move when well ahead.
   - The picks are random but weighted, and a seeded test proves the weights.
-- The calibration script runs from a clean checkout. It prints each step's score against the anchors and its average loss per move, and its results are recorded in `docs/decisions.md`.
+- The calibration script runs from a clean checkout. It prints each step's score against the anchors and its average loss per move, and its results are recorded in `pod-docs/decisions.md`.
 - In `npm run preview` at `/chess-web/`:
   - At 1400, a game out of book has no move that hangs a piece for nothing.
   - Full plays close to the engine's best.

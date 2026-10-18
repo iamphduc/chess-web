@@ -1,6 +1,6 @@
 # Sprint: Game review
 
-_From plan: docs/plans/post-game-review.md · Slug: game-review · Status: archived · Generated: 2026-10-16_
+_From plan: pod-docs/plans/post-game-review.md · Slug: game-review · Status: archived · Generated: 2026-10-16_
 
 ## Status board
 
@@ -219,8 +219,8 @@ UI slices use these, their own layout CSS and only tokens; they never edit L1's 
   - `useGameReview.ts` (glue, mounted once in `Board.tsx`): builds a runner over the controller's `analyse` (exposed from `useLiemOpponent`), starts it from the first `null` eval while the review is open and analysing, stops it on close or clear, loads books once with a dynamic `import()` of `loadLiemBooks` (failure → `null`), memoises `buildReview`, and runs a tried move: same as best → found; else `check` → `isFound`; a check error → `checkFailed`; Try again on a failed pass → `analysisRetried`.
   - `Board.tsx` / `Board.css` / `App.css`: **Review game** in the vs-Liem button row when `openReview` would work (never in Two players). In review: the graph full width above the board and sidebar; `ReviewBoard` in `.squares` (interactive only while a moment accepts a move); step buttons under it; the sidebar per the Look, then Back to game, New game, Flip and Sound. Below 768 px everything stacks as the Look says and the card is in `BottomSheet`; tapping a key point or a flagged move reopens it. Arrow keys step. The two-player and vs-Liem layouts are otherwise unchanged.
   - **Speed check:** time the pass after a real game of about 40 moves in `npm run preview`, on desktop and in phone emulation (CPU throttled if the tool allows), with `agent-browser`. Set `movetimeMs` from it.
-  - Docs: `docs/decisions.md` (the speed numbers and the chosen time; analysis reuses his worker), the README (the review), `docs/codebase-structure.md` (the `src/game/review/` and `src/features/review/` entries and a review step in `## Smoke recipe`).
-- **Files owned:** `src/features/review/reviewActions.ts` (new), `src/features/review/reviewLimits.ts` (new), `src/features/review/useGameReview.ts` (new), `src/features/liem/useLiemOpponent.ts`, `src/features/board/Board.tsx`, `src/features/board/Board.css`, `src/App.css`, `src/features/review/__tests__/review-actions.test.ts` (new), `src/features/review/__tests__/board-review.test.tsx` (new), `src/features/board/__tests__/board-modes.test.tsx`, `tests/build.test.ts`, `README.md`, `docs/decisions.md`, `docs/codebase-structure.md`
+  - Docs: `pod-docs/decisions.md` (the speed numbers and the chosen time; analysis reuses his worker), the README (the review), `pod-docs/codebase-structure.md` (the `src/game/review/` and `src/features/review/` entries and a review step in `## Smoke recipe`).
+- **Files owned:** `src/features/review/reviewActions.ts` (new), `src/features/review/reviewLimits.ts` (new), `src/features/review/useGameReview.ts` (new), `src/features/liem/useLiemOpponent.ts`, `src/features/board/Board.tsx`, `src/features/board/Board.css`, `src/App.css`, `src/features/review/__tests__/review-actions.test.ts` (new), `src/features/review/__tests__/board-review.test.tsx` (new), `src/features/board/__tests__/board-modes.test.tsx`, `tests/build.test.ts`, `README.md`, `pod-docs/decisions.md`, `pod-docs/codebase-structure.md`
 - **Success criteria:**
   - `[test] openReview only after a finished vs-Liem game with a human move and no pending promotion, for mate, stalemate and flag fall — review-actions.test.ts › when the review opens`
   - `[test] REVIEW_LIMITS is depth 18, multiPv 1 and a movetime from 100 to 1000 ms — review-actions.test.ts › review limits`
@@ -250,5 +250,5 @@ UI slices use these, their own layout CSS and only tokens; they never edit L1's 
   - U2: opus · medium · test-first yes · runtime throwaway page with the real reducer, full key-moment flow, desktop and 375 px · 8 NOTEs · time lost none
   - W1: opus · medium · test-first yes · runtime full review in the preview (losses, flag fall), speed check desktop and phone emulation · 2 PENDINGs (features row written by the orchestrator; `selectReview` fallback queued) · time lost ~4.5 min agent-browser, ~3 min autoplay script, ~10 min flag-fall wait
   - Wave 3 fix (opus): reopening a finished review showed the last reveal instead of the summary; `KeyMomentCard` starts on the summary when every moment is done · high
-  - Stalls: none. The orchestrator's own `agent-browser open` hung from Bash and PowerShell; chrome-devtools-axi was used for wave checks (see `docs/known-issues/agent-browser-batch-hang.md`).
+  - Stalls: none. The orchestrator's own `agent-browser open` hung from Bash and PowerShell; chrome-devtools-axi was used for wave checks (see `pod-docs/known-issues/agent-browser-batch-hang.md`).
 - **Agent context at hand-back:** about 1,387,000 tokens summed over the sprint-planner, 7 slice engineers and the wave fix — *each agent's final context size, not tokens billed*

@@ -170,7 +170,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <tr><td>Play any step and get a legal reply</td><td><code>npm run build &amp;&amp; npm test</code> pass</td><td><span class="tag met">met</span></td><td>744/744 at wave 3; CI <code>verify</code> green on #68</td></tr>
 <tr><td>Play an opponent that is not Stockfish's skill mode</td><td>No <code>UCI_LimitStrength</code> or <code>UCI_Elo</code>; each search sends its step's depth and MultiPV, with a time limit</td><td><span class="tag met">met</span></td><td><code>uci-engine.test.ts</code>; E1 logged worker traffic in preview at 1400 and Full</td></tr>
 <tr><td>Face mistakes that stay in a set size</td><td>Chooser unit tests: loss limit, slips, mate avoidance, found mates, no material for nothing, tighter when ahead, seeded weights</td><td><span class="tag met">met</span></td><td>15 tests in <code>human-move.test.ts</code>, 8 in <code>material.test.ts</code>, 3 in <code>step-profiles.test.ts</code></td></tr>
-<tr><td>(Developers) re-tune the steps</td><td>The calibration script runs from a clean checkout, prints scores and loss per move, and the results are in <code>docs/decisions.md</code></td><td><span class="tag met">met</span></td><td>Four runs recorded under "Strength step table set from the first calibration runs"; the reviewer reran a short one</td></tr>
+<tr><td>(Developers) re-tune the steps</td><td>The calibration script runs from a clean checkout, prints scores and loss per move, and the results are in <code>pod-docs/decisions.md</code></td><td><span class="tag met">met</span></td><td>Four runs recorded under "Strength step table set from the first calibration runs"; the reviewer reran a short one</td></tr>
 <tr><td>Play 1400 without free piece drops</td><td>At 1400, out of book, no move hangs a piece for nothing</td><td><span class="tag met">met</span> <span class="tag agent">agent check</span></td><td>K1 in preview (PR #67)</td></tr>
 <tr><td>Play Full near engine best</td><td>Full plays close to the engine's best</td><td><span class="tag met">met</span> <span class="tag agent">agent check</span></td><td>Reviewer: Stockfish's best in 47 of 48 searches; the 48th was a tie</td></tr>
 <tr><td>Get quick replies on a phone</td><td>Each reply within the time limit, every step, desktop and phone emulation</td><td><span class="tag met">met</span> <span class="tag agent">agent check</span></td><td>K1: within movetime + 1 s at every step, desktop and 375 px. Not on a real phone.</td></tr>
@@ -196,7 +196,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 
 <section id="decisions">
 <h2>Key decisions</h2>
-<p class="small">A red edge marks a decision the human made or agreed to. In the plan interview the human said "go with all your recommendations", so every plan "(default)" is counted as agreed. Links go to <a href="../decisions.md"><code>docs/decisions.md</code></a> by entry title.</p>
+<p class="small">A red edge marks a decision the human made or agreed to. In the plan interview the human said "go with all your recommendations", so every plan "(default)" is counted as agreed. Links go to <a href="../decisions.md"><code>pod-docs/decisions.md</code></a> by entry title.</p>
 <div class="cards">
 
 <div class="card human">
@@ -376,7 +376,7 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 
 <section id="left">
 <h2>What's left</h2>
-<p class="small">Open entries in <code>docs/handoff-queue.md</code> for this plan. Older entries from other plans are left out.</p>
+<p class="small">Open entries in <code>pod-docs/handoff-queue.md</code> for this plan. Older entries from other plans are left out.</p>
 <div class="bucket"><h3>Fix next</h3>
 <ul><li>Add a chooser rule such as "never skip a free capture of 3 or more"; win % hides material when far ahead (engineer → orchestrator, K1).</li></ul></div>
 <div class="bucket"><h3>Before hosting</h3>
@@ -398,13 +398,13 @@ td:first-child code { white-space: nowrap; overflow-wrap: normal; }
 <section id="sources">
 <h2>Sources</h2>
 <ul>
-<li>Plan: <a href="../plans/human-style-strength.md"><code>docs/plans/human-style-strength.md</code></a> (working copy, status <code>archived</code>)</li>
-<li>Sprint: <a href="../sprints/archive/human-moves.md"><code>docs/sprints/archive/human-moves.md</code></a>, with its Sprint summary and slice log</li>
-<li>Research: <a href="../research/human-style-strength.md"><code>docs/research/human-style-strength.md</code></a></li>
-<li>Decisions: <a href="../decisions.md"><code>docs/decisions.md</code></a>, entries dated 2026-10-09 (Stockfish, amended) and 2026-10-12 (five entries; three uncommitted)</li>
-<li>Queue: <a href="../handoff-queue.md"><code>docs/handoff-queue.md</code></a>, entries dated 2026-10-12 (working copy)</li>
-<li>Smoke recipe and features: <a href="../codebase-structure.md"><code>docs/codebase-structure.md</code></a>, <a href="../features.md"><code>docs/features.md</code></a></li>
-<li>Look: <a href="../plans/play-like-liem.md"><code>docs/plans/play-like-liem.md</code></a>, <a href="../design-drafts/play-liem-look.html"><code>docs/design-drafts/play-liem-look.html</code></a></li>
+<li>Plan: <a href="../plans/human-style-strength.md"><code>pod-docs/plans/human-style-strength.md</code></a> (working copy, status <code>archived</code>)</li>
+<li>Sprint: <a href="../sprints/archive/human-moves.md"><code>pod-docs/sprints/archive/human-moves.md</code></a>, with its Sprint summary and slice log</li>
+<li>Research: <a href="../research/human-style-strength.md"><code>pod-docs/research/human-style-strength.md</code></a></li>
+<li>Decisions: <a href="../decisions.md"><code>pod-docs/decisions.md</code></a>, entries dated 2026-10-09 (Stockfish, amended) and 2026-10-12 (five entries; three uncommitted)</li>
+<li>Queue: <a href="../handoff-queue.md"><code>pod-docs/handoff-queue.md</code></a>, entries dated 2026-10-12 (working copy)</li>
+<li>Smoke recipe and features: <a href="../codebase-structure.md"><code>pod-docs/codebase-structure.md</code></a>, <a href="../features.md"><code>pod-docs/features.md</code></a></li>
+<li>Look: <a href="../plans/play-like-liem.md"><code>pod-docs/plans/play-like-liem.md</code></a>, <a href="../design-drafts/play-liem-look.html"><code>pod-docs/design-drafts/play-liem-look.html</code></a></li>
 <li>PRs: <a href="https://github.com/iamphduc/chess-web/pull/65">#65</a> (wave 1), <a href="https://github.com/iamphduc/chess-web/pull/66">#66</a> (wave 2), <a href="https://github.com/iamphduc/chess-web/pull/67">#67</a> (wave 3), <a href="https://github.com/iamphduc/chess-web/pull/68">#68</a> (final, with the reviewer's round 1 comment)</li>
 <li>Commits: <code>main..human-style-strength</code>, 37 commits from <code>8087361</code> (plan and research) to <code>f2c0dfe</code> (queue the calibration concerns)</li>
 <li>Code: <code>src/game/opponent/engine/lines.ts</code>, <code>engine/move-engine.ts</code>, <code>step-profiles.ts</code>, <code>human-move.ts</code>, <code>material.ts</code>, <code>opponent.ts</code>, <code>strength.ts</code>, <code>src/features/liem/bookNote.ts</code>, <code>scripts/calibrate/*.ts</code></li>

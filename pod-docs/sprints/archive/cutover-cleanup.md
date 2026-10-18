@@ -1,6 +1,6 @@
 # Sprint: Cutover & Cleanup
 
-_From plan: docs/plans/pure-engine-refactor.md · Slug: cutover-cleanup · Status: archived · Generated: 2026-06-04_
+_From plan: pod-docs/plans/pure-engine-refactor.md · Slug: cutover-cleanup · Status: archived · Generated: 2026-06-04_
 
 This is the **strangler-fig cutover** — the single late, revertable commit where the live app stops calling the legacy singleton engine (`game/piece-moves.ts`, the mutable state on `game/pieces/*`) and starts driving `BoardSlice` from the pure engine (`game/engine/*`). It is the final sprint in the plan. Per the "engine boundary excludes presentation" decision, the engine answers only "legal moves" + "resulting position"; **notation, `lastMoves` highlights, and the fallen-pieces list stay reducer/adapter-side**, so the cutover is an *adapter* between the engine's `GameState` and `BoardSlice`'s existing UI-facing state — not a UI rewrite.
 
@@ -38,7 +38,7 @@ Wave membership lives in the **Wave** column; slices sharing a wave run in paral
 - **Success criteria:**
   - `npm test` (`vitest run`) green — full engine suite still passes + the new reducer-wiring tests.
   - `npx tsc --noEmit` clean and `npm run build` (`react-scripts build`) clean — no type errors, no remaining UI-shape breakage.
-  - **Runtime smoke (LIVE this sprint):** `npm install --legacy-peer-deps`, `npm start` → http://localhost:3000; load with no console errors; play a full game exercising **castle, en passant, pawn promotion (picker), and deliver checkmate (GameOver overlay)**; then **reset / new game and confirm state clears across two consecutive games**. (Per `docs/codebase-structure.md` → `## Smoke recipe`.)
+  - **Runtime smoke (LIVE this sprint):** `npm install --legacy-peer-deps`, `npm start` → http://localhost:3000; load with no console errors; play a full game exercising **castle, en passant, pawn promotion (picker), and deliver checkmate (GameOver overlay)**; then **reset / new game and confirm state clears across two consecutive games**. (Per `pod-docs/codebase-structure.md` → `## Smoke recipe`.)
   - The reset-clears-across-games reducer test passes.
 - **Depends on:** —
 

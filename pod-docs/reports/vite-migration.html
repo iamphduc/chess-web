@@ -133,7 +133,7 @@ ul.left li { margin-bottom: 4px; }
 <tr><td>Keep writing <code>game/…</code>, <code>features/…</code> imports</td><td><code>tsconfig.json</code> has no <code>baseUrl</code>; no import line in <code>src/</code> changed for the alias switch</td><td><span class="tag met">met</span> reviewer: <code>src/</code> changes are only the avatar map, a comment and tests</td></tr>
 <tr><td>Get typecheck, build, tests and a secret scan on every PR</td><td><code>.github/workflows/</code> runs typecheck, test and build on <code>pull_request</code>, and deploys with <code>actions/deploy-pages</code> on push to <code>main</code></td><td><span class="tag part">PR side met · deploy not checked</span> real runs on #36, #37, #38; the deploy job only runs after the merge to <code>main</code></td></tr>
 <tr><td>See the Vite build live at <code>iamphduc.github.io/chess-web/</code></td><td>Live site serves the Vite build and passes the full smoke playthrough with no console errors</td><td><span class="tag not">not checked</span> needs the human Pages switch and the merge of #38</td></tr>
-<tr><td>Follow an up-to-date codebase brief and smoke recipe</td><td><code>docs/codebase-structure.md</code> describes Vite, the post-cutover engine and the new smoke recipe</td><td><span class="tag met">met</span> pinned by <code>tests/docs.test.ts</code></td></tr>
+<tr><td>Follow an up-to-date codebase brief and smoke recipe</td><td><code>pod-docs/codebase-structure.md</code> describes Vite, the post-cutover engine and the new smoke recipe</td><td><span class="tag met">met</span> pinned by <code>tests/docs.test.ts</code></td></tr>
 </table></div>
 <p>The full local playthrough (castle, en passant, promotion, checkmate, reset across two games) was run by the V1 engineer on the production preview build. The reviewer did not run a browser playthrough.</p>
 
@@ -146,7 +146,7 @@ ul.left li { margin-bottom: 4px; }
 
 <!-- 3 -->
 <h2 id="decisions">3. Key decisions</h2>
-<p>Most choices come from <code>docs/research/cra-to-vite.md</code> and the plan's Key decisions. "Agent default" means the planner proposed it and it was not changed in the plan interview. Two decision entries were written: <a href="../decisions.md">decisions.md → "Vite + Vitest replace CRA"</a> and <a href="../decisions.md">"GitHub Actions deploys to GitHub Pages"</a> (both 2026-10-04). There are no design drafts.</p>
+<p>Most choices come from <code>pod-docs/research/cra-to-vite.md</code> and the plan's Key decisions. "Agent default" means the planner proposed it and it was not changed in the plan interview. Two decision entries were written: <a href="../decisions.md">decisions.md → "Vite + Vitest replace CRA"</a> and <a href="../decisions.md">"GitHub Actions deploys to GitHub Pages"</a> (both 2026-10-04). There are no design drafts.</p>
 <div class="cards">
 
 <div class="card"><h3>Deploy with GitHub Actions and the official Pages actions</h3><span class="tag human">human</span>
@@ -285,7 +285,7 @@ ul.left li { margin-bottom: 4px; }
 
 <!-- 6 -->
 <h2 id="left">6. What's left</h2>
-<p>The 10 open entries in <code>docs/handoff-queue.md</code>, plus the human steps from the final PR.</p>
+<p>The 10 open entries in <code>pod-docs/handoff-queue.md</code>, plus the human steps from the final PR.</p>
 <div class="scroll"><table>
 <tr><th>When</th><th>Item</th><th>Source</th></tr>
 <tr><td><span class="tag not">Fix next</span></td><td>Review and merge final PR #38 (verdict pass).</td><td>queue 2026-10-05 orchestrator → human</td></tr>
@@ -307,10 +307,10 @@ ul.left li { margin-bottom: 4px; }
 <!-- 7 -->
 <h2 id="sources">7. Sources</h2>
 <ul class="left">
-<li>Plan: <code>docs/plans/vite-migration.md</code></li>
-<li>Sprints: <code>docs/sprints/archive/vite-switch.md</code>, <code>docs/sprints/archive/ci-deploy.md</code> (Sprint summaries and slice logs)</li>
-<li>Research: <code>docs/research/cra-to-vite.md</code></li>
-<li><code>docs/decisions.md</code> (2026-10-04 entries), <code>docs/handoff-queue.md</code> (working copy, incl. 2026-10-05 entries), <code>docs/known-issues/windows-server-teardown.md</code>, <code>docs/known-issues/browser-smoke-drag.md</code>, <code>docs/codebase-structure.md</code></li>
+<li>Plan: <code>pod-docs/plans/vite-migration.md</code></li>
+<li>Sprints: <code>pod-docs/sprints/archive/vite-switch.md</code>, <code>pod-docs/sprints/archive/ci-deploy.md</code> (Sprint summaries and slice logs)</li>
+<li>Research: <code>pod-docs/research/cra-to-vite.md</code></li>
+<li><code>pod-docs/decisions.md</code> (2026-10-04 entries), <code>pod-docs/handoff-queue.md</code> (working copy, incl. 2026-10-05 entries), <code>pod-docs/known-issues/windows-server-teardown.md</code>, <code>pod-docs/known-issues/browser-smoke-drag.md</code>, <code>pod-docs/codebase-structure.md</code></li>
 <li>Code: <code>vite.config.ts</code>, <code>tsconfig.json</code>, <code>package.json</code>, <code>index.html</code>, <code>.github/workflows/pod-ci.yml</code>, <code>src/features/board/components/avatar.ts</code></li>
 <li>PRs: <a href="https://github.com/iamphduc/chess-web/pull/33">#33</a>, <a href="https://github.com/iamphduc/chess-web/pull/34">#34</a>, <a href="https://github.com/iamphduc/chess-web/pull/35">#35</a>, <a href="https://github.com/iamphduc/chess-web/pull/36">#36</a>, <a href="https://github.com/iamphduc/chess-web/pull/37">#37</a>, <a href="https://github.com/iamphduc/chess-web/pull/38">#38</a>; reviewer comment <a href="https://github.com/iamphduc/chess-web/pull/38#issuecomment-5985707063">5985707063</a></li>
 <li>Commits: <code>origin/main</code> <code>301e649</code> to <code>vite-migration</code> <code>be52698</code> (34 commits), incl. <code>03029e9</code> (A1), <code>dcfb158</code> (V1), <code>956f15c</code> (D1), <code>8383786</code> and <code>f743836</code> (C1), <code>14a93e0</code> (D1)</li>

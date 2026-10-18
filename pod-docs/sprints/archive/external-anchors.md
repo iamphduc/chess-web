@@ -1,6 +1,6 @@
 # Sprint: external-anchors
 
-_From plan: docs/plans/pure-engine-refactor.md · Slug: external-anchors · Status: archived · Generated: 2026-06-04_
+_From plan: pod-docs/plans/pure-engine-refactor.md · Slug: external-anchors · Status: archived · Generated: 2026-06-04_
 
 Anchors the hand-authored engine against **external ground truth** independent of our own beliefs — the mitigation the plan names for the "hand-authoring chess rules risks encoding our own misunderstanding" risk. Two anchors: published **perft** node counts (start position depth 1-3 + one tactical position) and one **recorded short game** replayed move-for-move ending in checkmate. This sprint is **test-only / additive** — it adds no engine behaviour, only ground-truth tests (plus, optionally, a tiny test-only position-builder helper). It must NOT wire anything into `BoardSlice` (that is `cutover-cleanup`).
 
@@ -23,7 +23,7 @@ Wave membership lives in the **Wave** column; slices sharing a wave run in paral
   - Assert published start-position counts from `initialGameState()`: **depth 1 = 20, depth 2 = 400, depth 3 = 8902.** (Optionally a depth-1 sanity sub-assert that the move list length equals 20 directly.)
   - Do NOT promote the helper into a non-test `src/` module — perft is needed only by tests; keeping it test-local avoids shipping dead engine code. (If `perft-tactical` wants to share it, see its Depends-on note — the shared helper, if extracted, lives in a test-only file under `__tests__/`, never in the engine proper.)
   - Use **relative imports** (`../engine`, `../game-state`) — Vitest does not resolve the tsconfig `baseUrl` alias. Import from `vitest`.
-  - Do NOT touch any engine source, `BoardSlice`, or `docs/plans/`.
+  - Do NOT touch any engine source, `BoardSlice`, or `pod-docs/plans/`.
 - **Files owned:**
   - `src/game/engine/__tests__/perft-start.test.ts` (new)
   - `src/game/engine/__tests__/perft-helper.ts` (new, optional — the shared test-only `perft()` + position-builder, importable by `perft-tactical`; if the engineer keeps perft inline in the test file instead, this file is simply not created and `perft-tactical` defines its own — flag the choice in a PENDING)
@@ -39,7 +39,7 @@ Wave membership lives in the **Wave** column; slices sharing a wave run in paral
   - Add a test that starts from `initialGameState()` and replays a famous decisive miniature **move-for-move**. Recommended: **Scholar's mate** (1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6?? 4. Qxf7#) — short, no promotion, ends in checkmate, easy to hand-verify. Légal's mate or another documented sub-15-move master miniature is an acceptable substitute; the engineer picks and documents the source/line in a header comment.
   - For each ply: assert the move is present in `legalMoves(state, from)` for the side to move (i.e. the engine *accepts* it as legal — match on `to` and, if applicable, `promotion`), then advance via `applyMove`. After the final move, assert `gameStatus(finalState) === "checkmate"`.
   - Translate algebraic coordinates to the engine grid (`[y, x]`, row 0 = Black back rank, row 7 = White; file a..h = x 0..7; rank 1..8 = y 7..0). A small local `algebraic(square)` helper inside the test file is fine; do NOT add a non-test parser.
-  - Do NOT replay a drawn or unfinished game — the anchor's value is the terminal checkmate verdict. Do NOT touch engine source, `BoardSlice`, or `docs/plans/`.
+  - Do NOT replay a drawn or unfinished game — the anchor's value is the terminal checkmate verdict. Do NOT touch engine source, `BoardSlice`, or `pod-docs/plans/`.
   - Use **relative imports** and import from `vitest`.
 - **Files owned:**
   - `src/game/engine/__tests__/recorded-game.test.ts` (new)
@@ -57,7 +57,7 @@ Wave membership lives in the **Wave** column; slices sharing a wave run in paral
   - Piece-id assignment: `pieceKind` keys only on the id's kind substring, so any distinct `WhitePawnA..H` / `BlackPawnA..H` id may stand for any pawn regardless of its file, and the two rooks/knights/bishops per side map to their `QueenX`/`KingX` ids. Kiwipete uses exactly one queen per side (`WhiteQueen`/`BlackQueen`). Each occupied square gets a distinct, kind-correct `PieceType`. Document the FEN→grid transcription in a header comment so it is auditable.
   - Reuse the perft helper: import it from `perft-start`'s `perft-helper.ts` if that file was created; otherwise define a local `perft()` identical in contract (count `legalMoves` over all side-to-move pieces, recurse via `applyMove`, depth 0 → 1).
   - If, in practice, building Kiwipete by hand proves too error-prone or the FEN tooling it wants is out of scope, **fall back to a simpler documented tactical position** with published perft (e.g. a position with far fewer pieces) and record the substitution + its source in a PENDING — the anchor requirement is "one tactical position with published counts", not Kiwipete specifically.
-  - Do NOT add a general FEN parser to non-test `src/` — a hand-built `GameState` (or a test-only builder) is the intended path; a parser is out of scope for this test-only sprint. Do NOT touch engine source, `BoardSlice`, or `docs/plans/`.
+  - Do NOT add a general FEN parser to non-test `src/` — a hand-built `GameState` (or a test-only builder) is the intended path; a parser is out of scope for this test-only sprint. Do NOT touch engine source, `BoardSlice`, or `pod-docs/plans/`.
   - Use **relative imports** and import from `vitest`.
 - **Files owned:**
   - `src/game/engine/__tests__/perft-tactical.test.ts` (new)
@@ -77,7 +77,7 @@ Wave membership lives in the **Wave** column; slices sharing a wave run in paral
 - **Worktree teardown:** orchestrator should expect to `--force`-remove worktrees (they accumulate untracked per-worktree `node_modules`).
 - **Strangler-fig:** test-only / additive sprint. Do **not** wire the engine or perft into `BoardSlice` — that is `cutover-cleanup`.
 - **Branch naming:** flat `external-anchors-<slice-code>` (no `/`).
-- **Smoke gate:** `docs/codebase-structure.md` `## Smoke recipe` is still a stub. This sprint adds **no runnable app surface** (pure additive tests), so — exactly as for `engine-foundation` — it is verified by `vitest run` + `tsc`, and the fail-closed runtime-smoke gate does not apply here. The stub still blocks `cutover-cleanup`; not this sprint's job to fill.
+- **Smoke gate:** `pod-docs/codebase-structure.md` `## Smoke recipe` is still a stub. This sprint adds **no runnable app surface** (pure additive tests), so — exactly as for `engine-foundation` — it is verified by `vitest run` + `tsc`, and the fail-closed runtime-smoke gate does not apply here. The stub still blocks `cutover-cleanup`; not this sprint's job to fill.
 
 ## Sprint summary
 

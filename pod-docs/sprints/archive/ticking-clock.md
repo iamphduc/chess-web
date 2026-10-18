@@ -1,6 +1,6 @@
 # Sprint: Ticking clock
 
-_From plan: docs/plans/animated-clock.md · Slug: ticking-clock · Status: archived · Generated: 2026-10-05_
+_From plan: pod-docs/plans/animated-clock.md · Slug: ticking-clock · Status: archived · Generated: 2026-10-05_
 
 <!-- autopilot-run: started=2026-10-05T07:34:17Z sprints=1 waves=2 -->
 
@@ -71,8 +71,8 @@ The icon draws in `currentColor`, so it follows the pill's ink. Existing variabl
 ## Per-slice detail
 
 ### L1: Look: clock color tokens and Quicksand 700
-- **Scope:** Add the six clock tokens above to `src/index.css` `:root`. Change the existing Google Fonts `@import` to load Quicksand weights 500 and 700 (`wght@500;700`); nothing else about fonts changes (no self-hosting, no npm package). Base control styles: none — the only control styled this sprint is the clock pill, which C1 builds from these tokens; the Play/Reset buttons and the rest of the page don't change (plan: other restyling out of scope). No other slice edits `src/index.css`. Update `docs/codebase-structure.md` Stack & conventions with one line: clock colors are the `--clock-*` tokens in `src/index.css`.
-- **Files owned:** `src/index.css`, `tests/theme.test.ts` (new), `docs/codebase-structure.md`
+- **Scope:** Add the six clock tokens above to `src/index.css` `:root`. Change the existing Google Fonts `@import` to load Quicksand weights 500 and 700 (`wght@500;700`); nothing else about fonts changes (no self-hosting, no npm package). Base control styles: none — the only control styled this sprint is the clock pill, which C1 builds from these tokens; the Play/Reset buttons and the rest of the page don't change (plan: other restyling out of scope). No other slice edits `src/index.css`. Update `pod-docs/codebase-structure.md` Stack & conventions with one line: clock colors are the `--clock-*` tokens in `src/index.css`.
+- **Files owned:** `src/index.css`, `tests/theme.test.ts` (new), `pod-docs/codebase-structure.md`
 - **Success criteria:**
   - `[test] each --clock-* token has its contract value (hex compared case-insensitively) — tests/theme.test.ts › clock tokens have the Look values`
   - `[test] waiting and running ink/bg pairs reach 4.5:1, computed from the token values with the WCAG formula — tests/theme.test.ts › normal clock pairs meet 4.5:1 contrast`
@@ -106,8 +106,8 @@ The icon draws in `currentColor`, so it follows the pill's ink. Existing variabl
   - New presentational `PlayerClock` (`src/features/board/components/PlayerClock.tsx`), props `{ remainingMs: number; isActive: boolean; playerName: string }`, no hooks or store. It renders the existing `.player__time` pill with: class `player__time--running` when `isActive`; class `player__time--low` when `isActive` and `clockStage` isn't `normal` (the waiting pill never turns red); `role="timer"` and `aria-label="Clock for <playerName>"` on the pill; an inline SVG `.clock-icon` (`aria-hidden="true"`, round face, one hand `.clock-icon__hand` with inline `transform: rotate(<handAngle>deg)` about the face center); digits `.player__timer` showing `formatClock`. A visually hidden sibling of the pill (not inside it) with `role="alert"` holds `lowTimeAlert(remainingMs)`.
   - Rewrite `Player.tsx` to keep a `ClockState` and drive it with `clockPhase` / `startClock` / `pauseClock` / `initialClock` and `Date.now()`, a timer effect keyed only on `tickInterval(...)` (see contract), and the flag-fall / game-over `stop()` rule. Remove `toTime` and the `BsClockHistory` import (leave `react-icons` in `package.json`; see note below). Render `PlayerClock`. Keep Reset, Play, stop at 0 and stop at game over working.
   - `Player.css`: clock colors only via the `--clock-*` tokens (waiting → waiting pair, running → running pair, low → low pair); digits weight 700 and `font-variant-numeric: tabular-nums`, 1.5rem as today; the hand has no `transition` or `animation` (crisp jump, no sweep or bounce); `@media (prefers-reduced-motion: reduce)` sets `.clock-icon__hand { transform: none !important; }`. Follow the plan's Look; nothing else on the page changes.
-  - Docs: add a clock row to `docs/features.md` (drive: browser sample of both `.clock-icon__hand` transforms and digits across 2 s after Play, plus `npx vitest run src/features/board/__tests__/clock.test.ts src/features/board/__tests__/player-clock.test.tsx`; proof: running hand moves 90° per second with the digits, waiting hand and digits unchanged, tests pass), and keep the "Play and clocks" row true. In `docs/codebase-structure.md` add `clock.ts` and `PlayerClock` to Layout, and note under Tests that components may be tested in the node environment with `react-dom/server`'s `renderToStaticMarkup` (no jsdom).
-- **Files owned:** `src/features/board/components/Player.tsx`, `src/features/board/components/Player.css`, `src/features/board/components/PlayerClock.tsx` (new), `src/features/board/__tests__/player-clock.test.tsx` (new), `src/features/board/__tests__/player.test.tsx` (new), `tests/player-css.test.ts` (new), `docs/features.md`, `docs/codebase-structure.md`
+  - Docs: add a clock row to `pod-docs/features.md` (drive: browser sample of both `.clock-icon__hand` transforms and digits across 2 s after Play, plus `npx vitest run src/features/board/__tests__/clock.test.ts src/features/board/__tests__/player-clock.test.tsx`; proof: running hand moves 90° per second with the digits, waiting hand and digits unchanged, tests pass), and keep the "Play and clocks" row true. In `pod-docs/codebase-structure.md` add `clock.ts` and `PlayerClock` to Layout, and note under Tests that components may be tested in the node environment with `react-dom/server`'s `renderToStaticMarkup` (no jsdom).
+- **Files owned:** `src/features/board/components/Player.tsx`, `src/features/board/components/Player.css`, `src/features/board/components/PlayerClock.tsx` (new), `src/features/board/__tests__/player-clock.test.tsx` (new), `src/features/board/__tests__/player.test.tsx` (new), `tests/player-css.test.ts` (new), `pod-docs/features.md`, `pod-docs/codebase-structure.md`
 - **Success criteria:**
   - `[test] pill has role="timer", aria-label "Clock for Me", digits 10:00 at 600000 — player-clock.test.tsx › renders a labelled timer`
   - `[test] running class only when isActive; low class at 19999 active, not at 20000 active, not at 5000 waiting — player-clock.test.tsx › low-time red only on the running pill under 20s`
@@ -129,11 +129,11 @@ Note for C1: after this slice `react-icons` has no importer left. Removing it ch
 
 - **Synced with merge-target:** up to date (first sprint of the plan, cut from `origin/main` at preflight)
 - **Slices shipped:** L1, T1, C1 (wave PRs #41, #42)
-- **Queue entries:** resolved 0, deferred 3: stalemate-shows-win (Fix next), Quicksand real bold (Needs your decision), `react-icons` unused (Someday). See `docs/handoff-queue.md`, 2026-10-05.
+- **Queue entries:** resolved 0, deferred 3: stalemate-shows-win (Fix next), Quicksand real bold (Needs your decision), `react-icons` unused (Someday). See `pod-docs/handoff-queue.md`, 2026-10-05.
 - **Slice log:**
   - L1: high · test-first yes · runtime dev server, font + token evals, desktop and 375 px screenshots · 1 NOTE · time lost none
-  - T1: high · test-first yes · runtime build + dev server 200 (no UI) · 5 NOTEs · time lost none (used `git worktree remove --force` at teardown; recorded `docs/known-issues/worktree-remove.md`)
+  - T1: high · test-first yes · runtime build + dev server 200 (no UI) · 5 NOTEs · time lost none (used `git worktree remove --force` at teardown; recorded `pod-docs/known-issues/worktree-remove.md`)
   - C1: medium (Firefox not checked) · test-first yes · runtime tick sampling, turn switch by drag, low time via shifted `Date.now`, reduced motion via Chrome flag, desktop and 375 px · 3 NOTEs · time lost ~2 min hung heredoc, drag workaround for stale refs
   - Orchestrator: L1 trimmed before dispatch (font self-hosting cut). No wave fixes, no stalls.
-  - Teardown: the permission system refused `git clean -fdX`; a plain `git worktree remove` then worked for every worktree (ignored `node_modules` doesn't block it). Known issue corrected: `docs/known-issues/worktree-remove.md`.
+  - Teardown: the permission system refused `git clean -fdX`; a plain `git worktree remove` then worked for every worktree (ignored `node_modules` doesn't block it). Known issue corrected: `pod-docs/known-issues/worktree-remove.md`.
 - **Agent context at hand-back:** 332,868 tokens (sprint-planner 75,374 + L1 74,876 + T1 62,364 + C1 120,254), *each agent's final context size, not tokens billed*

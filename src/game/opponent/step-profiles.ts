@@ -22,7 +22,7 @@ export interface StepProfile {
 }
 
 /**
- * Set from `npm run calibrate` (docs/decisions.md, 2026-10-12). Going up the
+ * Set from `npm run calibrate` (pod-docs/decisions.md, 2026-10-12). Going up the
  * steps, depth never falls and the loss limits, slip chance, slip limit and
  * temperature never rise. A search stops at its depth or its `movetimeMs`,
  * whichever comes first. Full's real limit is time: at 1000 ms it stops at

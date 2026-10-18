@@ -1,6 +1,6 @@
 // `npm run calibrate`: plays each strength step against Stockfish anchors at a
 // set UCI_Elo and against the next step up, and prints a table per step. Dev
-// only, run by hand; never in tests or CI. See docs/codebase-structure.md.
+// only, run by hand; never in tests or CI. See pod-docs/codebase-structure.md.
 import { availableParallelism } from "node:os";
 import { pathToFileURL } from "node:url";
 import { createUciEngine, type UciTransport } from "../../src/game/opponent/engine/uci-engine";
@@ -23,7 +23,7 @@ import {
 /**
  * How long an anchor thinks per move. Stockfish's UCI_Elo scale was set at
  * about 60 s + 0.6 s a game; at 500 ms its anchors played far below their
- * number (first run, docs/decisions.md 2026-10-12).
+ * number (first run, pod-docs/decisions.md 2026-10-12).
  */
 export const ANCHOR_MOVETIME_MS = 1000;
 

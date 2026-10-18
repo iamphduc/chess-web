@@ -1,6 +1,6 @@
 # Sprint: Special Moves
 
-_From plan: docs/plans/pure-engine-refactor.md · Slug: special-moves · Status: archived · Generated: 2026-06-04_
+_From plan: pod-docs/plans/pure-engine-refactor.md · Slug: special-moves · Status: archived · Generated: 2026-06-04_
 
 ## Status board
 
@@ -62,8 +62,8 @@ Wave membership lives in the **Wave** column; slices sharing a wave run in paral
 ## Field semantics
 
 - **Wave:** the leading column — the parallel batch a slice runs in. Slices sharing a wave run concurrently and **must own disjoint file sets**. Assign waves to **maximize parallel width**: each slice goes in the *earliest* wave where (a) all its `Depends on` slices sit in strictly-earlier waves and (b) its `Files owned` are disjoint from every slice already in that wave. Open a new wave only when a dependency or file conflict forces it — never split independent, non-conflicting slices across waves. **Cap each wave at 5 slices**; eligible overflow spills into the next wave (still respecting deps and disjoint files).
-- **Slug:** matches the row in the main plan's Sprint sequence (`docs/plans/pure-engine-refactor.md`).
-- **Sprint doc Status:** `active` while in `docs/sprints/`; flipped to `archived` immediately before `mv` to `docs/sprints/archive/`.
+- **Slug:** matches the row in the main plan's Sprint sequence (`pod-docs/plans/pure-engine-refactor.md`).
+- **Sprint doc Status:** `active` while in `pod-docs/sprints/`; flipped to `archived` immediately before `mv` to `pod-docs/sprints/archive/`.
 - **Slice Status transitions:** `pending` → `pr open` → `done`, with `blocked` as terminal.
 - **PR values:** `—` / URL / `blocked` / `skipped — verification failed` / `merged`.
 - **Difficulty (1–5):** 1 = trivial; 3 = ordinary; 5 = architecture-touching or ambiguous. Scored per slice; justification belongs in the per-slice detail.
@@ -84,8 +84,8 @@ The castle's through/into/out-of-check legality lives in `king.ts` (it needs `is
 - **Relative imports under Vitest:** `vitest.config.ts` does NOT resolve tsconfig `baseUrl` aliases. All engine modules use **relative imports** (`../game-state`, `../engine`, `./classify`, `./attack`, `./promotion`). This sprint does not add `vite-tsconfig-paths`.
 - **Worktree teardown** may need `git worktree remove --force` because per-worktree `node_modules` is untracked.
 - **Strangler-fig boundary:** this sprint is additive and pure — `Move` grows a field, `applyMove` gains special-move bookkeeping, generators gain castling/en-passant/promotion, but **none of it is wired into `BoardSlice`**. The live app stays on the old engine until `cutover-cleanup`. Do NOT touch `piece-moves.ts`, `BoardSlice.ts`, `src/game/pieces/*`, `src/constants.ts` (read-only reuse of `PromotionBoard` is fine), or the old singleton state.
-- **Quarantine discipline:** promotion uses the existing `PieceType` unique-id enum and the `GameState.promotionCount` counter; do NOT begin the `{ kind, color }` redesign (explicitly deferred per `docs/decisions.md` → "Quarantine the promoted-piece identity scheme").
-- **Smoke-recipe stub:** `docs/codebase-structure.md`'s `## Smoke recipe` is still unfilled. Harmless this sprint (every slice is a pure static slice with no runtime app surface; verified by `npm test` + `tsc` + `npm run build`), but `/code`'s fail-closed runtime-smoke gate will halt from `cutover-cleanup` onward until it's filled.
+- **Quarantine discipline:** promotion uses the existing `PieceType` unique-id enum and the `GameState.promotionCount` counter; do NOT begin the `{ kind, color }` redesign (explicitly deferred per `pod-docs/decisions.md` → "Quarantine the promoted-piece identity scheme").
+- **Smoke-recipe stub:** `pod-docs/codebase-structure.md`'s `## Smoke recipe` is still unfilled. Harmless this sprint (every slice is a pure static slice with no runtime app surface; verified by `npm test` + `tsc` + `npm run build`), but `/code`'s fail-closed runtime-smoke gate will halt from `cutover-cleanup` onward until it's filled.
 
 ## Sprint summary
 

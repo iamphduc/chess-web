@@ -5,14 +5,14 @@ _Found: 2026-10-06 · board-interaction (T1) · updated 2026-10-06 · sound-and-
 `chrome-devtools-axi` has no raw touch input. Its `drag` uses the mouse, and `emulate --viewport "375x812x2,mobile,touch"` only sets up a touch viewport, so a touch drag can't be driven through it.
 
 - **Taps:** with touch emulation on, a tap fires `touchend → mousedown → click`, so clicking pieces and squares from page JS (or with the tool's `click`) is a fair stand-in for tap-to-move.
-- **Touch drag:** send real CDP `Input.dispatchTouchEvent` events from a small Node script to a separately launched headless Chrome. The full script and the steps are in `docs/research/touch-drag.md` section 4. Touch events built in page JavaScript are not a valid test.
+- **Touch drag:** send real CDP `Input.dispatchTouchEvent` events from a small Node script to a separately launched headless Chrome. The full script and the steps are in `pod-docs/research/touch-drag.md` section 4. Touch events built in page JavaScript are not a valid test.
 - **`chrome-devtools-axi run`** fails on Windows (`Received protocol 'c:'`). Pass multi-line scripts to `eval` as one line instead, for example `eval "$(tr '\n' ' ' < script.js)"`.
 
 ## Touch-drag smoke run
 
 The app uses `react-dnd-multi-backend` with the `HTML5toTouch` preset. The mouse uses the HTML5 backend. The first `touchstart` switches to the touch backend, and a touch-only preview (`PieceDragPreview`) draws the dragged piece under the finger.
 
-Set up as in `docs/research/touch-drag.md` section 4: one dev server, one headless Chrome with `--remote-debugging-port`, and `touch.mjs` saved outside the repo. Change `URL_` and the `9333` port in the script to your own ports. The script finds squares by DOM order, which only matches the unflipped board. For the flipped check, find squares with `document.querySelector('[data-square="d2"]')` instead.
+Set up as in `pod-docs/research/touch-drag.md` section 4: one dev server, one headless Chrome with `--remote-debugging-port`, and `touch.mjs` saved outside the repo. Change `URL_` and the `9333` port in the script to your own ports. The script finds squares by DOM order, which only matches the unflipped board. For the flipped check, find squares with `document.querySelector('[data-square="d2"]')` instead.
 
 Run these scenarios. Each one must end with `console none`.
 
@@ -28,4 +28,4 @@ Run these scenarios. Each one must end with `console none`.
 
 To find the preview mid-drag, look for a `div` in `#root` with `style.pointerEvents === "none"` and a `backgroundImage`. It has no box shadow, no filter and opacity 1, and its center matches the finger. After the drop, no such element is left.
 
-Not covered: a real phone. Emulated touch is close, but iOS Safari scroll and long-press behavior may differ. If a real phone scrolls the page during a piece drag, add `touch-action: none` on `.piece` only (see `docs/research/touch-drag.md`).
+Not covered: a real phone. Emulated touch is close, but iOS Safari scroll and long-press behavior may differ. If a real phone scrolls the page during a piece drag, add `touch-action: none` on `.piece` only (see `pod-docs/research/touch-drag.md`).

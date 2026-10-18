@@ -28,7 +28,7 @@ The current rules live in module-level singletons (`whiteKing`, `whitePawn`, `pi
 - Fixing the `toX < 8` bounds bug as a red→green regression test.
 - External ground-truth anchors: perft node counts (depth 2–3) and one recorded short game.
 - Cutting `BoardSlice` over to the new engine; a thin layer of reducer-wiring tests; deleting the old singleton state.
-- An authoritative decision record for the promotion-id quarantine (already written to `docs/decisions.md`).
+- An authoritative decision record for the promotion-id quarantine (already written to `pod-docs/decisions.md`).
 
 **Out of scope:**
 - The `{ kind, color }` piece-identity redesign — quarantined; counter moved into `GameState`, deeper redesign deferred to a future effort.
@@ -52,10 +52,10 @@ Status values: `planned` / `active` / `done`. The orchestrator only flips its ro
 The `Depends on` column is the **only** cross-sprint dependency signal. Wave ordering and per-slice deps live inside each sprint doc.
 
 ## Key decisions
-- **Pure functional engine over an immutable `GameState`.** Pieces stay polymorphic but stateless. See `docs/decisions.md` → "Pure functional chess engine over an immutable GameState".
-- **Quarantine the promoted-piece identity scheme.** Move the counter into `GameState`; defer the `{ kind, color }` redesign. See `docs/decisions.md` → "Quarantine the promoted-piece identity scheme".
-- **Tests encode correct chess, not old-engine parity.** Bounds bug becomes a red→green test; external anchors give ground truth. See `docs/decisions.md` → "Tests encode correct chess, not old-engine parity".
-- **Strangler-fig cutover, built test-first in parallel.** Tracer-bullet slice then dependency-ordered fill-in; single late cutover commit; feature branch + PR; no auto-deploy. See `docs/decisions.md` → "Strangler-fig cutover; build the engine test-first in parallel".
+- **Pure functional engine over an immutable `GameState`.** Pieces stay polymorphic but stateless. See `pod-docs/decisions.md` → "Pure functional chess engine over an immutable GameState".
+- **Quarantine the promoted-piece identity scheme.** Move the counter into `GameState`; defer the `{ kind, color }` redesign. See `pod-docs/decisions.md` → "Quarantine the promoted-piece identity scheme".
+- **Tests encode correct chess, not old-engine parity.** Bounds bug becomes a red→green test; external anchors give ground truth. See `pod-docs/decisions.md` → "Tests encode correct chess, not old-engine parity".
+- **Strangler-fig cutover, built test-first in parallel.** Tracer-bullet slice then dependency-ordered fill-in; single late cutover commit; feature branch + PR; no auto-deploy. See `pod-docs/decisions.md` → "Strangler-fig cutover; build the engine test-first in parallel".
 - **Engine boundary excludes presentation.** Notation strings, `lastMoves` highlights, and the fallen-pieces list stay reducer/UI-side; the engine answers only "legal moves" and "resulting position".
 
 ## Known risks

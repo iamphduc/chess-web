@@ -1,6 +1,6 @@
 # Sprint: Play Liem on the board
 
-_From plan: docs/plans/play-like-liem.md · Slug: liem-opponent · Status: archived · Generated: 2026-10-09_
+_From plan: pod-docs/plans/play-like-liem.md · Slug: liem-opponent · Status: archived · Generated: 2026-10-09_
 <!-- autopilot-run: started=2026-10-10T11:05:00+07:00 sprints=0 waves=1 -->
 
 ## Status board
@@ -81,8 +81,8 @@ The Start game button is the existing `.button.button--play`.
   - Self-host Quicksand 500 and 700: commit woff2 files (one variable file or one file per weight, latin) and the OFL licence under `src/assets/fonts/`. Replace the Google Fonts `@import` with `@font-face` rules (`font-display: swap`).
   - Write `src/styles/liem.css` with every class in the contract's Look classes. Set the plan's type sizes (title 22/700, Elo 28/700, labels 16/700, body 16/500, counts 15, badge 14) and the 3 px `--board-focus` ring on `:focus-visible`. Reset buttons so no browser-default control styling is left. Import the file from `src/index.tsx`.
   - Red is used only for edges and underlines, never for text.
-  - Update the fonts line in `docs/codebase-structure.md`.
-- **Files owned:** `src/index.css`, `src/index.tsx`, `src/styles/liem.css` (new), `src/assets/fonts/` (new), `tests/theme.test.ts`, `tests/liem-theme.test.ts` (new), `docs/codebase-structure.md`
+  - Update the fonts line in `pod-docs/codebase-structure.md`.
+- **Files owned:** `src/index.css`, `src/index.tsx`, `src/styles/liem.css` (new), `src/assets/fonts/` (new), `tests/theme.test.ts`, `tests/liem-theme.test.ts` (new), `pod-docs/codebase-structure.md`
 - **Success criteria:**
   - `[test] each Liem token is declared once in :root with its Look value — tests/liem-theme.test.ts › liem tokens have the Look values`
   - `[test] text and soft text on card, note and page (#333333), gold on card and on badge bg, and text on gold tint are all at least 4.5:1 — tests/liem-theme.test.ts › text pairs meet 4.5:1`
@@ -174,8 +174,8 @@ The Start game button is the existing `.button.button--play`.
     - Stockfish (GPL v3), with links to the Stockfish source and the nmrugg `stockfish` npm package.
     - Game data sources: Chess.com public API, Lichess (CC0 database and API), TWIC/chessgames.com for over-the-board files. The books hold only move counts.
     - The sounds' existing credits.
-  - Add the plan's `docs/decisions.md` entry: the repo becomes GPL-3.0 because the app ships Stockfish.
-- **Files owned:** `LICENSE` (new), `README.md`, `package.json`, `tests/license.test.ts` (new), `docs/decisions.md`
+  - Add the plan's `pod-docs/decisions.md` entry: the repo becomes GPL-3.0 because the app ships Stockfish.
+- **Files owned:** `LICENSE` (new), `README.md`, `package.json`, `tests/license.test.ts` (new), `pod-docs/decisions.md`
 - **Success criteria:**
   - `[test] LICENSE starts with "GNU GENERAL PUBLIC LICENSE" and "Version 3, 29 June 2007" and contains "END OF TERMS AND CONDITIONS"; package.json license is "GPL-3.0-or-later" — tests/license.test.ts › repo is GPL-3.0`
 - **Depends on:** —
@@ -258,9 +258,9 @@ The Start game button is the existing `.button.button--play`.
     - Wires `BookNote`'s `onRetry` to `retry`.
     - Disposes on unmount.
   - Use only the L1 tokens and classes, and follow the Look.
-  - Add vs-Liem to `docs/codebase-structure.md`: the layout, and a smoke-recipe paragraph using the contract's smoke hooks.
-  - Add `docs/decisions.md` entries: the engine and books load at game start, not on page load; the page opens in Two players.
-- **Files owned:** `src/features/board/Board.tsx`, `src/features/board/Board.css`, `src/features/liem/useLiemOpponent.ts` (new), `src/features/board/__tests__/board-modes.test.tsx` (new), `tests/build.test.ts`, `docs/codebase-structure.md`, `docs/decisions.md`
+  - Add vs-Liem to `pod-docs/codebase-structure.md`: the layout, and a smoke-recipe paragraph using the contract's smoke hooks.
+  - Add `pod-docs/decisions.md` entries: the engine and books load at game start, not on page load; the page opens in Two players.
+- **Files owned:** `src/features/board/Board.tsx`, `src/features/board/Board.css`, `src/features/liem/useLiemOpponent.ts` (new), `src/features/board/__tests__/board-modes.test.tsx` (new), `tests/build.test.ts`, `pod-docs/codebase-structure.md`, `pod-docs/decisions.md`
 - **Success criteria:**
   - `[test] two players: tabs, both players cards above and below the board, Play/Reset/Flip/Sound, and no setup card or note — board-modes.test.tsx › two-player layout unchanged`
   - `[test] vs Liem with the card open: the dialog sits inside .squares with liem-dimmed, and there's no Play button — board-modes.test.tsx › setup card over the dimmed board`
@@ -278,7 +278,7 @@ The Start game button is the existing `.button.button--play`.
 
 - **Synced with merge-target:** up to date (no new `main` commits since the plan branch was cut).
 - **Slices shipped:** L1, G1, P1, C1, D1 (wave PR #61), U1, U2, U3 (wave PR #62). U3 moved from wave 3 into wave 2 after the human tried a harness of U1 and U2 and asked for the real layout before merging, so the sprint ran 2 waves, not 3.
-- **Queue entries:** resolved 9 (the GPL door, both gate halts, U2's `bookMoveLabel` signature, U2's note words kept, the Start-green contrast, U1's flaky test, U3's test-only guard, and the merge block), deferred 0 new from this sprint; sprint-1 deferrals still open (Lichess account, thin slow book, book floor) — see `docs/handoff-queue.md`, 2026-10-09 and 2026-10-10.
+- **Queue entries:** resolved 9 (the GPL door, both gate halts, U2's `bookMoveLabel` signature, U2's note words kept, the Start-green contrast, U1's flaky test, U3's test-only guard, and the merge block), deferred 0 new from this sprint; sprint-1 deferrals still open (Lichess account, thin slow book, book floor) — see `pod-docs/handoff-queue.md`, 2026-10-09 and 2026-10-10.
 - **Slice log:**
   - L1, G1, P1, C1, D1: opus · medium · test-first yes · runtime wave 1 check (he played 1.Nf3 from book as White, input lock, 2.Nc3 from the engine, two-player mate, Quicksand self-hosted, 375 px) · NOTEs passed to wave 2 · time lost none
   - U1: opus · medium · test-first yes · runtime harness on 3060 (Black flips, tabs, steps, Full) · 7 NOTEs · time lost none

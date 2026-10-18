@@ -1,6 +1,6 @@
 # Sprint: Engine Foundation
 
-_From plan: docs/plans/pure-engine-refactor.md · Slug: engine-foundation · Status: archived · Generated: 2026-06-04_
+_From plan: pod-docs/plans/pure-engine-refactor.md · Slug: engine-foundation · Status: archived · Generated: 2026-06-04_
 
 ## Status board
 
@@ -10,7 +10,7 @@ _From plan: docs/plans/pure-engine-refactor.md · Slug: engine-foundation · Sta
 | 2 | gamestate | Define the immutable `GameState` value/type and initial-state factory | 3 | engineer-senior | engine-foundation-gamestate | #4 merged | done | harness |
 | 3 | tracer | Tracer-bullet `legalMoves` + `applyMove` for one quiet move, end-to-end | 3 | engineer-senior | engine-foundation-tracer | #5 merged | done | gamestate |
 
-> Re-sliced 2026-06-04: test runner switched from CRA/Jest to **Vitest** (see `docs/decisions.md` → "Vitest for the engine test suite, over CRA's Jest"). Because `vitest` is not installed until `harness` merges, `gamestate` and `tracer` now depend on `harness`, making the sprint 3 sequential waves.
+> Re-sliced 2026-06-04: test runner switched from CRA/Jest to **Vitest** (see `pod-docs/decisions.md` → "Vitest for the engine test suite, over CRA's Jest"). Because `vitest` is not installed until `harness` merges, `gamestate` and `tracer` now depend on `harness`, making the sprint 3 sequential waves.
 
 Wave membership lives in the **Wave** column; slices sharing a wave run in parallel and must own disjoint file sets.
 
@@ -42,8 +42,8 @@ Wave membership lives in the **Wave** column; slices sharing a wave run in paral
 ## Field semantics
 
 - **Wave:** the leading column — the parallel batch a slice runs in. Slices sharing a wave run concurrently and **must own disjoint file sets**. Assign waves to **maximize parallel width**: each slice goes in the *earliest* wave where (a) all its `Depends on` slices sit in strictly-earlier waves and (b) its `Files owned` are disjoint from every slice already in that wave. Open a new wave only when a dependency or file conflict forces it — never split independent, non-conflicting slices across waves. **Cap each wave at 5 slices**; eligible overflow spills into the next wave (still respecting deps and disjoint files).
-- **Slug:** matches the row in the main plan's Sprint sequence (`docs/plans/pure-engine-refactor.md`).
-- **Sprint doc Status:** `active` while in `docs/sprints/`; flipped to `archived` immediately before `mv` to `docs/sprints/archive/`.
+- **Slug:** matches the row in the main plan's Sprint sequence (`pod-docs/plans/pure-engine-refactor.md`).
+- **Sprint doc Status:** `active` while in `pod-docs/sprints/`; flipped to `archived` immediately before `mv` to `pod-docs/sprints/archive/`.
 - **Slice Status transitions:** `pending` → `pr open` → `done`, with `blocked` as terminal.
 - **PR values:** `—` / URL / `blocked` / `skipped — verification failed` / `merged`.
 - **Difficulty (1–5):** 1 = trivial; 3 = ordinary; 5 = architecture-touching or ambiguous. Scored per slice; justification belongs in the per-slice detail.

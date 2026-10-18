@@ -1,6 +1,6 @@
 # Sprint: Board interaction
 
-_From plan: docs/plans/board-feel.md · Slug: board-interaction · Status: archived · Generated: 2026-10-06_
+_From plan: pod-docs/plans/board-feel.md · Slug: board-interaction · Status: archived · Generated: 2026-10-06_
 
 <!-- autopilot-run: started=2026-10-06T11:36:12Z sprints=0 waves=2 -->
 
@@ -124,10 +124,10 @@ Board, square, overlay and piece CSS use only these tokens for color.
     - whether mouse drag still works on desktop.
   - Then **revert** `package.json`, `package-lock.json` and `src/index.tsx`. Only the research note is committed.
   - Verdict: **fits** (the files and changes the next sprint needs, with no board rewrite) or **doesn't fit** (why, so the next sprint logs a `PENDING`). Report the verdict as a NOTE in the engineer summary, so the orchestrator copies it into this doc's Sprint summary.
-- **Files owned:** `docs/research/touch-drag.md` (new)
+- **Files owned:** `pod-docs/research/touch-drag.md` (new)
 - **Success criteria:**
-  - `[manual]` `docs/research/touch-drag.md` records the HTML5-backend touch result, both packages' versions and peer ranges, the multi-backend trial result, the verdict, and the steps to repeat it.
-  - `[manual]` `git diff` against the wave base shows only `docs/research/touch-drag.md`, with no dependency added.
+  - `[manual]` `pod-docs/research/touch-drag.md` records the HTML5-backend touch result, both packages' versions and peer ranges, the multi-backend trial result, the verdict, and the steps to repeat it.
+  - `[manual]` `git diff` against the wave base shows only `pod-docs/research/touch-drag.md`, with no dependency added.
 - **Depends on:** —
 - **One-way door:** none
 
@@ -147,7 +147,7 @@ Board, square, overlay and piece CSS use only these tokens for color.
     - A drop still dispatches `movePiece`.
   - `Square` reads its own `isSelected` and `view.flipped` from the store, renders labels from `squareLabels`, and adds `data-square`. Its props from `Board` stay the same.
   - Tap-to-move must work at 375 px touch emulation. Don't add `touch-action: none`.
-  - Update `docs/known-issues/browser-smoke-drag.md`: moves can now be played by clicking `[data-square=…]` twice.
+  - Update `pod-docs/known-issues/browser-smoke-drag.md`: moves can now be played by clicking `[data-square=…]` twice.
 - **Files owned:**
   - `src/features/board/components/Square.tsx`
   - `src/features/board/components/Square.css`
@@ -159,7 +159,7 @@ Board, square, overlay and piece CSS use only these tokens for color.
   - `src/features/board/__tests__/square-marks.test.ts` (new)
   - `src/features/board/__tests__/square.test.tsx` (new)
   - `tests/board-css.test.ts` (new)
-  - `docs/known-issues/browser-smoke-drag.md`
+  - `pod-docs/known-issues/browser-smoke-drag.md`
 - **Success criteria:**
   - `[test]` A last-move square, a selected square, or a square that is both gives `highlight: true` (one tint) — `square-marks.test.ts` › `one yellow tint for last move and selection`
   - `[test]` A legal empty square gives `dot`, a legal occupied square gives `ring`, and a non-legal square gives `null` — `square-marks.test.ts` › `dot on empty, ring on capture`
@@ -173,7 +173,7 @@ Board, square, overlay and piece CSS use only these tokens for color.
     - Clicking an empty square deselects, and clicking another own piece reselects in one click.
     - A check shows the red glow on the king's square, with no glow around the piece.
     - Dragging shows dots, and a legal square shows the white inner edge while an illegal one shows nothing.
-    - Compare against `docs/design-drafts/board-feel-look.html` (direction A).
+    - Compare against `pod-docs/design-drafts/board-feel-look.html` (direction A).
   - `[manual]` At 375 px touch emulation, a full game is played by tapping only: castling, en passant, promotion (tap the picker) and checkmate. There are no console errors.
 - **Depends on:** L1, R1
 - **One-way door:** none
@@ -188,7 +188,7 @@ Board, square, overlay and piece CSS use only these tokens for color.
   - The flip itself doesn't slide pieces across the board; pieces jump to their flipped squares. Normal moves still animate. Do this in `Board.tsx`. If it can't be done without editing `Piece.tsx` (owned by H1), report a NOTE.
   - Wrap the board in framer-motion `MotionConfig reducedMotion="user"`, so piece moves jump under `prefers-reduced-motion: reduce`.
   - Use only the tokens and follow the Look.
-  - Update `docs/codebase-structure.md`:
+  - Update `pod-docs/codebase-structure.md`:
     - Add Layout lines for `orientation.ts`, `viewSlice.ts` and `squareMarks.ts`.
     - In the smoke recipe, add the steps for playing by clicking `[data-square=…]`, flipping and moving on the flipped board, and tapping a game at 375 px.
 - **Files owned:**
@@ -197,7 +197,7 @@ Board, square, overlay and piece CSS use only these tokens for color.
   - `src/features/board/components/Button.tsx`
   - `src/features/board/components/Promotion.tsx`
   - `src/features/board/__tests__/board-flip.test.tsx` (new)
-  - `docs/codebase-structure.md`
+  - `pod-docs/codebase-structure.md`
 - **Success criteria:**
   - `[test]` The unflipped `Board` markup lists the a8 rook's piece first and the black player's name before the white one. After `toggleFlip`, the h1 rook's piece comes first and the white name comes first — `board-flip.test.tsx` › `flip reverses squares and player cards`
   - `[test]` The button row holds a `button--icon` with `aria-label="Flip board"`, whose `aria-pressed` is `false`, then `true` after `toggleFlip` — `board-flip.test.tsx` › `flip button reflects state`
@@ -221,7 +221,7 @@ Board, square, overlay and piece CSS use only these tokens for color.
 - **Slice log:**
   - L1: high · test-first yes · runtime focus ring and icon button at desktop and 375 px · 3 NOTEs · time lost none
   - R1: medium · test-first yes · runtime restructured `movePiece` by drag (new actions had no UI yet) · 3 NOTEs + 1 PENDING (solved) · time lost none
-  - T1: medium · test-first n/a (research slice) · runtime HTML5 vs `rdndmb-html5-to-touch` under CDP touch at 375 px · 4 NOTEs · time lost none. **Verdict: touch drag fits** — the next sprint needs `react-dnd-multi-backend` + `rdndmb-html5-to-touch` 9.0.0, the `DndProvider options={HTML5toTouch}` swap in `src/index.tsx`, a touch drag preview (`Preview` from `react-dnd-multi-backend`), and select-on-drag-start (`pickUp`, now shipped). Details and the CDP touch script: `docs/research/touch-drag.md`.
+  - T1: medium · test-first n/a (research slice) · runtime HTML5 vs `rdndmb-html5-to-touch` under CDP touch at 375 px · 4 NOTEs · time lost none. **Verdict: touch drag fits** — the next sprint needs `react-dnd-multi-backend` + `rdndmb-html5-to-touch` 9.0.0, the `DndProvider options={HTML5toTouch}` swap in `src/index.tsx`, a touch drag preview (`Preview` from `react-dnd-multi-backend`), and select-on-drag-start (`pickUp`, now shipped). Details and the CDP touch script: `pod-docs/research/touch-drag.md`.
   - H1: high · test-first yes · runtime click, drag (page-JS `DataTransfer` and real mouse), full game by taps at 375 px · 5 NOTEs · time lost none
   - F1: medium · test-first yes · runtime flip, moves/promotion/mate flipped, clocks mid-game, 375 px, reduced motion · 5 NOTEs · time lost none
   - Wave fix: none (the picker overhang is the older formula, deferred as PENDING)

@@ -22,7 +22,7 @@ Constraints:
 ## Scope
 **In scope:**
 - **Analysis pass:** after the game ends, one full-strength Stockfish search per position in the game (MultiPV 1, a fixed time per position with a depth cap). It reuses his engine worker, which is idle once the game is over, and it reports progress. Starting a new game or leaving the review stops it.
-- **Speed check:** before the time per position is fixed, time the lite build on desktop and in phone emulation, and on a real phone if one is at hand. Record the numbers and the chosen value in `docs/decisions.md`.
+- **Speed check:** before the time per position is fixed, time the lite build on desktop and in phone emulation, and on a real phone if one is at hand. Record the numbers and the chosen value in `pod-docs/decisions.md`.
 - **Grading (pure functions):**
   - Win % with the Lichess formula (already in `human-move.ts`; share it, don't copy it).
   - Each human move's drop in win % from the human's side. Inaccuracy ≥ 10, mistake ≥ 20, blunder ≥ 30.
@@ -33,10 +33,10 @@ Constraints:
   - **Find the better move:** the board shows the position before the human's move, the answer is hidden, and the human plays a move. A move counts as found if it's Stockfish's best, or if it loses less than 10 win % against the best (an extra search on that move, the same settings). It has **Show answer** and **Skip**.
   - **Reveal:** "You played X · Stockfish: Y · Liem played Z in N games" (the Liem line only when that position is in his book).
 - **Review screen:** a board you can step through (first, back, forward, last, and the arrow keys), the move list with grade marks, the win % graph (tap or click a point to jump there), the accuracy, the key-moment card and the "Left his book" note. **Back to game** returns to the finished game, and **New game** works as it does today.
-- **Docs:** `docs/features.md` rows, the README, and the new `docs/decisions.md` entries.
+- **Docs:** `pod-docs/features.md` rows, the README, and the new `pod-docs/decisions.md` entries.
 
 **Out of scope:**
-- Saving past games or a "Past games" list. Only the game that just ended can be reviewed, and closing or reloading the page loses it. Write `docs/ideas/saved-games.md` for the next plan.
+- Saving past games or a "Past games" list. Only the game that just ended can be reviewed, and closing or reloading the page loses it. Write `pod-docs/ideas/saved-games.md` for the next plan.
 - Reviewing two-player games.
 - Analysing during the game.
 - Labels like "brilliant", "great" or "best", and a recurring-mistakes report across games.
@@ -85,7 +85,7 @@ The human's pick: **"A plus the big graph point like B and also I like the idea 
   - **At 375 px:** everything stacks: the graph (90 px tall, 312 px wide), the board (312 px), the step buttons, the accuracy, the move list, then the "Left his book" note. The key-moment card opens as **C's bottom sheet**: rounded top corners (16 px), a red top edge, a grab bar, a ✕ to close, and a dimmed board behind it (`rgba(0,0,0,.35)`). Tapping a key point on the graph or a flagged move opens it again. During Find the better move the sheet sits low, so the board stays usable.
 - **Signature detail:** gold stars for found moves. Each key moment has an empty star, the same gold star that sits next to his name, and it fills when the human finds the move. The review ends on "2 of 3 found".
 - **Rules out:** chess.com-style coach characters and "brilliant" icons; a table-heavy analysis screen; browser-default controls; new colors beyond the grade tokens; flag red as text.
-- **Draft:** `docs/design-drafts/review-look-directions.html` (A, with B's graph and C's phone sheet).
+- **Draft:** `pod-docs/design-drafts/review-look-directions.html` (A, with B's graph and C's phone sheet).
 
 ## Key decisions
 - **Only vs-Liem games, and only the game that just ended.** There's nothing to save, so there's no new storage. Saving games is the next idea. (human)
@@ -94,7 +94,7 @@ The human's pick: **"A plus the big graph point like B and also I like the idea 
 - **Lichess levels (10/20/30 win-% drop), with every inaccuracy or worse marked, and the 3 biggest drops as key moments.** (human) — [research](../research/post-game-review.md)
 - **A move that keeps the game in his book is never flagged.** This is like Lichess's rule for master moves. His book stores only his own moves, so for the human's move the wording is "he faced this in N games", not "Liem played this". (human, wording corrected in the interview)
 - **Write our own code from the public Lichess formulas; no Chesskit code** (AGPL-3.0). (default)
-- **The time per position comes from the speed check.** Start from about 0.5 s with a depth cap of 18, so a 40-move game (about 80 positions) takes about 40 s. Record the measured value in `docs/decisions.md`. (default)
+- **The time per position comes from the speed check.** Start from about 0.5 s with a depth cap of 18, so a 40-move game (about 80 positions) takes about 40 s. Record the measured value in `pod-docs/decisions.md`. (default)
 - **Game accuracy is the plain average of the human's per-move accuracy.** Book moves count as 100. Lichess also mixes in a volatility-weighted mean, which is more work for a small change. (default)
 - **A tried move counts as found if it loses less than 10 win %** against Stockfish's best, which is under the inaccuracy level. (default)
 - **The graph shows the human's side by default**, with a switch to White's side. (default)
@@ -119,7 +119,7 @@ The human's pick: **"A plus the big graph point like B and also I like the idea 
   - the book check (a move in his book is never flagged);
   - choosing the key moments (the 3 biggest drops at inaccuracy or worse);
   - the found-move rule.
-- The speed check's numbers and the chosen time per position are in `docs/decisions.md`.
+- The speed check's numbers and the chosen time per position are in `pod-docs/decisions.md`.
 - In `npm run preview` at `/chess-web/`, after a real vs-Liem game:
   - **Review game** opens the review, with progress while it analyses.
   - The graph, the move list marks, the accuracy and "Left his book at move N" are shown.
@@ -127,4 +127,10 @@ The human's pick: **"A plus the big graph point like B and also I like the idea 
   - Back to game and New game work, and no review search runs into his next game.
   - A two-player game has no Review button.
 - At desktop and 375 px, the review matches `## Look`: B's graph, A's card and stars, and C's bottom sheet on the phone, with no sideways page scroll.
-- The README and `docs/features.md` describe the review.
+- The README and `pod-docs/features.md` describe the review.
+
+## Queue log
+
+- `[2026-10-16 · PENDING · orchestrator → human · sprint: game-review]` Needs your decision: Lichess's real grade levels are **5 / 10 / 15** win-% points (0.1 / 0.2 / 0.3 on its −1..1 "winning chances" scale, `modules/tree/src/main/Advice.scala` in lila), not the 10 / 20 / 30 the plan took from the research. Lichess also clamps cp to ±1000 before the formula. Value in use: 10 / 20 / 30 (`INACCURACY`/`MISTAKE`/`BLUNDER` in `src/game/review/grade.ts`; the found rule uses `INACCURACY`). 5 / 10 / 15 flags about twice as many moves. Reply with the levels you want; it is a one-line change. **Resolution:** 2026-10-16 — the human chose to keep 10 / 20 / 30 (fewer marks at club level); W1 records it in `pod-docs/decisions.md`.
+- `[2026-10-16 · PENDING · reviewer → human · sprint: game-review]` While a key moment waits for your move, the move list (sidebar on desktop, under the sheet on a phone) still shows the move you played with its mark, e.g. `2. g4 ??`, though the card says "Your move is hidden." The better move stays hidden. Value in use: the list shows it. **Resolution:** 2026-10-16 — Needs your decision: see `pod-docs/decisions.md` → "The move list shows your move while you look for a better one (agent default — override anytime)".
+- `[2026-10-16 · PENDING · orchestrator → human]` plan post-game-review complete — final PR https://github.com/iamphduc/chess-web/pull/73, review pass, 5 open entries sorted in the hand-back. **Resolution:** 2026-10-17 — final PR merged

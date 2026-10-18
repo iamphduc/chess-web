@@ -23,7 +23,7 @@ CRA is no longer maintained ([Sunsetting Create React App](https://react.dev/blo
 - tsconfig: swap `baseUrl: ./src` for explicit `paths` (`app/*`, `assets/*`, `features/*`, `game/*`, `hooks/*`), so import strings stay the same. Add Vite's recommended settings (`moduleResolution: bundler`, `types: ["vite/client"]`).
 - Bump `@types/node` to `^24` and TypeScript to the latest 5.x. Remove CRA-only packages (`react-scripts`, `@types/jest`, `@testing-library/jest-dom`, `eslintConfig`, `browserslist`).
 - GitHub Actions: a PR check job (typecheck, test, build) and a deploy job on push to `main`, using the official Pages actions. Remove `gh-pages.js` and the `gh-pages` package.
-- Update `docs/codebase-structure.md`. It still describes CRA and the pre-cutover engine, and its smoke recipe needs the new commands.
+- Update `pod-docs/codebase-structure.md`. It still describes CRA and the pre-cutover engine, and its smoke recipe needs the new commands.
 
 **Out of scope:**
 - React 19, Redux Toolkit 2, react-dnd, and framer-motion → motion upgrades.
@@ -42,7 +42,7 @@ CRA is no longer maintained ([Sunsetting Create React App](https://react.dev/blo
 none — no UI change. The app must render exactly as it does today.
 
 ## Key decisions
-- **Research first:** `docs/research/cra-to-vite.md` (2026-10-03). The choices below come from it.
+- **Research first:** `pod-docs/research/cra-to-vite.md` (2026-10-03). The choices below come from it.
 - **Deploy with GitHub Actions + official Pages actions**, not by pushing a `gh-pages` branch. PRs get typecheck/test/build checks; deploy runs only on push to `main` (human choice).
 - **Upgrade only what the move needs.** React 18, Redux Toolkit 1.x, react-dnd 16 and framer-motion 7 stay (human choice).
 - **Vite 8 + plugin-react 6 + Vitest 5 on Node 24** — plugin-react 6 needs Vite 8, and Vitest 5 needs Node 22.12+. Node 24 matches the local machine (v24.16.0). CI pins Node 24 too. (default)
@@ -64,7 +64,7 @@ none — no UI change. The app must render exactly as it does today.
 
 ## Open questions
 - Delete the old `gh-pages` branch after the first successful Actions deploy? (Human call. Default: keep it until the live smoke passes, then delete.)
-- Open handoff items this plan may close: the `@types/node` peer conflict, the per-worktree `npm install --legacy-peer-deps` step, and the alias-under-Vitest note. The sprint-planner should resolve them in `docs/handoff-queue.md` when they land.
+- Open handoff items this plan may close: the `@types/node` peer conflict, the per-worktree `npm install --legacy-peer-deps` step, and the alias-under-Vitest note. The sprint-planner should resolve them in `pod-docs/handoff-queue.md` when they land.
 
 ## Verification
 - `package.json` has no `react-scripts`, `gh-pages`, `@types/jest`, `eslintConfig` or `browserslist`. There is no `vitest.config.ts` or `gh-pages.js`.
@@ -72,4 +72,4 @@ none — no UI change. The app must render exactly as it does today.
 - `tsconfig.json` has no `baseUrl`, and no import line in `src/` changed for the alias switch.
 - `.github/workflows/` runs typecheck, test and build on `pull_request`, and deploys with `actions/deploy-pages` on push to `main`.
 - `https://iamphduc.github.io/chess-web/` serves the Vite build and passes the full smoke playthrough with no console errors.
-- `docs/codebase-structure.md` describes Vite, the post-cutover engine, and the new smoke recipe.
+- `pod-docs/codebase-structure.md` describes Vite, the post-cutover engine, and the new smoke recipe.

@@ -19,7 +19,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # The Verification: command in docs/codebase-structure.md (build runs tsc --noEmit).
+      # The Verification: command in pod-docs/codebase-structure.md (build runs tsc --noEmit).
       - run: npm run build && npm test
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v6

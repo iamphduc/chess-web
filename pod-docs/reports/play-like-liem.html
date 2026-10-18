@@ -192,7 +192,7 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 <tr><td>In book, his moves come from the book, and the badge and the note show matching counts</td><td><span class="tag met">met</span></td><td>U3 and the PR #62 wave check (badge 1,787). In my run, the badge read 237 and the note's total read 237.</td></tr>
 <tr><td>Out of book, the note shows "Out of his book", and his moves stay legal</td><td><span class="tag met">met</span></td><td>U3: "left the book (note turned red, legal engine moves)" (PR #62).</td></tr>
 <tr><td>Castling, en passant, promotion and checkmate against him</td><td><span class="tag met">met</span></td><td>U3: castling and checkmate. The orchestrator checked en passant (<code>3. exd6</code>), your promotion with the picker (<code>5. cxb8=Q</code>), and his promotion in one ply (<code>8... gxh1=Q</code>). It dispatched his moves through the store to reach those positions.</td></tr>
-<tr><td>A slow clock uses the slow book, a fast one uses the online book, and a unit test proves the fallback</td><td><span class="tag part">met in tests</span></td><td><code>book.test.ts › bookForClock edges</code> and <code>› thin-line fallback</code>. The app has only a 10+0 clock today, so a real game always picks the online book. A clock choice is filed in <code>docs/ideas/clock-choice.md</code>.</td></tr>
+<tr><td>A slow clock uses the slow book, a fast one uses the online book, and a unit test proves the fallback</td><td><span class="tag part">met in tests</span></td><td><code>book.test.ts › bookForClock edges</code> and <code>› thin-line fallback</code>. The app has only a 10+0 clock today, so a real game always picks the online book. A clock choice is filed in <code>pod-docs/ideas/clock-choice.md</code>.</td></tr>
 <tr><td>Two-player mode passes the existing smoke recipe unchanged</td><td><span class="tag met">met</span></td><td>U3 ran the recipe. <code>board-modes.test.tsx › two-player layout unchanged</code>.</td></tr>
 <tr><td>The setup card, tabs, badge and book note match the Look at desktop and 375 px</td><td><span class="tag met">met</span></td><td>PR #62 Look check at 1400, 768, 767, 600 and 375 px. The screenshots above match the Look's palette.</td></tr>
 <tr><td>The move choice sits behind one interface, and a test runs it with a fake engine</td><td><span class="tag met">met</span></td><td><code>MoveEngine</code> in <code>move-engine.ts</code>. <code>opponent.test.ts</code> uses a fake engine.</td></tr>
@@ -203,14 +203,14 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 <section id="decisions">
 <h2>Key decisions</h2>
-<p class="small">A red edge means the human made or changed the call. An olive edge means an agent or the plan's defaults made it. Entries are in <a href="../decisions.md"><code>docs/decisions.md</code></a> under the heading named on each card. The look draft is <a href="../design-drafts/play-liem-look.html"><code>docs/design-drafts/play-liem-look.html</code></a>.</p>
+<p class="small">A red edge means the human made or changed the call. An olive edge means an agent or the plan's defaults made it. Entries are in <a href="../decisions.md"><code>pod-docs/decisions.md</code></a> under the heading named on each card. The look draft is <a href="../design-drafts/play-liem-look.html"><code>pod-docs/design-drafts/play-liem-look.html</code></a>.</p>
 <div class="cards">
   <div class="card">
     <h3>Book first, Stockfish after</h3>
     <p><span class="k">Why:</span> cloning a 2700 player isn't proven. Personal Maia models needed about 5,000 games, and GM attempts were "less successful" (research).</p>
     <p><span class="k">Instead of:</span> a personal neural model or Maia.</p>
     <p><span class="k">So:</span> openings are really his, and the middlegame is a strength-limited engine.</p>
-    <p class="meta">Planner, from <code>docs/research/play-like-player.md</code>. In the plan, not in decisions.md.</p>
+    <p class="meta">Planner, from <code>pod-docs/research/play-like-player.md</code>. In the plan, not in decisions.md.</p>
   </div>
   <div class="card">
     <h3>Stockfish lite, one thread, in a Web Worker, behind <code>MoveEngine</code></h3>
@@ -412,11 +412,11 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 <section id="sources">
 <h2>Sources</h2>
 <ul>
-  <li>Plan: <a href="../plans/play-like-liem.md"><code>docs/plans/play-like-liem.md</code></a>. Research: <a href="../research/play-like-player.md"><code>docs/research/play-like-player.md</code></a>. Ideas: <a href="../ideas/opponent-engine-options.md"><code>opponent-engine-options.md</code></a>, <a href="../ideas/clock-choice.md"><code>clock-choice.md</code></a>.</li>
+  <li>Plan: <a href="../plans/play-like-liem.md"><code>pod-docs/plans/play-like-liem.md</code></a>. Research: <a href="../research/play-like-player.md"><code>pod-docs/research/play-like-player.md</code></a>. Ideas: <a href="../ideas/opponent-engine-options.md"><code>opponent-engine-options.md</code></a>, <a href="../ideas/clock-choice.md"><code>clock-choice.md</code></a>.</li>
   <li>Sprints (archived, with Sprint summaries and slice logs): <a href="../sprints/archive/liem-book.md"><code>liem-book.md</code></a>, <a href="../sprints/archive/liem-opponent.md"><code>liem-opponent.md</code></a>.</li>
-  <li><a href="../decisions.md"><code>docs/decisions.md</code></a>: the 2026-10-09 and 2026-10-10 entries, including five that were still uncommitted while I wrote this.</li>
-  <li><a href="../handoff-queue.md"><code>docs/handoff-queue.md</code></a>: entries for <code>sprint: liem-book</code> and <code>sprint: liem-opponent</code>, plus the plan-complete entry.</li>
-  <li>Look draft: <a href="../design-drafts/play-liem-look.html"><code>docs/design-drafts/play-liem-look.html</code></a>. Smoke recipe: <a href="../codebase-structure.md"><code>docs/codebase-structure.md</code></a>.</li>
+  <li><a href="../decisions.md"><code>pod-docs/decisions.md</code></a>: the 2026-10-09 and 2026-10-10 entries, including five that were still uncommitted while I wrote this.</li>
+  <li><a href="../handoff-queue.md"><code>pod-docs/handoff-queue.md</code></a>: entries for <code>sprint: liem-book</code> and <code>sprint: liem-opponent</code>, plus the plan-complete entry.</li>
+  <li>Look draft: <a href="../design-drafts/play-liem-look.html"><code>pod-docs/design-drafts/play-liem-look.html</code></a>. Smoke recipe: <a href="../codebase-structure.md"><code>pod-docs/codebase-structure.md</code></a>.</li>
   <li>PRs: <a href="https://github.com/iamphduc/chess-web/pull/59">#59</a>, <a href="https://github.com/iamphduc/chess-web/pull/60">#60</a>, <a href="https://github.com/iamphduc/chess-web/pull/61">#61</a>, <a href="https://github.com/iamphduc/chess-web/pull/62">#62</a>, and final <a href="https://github.com/iamphduc/chess-web/pull/63">#63</a> (105 files, +15,390 / −83) with the <a href="https://github.com/iamphduc/chess-web/pull/63#issuecomment-6095224333">review comment</a>.</li>
   <li>Plan branch <code>play-like-liem</code>: 71 commits ahead of <code>main</code>, from <code>a073393</code> to <code>7a53ff1</code>. The timeline uses commits <code>7d9fbe4</code>, <code>0fe2dbf</code>, <code>5d2529c</code>, <code>94a73a0</code>, <code>a918399</code> and <code>eed43e9</code>.</li>
   <li>Code: <code>src/game/opponent/</code> (types, book, opponent, engine, players), <code>src/features/liem/</code>, <code>src/features/board/BoardSlice.ts</code>.</li>

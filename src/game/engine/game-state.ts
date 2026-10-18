@@ -8,7 +8,7 @@ import { PieceType } from "../piece-type";
  * The `isEnemyAttacked` highlighting stays in the reducer/adapter layer.
  *
  * Piece identity reuses the existing {@link PieceType} enum. The
- * `{ kind, color }` redesign is explicitly quarantined (see docs/decisions.md).
+ * `{ kind, color }` redesign is explicitly quarantined (see pod-docs/decisions.md).
  */
 export type EngineSquare = PieceType | null;
 

@@ -127,7 +127,7 @@ ul.left li { margin-bottom: 4px; }
 <tr><td>Turn off motion through the OS: the hand stays still, digits keep counting.</td><td>With <code>prefers-reduced-motion: reduce</code> emulated, the hand doesn't move.</td><td><span class="tag part">met, engineer only</span> C1 checked with Chrome <code>--force-prefers-reduced-motion</code>; CSS test pins the rule; the reviewer had no browser.</td></tr>
 <tr><td>Screen-reader users hear the clock's name and one alert at 10 s.</td><td>Each clock has <code>role="timer"</code> and a label; one alert at 10 s.</td><td><span class="tag met">met</span> <code>player-clock</code> tests; alert seen once in the wave-2 check.</td></tr>
 <tr><td>(No user change.)</td><td><code>BsClockHistory</code> gone from <code>Player.tsx</code>; no new runtime dependency.</td><td><span class="tag met">met</span> no <code>react-icons</code> import left in <code>src/</code>; <code>package.json</code> unchanged vs <code>main</code>.</td></tr>
-<tr><td>(Docs.)</td><td><code>docs/features.md</code> has a clock row.</td><td><span class="tag met">met</span> row "Ticking clock icon and low time".</td></tr>
+<tr><td>(Docs.)</td><td><code>pod-docs/features.md</code> has a clock row.</td><td><span class="tag met">met</span> row "Ticking clock icon and low time".</td></tr>
 </tbody></table></div>
 <p class="note">Firefox was never checked. The hand turns with <code>transform-box: view-box; transform-origin: 50% 50%</code>, which is why C1 reported medium confidence.</p>
 
@@ -234,13 +234,13 @@ ul.left li { margin-bottom: 4px; }
 <div class="scroll"><table>
 <thead><tr><th>Step</th><th>Slices</th><th>What the agents reported</th><th>What the orchestrator did</th><th>PR</th></tr></thead>
 <tbody>
-<tr><td>Plan <span class="tag human">human</span></td><td>—</td><td>Researcher wrote <code>docs/research/animated-clock.md</code> (2026-10-04; 11 searches, 12 pages).</td><td>Fast grilling interview; three look drafts. Human picked the chess.com style and described the quarter-turn hand.</td><td>commit <code>b11618f</code></td></tr>
+<tr><td>Plan <span class="tag human">human</span></td><td>—</td><td>Researcher wrote <code>pod-docs/research/animated-clock.md</code> (2026-10-04; 11 searches, 12 pages).</td><td>Fast grilling interview; three look drafts. Human picked the chess.com style and described the quarter-turn hand.</td><td>commit <code>b11618f</code></td></tr>
 <tr><td>Sprint draft</td><td>—</td><td>Sprint-planner wrote <code>ticking-clock</code> with a shared contract (<code>clock.ts</code> API, tokens); queued the stalemate-shows-win bug.</td><td>Trimmed L1 before dispatch (font self-hosting cut). Autopilot started 07:34 UTC.</td><td>commit <code>12efa8d</code></td></tr>
 <tr><td>Wave 1</td><td>L1 (high), T1 (high), parallel</td><td>Both test-first. L1: tokens, contrast tests, 1 PENDING (real bold). T1: 12 tests; NOTE "<code>handAngle</code> uses the contract's literal <code>600</code>".</td><td>Wave check: 29 files / 227 tests; smoke at 1280 and 375 px. No wave fix.</td><td><a href="https://github.com/iamphduc/chess-web/pull/41">#41</a></td></tr>
 <tr><td>Wave 2</td><td>C1 (medium)</td><td>Test-first. Rewrote <code>Player</code>, added <code>PlayerClock</code>; "Firefox not checked". 2 PENDING, 2 NOTEs.</td><td>Wave check: 32 files / 240 tests; sampled the hand per second; shifted time for red, tenths, alert, flag fall. No wave fix.</td><td><a href="https://github.com/iamphduc/chess-web/pull/42">#42</a></td></tr>
 <tr><td>Review</td><td>whole plan</td><td>Reviewer: <b>pass</b>, round 1, 0 FIX, 2 PENDING, 6 dismissed suspicions.</td><td>Queued both findings; recorded two agent defaults in <code>decisions.md</code>.</td><td><a href="https://github.com/iamphduc/chess-web/pull/43">#43</a></td></tr>
 </tbody></table></div>
-<p><b>Where something happened.</b> No wave fixes, stalls or halts. C1 lost about 2 min to a hung heredoc and worked around stale refs when dragging pieces. At teardown T1 used <code>git worktree remove --force</code>; the permission system later refused <code>git clean -fdX</code>, and a plain <code>git worktree remove</code> then worked, so the known issue was corrected (<code>docs/known-issues/worktree-remove.md</code>).</p>
+<p><b>Where something happened.</b> No wave fixes, stalls or halts. C1 lost about 2 min to a hung heredoc and worked around stale refs when dragging pieces. At teardown T1 used <code>git worktree remove --force</code>; the permission system later refused <code>git clean -fdX</code>, and a plain <code>git worktree remove</code> then worked, so the known issue was corrected (<code>pod-docs/known-issues/worktree-remove.md</code>).</p>
 <p><b>Human steps.</b> <span class="tag human">human</span> the look pick and the quarter-turn detail, both in the plan phase. No human answer is logged during the autopilot run. Wave PRs were merged under the <code>iamphduc</code> account within a minute of opening; the trail doesn't say whether a person or the orchestrator clicked merge.</p>
 <p><b>Review and fix pass.</b> The reviewer ran build and tests, a <code>vite preview</code> base-path check, and a throwaway jsdom + fake-timers run through Play → moves → a 580 s jump → flag fall → Reset → Play. It quoted: "The flag fall dispatched <code>stop</code> exactly once, and <code>0.0</code> in red stayed on screen." Not run by the reviewer: "the browser rows (icon look, 375 px, reduced-motion emulation). I have no browser." No fix round was needed.</p>
 
@@ -267,8 +267,8 @@ ul.left li { margin-bottom: 4px; }
 
 <h2 id="sources">7. Sources</h2>
 <ul class="left">
-<li><code>docs/plans/animated-clock.md</code> · <code>docs/sprints/archive/ticking-clock.md</code> (Sprint summary, slice log) · <code>docs/research/animated-clock.md</code></li>
-<li><code>docs/handoff-queue.md</code> and <code>docs/decisions.md</code>, 2026-10-05 entries · <code>docs/design-drafts/look-directions.html</code> · <code>docs/features.md</code></li>
+<li><code>pod-docs/plans/animated-clock.md</code> · <code>pod-docs/sprints/archive/ticking-clock.md</code> (Sprint summary, slice log) · <code>pod-docs/research/animated-clock.md</code></li>
+<li><code>pod-docs/handoff-queue.md</code> and <code>pod-docs/decisions.md</code>, 2026-10-05 entries · <code>pod-docs/design-drafts/look-directions.html</code> · <code>pod-docs/features.md</code></li>
 <li>Code: <code>src/features/board/clock.ts</code>, <code>components/Player.tsx</code>, <code>components/PlayerClock.tsx</code>, <code>components/Player.css</code>, <code>src/index.css</code></li>
 <li>PRs: <a href="https://github.com/iamphduc/chess-web/pull/41">#41 Wave 1</a> · <a href="https://github.com/iamphduc/chess-web/pull/42">#42 Wave 2</a> · <a href="https://github.com/iamphduc/chess-web/pull/43">#43 final, with the reviewer's comment</a></li>
 <li>Commits on <code>animated-clock</code>: <code>b11618f</code>, <code>12efa8d</code>, <code>6fc7f79</code>, <code>b39cc46</code>, <code>eeb3f21</code>, <code>3b2e3b6</code>, <code>fa3c167</code>, <code>68b1494</code>, <code>dbf0f6d</code>, <code>107d671</code>, <code>d257812</code>, <code>1e75b81</code>, <code>2f0525c</code></li>

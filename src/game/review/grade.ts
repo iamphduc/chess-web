@@ -5,7 +5,7 @@ import type { Grade, PositionEval } from "./types";
 
 /**
  * Grade levels, in win % points lost. The human chose 10/20/30; Lichess's
- * own levels are 5/10/15. See docs/decisions.md (2026-10-16).
+ * own levels are 5/10/15. See pod-docs/decisions.md (2026-10-16).
  */
 export const INACCURACY = 10;
 export const MISTAKE = 20;

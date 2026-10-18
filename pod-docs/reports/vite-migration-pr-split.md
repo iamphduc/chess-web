@@ -1,6 +1,6 @@
 # Review: how pod split the vite-migration plan into PRs
 
-_Written: 2026-10-05 · Plan: `docs/plans/vite-migration.md` · Sprints: `docs/sprints/archive/vite-switch.md`, `docs/sprints/archive/ci-deploy.md`_
+_Written: 2026-10-05 · Plan: `pod-docs/plans/vite-migration.md` · Sprints: `pod-docs/sprints/archive/vite-switch.md`, `pod-docs/sprints/archive/ci-deploy.md`_
 
 ## Question
 
@@ -14,7 +14,7 @@ Plan: 2 sprints, 5 slices, 5 waves, all run one after another (no parallel slice
 |---|---|---|---|---|
 | #33 | vite-switch · 1 · A1 | Replace webpack-only `require()` avatar lookup with a static map | +90 / -2 | code (prep) |
 | #34 | vite-switch · 2 · V1 | CRA → Vite 8 + Vitest 5, config, `index.html`, tsconfig paths, lockfile | +2664 / -30390 | code (the real change) |
-| #35 | vite-switch · 3 · D1 | Rewrite `docs/codebase-structure.md`, decisions entry, `tests/docs.test.ts` | +124 / -16 | docs |
+| #35 | vite-switch · 3 · D1 | Rewrite `pod-docs/codebase-structure.md`, decisions entry, `tests/docs.test.ts` | +124 / -16 | docs |
 | #36 | ci-deploy · 1 · C1 | `pod-ci.yml` workflow, remove `gh-pages`, package becomes ESM | +230 / -509 | code |
 | #37 | ci-deploy · 2 · D1 | CI section in docs, decisions entry, stale comment fix, +6 docs tests | +68 / -7 | docs |
 | #38 | plan PR | `vite-migration` → `main` | all of the above | final merge |

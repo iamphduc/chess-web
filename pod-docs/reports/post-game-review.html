@@ -191,9 +191,9 @@ blockquote { margin: 0 0 12px; padding: 6px 14px; border-left: 4px solid var(--o
   <tr><td>Play two-player games with no review</td><td>A two-player game has no Review button</td><td><span class="tag met">met</span></td><td><code>board-review.test.tsx</code>; reviewer in the browser</td></tr>
   <tr><td>Review on a phone with the bottom sheet</td><td>At desktop and 375 px the review matches the Look, with no sideways scroll</td><td><span class="tag met">met</span></td><td>PR #72 Look check; reviewer at 375 px; two Someday Look notes queued</td></tr>
   <tr><td>Trust the numbers</td><td>Unit tests for win %, accuracy, grades, the book check, key moments and the found rule</td><td><span class="tag met">met</span></td><td><code>grade.test.ts</code>, <code>build-review.test.ts</code></td></tr>
-  <tr><td>Know how long the pass takes</td><td>The speed check's numbers and the chosen time are in <code>docs/decisions.md</code></td><td><span class="tag met">met</span></td><td>Desktop 380 ms a position, phone emulation 473 ms; no real phone</td></tr>
+  <tr><td>Know how long the pass takes</td><td>The speed check's numbers and the chosen time are in <code>pod-docs/decisions.md</code></td><td><span class="tag met">met</span></td><td>Desktop 380 ms a position, phone emulation 473 ms; no real phone</td></tr>
   <tr><td>Build and test</td><td><code>npm run build &amp;&amp; npm test</code> pass</td><td><span class="tag met">met</span></td><td>Round 2: 100 files, 985 tests</td></tr>
-  <tr><td>Read about it</td><td>The README and <code>docs/features.md</code> describe the review</td><td><span class="tag met">met</span></td><td>README "Game review"; two features rows</td></tr>
+  <tr><td>Read about it</td><td>The README and <code>pod-docs/features.md</code> describe the review</td><td><span class="tag met">met</span></td><td>README "Game review"; two features rows</td></tr>
   <tr><td>Review after any result</td><td>(Success line) works for win, loss, draw and time</td><td><span class="tag part">partly checked</span></td><td>Loss and flag fall driven in a browser. Mate, stalemate and flag fall are in <code>review-actions.test.ts</code>. A win and a draw weren't driven.</td></tr>
   <tr><td>Grades "follow the public Lichess formulas"</td><td>(Success line)</td><td><span class="tag part">partly</span></td><td>Win % and accuracy are Lichess's. The levels are the human's 10/20/30, not Lichess's 5/10/15.</td></tr>
 </table></div>
@@ -201,7 +201,7 @@ blockquote { margin: 0 0 12px; padding: 6px 14px; border-left: 4px solid var(--o
 
 <section id="decisions">
 <h2>Key decisions</h2>
-<p class="small">Red top edge: the human made it. Olive: an agent or plan default. Plan decisions are in the plan's <code>## Key decisions</code>; the rest link to <a href="../decisions.md"><code>docs/decisions.md</code></a> by heading.</p>
+<p class="small">Red top edge: the human made it. Olive: an agent or plan default. Plan decisions are in the plan's <code>## Key decisions</code>; the rest link to <a href="../decisions.md"><code>pod-docs/decisions.md</code></a> by heading.</p>
 <div class="cards">
   <div class="card human">
     <h3>Grade levels stay 10 / 20 / 30</h3>
@@ -235,7 +235,7 @@ blockquote { margin: 0 0 12px; padding: 6px 14px; border-left: 4px solid var(--o
     <h3>Only vs-Liem, only the game that just ended</h3>
     <p><span class="k">Why:</span> nothing to save means no new storage.</p>
     <p><span class="k">Alternatives:</span> saved games and a "Past games" list.</p>
-    <p><span class="k">Consequence:</span> reloading the page loses the review. Saved games is the next idea: <a href="../ideas/saved-games.md"><code>docs/ideas/saved-games.md</code></a>.</p>
+    <p><span class="k">Consequence:</span> reloading the page loses the review. Saved games is the next idea: <a href="../ideas/saved-games.md"><code>pod-docs/ideas/saved-games.md</code></a>.</p>
     <p class="meta"><span class="tag you">human</span>. Plan <code>## Key decisions</code>.</p>
   </div>
   <div class="card human">
@@ -395,12 +395,12 @@ blockquote { margin: 0 0 12px; padding: 6px 14px; border-left: 4px solid var(--o
 <section id="sources">
 <h2>Sources</h2>
 <ul>
-  <li>Plan: <a href="../plans/post-game-review.md"><code>docs/plans/post-game-review.md</code></a> (working tree, Status: archived)</li>
-  <li>Sprint: <a href="../sprints/archive/game-review.md"><code>docs/sprints/archive/game-review.md</code></a>, with its Sprint summary and slice log</li>
-  <li><a href="../decisions.md"><code>docs/decisions.md</code></a>: the four 2026-10-16 entries (working tree)</li>
-  <li><a href="../handoff-queue.md"><code>docs/handoff-queue.md</code></a>: this plan's entries dated 2026-10-16 (working tree)</li>
-  <li><a href="../research/post-game-review.md"><code>docs/research/post-game-review.md</code></a>, <a href="../design-drafts/review-look-directions.html"><code>docs/design-drafts/review-look-directions.html</code></a></li>
-  <li><a href="../features.md"><code>docs/features.md</code></a>, <a href="../codebase-structure.md"><code>docs/codebase-structure.md</code></a> (Smoke recipe), <a href="../known-issues/agent-browser-batch-hang.md"><code>agent-browser-batch-hang.md</code></a>, <code>README.md</code></li>
+  <li>Plan: <a href="../plans/post-game-review.md"><code>pod-docs/plans/post-game-review.md</code></a> (working tree, Status: archived)</li>
+  <li>Sprint: <a href="../sprints/archive/game-review.md"><code>pod-docs/sprints/archive/game-review.md</code></a>, with its Sprint summary and slice log</li>
+  <li><a href="../decisions.md"><code>pod-docs/decisions.md</code></a>: the four 2026-10-16 entries (working tree)</li>
+  <li><a href="../handoff-queue.md"><code>pod-docs/handoff-queue.md</code></a>: this plan's entries dated 2026-10-16 (working tree)</li>
+  <li><a href="../research/post-game-review.md"><code>pod-docs/research/post-game-review.md</code></a>, <a href="../design-drafts/review-look-directions.html"><code>pod-docs/design-drafts/review-look-directions.html</code></a></li>
+  <li><a href="../features.md"><code>pod-docs/features.md</code></a>, <a href="../codebase-structure.md"><code>pod-docs/codebase-structure.md</code></a> (Smoke recipe), <a href="../known-issues/agent-browser-batch-hang.md"><code>agent-browser-batch-hang.md</code></a>, <code>README.md</code></li>
   <li>PRs: <a href="https://github.com/iamphduc/chess-web/pull/70">#70</a>, <a href="https://github.com/iamphduc/chess-web/pull/71">#71</a>, <a href="https://github.com/iamphduc/chess-web/pull/72">#72</a>, <a href="https://github.com/iamphduc/chess-web/pull/73">#73</a> (with both review comments), <a href="https://github.com/iamphduc/chess-web/pull/74">#74</a></li>
   <li>Commits on <code>post-game-review</code>: <code>151cf41</code> (plan) to <code>57ac16e</code> (merge of #74); key ones <code>a223f17</code>, <code>e736974</code>, <code>1f95886</code>, <code>17a7b36</code>, <code>37442b0</code></li>
   <li>Code: <code>src/game/review/types.ts</code>, <code>grade.ts</code>, <code>build-review.ts</code>, <code>analysis-runner.ts</code>; <code>src/features/review/reviewSlice.ts</code>, <code>reviewLimits.ts</code>, <code>reviewActions.ts</code>, <code>useGameReview.ts</code></li>

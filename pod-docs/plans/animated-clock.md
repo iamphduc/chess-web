@@ -6,7 +6,7 @@ _Generated: 2026-10-05 · Status: archived · Grilled-with: grilling (fast)_
 Make the running player's clock visibly tick: replace the static `BsClockHistory` icon with a small clock face whose hand steps forward once a second, in a chess.com-like style, with low-time warnings. Fix the countdown so it stays accurate, so the icon and the digits never fall out of step.
 
 ## Why
-The clock looks frozen even while time is running, so it's easy to miss whose clock is ticking. Research (`docs/research/animated-clock.md`) found that chess sites focus on low-time warnings (chess.com shows tenths under 10s), and that the current countdown approach drifts.
+The clock looks frozen even while time is running, so it's easy to miss whose clock is ticking. Research (`pod-docs/research/animated-clock.md`) found that chess sites focus on low-time warnings (chess.com shows tenths under 10s), and that the current countdown approach drifts.
 
 Success: the running side's icon ticks once per real second; idle, waiting and finished clocks stay still; low time is obvious; time stays correct across turn switches and background tabs; reduced-motion users see no movement; screen-reader users hear one alert at 10s.
 
@@ -22,7 +22,7 @@ Constraint: keep the app's current look (dark page, white pill for the side to m
 - `prefers-reduced-motion: reduce` → icon stays still (digits and colors still update).
 - `role="timer"` with a label per player, no live announcements, except one alert at 10s left.
 - `tabular-nums` on the digits so they don't shift width each second.
-- Tests for the time math (drift-free countdown, formatting incl. tenths) and an updated row in `docs/features.md` for the clock.
+- Tests for the time math (drift-free countdown, formatting incl. tenths) and an updated row in `pod-docs/features.md` for the clock.
 
 **Out of scope:**
 - An in-app motion on/off setting (OS setting only).
@@ -51,7 +51,7 @@ The human's pick, in their words: **"I prefer the chess.com style."** They chose
 - **Signature detail:** the hand has only four positions (12, 3, 6, 9 o'clock) and jumps a quarter turn (90°) each second, so it goes all the way round every 4 seconds. A crisp jump with no sweep and no bounce. *(human, from memory of chess.com)*
 - **Low time:** under 20s the running pill turns red `#D9534F` with white digits and icon *(reading)*; under 10s digits switch to tenths (`9.8`) *(chess.com, confirmed)* and the red stays. At 0 the pill stays red showing `0.0`.
 - **Rules out:** colored second hands, bounce/overshoot, pulsing or breathing, flip digits, decorative effects on the waiting clock.
-- **Draft:** `docs/design-drafts/look-directions.html`. None of A, B or C was picked as-is; A is the base for the reading above.
+- **Draft:** `pod-docs/design-drafts/look-directions.html`. None of A, B or C was picked as-is; A is the base for the reading above.
 
 ## Key decisions
 - Tick, not pulse or smooth spin: it matches a countdown and is least distracting during play (research: WCAG 2.2.2 notes). Quarter-turn steps (4 positions, 90° per second), as the human recalls chess.com doing; easier to see at icon size than 6° steps.
@@ -79,4 +79,4 @@ The human's pick, in their words: **"I prefer the chess.com style."** They chose
 - With `prefers-reduced-motion: reduce` emulated, the hand doesn't move while digits keep counting.
 - Each player's clock has `role="timer"` and an accessible label; an alert fires once at 10s left.
 - `BsClockHistory` is no longer used in `Player.tsx`; no new runtime dependency in `package.json`.
-- `docs/features.md` has a clock row that proves the tick and the countdown.
+- `pod-docs/features.md` has a clock row that proves the tick and the countdown.

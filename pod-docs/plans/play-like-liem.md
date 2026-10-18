@@ -56,7 +56,7 @@ The human's pick: **"I like a mix between A and B"** from [the draft](../design-
   - Flag red `#DA251D`: the setup card's top edge, the active mode tab underline, and the "Out of his book" note edge.
   - Flag gold `#FFCD00`: the star next to his name, the strength value and steps, the picked color tile's border (tint `#2F2A14`), and the "Book" badge (on `#3A3214`).
   - Olive `#BBBE64` (the board's dark square): the book note's left edge and the count bars.
-  - Start green `#047A4F`, the app's Play green (5.38:1 with white text; darkened from `#059862` on 2026-10-10, see `docs/decisions.md`).
+  - Start green `#047A4F`, the app's Play green (5.38:1 with white text; darkened from `#059862` on 2026-10-10, see `pod-docs/decisions.md`).
   - New colors go in as tokens in `src/index.css` `:root`, for example `--liem-red`, `--liem-gold`, `--book-bar`, next to the `--board-*` and `--clock-*` tokens.
 - **Type:** Quicksand only (already loaded).
   - Card title: 22 / 700 (18 / 700 below 600 px, so it stays on one line).
@@ -72,12 +72,12 @@ The human's pick: **"I like a mix between A and B"** from [the draft](../design-
   - **At 375 px** everything stacks: tabs, his or your card, board, the other card, book note, buttons. The setup card fits within the board's square (312 px): below 600 px it uses less padding, shorter tiles, a 24 px Elo and 40 px strength steps.
 - **Signature detail:** the flag colors. A red edge and gold star on the challenge card, and the book note's olive edge turning flag red with "He's on his own from here" when the game leaves his book.
 - **Rules out:** chess.com-style character art and chat; a table-heavy explorer (look C); browser-default sliders and selects. Strength is the step control, not `<input type="range">` styling left at default.
-- **Draft:** `docs/design-drafts/play-liem-look.html`. The mix: B for setup, tabs, the badge and the color tiles. A for the book note and the "Out of his book" state.
+- **Draft:** `pod-docs/design-drafts/play-liem-look.html`. The mix: B for setup, tabs, the badge and the color tiles. A for the book note and the "Out of his book" state.
 
 ## Key decisions
 - **Book first, Stockfish after.** Cloning a 2700 isn't proven: personal Maia models needed about 5,000 games, and GM attempts were "less successful". So the realistic version is his real openings plus a limited engine. — [research](../research/play-like-player.md)
-- **Stockfish lite WASM, single thread, in a Web Worker.** It's about 1.7 MB, `UCI_Elo` covers 1320 to 3190, and it needs no special headers. The other options (our own TypeScript search, Maia, a personal model) and when to switch are in [opponent-engine-options](../ideas/opponent-engine-options.md). Add a `docs/decisions.md` entry when it lands.
-- **The repo becomes GPL-3.0.** Stockfish is GPL v3, and the repo has no licence today. Add a `docs/decisions.md` entry.
+- **Stockfish lite WASM, single thread, in a Web Worker.** It's about 1.7 MB, `UCI_Elo` covers 1320 to 3190, and it needs no special headers. The other options (our own TypeScript search, Maia, a personal model) and when to switch are in [opponent-engine-options](../ideas/opponent-engine-options.md). Add a `pod-docs/decisions.md` entry when it lands.
+- **The repo becomes GPL-3.0.** Stockfish is GPL v3, and the repo has no licence today. Add a `pod-docs/decisions.md` entry.
 - **Ship only move counts, never game files.** TWIC says "free for personal use only. All rights are reserved". The Lichess database is CC0. Raw PGN stays in a folder ignored by git, and the committed books hold only counts per position. This is a judgment call, not legal advice.
 - **Two books, picked by the game's clock.** Slow (15 minutes or more) uses his over-the-board games, and faster clocks use his online games. When a line is thin (default: fewer than 3 games), he falls back to the other book. Each count records its source, so the split can change later.
 - **Strength from 1400 to full, in 7 steps:** 1400, 1700, 1900, 2100, 2300, 2500 and full. Full means Stockfish's `UCI_Elo` set to his rating, 2732. The engine's floor is 1320. (default: the exact steps)
@@ -116,3 +116,7 @@ The human's pick: **"I like a mix between A and B"** from [the draft](../design-
 - Two-player mode passes the existing smoke recipe unchanged.
 - The pre-game card, tabs, badge and book note match the Look tokens at desktop size and at 375 px.
 - The move choice sits behind one interface, and a test runs it with a fake engine.
+
+## Queue log
+
+- `[2026-10-10 · PENDING · reviewer → orchestrator · sprint: liem-opponent]` **Someday:** `{match && <ModeTabs />}` in `src/features/board/Board.tsx:140` is left from the removed guard; delete `match &&`. **Resolution:** 2026-10-16 — Obsolete: `Board.tsx` already reads `<ModeTabs />` (found by the game-review sprint-planner).

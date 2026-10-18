@@ -8,7 +8,7 @@ _Generated: 2026-10-06 · Status: archived · Grilled-with: grilling (fast)_
 Make the board feel like chess.com: restyled move highlights, click-to-move that behaves as players expect, a flip-board button, move sounds with a mute toggle, play that works on a phone, and less motion when the OS asks for it. The board stays custom; only its feel changes.
 
 ## Why
-The board already has legal-move dots, capture rings, a last-move overlay, a check glow and basic click-to-move, but they look dated (flat 50% yellow, green/red drag overlays, a glow around the king piece). Click-to-move can't deselect by clicking elsewhere. There are no sounds and no way to flip the board, and the react-dnd HTML5 backend is built for a mouse. This is the "Better board feel" item on `docs/roadmap.md`. It comes before online play, which will need the flip and a phone-ready board. Research: `docs/research/board-feel.md`.
+The board already has legal-move dots, capture rings, a last-move overlay, a check glow and basic click-to-move, but they look dated (flat 50% yellow, green/red drag overlays, a glow around the king piece). Click-to-move can't deselect by clicking elsewhere. There are no sounds and no way to flip the board, and the react-dnd HTML5 backend is built for a mouse. This is the "Better board feel" item on `docs/roadmap.md`. It comes before online play, which will need the flip and a phone-ready board. Research: `pod-docs/research/board-feel.md`.
 
 **Success criteria for the whole plan:**
 - The highlights match Look direction A on both light and dark squares.
@@ -17,7 +17,7 @@ The board already has legal-move dots, capture rings, a last-move overlay, a che
 - Every kind of move plays its own sound, and the mute setting survives a reload.
 - A full game can be played by tapping on a phone-size touch screen.
 - With reduced motion on, pieces jump instead of sliding.
-- `npm run build && npm test` passes, and the smoke playthrough in `docs/codebase-structure.md` still passes.
+- `npm run build && npm test` passes, and the smoke playthrough in `pod-docs/codebase-structure.md` still passes.
 
 **Constraints:**
 - Keep the Wheat board colors, the piece SVGs, Quicksand, and the dark page.
@@ -52,8 +52,8 @@ The board already has legal-move dots, capture rings, a last-move overlay, a che
   - Touch drag is added through the multi-backend switcher, as long as it doesn't need a board rewrite. If it does, it's dropped and logged as `PENDING`.
 - **Reduced motion.** With `prefers-reduced-motion: reduce`, piece moves don't animate. Use framer-motion's `MotionConfig reducedMotion="user"` or similar. Highlights and sounds stay.
 - **Docs.**
-  - Update `docs/features.md` with how to prove each new feature.
-  - Update the smoke recipe in `docs/codebase-structure.md` with the flip, sound and tap steps.
+  - Update `pod-docs/features.md` with how to prove each new feature.
+  - Update the smoke recipe in `pod-docs/codebase-structure.md` with the flip, sound and tap steps.
   - Update `docs/roadmap.md`: move Vite migration and Better board feel to a Done section.
 
 **Out of scope:**
@@ -62,7 +62,7 @@ The board already has legal-move dots, capture rings, a last-move overlay, a che
 - Board color themes, piece sets, and a sound-set or volume picker.
 - Auto-flip each turn.
 - Changing the board size or layout.
-- The `{ kind, color }` piece identity redesign (`docs/decisions.md`).
+- The `{ kind, color }` piece identity redesign (`pod-docs/decisions.md`).
 
 ## Sprint sequence
 
@@ -84,7 +84,7 @@ The human's pick: **"I will pick A"** (chess.com classic).
   - Legal dot and capture ring: `rgba(0, 0, 0, 0.14)`. The dot is 33% of the square, centered. The ring is a circle as big as the square, with a border 9% of the square.
   - Check: a radial gradient on the king's square, `radial-gradient(circle, #ff0000 0%, rgba(231, 0, 0, 0.9) 25%, rgba(169, 0, 0, 0) 89%)`.
   - Drag-over a legal square: an inset white edge, `rgba(255, 255, 255, 0.65)`, 6% of the square.
-  - Sound-on button: `#047A4F`, the app's Play green (was `#059862`; darkened on 2026-10-10 for 4.5:1 text contrast, see `docs/decisions.md`).
+  - Sound-on button: `#047A4F`, the app's Play green (was `#059862`; darkened on 2026-10-10 for 4.5:1 text contrast, see `pod-docs/decisions.md`).
   - Focus ring: `#FFFFFF`, 3 px with a 2 px offset.
   - Unchanged: board light `rgb(234, 240, 206)`, board dark `rgb(187, 190, 100)`, page `#333333`.
 - **Type:** Quicksand 700 for the coordinates, Quicksand 500 at 16 px for text. Both fonts are unchanged.
@@ -96,10 +96,10 @@ The human's pick: **"I will pick A"** (chess.com classic).
   - Bouncy or springy piece motion.
   - Colored dots.
   - New board colors.
-- **Draft:** `docs/design-drafts/board-feel-look.html` (direction A picked).
+- **Draft:** `pod-docs/design-drafts/board-feel-look.html` (direction A picked).
 
 ## Key decisions
-- **Keep the custom board, with no chessground or react-chessboard.** Most of the features already exist, and a switch means a rewrite. Chessground is GPL-3.0, and the repo has no licence yet (research: `docs/research/board-feel.md` → What exists, Gaps).
+- **Keep the custom board, with no chessground or react-chessboard.** Most of the features already exist, and a switch means a rewrite. Chessground is GPL-3.0, and the repo has no licence yet (research: `pod-docs/research/board-feel.md` → What exists, Gaps).
 - **Sounds come from a CC0 pack, not lichess's sounds.** The lichess sets are AGPL or CC BY-NC-SA, the standard set's terms weren't found, and that set has no check sound (research → Gaps).
 - **Resume the `AudioContext` on the first gesture, and add a mute toggle** (research → Best practices: Chrome autoplay policy).
 - **Dots on empty squares and rings on capture squares** (research → Best practices: chessground). The colors follow Look A.
@@ -117,7 +117,7 @@ The human's pick: **"I will pick A"** (chess.com classic).
 - **framer-motion `layoutId` can animate every piece across the board when it flips.** Mitigation: turn off layout animation for the flip render, and check it in the browser smoke.
 - **`react-dnd-multi-backend` may not fit react-dnd 16 or React 18.** Mitigation: sprint 1's phone check and a version check decide. If it doesn't fit, ship tap-to-move only and log a `PENDING` entry.
 - **Audio tests need a browser.** The Vitest setup is node-only. Mitigation: keep sound picking (move to sound) as a pure function with unit tests, and check playback in the browser smoke.
-- **Browser smoke drags are awkward** (`docs/known-issues/browser-smoke-drag.md`). Mitigation: click-to-move gives the smoke a reliable way to play moves.
+- **Browser smoke drags are awkward** (`pod-docs/known-issues/browser-smoke-drag.md`). Mitigation: click-to-move gives the smoke a reliable way to play moves.
 
 ## Open questions
 - Which CC0 pack to use. The engineer picks a small one with move, capture, check, castle, promote and game-end sounds, and records the source. If there's no check sound, use a distinct short tone for check.
@@ -140,4 +140,4 @@ The human's pick: **"I will pick A"** (chess.com classic).
   - There are no console errors, including before the first click.
 - **Phone** (375 px touch emulation): a full game, including castling, en passant, promotion and checkmate, can be played by tapping. Touch drag works if it shipped; if not, a `PENDING` entry says why.
 - **Reduced motion emulated:** pieces jump without sliding.
-- `docs/features.md`, the smoke recipe in `docs/codebase-structure.md`, and `docs/roadmap.md` are updated.
+- `pod-docs/features.md`, the smoke recipe in `pod-docs/codebase-structure.md`, and `docs/roadmap.md` are updated.
