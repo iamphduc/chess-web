@@ -46,11 +46,10 @@ describe("Player avatar", () => {
     expect(html).toContain('aria-label="Clock for Sparring · 1400"');
   });
 
-  it("a name mark sits between the title and the name", () => {
-    const html = renderPlayer(
-      <Player name="Le Quang Liem" title="GM" avatar={null} isWhite={false} nameMark={<b>★</b>} />
-    );
-    expect(html).toContain('<div class="player__name"><span class="player__title">GM</span><b>★</b>Le Quang Liem</div>');
+  it("the name line is the title then the name, with nothing between", () => {
+    const props = { name: "Le Quang Liem", title: "GM", avatar: null, isWhite: false, nameMark: <b>★</b> };
+    const html = renderPlayer(<Player {...props} />);
+    expect(html).toContain('<div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div>');
   });
 });
 
