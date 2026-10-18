@@ -42,6 +42,55 @@ describe("calibrate CLI", () => {
     expect(error(["--fast"])).toMatch(/unknown flag "--fast"/);
   });
 
+  it("measure flags", () => {
+    const sparring = STRENGTH_STEPS.filter((s) => s !== "full");
+    // Defaults: the six sparring steps, 20 games each.
+    expect(parseArgs(["--measure"])).toEqual({
+      mode: "measure",
+      steps: sparring,
+      games: 20,
+      seed: 1,
+      jobs: expect.any(Number),
+    });
+    expect(
+      parseArgs(["--measure", "--steps", "full,1400", "--games", "3", "--seed", "7", "--jobs", "2"])
+    ).toEqual({ mode: "measure", steps: [1400, "full"], games: 3, seed: 7, jobs: 2 });
+    // Any whole number of games from 1 up; the flag may come after the others.
+    expect(parseArgs(["--games=1", "--measure"])).toMatchObject({ mode: "measure", games: 1 });
+    const error = (argv: string[]) => {
+      const parsed = parseArgs(argv);
+      expect("error" in parsed, argv.join(" ")).toBe(true);
+      return (parsed as { error: string }).error;
+    };
+    expect(error(["--measure", "--games", "0"])).toMatch(/--games.*1 or more/);
+    expect(error(["--measure", "--games", "2.5"])).toMatch(/--games/);
+    expect(error(["--measure", "--anchors", "0"])).toMatch(/--anchors.*--measure/);
+    expect(error(["--anchors", "none", "--measure"])).toMatch(/--anchors.*--measure/);
+    expect(error(["--measure", "--anchor-elos", "2400"])).toMatch(/--anchor-elos.*--measure/);
+    expect(error(["--measure=yes"])).toMatch(/--measure takes no value/);
+    // Old flags parse as before: no mode key, even games only.
+    expect(parseArgs(["--games", "2"])).not.toHaveProperty("mode");
+    expect(error(["--games", "3"])).toMatch(/--games.*even/);
+  });
+
+  it("--measure with --anchors exits with a message, before any engine starts", async () => {
+    const out: string[] = [];
+    let started = 0;
+    const deps: CalibrateDeps = {
+      log: (line) => out.push(line),
+      error: (line) => out.push(`ERR ${line}`),
+      startEngine: () => {
+        started += 1;
+        throw new Error("no engine in tests");
+      },
+      now: () => 0,
+    };
+    expect(await runCalibrate(["--measure", "--anchors", "0"], deps)).toBe(1);
+    expect(started).toBe(0);
+    expect(out.join("\n")).toMatch(/ERR --anchors.*--measure/);
+    expect(out.join("\n")).toMatch(/usage: npm run calibrate.*--measure/s);
+  });
+
   it("an odd --games or an unknown step exits with a message, before any engine starts", async () => {
     const out: string[] = [];
     let started = 0;
