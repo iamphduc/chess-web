@@ -1,7 +1,7 @@
 # Plan: Sparring ladder to Liem
 
 _Generated: 2026-10-17 · Status: active · Grilled-with: grilling (fast)_
-<!-- autopilot-run: started=2026-10-18T10:31:18Z sprints=0 waves=2 -->
+<!-- autopilot-run: started=2026-10-18T10:31:18Z sprints=0 waves=3 -->
 
 ## Goal
 Turn the strength steps into a ladder that builds toward beating GM Le Quang Liem. Levels 1400 to 2500 become sparring bots: each one plays Liem's openings from his real games, then plays at its level with that level's real mistakes. Liem himself is the final boss. The page opens on the vs Liem tab.
