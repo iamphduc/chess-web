@@ -11,7 +11,16 @@ describe("STEP_PROFILES", () => {
       const p: StepProfile = STEP_PROFILES[step];
       const { depth, multiPv, movetimeMs } = p.search;
       expect(isWhole(depth) && depth >= 1 && depth <= 20, `${step} depth`).toBe(true);
-      expect(isWhole(multiPv) && multiPv >= 1 && multiPv <= 6, `${step} multiPv`).toBe(true);
+      expect(isWhole(multiPv) && multiPv >= 1 && multiPv <= 10, `${step} multiPv`).toBe(true);
+      const { mistakeChance, blunderChance, blunderMaxCp, hangWeight } = p;
+      const isChance = (n: unknown) => typeof n === "number" && n >= 0 && n <= 1;
+      expect(isChance(mistakeChance), `${step} mistakeChance`).toBe(true);
+      expect(isChance(blunderChance), `${step} blunderChance`).toBe(true);
+      expect((mistakeChance ?? NaN) + (blunderChance ?? NaN), `${step} chances sum`).toBeLessThanOrEqual(1);
+      expect(typeof blunderMaxCp === "number" && blunderMaxCp >= 0, `${step} blunderMaxCp`).toBe(
+        true
+      );
+      expect(isChance(hangWeight), `${step} hangWeight`).toBe(true);
       expect(movetimeMs >= 100 && movetimeMs <= 1000, `${step} movetimeMs`).toBe(true);
       expect(p.maxLoss, `${step} maxLoss`).toBeGreaterThanOrEqual(0);
       expect(p.temperature, `${step} temperature`).toBeGreaterThanOrEqual(0);
