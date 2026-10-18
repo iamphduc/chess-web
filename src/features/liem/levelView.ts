@@ -14,8 +14,6 @@ export interface LevelView {
   name: string;
   /** The tag before the name: his title, or `null` for a sparring bot. */
   title: string | null;
-  /** The gold star by the name: his card only. */
-  star: boolean;
   /** The glyph in place of a photo (♞), or `null` when the card shows `avatar`. */
   glyph: string | null;
   /** His photo's file name, or `null` when the card shows `glyph`. */
@@ -58,7 +56,6 @@ export function levelView(step: StrengthStep, entry: PlayerEntry = LIEM.entry): 
       sparring: false,
       name: entry.name,
       title: entry.title,
-      star: true,
       glyph: null,
       avatar: entry.avatar,
       detail: detailLead + shortDetail,
@@ -78,7 +75,6 @@ export function levelView(step: StrengthStep, entry: PlayerEntry = LIEM.entry): 
     sparring: true,
     name: `Sparring · ${step}`,
     title: null,
-    star: false,
     glyph: "♞",
     avatar: null,
     detail: `Plays ${shortDetail}`,

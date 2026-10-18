@@ -57,7 +57,7 @@ const renderPlayer = ({ name, title, avatar, isWhite }: PlayerInfo) => (
   />
 );
 
-/** His card at the picked level: a sparring bot's ♞ card, or his own with photo, GM and star. */
+/** His card at the picked level: a sparring bot's ♞ card, or his own with photo and GM. */
 const renderLiem = (color: PieceColor, strength: StrengthStep) => {
   const view = levelView(strength);
   return (
@@ -67,13 +67,6 @@ const renderLiem = (color: PieceColor, strength: StrengthStep) => {
       title={view.title}
       avatar={view.avatar}
       glyph={view.glyph ?? undefined}
-      nameMark={
-        view.star ? (
-          <span className="liem-star" aria-hidden="true">
-            ★
-          </span>
-        ) : undefined
-      }
       isWhite={color === "white"}
       detail={<LiemCardDetail />}
     />
