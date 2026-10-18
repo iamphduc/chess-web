@@ -300,6 +300,10 @@ describe("off book, the chooser picks among the lines", () => {
     slipMaxLoss: 10,
     aheadMaxLoss: 10,
     forceMateIn: 1,
+    mistakeChance: 0,
+    blunderChance: 0,
+    blunderMaxCp: 0,
+    hangWeight: 0,
   };
   const THREE = [line("e2e4", 30), line("d2d4", 28), line("g1f3", 20)];
 
