@@ -1,14 +1,17 @@
 // `npm run calibrate`: plays each strength step against Stockfish anchors at a
 // set UCI_Elo and against the next step up, and prints a table per step. Dev
 // only, run by hand; never in tests or CI. See pod-docs/codebase-structure.md.
+import { existsSync, readFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { pathToFileURL } from "node:url";
 import { createUciEngine, type UciTransport } from "../../src/game/opponent/engine/uci-engine";
 import { createOpponent } from "../../src/game/opponent/opponent";
 import { LIEM } from "../../src/game/opponent/players";
+import { parseBook } from "../../src/game/opponent/parse-book";
 import { STEP_PROFILES } from "../../src/game/opponent/step-profiles";
 import { STRENGTH_STEPS, strengthElo, type StrengthStep } from "../../src/game/opponent/strength";
 import type { Book, BookName } from "../../src/game/opponent/types";
+import { loadAccuracy } from "./accuracy";
 import { clampAnchorElo, createAnchor, defaultAnchors, DEFAULT_ANCHOR_OFFSETS, spawnStockfish } from "./anchor";
 import {
   gamePlan,
@@ -19,6 +22,18 @@ import {
   type MatchPlayer,
   type PairingResult,
 } from "./match";
+import {
+  DEFAULT_MEASURE_GAMES,
+  hash,
+  MEASURE_CLOCK,
+  runMeasure,
+  seeded,
+  SPARRING_STEPS,
+  type Grader,
+  type MeasureArgs,
+  type MeasureDeps,
+  type MeasurePlayer,
+} from "./measure";
 
 /**
  * How long an anchor thinks per move. Stockfish's UCI_Elo scale was set at
@@ -49,7 +64,8 @@ export interface CalibrateDeps {
 
 const USAGE =
   "usage: npm run calibrate -- [--steps 1400,1700,...,full] [--anchors -200,0,200|none] " +
-  "[--anchor-elos 1800,2400] [--games N (even)] [--seed N] [--jobs N]";
+  "[--anchor-elos 1800,2400] [--games N (even)] [--seed N] [--jobs N]\n" +
+  "       npm run calibrate -- --measure [--steps 1400,...,2500] [--games N (default 20)] [--seed N] [--jobs N]";
 
 const defaultJobs = () => Math.max(1, Math.min(6, availableParallelism() - 2));
 
@@ -59,8 +75,13 @@ function wholeList(text: string): number[] | null {
   return parts.map(Number);
 }
 
-/** The flags, or an error message. */
-export function parseArgs(argv: readonly string[]): CalibrateArgs | { error: string } {
+/**
+ * The flags, or an error message. `--measure` anywhere picks the measure mode:
+ * self-play, the sparring steps by default, any whole number of games, and
+ * no anchors.
+ */
+export function parseArgs(argv: readonly string[]): CalibrateArgs | MeasureArgs | { error: string } {
+  const measure = argv.some((a) => a === "--measure" || a.startsWith("--measure="));
   const out: CalibrateArgs = {
     steps: [...STRENGTH_STEPS],
     anchors: [...DEFAULT_ANCHOR_OFFSETS],
@@ -76,6 +97,13 @@ export function parseArgs(argv: readonly string[]): CalibrateArgs | { error: str
     if (flag.startsWith("--") && eq > 0) {
       value = flag.slice(eq + 1);
       flag = flag.slice(0, eq);
+    }
+    if (flag === "--measure") {
+      if (value !== undefined) return { error: "--measure takes no value" };
+      continue;
+    }
+    if (measure && (flag === "--anchors" || flag === "--anchor-elos")) {
+      return { error: `${flag} can't be used with --measure: self-play has no anchors` };
     }
     if (!["--steps", "--anchors", "--anchor-elos", "--games", "--seed", "--jobs"].includes(flag)) {
       return { error: `unknown flag "${flag}"` };
@@ -119,6 +147,11 @@ export function parseArgs(argv: readonly string[]): CalibrateArgs | { error: str
       }
       case "--games": {
         const n = /^\d+$/.test(value) ? Number(value) : NaN;
+        if (measure) {
+          if (!(n >= 1)) return { error: `--games must be a whole number of 1 or more, got "${value}"` };
+          out.games = n;
+          break;
+        }
         if (!(n >= 2) || n % 2 !== 0) {
           return { error: `--games must be an even number of 2 or more (each opening once per color), got "${value}"` };
         }
@@ -138,25 +171,18 @@ export function parseArgs(argv: readonly string[]): CalibrateArgs | { error: str
       }
     }
   }
+  if (measure) {
+    const stepsGiven = argv.some((a) => a === "--steps" || a.startsWith("--steps="));
+    const gamesGiven = argv.some((a) => a === "--games" || a.startsWith("--games="));
+    return {
+      mode: "measure",
+      steps: stepsGiven ? out.steps : [...SPARRING_STEPS],
+      games: gamesGiven ? out.games : DEFAULT_MEASURE_GAMES,
+      seed: out.seed,
+      jobs: out.jobs,
+    };
+  }
   return out;
-}
-
-/** mulberry32: a small seeded random in [0, 1). */
-function seeded(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function hash(text: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
-  return h >>> 0;
 }
 
 const emptyBook = (book: BookName): Book => ({
@@ -246,6 +272,47 @@ function stepTable(step: StrengthStep, rows: { pairing: Pairing; result: Pairing
   return lines;
 }
 
+const BOOKS_DIR = new URL(`../../src/game/opponent/players/${LIEM.entry.id}/`, import.meta.url);
+const BASELINES_FILE = new URL("../ladder/human-baselines.json", import.meta.url);
+
+/** His committed books, read once. */
+let books: Record<BookName, Book> | null = null;
+function liemBooks(): Record<BookName, Book> {
+  const read = (file: string) => parseBook(JSON.parse(readFileSync(new URL(file, BOOKS_DIR), "utf8")));
+  books ??= { slow: read(LIEM.entry.books.slow), online: read(LIEM.entry.books.online) };
+  return books;
+}
+
+/** The measure mode's engines and files. */
+function measureDeps(deps: CalibrateDeps): MeasureDeps {
+  return {
+    log: deps.log,
+    error: deps.error,
+    now: deps.now,
+    makePlayer(step, random): MeasurePlayer {
+      const profile = STEP_PROFILES[step];
+      const opponent = createOpponent({ books: liemBooks(), engine: createUciEngine(deps.startEngine()) });
+      return {
+        newGame: () => opponent.newGame(),
+        move: async (state) => {
+          const choice = await opponent.chooseMove(state, { profile, clock: MEASURE_CLOCK, random });
+          return { uci: choice.uci, source: choice.source, lines: choice.lines };
+        },
+        dispose: () => opponent.dispose(),
+      };
+    },
+    makeGrader(): Grader {
+      const engine = createUciEngine(deps.startEngine());
+      return {
+        analyse: (fen, limits, signal) => engine.analyse(fen, limits, signal),
+        dispose: () => engine.dispose(),
+      };
+    },
+    readBaselines: () => (existsSync(BASELINES_FILE) ? JSON.parse(readFileSync(BASELINES_FILE, "utf8")) : null),
+    loadAccuracy: () => loadAccuracy(),
+  };
+}
+
 /** Runs the calibration; returns the exit code. */
 export async function runCalibrate(argv: readonly string[], deps: CalibrateDeps): Promise<number> {
   const args = parseArgs(argv);
@@ -254,6 +321,7 @@ export async function runCalibrate(argv: readonly string[], deps: CalibrateDeps)
     deps.log(USAGE);
     return 1;
   }
+  if ("mode" in args) return runMeasure(args, measureDeps(deps));
   const { seed } = args;
   const rating = LIEM.entry.rating;
   const pairings = pairingsFor(args, rating);

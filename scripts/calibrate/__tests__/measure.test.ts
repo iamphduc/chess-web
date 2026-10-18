@@ -276,7 +276,7 @@ describe("measure report", () => {
     const { deps, out } = fakeDeps({ readBaselines: () => null });
     expect(await runMeasure(args([1400], 1), deps)).toBe(0);
     const text = out.join("\n");
-    expect(text).toMatch(/review\.blunder\s+20\.00\s+-\s+-\s+-/);
+    expect(text).toMatch(/review\.blunder\s+10\.00\s+-\s+-\s+-/);
     expect(text).toMatch(/human-baselines\.json.*npm run baseline/);
   });
 
@@ -284,7 +284,8 @@ describe("measure report", () => {
     const { deps, out } = fakeDeps();
     expect(await runMeasure(args(["full"], 1), deps)).toBe(0);
     const b = block(out, "full").join("\n");
-    expect(b).toMatch(/review\.mistake\s+0\.00\s+-\s+-\s+-/);
+    expect(b).toMatch(/review\.mistake\s+10\.00\s+-\s+-\s+-/);
+    expect(b).not.toMatch(/npm run baseline/);
   });
 
   it("grader failure", async () => {
