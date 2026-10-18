@@ -51,7 +51,7 @@ describe("BookNote and LiemCardDetail", () => {
     const fresh = liemGame();
     expect(note(fresh)).toMatch(/class="liem-note"[^>]*data-book-state="waiting"/);
     expect(note(fresh)).not.toContain("data-uci");
-    expect(text(detail(fresh))).toContain("GM · playing about 2100");
+    expect(text(detail(fresh))).toBe("Plays Liem's openings");
     expect(detail(fresh)).not.toContain("liem-badge");
 
     // In book: rows with the smoke hooks, the played row marked.
@@ -76,7 +76,7 @@ describe("BookNote and LiemCardDetail", () => {
     expect(badge).toMatch(/class="liem-badge" data-book-games="312"/);
     expect(badge).not.toContain("data-engine");
     expect(text(badge)).toContain("★ Book · 312");
-    expect(text(badge)).toContain("GM · playing about 2100");
+    expect(text(badge)).toContain("Plays Liem's openings");
 
     // Out of book: the red edge and his words.
     const out = liemGame();
@@ -108,34 +108,58 @@ describe("BookNote and LiemCardDetail", () => {
     expect(detail(inBook)).not.toContain("Thinking…");
   });
 
-  it("shows the Elo of the chosen step, Full as his rating", () => {
+  it("shows the picked level: a sparring bot's openings line, or his GM line", () => {
     const store = createAppStore();
-    store.dispatch(setMode("liem"));
     store.dispatch(setStrength("full"));
-    expect(text(detail(store))).toContain("GM · playing about 2732");
+    expect(text(detail(store))).toBe("GM · 2732");
     store.dispatch(setStrength(1400));
-    expect(text(detail(store))).toContain("GM · playing about 1400");
+    expect(text(detail(store))).toBe("Plays Liem's openings");
   });
 
-  it("his card says playing about the step", () => {
-    const store = liemGame();
-    const sub = detail(store).match(/<span class="liem-detail__sub">(.*?<\/span>)<\/span>/)?.[1] ?? "";
-    expect(text(sub)).toBe("GM · playing about 2100");
+  it("no card says playing about", () => {
+    for (const step of [1400, 2100, 2500, "full"] as const) {
+      const store = createAppStore();
+      store.dispatch(setStrength(step));
+      expect(text(detail(store))).not.toMatch(/playing|about/);
+    }
   });
 
-  // A narrow board can't fit "GM · playing about 2100" beside the badge, so the
-  // card hides parts of the line by width (Board.css); each part has its own span.
-  it("his strength line comes in parts a narrow card can drop", () => {
+  // A phone can't fit "Plays Liem's openings" beside the badge, so the card
+  // hides "Plays " there (Board.css); each part has its own span.
+  it("the sparring line comes in parts a narrow card can drop", () => {
     const store = liemGame();
     expect(detail(store)).toContain(
-      '<span class="liem-detail__sub"><span class="liem-detail__lead">GM · playing </span>' +
-        '<span class="liem-detail__about">about </span><span class="liem-detail__elo">2100</span></span>'
+      '<span class="liem-detail__sub"><span class="liem-detail__lead">Plays </span>' +
+        '<span class="liem-detail__short">Liem&#x27;s openings</span></span>'
     );
-    // strength is picked before a game starts
+    // His own line is short already: one part.
     const full = createAppStore();
-    full.dispatch(setMode("liem"));
     full.dispatch(setStrength("full"));
-    expect(detail(full)).toContain('<span class="liem-detail__elo">2732</span>');
+    expect(detail(full)).toContain('<span class="liem-detail__sub"><span class="liem-detail__short">GM · 2732</span></span>');
+  });
+
+  it("badge on a sparring card", () => {
+    const sparring = () => {
+      const store = createAppStore();
+      store.dispatch(setStrength(1400));
+      store.dispatch(gameStarted());
+      store.dispatch(newGame({ humanColor: "black" }));
+      return store;
+    };
+
+    const inBook = sparring();
+    heMoved(inBook, "book");
+    expect(detail(inBook)).toMatch(/class="liem-badge" data-book-games="312"/);
+    expect(text(detail(inBook))).toBe("Plays Liem's openings★ Book · 312");
+
+    const out = sparring();
+    heMoved(out, "engine");
+    expect(detail(out)).toContain('<span class="liem-badge liem-badge--engine" data-engine="stockfish">Stockfish</span>');
+    expect(note(out)).toContain("Stockfish at about 1400 plays from here. It isn&#x27;t trained on his games.");
+
+    const thinking = sparring();
+    thinking.dispatch(setOpponentStatus("thinking"));
+    expect(text(detail(thinking))).toBe("Plays Liem's openingsThinking…");
   });
 
   it("the book badge's count is its own part, so a phone can show just ★ Book", () => {
@@ -160,7 +184,16 @@ describe("BookNote and LiemCardDetail", () => {
     const html = note(out);
     expect(html).toMatch(/class="liem-note liem-note--out"[^>]*data-book-state="out"/);
     expect(html).toContain('<h3 class="book-note__title">Out of his book</h3>');
-    expect(html).toContain("Standard Stockfish 18 plays from here. It isn&#x27;t trained on his games.");
+    expect(html).toContain("Stockfish at about 2100 plays from here. It isn&#x27;t trained on his games.");
+    expect(html).not.toContain("Standard Stockfish");
+
+    // His own level: full-strength Stockfish.
+    const him = createAppStore();
+    him.dispatch(setStrength("full"));
+    him.dispatch(gameStarted());
+    him.dispatch(newGame({ humanColor: "black" }));
+    heMoved(him, "engine");
+    expect(note(him)).toContain("Full-strength Stockfish 18 plays from here. It isn&#x27;t trained on his games.");
     expect(html).not.toContain("on his own");
   });
 

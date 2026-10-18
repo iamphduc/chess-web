@@ -4,9 +4,11 @@ import { applyMove } from "game/engine/engine";
 import { initialGameState, type GameState } from "game/engine/game-state";
 import { uciToMove } from "game/opponent/position";
 import { STEP_PROFILES } from "game/opponent/step-profiles";
+import { createAppStore } from "app/store";
 import { GameOverType } from "features/board/components/GameOver";
 import { liemTurn, type LiemTurnBoard } from "../liemTurn";
-import { matchSlice, type MatchState } from "../matchSlice";
+import { matchSlice, type MatchState, setColorPick } from "../matchSlice";
+import { liemGameId } from "../useLiemOpponent";
 
 function play(state: GameState, ...ucis: string[]): GameState {
   return ucis.reduce((s, uci) => {
@@ -80,5 +82,23 @@ describe("his turn only", () => {
     ["human to move at the start", { engineHistory: [start] }, {}],
   ])("returns null when %s", (_name, b, m) => {
     expect(liemTurn(board(b), match(m))).toBeNull();
+  });
+});
+
+describe("page load", () => {
+  it("no request on page load", () => {
+    const store = createAppStore();
+    const { board, match } = store.getState();
+    // The page opens on vs Liem with the card open, and nothing asks him or loads him.
+    expect(match).toMatchObject({ mode: "liem", setupOpen: true });
+    expect(liemTurn(board, match)).toBeNull();
+    expect(liemGameId(board, match)).toBeNull();
+
+    // Black picked: he would move first, but not before Start game.
+    store.dispatch(setColorPick("black"));
+    const after = store.getState();
+    expect(after.match.colorPick).toBe("black");
+    expect(liemTurn(after.board, after.match)).toBeNull();
+    expect(liemGameId(after.board, after.match)).toBeNull();
   });
 });

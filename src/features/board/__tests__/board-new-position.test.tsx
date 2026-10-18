@@ -15,6 +15,13 @@ import { Board } from "../Board";
 
 type Store = ReturnType<typeof createAppStore>;
 
+/** Two players, after one click on its tab (the page opens on vs Liem). */
+function twoPlayers(): Store {
+  const store = createAppStore();
+  store.dispatch(switchMode("two-player"));
+  return store;
+}
+
 function render(store: Store): string {
   return renderToStaticMarkup(
     <Provider store={store}>
@@ -73,8 +80,8 @@ function click(store: Store, square: string) {
 
 describe("a new position keeps the squares mounted", () => {
   it("opening and closing the setup card keeps the same square nodes", () => {
-    const store = createAppStore();
-    const twoPlayers = squarePath(store, "e2");
+    const store = twoPlayers();
+    const twoPlayerPath = squarePath(store, "e2");
 
     store.dispatch(switchMode("liem"));
     const cardOpen = squarePath(store, "e2");
@@ -87,7 +94,7 @@ describe("a new position keeps the squares mounted", () => {
     store.dispatch(newLiemGame());
     const reopened = squarePath(store, "e2");
 
-    expect(cardOpen).toBe(twoPlayers);
+    expect(cardOpen).toBe(twoPlayerPath);
     expect(inGame).toBe(cardOpen);
     expect(reopened).toBe(inGame);
   });
@@ -107,7 +114,7 @@ describe("a new position keeps the squares mounted", () => {
 
 describe("each game has its own piece layout ids", () => {
   it("two-player Reset gives every piece a new layout id", () => {
-    const store = createAppStore();
+    const store = twoPlayers();
     click(store, "e2");
     click(store, "e4");
     const before = layoutId(store, "a1");
@@ -117,7 +124,7 @@ describe("each game has its own piece layout ids", () => {
   });
 
   it("mode switch, Start game and New game each start new layout ids", () => {
-    const store = createAppStore();
+    const store = twoPlayers();
     const seen = [layoutId(store, "a1")];
     store.dispatch(switchMode("liem"));
     seen.push(layoutId(store, "a1"));
@@ -132,7 +139,7 @@ describe("each game has its own piece layout ids", () => {
   });
 
   it("a move keeps the moved piece's layout id, so it slides", () => {
-    const store = createAppStore();
+    const store = twoPlayers();
     const pawn = layoutId(store, "e2");
     click(store, "e2");
     click(store, "e4");

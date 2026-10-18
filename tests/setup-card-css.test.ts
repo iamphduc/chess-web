@@ -58,13 +58,13 @@ const narrow = () => {
   return block!.body;
 };
 
-// The desktop card: the phone fix must not change it. human-moves U1 added "about" and the Stockfish line.
+// The desktop card: the phone fix must not change it. human-moves U1 added "about" and the Stockfish line;
+// ladder U1 dropped "Full" (the Liem step reads "★ Liem" in the gold Elo style).
 const DESKTOP = `.setup-card{box-sizing: border-box; width: 100%; max-width: 360px; text-align: left;}
 .setup-card__strength{margin-top: 16px;}
 .setup-card__strength-top{display: flex; align-items: baseline; justify-content: space-between; gap: 8px;}
 .setup-card__label{font-size: 16px; font-weight: 700;}
 .setup-card__value{display: inline-flex; align-items: baseline; gap: 8px;}
-.setup-card__full{font-size: 16px; font-weight: 700; color: var(--liem-gold);}
 .setup-card__about{font-size: 16px; font-weight: 500; color: var(--liem-text-soft);}
 .setup-card__engine{margin: 12px 0 0;}
 .setup-card__actions{margin-top: 16px;}`;

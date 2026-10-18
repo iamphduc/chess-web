@@ -342,33 +342,41 @@ function visuallyHidden(d: [string, string][]): boolean {
 
 describe("his card on the board", () => {
   const card = ".board > .player";
-  const PARTS = [".liem-detail__lead", ".liem-detail__about", ".liem-badge__count"];
+  const PARTS = [".liem-detail__lead", ".liem-detail__short", ".liem-badge__count"];
 
-  it("a wide board shows his whole line: GM · playing about 2100 and ★ Book · N", () => {
+  it("a wide board shows the whole line: Plays Liem's openings and ★ Book · N", () => {
     const wide = outsideMedia(boardCss());
     for (const part of PARTS) {
       expect(visuallyHidden(declsFor(wide, `${card} ${part}`)), `${part} shows outside the narrow rules`).toBe(false);
     }
-    expect(declsFor(wide, `${card} .liem-detail__elo::before`), "no ~ outside the narrow rules").toEqual([]);
+    // The old "~2100" line is gone with "playing about".
+    expect(boardCss()).not.toMatch(/liem-detail__(about|elo)/);
   });
 
-  it("below 1200 px the line drops 'GM · playing ' (the GM tag sits by his name)", () => {
-    const mid = mediaBlocks(boardCss(), /max-width:\s*1199px/);
-    expect(visuallyHidden(declsFor(mid, `${card} .liem-detail__lead`)), "lead hidden below 1200 px").toBe(true);
-    expect(visuallyHidden(declsFor(mid, `${card} .liem-detail__about`)), "about stays from 768 px").toBe(false);
-  });
-
-  it("below 768 px the line reads ~2100 and the badge ★ Book", () => {
+  it("sparring detail on phones", () => {
     const phone = mediaBlocks(boardCss(), /max-width:\s*767px/);
-    expect(visuallyHidden(declsFor(phone, `${card} .liem-detail__about`)), "about hidden on phones").toBe(true);
+    // "Plays " is hidden from sight only, so the line reads "Liem's openings" and is read out in full.
+    expect(visuallyHidden(declsFor(phone, `${card} .liem-detail__lead`)), "lead hidden on phones").toBe(true);
+    expect(visuallyHidden(declsFor(phone, `${card} .liem-detail__short`)), "short part stays").toBe(false);
     expect(visuallyHidden(declsFor(phone, `${card} .liem-badge__count`)), "count hidden on phones").toBe(true);
-    const tilde = declsFor(phone, `${card} .liem-detail__elo::before`).find(([p]) => p === "content")?.[1];
-    // shown as "~", read as nothing: "about" is still read out
-    expect(tilde).toBe('"~" / ""');
     // the line keeps body type; nothing drops below 14 px
     for (const [p, v] of declarations(phone.replace(/[^{}]+\{|\}/g, ";"))) {
       if (p === "font-size") expect(parseFloat(v), `font-size ${v}`).toBeGreaterThanOrEqual(14);
     }
+  });
+
+  it("from 768 px the sparring line is whole", () => {
+    // Only the phone rules hide a part of the line.
+    const others = mediaBlocks(boardCss(), /^(?![^]*max-width:\s*767px)/);
+    expect(others, "Board.css has other @media blocks").not.toBe("");
+    for (const part of PARTS) {
+      expect(visuallyHidden(declsFor(others, `${card} ${part}`)), `${part} outside the phone rules`).toBe(false);
+    }
+  });
+
+  it("his star sits in the name line at its size", () => {
+    const d = declsFor(outsideMedia(boardCss()), `${card} .liem-star`);
+    expect(d.find(([p]) => p === "font-size")?.[1]).toBe("inherit");
   });
 
   it("the Stockfish pill is the badge's outer size inside a player card", () => {
