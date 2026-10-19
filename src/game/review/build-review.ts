@@ -3,6 +3,7 @@ import type { GameState } from "../engine/game-state";
 import { lookupBook, type GameClock } from "../opponent/book";
 import { uciToMove } from "../opponent/position";
 import { moveGames, type Book, type BookMove, type BookName } from "../opponent/types";
+import { gameAccuracy, LICHESS_START_WIN, lichessWinPercent } from "./game-accuracy";
 import { gradeMove, winFor } from "./grade";
 import { gameMoves, moveLabel } from "./moves";
 import type {
@@ -124,17 +125,6 @@ function reviewPly(
   return move;
 }
 
-function gameAccuracy(moves: readonly ReviewMove[]): number | null {
-  const human = moves.filter((m) => m.byHuman);
-  if (human.length === 0) return null;
-  let sum = 0;
-  for (const m of human) {
-    if (m.accuracy === null) return null;
-    sum += m.accuracy;
-  }
-  return sum / human.length;
-}
-
 /**
  * The review of a finished game, from whatever evals are in so far. Throws a
  * RangeError when two neighbouring positions aren't one legal move apart.
@@ -192,7 +182,15 @@ export function buildReview(input: BuildReviewInput): ReviewModel {
     whiteWin,
     analysed: whiteWin.filter((w) => w !== null).length,
     total: positions.length,
-    accuracy: gameAccuracy(moves),
+    accuracy: gameAccuracy(
+      positions.map((p, i) => {
+        if (i === 0) return LICHESS_START_WIN;
+        const e = evalAt(i);
+        return e === null ? null : lichessWinPercent(e.score, p.turn);
+      }),
+      moves.map((_, ply) => positions[ply].turn),
+      input.humanColor
+    ),
     counts,
     keyMoments,
     bookPlies,
