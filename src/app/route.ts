@@ -77,13 +77,54 @@ export interface HashWindow {
   history: { state: unknown; replaceState(state: unknown, unused: string, url: string): void };
 }
 
+/** Marks a `#/review` history entry that sits right on top of a `#/play` entry. */
+const OVER_PLAY = "chess-web.reviewOverPlay";
+
+function isOverPlay(state: unknown): boolean {
+  return typeof state === "object" && state !== null && (state as Record<string, unknown>)[OVER_PLAY] === true;
+}
+
 /**
  * Arrives at the current hash and, when the screen shown has another hash,
  * replaces it (no history entry, no `hashchange`). Returns the screen shown.
+ * `from` is the hash just left (a hashchange's old URL): a review opened from
+ * `#/play` marks its entry, so Play again can step back onto that entry.
  */
-export function followHash(dispatch: AppDispatch, win: HashWindow): Screen {
+export function followHash(dispatch: AppDispatch, win: HashWindow, from?: string): Screen {
   const shown = dispatch(arriveAt(parseHash(win.location.hash)));
   const hash = hashFor(shown);
-  if (win.location.hash !== hash) win.history.replaceState(win.history.state, "", hash);
+  if (win.location.hash !== hash) {
+    win.history.replaceState(win.history.state, "", hash);
+  } else if (shown === "review" && from !== undefined && parseHash(from) === "play" && !isOverPlay(win.history.state)) {
+    const state = typeof win.history.state === "object" && win.history.state !== null ? win.history.state : {};
+    win.history.replaceState({ ...state, [OVER_PLAY]: true }, "", hash);
+  }
   return shown;
+}
+
+/** The parts of `window` that leaving the review for play uses. */
+export interface ReviewExitWindow {
+  location: { hash: string; replace(url: string): void };
+  history: { state: unknown; back(): void };
+}
+
+/**
+ * Leaves `#/review` for `#/play` without stacking a new entry: Back onto the
+ * `#/play` entry under it when there is one, else `#/review` becomes `#/play`.
+ * Either way `hashchange` runs the route. Off the review it is `goTo("play")`.
+ * Does nothing without `window`.
+ */
+export function leaveReviewForPlay(win: ReviewExitWindow | undefined = globalWindow()): void {
+  if (win === undefined) return;
+  if (parseHash(win.location.hash) !== "review") {
+    win.location.hash = hashFor("play");
+  } else if (isOverPlay(win.history.state)) {
+    win.history.back();
+  } else {
+    win.location.replace(hashFor("play"));
+  }
+}
+
+function globalWindow(): ReviewExitWindow | undefined {
+  return typeof window === "undefined" ? undefined : window;
 }
