@@ -95,12 +95,47 @@ describe("orientation", () => {
       top: 60,
       bottom: "unset",
     });
-    // Unflipped a8 matches today's Promotion.tsx formula.
-    expect(promotionPlacement(...sq("a8"), false, 60)).toEqual({
-      left: -30,
+    // Unflipped b8 keeps the half-square offset (a8 is clamped, see below).
+    expect(promotionPlacement(...sq("b8"), false, 60)).toEqual({
+      left: 30,
       right: "unset",
       top: 60,
       bottom: "unset",
     });
+  });
+
+  it("picker stays inside the board", () => {
+    // The widest picker: the review board's four 0.8-square buttons plus its padding and border.
+    const widest = (s: number) => 4 * 0.8 * s + 24;
+    const corners = ["a8", "h8", "a1", "h1"];
+    for (const s of [39, 52, 60, 78]) {
+      for (const flipped of [false, true]) {
+        // Every square a picker can open on: both back ranks.
+        for (const file of "abcdefgh") {
+          for (const rank of ["8", "1"]) {
+            const name = `${file}${rank}`;
+            const p = promotionPlacement(...sq(name), flipped, s);
+            const horizontal = [p.left, p.right].filter((v): v is number => v !== "unset");
+            const vertical = [p.top, p.bottom].filter((v): v is number => v !== "unset");
+            expect(horizontal, `${name} flipped=${flipped} one side`).toHaveLength(1);
+            expect(vertical, `${name} flipped=${flipped} one end`).toHaveLength(1);
+            const [edge] = horizontal;
+            expect(edge, `${name} flipped=${flipped} s=${s} near edge`).toBeGreaterThanOrEqual(0);
+            expect(edge + widest(s), `${name} flipped=${flipped} s=${s} far edge`).toBeLessThanOrEqual(8 * s);
+            expect(vertical[0]).toBeGreaterThanOrEqual(0);
+            expect(vertical[0]).toBeLessThanOrEqual(7 * s);
+          }
+        }
+        // The corners sit flush with the board's edge.
+        for (const name of corners) {
+          const p = promotionPlacement(...sq(name), flipped, s);
+          const edge = p.left !== "unset" ? p.left : p.right;
+          expect(edge, `${name} flipped=${flipped} s=${s}`).toBe(0);
+        }
+      }
+    }
+    // The e8 and e1 placements don't change (also pinned in "promotion picker follows the flip").
+    expect(promotionPlacement(...sq("e8"), false, 52)).toEqual({ left: "unset", right: 130, top: 52, bottom: "unset" });
+    expect(promotionPlacement(...sq("e1"), true, 52)).toEqual({ left: 130, right: "unset", top: 52, bottom: "unset" });
   });
 });
