@@ -20,6 +20,14 @@
 
 /* "Stockfish" in its place out of book: soft text in a hairline ring, so ochre stays
    for his book. Same shape and size as the badge. */
+/* The ★ before "Book": an ochre shape, never ochre text. */
+.liem-badge__star {
+  flex: none;
+  width: 0.9em;
+  height: 0.9em;
+  fill: var(--gold);
+}
+
 .liem-badge--engine {
   color: var(--soft);
   border-color: var(--line);

@@ -4,10 +4,11 @@ import "./BookNote.css";
 import { useAppSelector } from "app/hooks";
 import { bookNoteView, liemBadge, type LiemBadge } from "../bookNote";
 import { levelView } from "../levelView";
+import { Star } from "./Star";
 
 const count = new Intl.NumberFormat("en-US");
 
-/** The "★ Book · N" badge in book, or the "Stockfish" pill in its place out of book. */
+/** The "★ Book · N" badge (an ochre ★ shape) in book, or the "Stockfish" pill in its place out of book. */
 function Badge({ badge }: { badge: LiemBadge }) {
   if (badge.kind === "engine") {
     return (
@@ -18,8 +19,9 @@ function Badge({ badge }: { badge: LiemBadge }) {
   }
   return (
     <span className="liem-badge" data-book-games={badge.games}>
+      <Star className="liem-badge__star" />
       <span className="liem-badge__text">
-        ★ Book<span className="liem-badge__count">{` · ${count.format(badge.games)}`}</span>
+        Book<span className="liem-badge__count">{` · ${count.format(badge.games)}`}</span>
       </span>
     </span>
   );

@@ -94,6 +94,7 @@
 }
 
 body {
+  margin: 0; /* full bleed: the top bar runs edge to edge and a screen that fits doesn't scroll */
   font-family: var(--font);
   font-size: var(--text-body);
   font-weight: 500;
