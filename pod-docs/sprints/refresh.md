@@ -1,19 +1,19 @@
 # Sprint: refresh
 
 _From plan: pod-docs/plans/ui-refresh.md · Slug: refresh · Status: active · Generated: 2026-10-19_
-<!-- autopilot-run: started=2026-10-19T09:41:08Z sprints=0 waves=1 -->
+<!-- autopilot-run: started=2026-10-19T09:41:08Z sprints=0 waves=2 -->
 
 ## Status board
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | L1 | Look: scorebook tokens, Quicksand, base controls and cards | refresh-L1 | — | in-progress | — | — |
-| 1 | N1 | Level names instead of ratings | refresh-N1 | — | in-progress | — | — |
-| 1 | R1 | Hash screens: route rules, Home and New game actions | refresh-R1 | — | in-progress | — | — |
-| 2 | H1 | Home page and the screen switch | refresh-H1 | — | pending | — | L1, N1, R1 |
-| 2 | B1 | Board screen: top bar, Moves card, no tabs or setup card | refresh-B1 | — | pending | — | L1, N1, R1 |
-| 2 | P1 | Player cards with "+N", clocks, book note and badges in the Look | refresh-P1 | — | pending | — | L1, N1 |
-| 2 | G1 | Board pieces in the Look: squares, promotion picker, game-over notice | refresh-G1 | — | pending | — | L1 |
+| 1 | L1 | Look: scorebook tokens, Quicksand, base controls and cards | refresh-L1 | #80 | merged | medium | — |
+| 1 | N1 | Level names instead of ratings | refresh-N1 | #80 | merged | medium | — |
+| 1 | R1 | Hash screens: route rules, Home and New game actions | refresh-R1 | #80 | merged | medium | — |
+| 2 | H1 | Home page and the screen switch | refresh-H1 | — | in-progress | — | L1, N1, R1 |
+| 2 | B1 | Board screen: top bar, Moves card, no tabs or setup card | refresh-B1 | — | in-progress | — | L1, N1, R1 |
+| 2 | P1 | Player cards with "+N", clocks, book note and badges in the Look | refresh-P1 | — | in-progress | — | L1, N1 |
+| 2 | G1 | Board pieces in the Look: squares, promotion picker, game-over notice | refresh-G1 | — | in-progress | — | L1 |
 | 3 | V1 | Review: graph in the sidebar and phone sheet, top bar, Look | refresh-V1 | — | pending | — | B1, P1, R1 |
 | 4 | C1 | Remove old tokens and styles; decisions, docs and README | refresh-C1 | — | pending | — | H1, B1, P1, G1, V1 |
 
