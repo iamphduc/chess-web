@@ -4,15 +4,14 @@ import { contrast, declarations, last, readCss, rootTokens, rules, token } from 
 
 const buttonCss = () => readCss("features", "board", "components", "Button.css");
 
-// The board on wood (plan ui-refresh, ## Look). --board-sound-on stays defined until C1 removes it.
+// The board on wood (plan ui-refresh, ## Look).
 const BOARD: Record<string, string> = {
   "--board-light": "#F0E3C8",
   "--board-dark": "#B98B5E",
-  "--board-highlight": "rgba(255, 255, 51, 0.5)",
+  "--board-highlight": "rgba(204, 153, 26, 0.5)",
   "--board-hint": "rgba(0, 0, 0, 0.14)",
   "--board-drop-edge": "rgba(255, 255, 255, 0.65)",
   "--board-focus": "#1E1B16",
-  "--board-sound-on": "#047A4F",
 };
 
 // Declarations of every rule naming exactly `selector` (alone or in a comma list), in order.
