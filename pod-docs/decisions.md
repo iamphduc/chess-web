@@ -304,3 +304,7 @@ A sparring bot's mistake shows as a drop in the review graph, never as a mark in
 ## 2026-10-18 — The tuned table stands until you replay 1400 (agent default — override anytime)
 
 The 2026-10-12 "The 1400 step plays like 1400" check is superseded by the tuned table. The bots now hang pieces 1.2–2.4× and miss captures 2–5× as often as humans; those two rates have no target. Play a few 1400 games and say if it feels too loose: lower `hangWeight` or `blunderMaxCp` in `src/game/opponent/step-profiles.ts`.
+
+## 2026-10-19 — merge target: pod-staging
+
+Autopilot merges land on `pod-staging`, cut from `main`. The human looks, then moves them to `main`, which deploys to GitHub Pages, so unattended code never deploys alone. (human, 2026-10-19)
