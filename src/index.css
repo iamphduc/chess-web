@@ -16,34 +16,69 @@
 }
 
 :root {
+  /* The Look (plan ui-refresh, ## Look): a paper scorebook in Quicksand.
+     Every CSS file outside this one uses only tokens for color, size and space.
+     --gold is never a text color: it fails 4.5:1 on cream, so it's for bars, borders and the star. */
+  --bg: #F4EFE4; /* page */
+  --surface: #FBF8F1; /* cards */
+  --surface-2: #EFE8D8; /* raised controls and alternate rows */
+  --line: #DCD2BD;
+  --ink: #1E1B16;
+  --soft: #6B6457;
+  --accent: #A8322B; /* red ink: marks, the GM tag, low time */
+  --gold: #B8860B; /* ochre: level bars and the star, never text */
+  --go: #1E1B16; /* the Play button */
+  --go-ink: #FBF8F1;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius: 4px;
+
+  --font: "Quicksand", sans-serif; /* weights 500 and 700 only */
+  --text-hero: 30px;
+  --text-title: 20px;
+  --text-body: 16px;
+  --text-small: 14px;
+
+  /* Player clocks (ink on bg). Each pair is 4.5:1 or more. */
+  --clock-waiting-bg: var(--surface-2);
+  --clock-waiting-ink: var(--soft);
+  --clock-running-bg: var(--ink);
+  --clock-running-ink: var(--bg);
+  --clock-low-bg: var(--accent);
+  --clock-low-ink: var(--surface);
+
+  /* Board on wood. Board, square, overlay and piece CSS use only these for color. */
+  --board-light: #F0E3C8;
+  --board-dark: #B98B5E;
+  --board-highlight: rgba(255, 255, 51, 0.5); /* last move and selected square */
+  --board-hint: rgba(0, 0, 0, 0.14); /* legal-move dot and capture ring */
+  --board-check: rgba(168, 50, 43, 0.55); /* a flat --accent tint on the king in check */
+  --board-drop-edge: rgba(255, 255, 255, 0.65); /* inset edge on a legal drag-over square */
+  --board-focus: #1E1B16; /* the focus ring on every control: the --ink value */
+
+  /* Game review grades: each keeps its old hue, darkened to read at 4.5:1 on --surface and
+     --surface-2. Chips put --grade-ink (the card cream) on the grade color. */
+  --grade-inaccuracy: #146AB0;
+  --grade-mistake: #A45000;
+  --grade-blunder: #CF0F00;
+  --grade-best: #27744F;
+  --grade-book: #686A2D;
+  --grade-ink: #FBF8F1;
+  --review-scrim: rgba(0, 0, 0, 0.35);
+
+  /* Old tokens, kept until the components move to the Look (C1 removes them). No new uses. */
   --background: #fff;
   --text: rgba(0, 0, 0, 0.9);
-
   --dark-background: rgba(0, 0, 0, 0.8);
   --dark-text: #fff;
   --dark-title: #595959;
   --dark-surface: rgba(0, 0, 0, 0.24);
-
-  /* Player clocks (ink on bg). The low pair is ~3.96:1: large digits and icon only. */
-  --clock-waiting-bg: #474747;
-  --clock-waiting-ink: #FFFFFF;
-  --clock-running-bg: #FFFFFF;
-  --clock-running-ink: #1C1C1C;
-  --clock-low-bg: #D9534F;
-  --clock-low-ink: #FFFFFF;
-
-  /* Board (Look A). Board, square, overlay and piece CSS use only these for color. */
-  --board-light: rgb(234, 240, 206);
-  --board-dark: rgb(187, 190, 100);
-  --board-highlight: rgba(255, 255, 51, 0.5); /* last move and selected square */
-  --board-hint: rgba(0, 0, 0, 0.14); /* legal-move dot and capture ring */
-  --board-check: radial-gradient(circle, #ff0000 0%, rgba(231, 0, 0, 0.9) 25%, rgba(169, 0, 0, 0) 89%);
-  --board-drop-edge: rgba(255, 255, 255, 0.65); /* inset edge on a legal drag-over square */
   --board-sound-on: #047A4F;
-  --board-focus: #FFFFFF;
-
-  /* vs-Liem (play-like-liem Look). src/styles/liem.css uses only these for color.
-     Red is for edges and underlines only, never text. White on --liem-start (the Play green) is 5.38:1. */
   --liem-card: #1F1F1F;
   --liem-note: #262626;
   --liem-text: #FFFFFF;
@@ -55,24 +90,15 @@
   --liem-line: #474747;
   --liem-start: #047A4F;
   --book-bar: #BBBE64;
-
-  /* Game review (post-game-review Look). src/styles/review.css uses only tokens for color.
-     Each grade color is 4.5:1 or more as text on #1F1F1F, #262626 and #333333;
-     chips put --grade-ink on the grade color. --grade-book is the --book-bar olive. */
-  --grade-inaccuracy: #6CB4EE;
-  --grade-mistake: #FF9F43;
-  --grade-blunder: #FF7A70;
-  --grade-best: #4CC38A;
-  --grade-book: #BBBE64;
-  --grade-ink: #1F1F1F;
   --review-page: #333333;
-  --review-scrim: rgba(0, 0, 0, 0.35);
 }
 
 body {
-  font-family: "Quicksand", sans-serif;
-  background-color: var(--dark-background);
-  color: var(--dark-text);
+  font-family: var(--font);
+  font-size: var(--text-body);
+  font-weight: 500;
+  background-color: var(--bg);
+  color: var(--ink);
 }
 
 *,
