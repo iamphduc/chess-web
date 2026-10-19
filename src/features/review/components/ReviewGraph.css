@@ -41,7 +41,8 @@
 .review-graph__plot {
   position: relative;
   height: 80px;
-  overflow: hidden;
+  /* A point at 0 % or 100 % sits on the edge; it shows whole, over the card. */
+  overflow: visible;
   background-color: var(--surface);
   border-radius: var(--radius);
   cursor: pointer;

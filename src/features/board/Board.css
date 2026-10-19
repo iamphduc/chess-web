@@ -28,7 +28,7 @@
 }
 
 /* Play again, on the right of the review's top bar. */
-.top-bar__action {
+.top-bar > .top-bar__action {
   flex-shrink: 0;
   min-height: 40px;
   margin-left: auto;
