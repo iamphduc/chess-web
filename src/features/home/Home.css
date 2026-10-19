@@ -1,0 +1,230 @@
+/* The home page in the Look (plan ui-refresh, ## Look): one centred column on the cream
+   page. Tokens only, from src/index.css. Ochre is for the level bars and the star, never text. */
+
+.home {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+  color: var(--ink);
+}
+
+/* The mark and the name. */
+.home__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+
+.home__mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--ink);
+  color: var(--surface);
+  font-size: var(--text-title);
+  line-height: 1;
+}
+
+.home__hero {
+  margin: var(--space-6) 0 0;
+  font-size: var(--text-hero);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.home__lead {
+  margin: var(--space-3) 0 0;
+  color: var(--soft);
+  line-height: 1.5;
+}
+
+/* A field's label row: "Level" with the pick beside it. */
+.home__field {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: var(--space-5) 0 var(--space-2);
+  font-size: var(--text-small);
+}
+
+.home__label {
+  font-weight: 700;
+}
+
+.home__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.home__rating {
+  margin-left: var(--space-1);
+  color: var(--soft);
+  font-weight: 500;
+}
+
+/* The star before "Liem": an ochre shape, never ochre text. */
+.home__star {
+  flex: none;
+  width: 0.9em;
+  height: 0.9em;
+  fill: var(--gold);
+  vertical-align: -0.05em;
+}
+
+.home__level-name .home__star {
+  margin-right: var(--space-1);
+}
+
+/* The 7 level steps. */
+.home__levels {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.home__level,
+.home__color {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  background-color: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--soft);
+  font-family: var(--font);
+  font-size: var(--text-small);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+}
+
+.home__level {
+  padding: var(--space-2) 0;
+}
+
+.home__level:hover,
+.home__color:hover {
+  background-color: var(--surface-2);
+  color: var(--ink);
+}
+
+.home__level[aria-checked="true"],
+.home__color[aria-checked="true"] {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* "★ Liem" is ink text whether picked or not. */
+.home__level:last-child {
+  color: var(--ink);
+}
+
+/* The bar on top of each step: ochre up to the pick. */
+.home__bar {
+  display: block;
+  height: 4px;
+  margin: 0 var(--space-2) var(--space-2);
+  border-radius: var(--radius);
+  background-color: var(--line);
+}
+
+.home__level--lit .home__bar {
+  background-color: var(--gold);
+}
+
+.home__level-name {
+  display: block;
+  white-space: nowrap;
+}
+
+.home__engine {
+  margin: var(--space-2) 0 0;
+  color: var(--soft);
+  font-size: var(--text-small);
+  line-height: 1.4;
+}
+
+/* White, Black, Random. */
+.home__colors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.home__color {
+  padding: var(--space-3) var(--space-1);
+}
+
+.home__color[aria-checked="true"] {
+  background-color: var(--surface-2);
+}
+
+.home__glyph {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--ink);
+  font-size: var(--text-title);
+  line-height: 1.1;
+}
+
+.home__play {
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--space-5);
+}
+
+.home__alt {
+  display: block;
+  margin-top: var(--space-3);
+  color: var(--soft);
+  font-size: var(--text-small);
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+
+.home__alt:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* His openings · Then Stockfish · Review. */
+.home__strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home__step {
+  padding-top: var(--space-2);
+  border-top: 2px solid var(--line);
+  color: var(--soft);
+  font-size: var(--text-small);
+  line-height: 1.35;
+}
+
+.home__step b {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* A phone: the 7 steps don't fit one row at 14px, so they take two (4 then 3). */
+@media (max-width: 479px) {
+  .home__levels {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
