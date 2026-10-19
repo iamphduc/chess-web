@@ -7,8 +7,9 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createAppStore } from "app/store";
 import { Board } from "features/board/Board";
-import { clickSquare, playOpponentMove } from "features/board/BoardSlice";
-import { newLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
+import { clickSquare, playOpponentMove, stop } from "features/board/BoardSlice";
+import { GameOverType } from "features/board/components/GameOver";
+import { replayLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
 import { setColorPick } from "features/liem/matchSlice";
 import { applyMove } from "game/engine/engine";
 import { initialGameState } from "game/engine/game-state";
@@ -61,6 +62,19 @@ function buttonLabels(html: string): string[] {
   });
 }
 
+/** The label of each control in the Moves card's foot (the game layout). */
+function footLabels(html: string): string[] {
+  const at = html.search(/class="card [^"]*moves-card/);
+  if (at === -1) throw new Error("no .moves-card");
+  const footAt = html.indexOf('class="card__foot"', at);
+  if (footAt === -1) throw new Error("no .card__foot");
+  const foot = html.slice(footAt, html.indexOf("</div>", footAt));
+  return Array.from(foot.matchAll(/<(button|a)\b([^>]*)>([\s\S]*?)<\/\1>/g), (m) => {
+    const aria = m[2].match(/aria-label="([^"]*)"/)?.[1];
+    return aria ?? m[3].replace(/<[^>]+>/g, "").trim();
+  });
+}
+
 const sq = (name: string) => ({ y: 8 - Number(name[1]), x: "abcdefgh".indexOf(name[0]) });
 
 function play(store: Store, ucis: readonly string[]): void {
@@ -89,21 +103,38 @@ function liemGame(ucis: readonly string[]): Store {
   return store;
 }
 
-describe("the Review game button", () => {
+describe("the Review game link", () => {
   it("shows after a finished vs-Liem game", () => {
-    expect(buttonLabels(render(liemGame(FOOLS_MATE)))).toEqual(["Review game", "New game", "Flip board", "Sound"]);
+    const html = render(liemGame(FOOLS_MATE));
+    expect(footLabels(html)).toEqual(["Review game", "New game", "Flip board", "Sound"]);
+    // A link: the route opens the review.
+    expect(html).toMatch(/<a class="button button--play" href="#\/review">Review game<\/a>/);
   });
 
-  it("never shows mid-game, with the card open, or in Two players", () => {
-    expect(buttonLabels(render(liemGame(["f2f3", "e7e5"])))).not.toContain("Review game");
+  it("never shows mid-game, before a game, or in Two players", () => {
+    const mid = render(liemGame(["f2f3", "e7e5"]));
+    expect(footLabels(mid)).toEqual(["New game", "Flip board", "Sound"]);
+    expect(mid).not.toMatch(/href="#\/review"/);
 
-    // The card the page opens with.
-    expect(buttonLabels(render(createAppStore()))).not.toContain("Review game");
+    // Before a game (the home state).
+    expect(render(createAppStore())).not.toMatch(/href="#\/review"/);
 
     const twoPlayers = createAppStore();
     twoPlayers.dispatch(switchMode("two-player"));
     play(twoPlayers, FOOLS_MATE);
-    expect(buttonLabels(render(twoPlayers))).toEqual(["Play", "Reset", "Flip board", "Sound"]);
+    const two = render(twoPlayers);
+    expect(footLabels(two)).toEqual(["Play", "New game", "Flip board", "Sound"]);
+    expect(two).not.toMatch(/href="#\/review"/);
+  });
+
+  it("a game over with no move of yours has no link", () => {
+    // As Black, he moves first; with no move of yours there is nothing to review.
+    const store = createAppStore();
+    store.dispatch(setColorPick("black"));
+    store.dispatch(startLiemGame());
+    store.dispatch(stop());
+    expect(store.getState().board.gameOver).not.toBe(GameOverType.Continue);
+    expect(render(store)).not.toMatch(/href="#\/review"/);
   });
 });
 
@@ -144,20 +175,24 @@ describe("review layout", () => {
 });
 
 describe("new game from the review", () => {
-  it("clears the review and opens the setup card", () => {
+  it("clears the review and replays the level", () => {
     const store = liemGame(FOOLS_MATE);
+    const { gameId } = store.getState().board;
     store.dispatch(openReview());
     const inReview = render(store);
     expect(inReview).toMatch(/data-review-state=/);
     expect(buttonLabels(inReview)).toContain("New game");
-    store.dispatch(newLiemGame());
-    const { review, match } = store.getState();
+    store.dispatch(replayLiemGame());
+    const { review, match, board } = store.getState();
     expect(review.open).toBe(false);
     expect(review.gameId).toBeNull();
-    expect(match.setupOpen).toBe(true);
+    expect(match.setupOpen).toBe(false);
+    expect(board.gameId).toBeGreaterThan(gameId);
+    expect(board.humanColor).toBe("white");
     const html = render(store);
-    expect(html).toMatch(/role="dialog" aria-label="Challenge Le Quang Liem"/);
     expect(html).not.toMatch(/data-review-state=/);
     expect(html).not.toMatch(/data-review-graph/);
+    expect(html).not.toMatch(/role="dialog"/);
+    expect(footLabels(html)).toEqual(["New game", "Flip board", "Sound"]);
   });
 });

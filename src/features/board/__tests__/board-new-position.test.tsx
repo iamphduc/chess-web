@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { createAppStore } from "app/store";
 import { uciToMove } from "game/opponent/position";
-import { newLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
+import { newLiemGame, replayLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
 import { setColorPick } from "features/liem/matchSlice";
 import { clickSquare, playOpponentMove, reset } from "../BoardSlice";
 import { toggleFlip } from "../viewSlice";
@@ -79,36 +79,34 @@ function click(store: Store, square: string) {
 }
 
 describe("a new position keeps the squares mounted", () => {
-  it("opening and closing the setup card keeps the same square nodes", () => {
-    const store = twoPlayers();
-    const twoPlayerPath = squarePath(store, "e2");
-
-    store.dispatch(switchMode("liem"));
-    const cardOpen = squarePath(store, "e2");
-    expect(render(store)).toMatch(/role="dialog"/);
-
+  it("the squares stay mounted across a move and a flip", () => {
+    const store = createAppStore();
     store.dispatch(setColorPick("white"));
     store.dispatch(startLiemGame());
-    const inGame = squarePath(store, "e2");
+    const start = squarePath(store, "e2");
 
-    store.dispatch(newLiemGame());
-    const reopened = squarePath(store, "e2");
+    click(store, "e2");
+    click(store, "e4");
+    expect(squarePath(store, "e2")).toBe(start);
 
-    expect(cardOpen).toBe(twoPlayerPath);
-    expect(inGame).toBe(cardOpen);
-    expect(reopened).toBe(inGame);
+    store.dispatch(toggleFlip());
+    const flipped = squarePath(store, "e2");
+    // A flip reorders the squares within the same grid, so the grid itself stays put.
+    expect(flipped.split(" > ").slice(0, -1)).toEqual(start.split(" > ").slice(0, -1));
+
+    store.dispatch(replayLiemGame());
+    expect(squarePath(store, "a8").split(" > ").slice(0, -1)).toEqual(start.split(" > ").slice(0, -1));
   });
 
-  it("the squares are dimmed only while the card is open", () => {
+  it("the squares sit in the same place in both modes", () => {
     const store = createAppStore();
-    store.dispatch(switchMode("liem"));
-    expect(render(store)).toMatch(/class="squares__grid liem-dimmed" aria-hidden="true"/);
-    store.dispatch(setColorPick("white"));
     store.dispatch(startLiemGame());
-    const html = render(store);
-    expect(html).toMatch(/class="squares__grid"/);
-    expect(html).not.toMatch(/liem-dimmed/);
-    expect(html).not.toMatch(/class="squares__grid[^"]*" aria-hidden/);
+    const liem = squarePath(store, "e2");
+    const two = twoPlayers();
+    expect(squarePath(two, "e2")).toBe(liem);
+    expect(render(two)).toMatch(/class="squares__grid"/);
+    expect(render(store)).not.toMatch(/liem-dimmed/);
+    expect(render(store)).not.toMatch(/class="squares__grid[^"]*" aria-hidden/);
   });
 });
 
@@ -123,15 +121,22 @@ describe("each game has its own piece layout ids", () => {
     expect(layoutId(store, "e2")).not.toBe(layoutId(store, "a1"));
   });
 
-  it("mode switch, Start game and New game each start new layout ids", () => {
+  it("each game has its own piece layout ids", () => {
+    // Two-player New game (the old Reset), Start game and the board's New game.
     const store = twoPlayers();
     const seen = [layoutId(store, "a1")];
-    store.dispatch(switchMode("liem"));
+    store.dispatch(reset());
     seen.push(layoutId(store, "a1"));
+    store.dispatch(switchMode("liem"));
     store.dispatch(setColorPick("white"));
     store.dispatch(startLiemGame());
     seen.push(layoutId(store, "a1"));
+    store.dispatch(replayLiemGame());
+    seen.push(layoutId(store, "a1"));
+    store.dispatch(replayLiemGame());
+    seen.push(layoutId(store, "a1"));
     store.dispatch(newLiemGame());
+    store.dispatch(startLiemGame());
     seen.push(layoutId(store, "a1"));
     store.dispatch(switchMode("two-player"));
     seen.push(layoutId(store, "a1"));

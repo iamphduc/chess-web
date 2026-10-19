@@ -9,13 +9,13 @@ import { createAppStore } from "app/store";
 import { LIEM } from "game/opponent/players";
 import { uciToMove } from "game/opponent/position";
 import type { MoveChoice } from "game/opponent/opponent";
-import { newLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
+import { newLiemGame, replayLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
 import { setColorPick, setStrength } from "features/liem/matchSlice";
 import { toggleFlip } from "../viewSlice";
 import type { LiemOpponent } from "features/liem/opponentController";
 import { createLiemController, liemGameId, syncLiemTurn } from "features/liem/useLiemOpponent";
 import { backToGame, openReview } from "features/review/reviewActions";
-import { clickSquare, playOpponentMove } from "../BoardSlice";
+import { clickSquare, playOpponentMove, reset, start } from "../BoardSlice";
 import { Board } from "../Board";
 import { avatarSrc } from "../components/avatar";
 import { players } from "../../../game/players";
@@ -61,14 +61,38 @@ function playerNames(html: string): string[] {
   );
 }
 
-/** The label of each button in the `.buttons` row. */
-function buttonLabels(html: string): string[] {
-  const row = divWithClass(html, "buttons");
-  return Array.from(row.matchAll(/<button([^>]*)>([\s\S]*?)<\/button>/g), (m) => {
-    const aria = m[1].match(/aria-label="([^"]*)"/)?.[1];
-    return aria ?? m[2].replace(/<[^>]+>/g, "").trim();
+/** The label of each button or link in `html`: its `aria-label`, else its text. */
+function controlLabels(html: string): string[] {
+  return Array.from(html.matchAll(/<(button|a)([^>]*)>([\s\S]*?)<\/>/g), (m) => {
+    const aria = m[2].match(/aria-label="([^"]*)"/)?.[1];
+    return aria ?? m[3].replace(/<[^>]+>/g, "").trim();
   });
 }
+
+/** The Moves card in the sidebar. */
+const movesCard = (html: string) => divWithClass(divWithClass(html, "sidebar"), "moves-card");
+
+/** The labels of the controls in the Moves card's foot. */
+const footLabels = (html: string) => controlLabels(divWithClass(movesCard(html), "card__foot"));
+
+/** The top bar's markup. */
+function topBar(html: string): string {
+  const m = /<header class="top-bar"[\s\S]*?<\/header>/.exec(html);
+  if (!m) throw new Error("no header.top-bar");
+  return m[0];
+}
+
+/** Each scoresheet row as [number, white, black], tags stripped. */
+function scoresheetRows(html: string): string[][] {
+  return Array.from(html.matchAll(/<li class="scoresheet__row">([\s\S]*?)<\/li>/g), (m) =>
+    Array.from(m[1].matchAll(/<span class="(?:scoresheet__num|notation__move)">((?:<span[^>]*>[^<]*<\/span>|[^<])*)<\/span>/g), (c) =>
+      c[1].replace(/<[^>]+>/g, "").trim()
+    )
+  );
+}
+
+/** The text of the move in the ink chip. */
+const currentMove = (html: string) => html.match(/class="scoresheet__current">([^<]*)</)?.[1];
 
 /** The `.squares` box: the board's own squares, with or without the setup card. */
 const SQUARES_RE = /<div[^>]*class="squares(?: [^"]*)?"/;
@@ -180,21 +204,14 @@ function expectYourCard(card: string) {
 }
 
 describe("board modes", () => {
-  it("two players unchanged after the switch", () => {
-    // The page opens on vs Liem: the card is up and there's no Play or Reset.
-    const load = render(createAppStore());
-    expect(load).toMatch(/role="dialog" aria-label="Challenge Le Quang Liem"/);
-    expect(buttonLabels(load)).toEqual(["Flip board", "Sound"]);
-
-    // One click on Two players gives the old layout.
-    const html = render(twoPlayers());
+  it("two players foot", () => {
+    const store = twoPlayers();
+    const html = render(store);
     const board = divWithClass(html, "board");
 
-    expect(board).toMatch(/role="tablist"/);
-    expect(Array.from(board.matchAll(/role="tab"[^>]*>([^<]*)</g), (m) => m[1])).toEqual([
-      "vs Liem",
-      "Two players",
-    ]);
+    // No tabs: the top bar names the mode.
+    expect(html).not.toMatch(/role="tablist"|role="tab"/);
+    expect(topBar(html)).toContain('<span class="top-bar__title">Two players</span>');
 
     // The board's own two cards: black above the squares, white below.
     const squaresAt = board.indexOf('class="squares"');
@@ -203,10 +220,24 @@ describe("board modes", () => {
     expect(playerNames(board.slice(0, squaresAt))).toEqual([black.name]);
     expect(playerNames(board.slice(squaresAt))).toEqual([white.name]);
 
-    expect(buttonLabels(html)).toEqual(["Play", "Reset", "Flip board", "Sound"]);
-    expect(html).not.toMatch(/role="dialog"/);
+    expect(footLabels(html)).toEqual(["Play", "New game", "Flip board", "Sound"]);
     expect(html).not.toMatch(/data-book-state=/);
-    expect(html).not.toMatch(/liem-dimmed/);
+    expect(html).not.toMatch(/href="#\/review"/);
+
+    // Play starts the clocks; New game (the old Reset) clears the moves and stops them.
+    const before = store.getState().board.gameId;
+    store.dispatch(start());
+    expect(store.getState().board.isPlaying).toBe(true);
+    store.dispatch(clickSquare(sq("e2")));
+    store.dispatch(clickSquare(sq("e4")));
+    expect(store.getState().board.notation).toHaveLength(1);
+    store.dispatch(reset());
+    const after = store.getState().board;
+    expect(after.notation).toEqual([]);
+    expect(after.isPlaying).toBe(false);
+    expect(after.gameId).toBe(before + 1);
+    expect(store.getState().match.mode).toBe("two-player");
+    expect(scoresheetRows(render(store))).toEqual([]);
   });
 
   it("sparring and Liem cards", () => {
@@ -246,32 +277,123 @@ describe("board modes", () => {
     expectYourCard(cardsAround(render(him)).below[0]);
   });
 
-  it("setup card over the dimmed board", () => {
+  it("vs Liem board screen", () => {
+    const html = render(liemGameAs("white"));
+
+    // The top bar: ← Home, then the title.
+    const bar = topBar(html);
+    expect(bar).toMatch(/^<header class="top-bar">/);
+    expect(bar).toMatch(/<a class="button top-bar__home" href="#\/">← Home<\/a>/);
+    expect(bar).toContain('<span class="top-bar__title">vs Harder · you play White</span>');
+    expect(html.indexOf("<header")).toBeLessThan(html.indexOf('class="board"'));
+
+    // No tabs, no setup dialog, no dimming, no Fallen Pieces, no old wrappers.
+    expect(html).not.toMatch(/role="tablist"|role="tab"/);
+    expect(html).not.toMatch(/role="dialog"/);
+    expect(html).not.toMatch(/liem-dimmed|squares__overlay|liem-side|setup-card/);
+    expect(html).not.toMatch(/Fallen Pieces|fallen-piece/);
+    expect(html).not.toMatch(/class="buttons"/);
+
+    // The sidebar: the book note, then the Moves card, and nothing else.
+    const sidebar = divWithClass(html, "sidebar");
+    expect(cards(sidebar)).toEqual([]);
+    const noteAt = sidebar.indexOf("data-book-state=");
+    const movesAt = sidebar.search(/class="card [^"]*moves-card/);
+    expect(noteAt).toBeGreaterThan(-1);
+    expect(movesAt).toBeGreaterThan(noteAt);
+    expect(movesCard(html)).toMatch(/class="notation"/);
+    expect(movesCard(html)).toMatch(/class="card__head">Moves</);
+
+    // The squares are live: 64 of them, not hidden.
+    const squares = divWithClass(divWithClass(html, "board"), "squares");
+    expect(squares.match(/data-square="/g)).toHaveLength(64);
+    expect(squares).not.toMatch(/aria-hidden/);
+
+    // As Black at Liem: his name in the title.
+    const him = createAppStore();
+    him.dispatch(setStrength("full"));
+    him.dispatch(setColorPick("black"));
+    him.dispatch(startLiemGame());
+    expect(topBar(render(him))).toContain('<span class="top-bar__title">vs Liem · you play Black</span>');
+  });
+
+  it("moves card foot", () => {
+    // Mid-game: New game, Flip and Sound; no Review game.
+    const mid = render(liemGameAs("black"));
+    expect(footLabels(mid)).toEqual(["New game", "Flip board", "Sound"]);
+    expect(mid).not.toMatch(/href="#\/review"/);
+
+    // After a finished game with a move of yours: Review game first, a link to #/review.
+    const done = render(finishedLiemGame());
+    expect(footLabels(done)).toEqual(["Review game", "New game", "Flip board", "Sound"]);
+    expect(divWithClass(movesCard(done), "card__foot")).toMatch(
+      /<a class="button button--play" href="#\/review">Review game<\/a>/
+    );
+  });
+
+  it("new game replays the level", async () => {
     const store = createAppStore();
-    store.dispatch(switchMode("liem"));
+    store.dispatch(setStrength(1700));
+    store.dispatch(setColorPick("black"));
+    store.dispatch(startLiemGame());
+    const first = store.getState().board.gameId;
+    expect(store.getState().view.flipped).toBe(true);
+
+    // His turn: a fake opponent is thinking when you press New game.
+    const { opponent, answer } = fakeOpponent();
+    const controller = createLiemController(store.dispatch, () => Promise.resolve(opponent));
+    syncLiemTurn(controller, store.getState().board, store.getState().match);
+    await flush();
+    const stale = e2e4(store);
+
+    store.dispatch(replayLiemGame());
+    const { board, match, view } = store.getState();
+    expect(board.gameId).toBeGreaterThan(first);
+    expect(board.isPlaying).toBe(true); // the clocks restart
+    expect(board.humanColor).toBe("black");
+    expect(match.strength).toBe(1700);
+    expect(match.colorPick).toBe("black");
+    expect(match.setupOpen).toBe(false);
+    expect(view.flipped).toBe(true);
+    expect(topBar(render(store))).toContain("vs Medium · you play Black");
+
+    // The answer from the old game is dropped.
+    syncLiemTurn(controller, store.getState().board, store.getState().match);
+    answer(stale);
+    await flush();
+    expect(store.getState().board.engineHistory).toHaveLength(1);
+    expect(store.getState().match.lastChoice).toBeNull();
+
+    // The New game button is the one in the foot (a plain secondary button).
+    expect(divWithClass(movesCard(render(store)), "card__foot")).toMatch(
+      /<button type="button" class="button">New game<\/button>/
+    );
+  });
+
+  it("moves card scoresheet", () => {
+    const store = twoPlayers();
+    expect(scoresheetRows(render(store))).toEqual([]);
+    store.dispatch(clickSquare(sq("e2")));
+    store.dispatch(clickSquare(sq("e4")));
+    // After 1.e4 the white move is current, and the black cell is empty.
+    expect(scoresheetRows(render(store))).toEqual([["1.", "e4", ""]]);
+    expect(currentMove(render(store))).toBe("e4");
+
+    store.dispatch(clickSquare(sq("e7")));
+    store.dispatch(clickSquare(sq("e5")));
     const html = render(store);
-    const board = divWithClass(html, "board");
-    const squares = divWithClass(board, "squares");
+    expect(scoresheetRows(html)).toEqual([["1.", "e4", "e5"]]);
+    expect(currentMove(html)).toBe("e5");
+    expect(html.match(/scoresheet__current/g)).toHaveLength(1);
+    expect(movesCard(html)).toMatch(/<div class="notation"><ol class="scoresheet">/);
 
-    expect(board).toMatch(/role="tablist"/);
-    expect(squares).toMatch(/role="dialog" aria-label="Challenge Le Quang Liem"/);
-    // The squares are dimmed; the card on top of them is not.
-    const dimmed = divWithClass(squares, "liem-dimmed");
-    expect(dimmed.match(/data-square="/g)).toHaveLength(64);
-    expect(dimmed).not.toMatch(/role="dialog"/);
-
-    // His card above the board and yours below, both at full time; none in the sidebar.
-    const { above, below } = cardsAround(html);
-    expect(above).toHaveLength(1);
-    expect(below).toHaveLength(1);
-    expectHisCard(above[0]);
-    expectYourCard(below[0]);
-    expect(clockText(above[0])).toBe("10:00");
-    expect(clockText(below[0])).toBe("10:00");
-    expect(cards(divWithClass(html, "sidebar"))).toEqual([]);
-
-    expect(buttonLabels(html)).toEqual(["Flip board", "Sound"]);
-    expect(html).not.toMatch(/data-book-state=/);
+    store.dispatch(clickSquare(sq("g1")));
+    store.dispatch(clickSquare(sq("f3")));
+    expect(scoresheetRows(render(store))).toEqual([
+      ["1.", "e4", "e5"],
+      ["2.", "Nf3", ""],
+    ]);
+    expect(currentMove(render(store))).toBe("Nf3");
   });
 
   it("vs-Liem cards around the board", () => {
@@ -324,35 +446,13 @@ describe("board modes", () => {
     expect(below[0]).toMatch(/player__time--running/);
   });
 
-  it("vs-Liem sidebar order", () => {
-    const html = render(liemGameAs("black"));
-    const sidebar = divWithClass(html, "sidebar");
-
-    // No cards in the sidebar: the note, then the buttons, Fallen Pieces and Notation.
-    expect(cards(sidebar)).toEqual([]);
-    const noteAt = sidebar.indexOf("data-book-state=");
-    const buttonsAt = sidebar.indexOf('class="buttons"');
-    expect(noteAt).toBeGreaterThan(-1);
-    expect(buttonsAt).toBeGreaterThan(noteAt);
-    expect(sidebar.indexOf("Fallen Pieces")).toBeGreaterThan(buttonsAt);
-    expect(sidebar.indexOf("Notation")).toBeGreaterThan(sidebar.indexOf("Fallen Pieces"));
-    expect(buttonLabels(html)).toEqual(["New game", "Flip board", "Sound"]);
-  });
-
   it("the board's surroundings are the same in every mode", () => {
-    const setup = createAppStore();
-    setup.dispatch(switchMode("liem"));
-    const flippedSetup = createAppStore();
-    flippedSetup.dispatch(toggleFlip());
-    flippedSetup.dispatch(switchMode("liem"));
     const finished = finishedLiemGame();
     const reviewed = finishedLiemGame();
     reviewed.dispatch(openReview());
     reviewed.dispatch(backToGame());
     const states: [string, Store][] = [
       ["two players", twoPlayers()],
-      ["vs Liem, card open", setup],
-      ["vs Liem, card open, flipped", flippedSetup],
       ["vs Liem as White", liemGameAs("white")],
       ["vs Liem as Black", liemGameAs("black")],
       ["vs Liem, game over", finished],
@@ -362,16 +462,16 @@ describe("board modes", () => {
       const html = render(store);
       const { above, below } = cardsAround(html);
       expect({ name, above: above.length, below: below.length }).toEqual({ name, above: 1, below: 1 });
-      // Nothing extra above the board: the tabs and one card, as in every mode.
-      expect({ name, top: boardTop(html).match(/role="tablist"/g)?.length }).toEqual({ name, top: 1 });
+      // Nothing above the board's top card: the top bar sits outside the board column.
+      expect({ name, top: /<header|role="tablist"/.test(boardTop(html)) }).toEqual({ name, top: false });
+      expect({ name, bars: html.match(/<header class="top-bar">/g)?.length }).toEqual({ name, bars: 1 });
       expect({ name, graph: /data-review-graph/.test(html) }).toEqual({ name, graph: false });
       expect({ name, review: /data-review-state=/.test(html) }).toEqual({ name, review: false });
     }
 
-    // A finished game keeps the game's layout, with Review game added to the row.
-    expect(buttonLabels(render(finished))).toEqual(["Review game", "New game", "Flip board", "Sound"]);
     expect(render(reviewed)).toBe(render(finishedLiemGame()));
   });
+
 });
 
 /** A fake opponent whose next choice the test resolves by hand. */
