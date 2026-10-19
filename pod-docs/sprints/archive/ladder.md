@@ -1,7 +1,7 @@
 # Sprint: Sparring ladder to Liem
 
 _From plan: pod-docs/plans/sparring-ladder.md · Slug: ladder · Status: active · Generated: 2026-10-18_
-<!-- autopilot-run: started=2026-10-18T10:31:18Z sprints=0 waves=3 -->
+<!-- autopilot-run: started=2026-10-18T10:31:18Z sprints=1 waves=3 -->
 
 ## Status board
 
@@ -12,7 +12,7 @@ _From plan: pod-docs/plans/sparring-ladder.md · Slug: ladder · Status: active 
 | 1 | C1 | Chooser: mistake and blunder bands, new profile fields at zero | ladder-C1 | #76 | merged | medium | — |
 | 2 | U1 | Sparring and Liem labels, page opens on vs Liem | ladder-U1 | #77 | merged | medium | L1 |
 | 2 | M1 | `npm run calibrate -- --measure`: self-play from his book, graded | ladder-M1 | #77 | merged | high | H1, C1 |
-| 3 | T1 | Tune the step table to 75 % of human rates; docs and results | ladder-T1 | — | done | medium | C1, H1, M1 |
+| 3 | T1 | Tune the step table to 75 % of human rates; docs and results | ladder-T1 | #78 | merged | medium | C1, H1, M1 |
 
 ## Shared contract
 
@@ -259,3 +259,18 @@ _From plan: pod-docs/plans/sparring-ladder.md · Slug: ladder · Status: active 
 - **Depends on:** C1, H1, M1
 - **One-way door:** none
 - **Model:** opus
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date (main has no new commits; PR #75 is still open, so `game-accuracy.ts` isn't on the branch)
+- **Slices shipped:** L1, H1, C1, U1, M1, T1
+- **Queue entries:** resolved 1 (C1 optional fields), deferred 12 — see `pod-docs/handoff-queue.md` entries dated 2026-10-18 (H1 opponent sourcing and blitz bias, M1 accuracy row, U1 phone rating line, wave 2 name cut and dead `.liem-star` CSS, T1 ladder noise, bot mistakes not marked in the review, replay 1400, `measure.ts` fallbacks)
+- **Slice log:**
+  - L1: opus · medium · test-first yes (guard tests proven by breaking `index.css` once) · runtime ♞ class injected in `npm run preview` · 2 NOTEs · time lost none
+  - H1: opus · medium · test-first yes · runtime `npm run baseline` (14 min, 900 games) · 4 NOTEs · time lost none
+  - C1: opus · medium · test-first partly — 3 guard tests already passed (old behavior kept) · runtime a 1400 vs Liem game in dev · 4 NOTEs · time lost none
+  - U1: opus · medium · test-first yes · runtime 1400 and Liem games, review, Look at 1400 px and 375 px · 5 NOTEs · time lost none
+  - M1: opus · high · test-first yes · runtime `--measure --steps 1400 --games 2` · 5 NOTEs · time lost none
+  - Wave 2 fix (ladder-w2-fix): opus · medium · removed the in-game ★ before his name (it cut "Le Quang …" at 375 px); the name still ends "Le Quang Li…" as before the sprint
+  - T1: opus · medium · test-first yes · runtime 14 calibrate runs (~4 h), a scripted 1400 game and its review · 4 NOTEs · time lost: two stops by the orchestrator (a human pause, then a run that was meant for the cloud but started locally) threw away about 1 h of runs; ~25 min on a scripted browser player
+- **Agent context at hand-back:** about 1.16 M tokens (L1 86 k, H1 201 k, C1 145 k, U1 251 k, M1 168 k, wave fix 82 k, T1 222 k; the two stopped T1 runs not counted) — *each agent's final context size, not tokens billed*
