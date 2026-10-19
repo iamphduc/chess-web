@@ -145,9 +145,10 @@ function detailText(card: string): string {
   return (m?.[1] ?? "").replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'");
 }
 
-/** A sparring bot's card at `elo`: the knight, "Sparring · N" and his openings line; no GM, star or photo. */
-function expectSparringCard(card: string, elo: number) {
-  expect(playerNames(card)).toEqual([`Sparring · ${elo}`]);
+/** A sparring bot's card named `name`: the knight, the level's name and his openings line; no GM, star, photo or rating. */
+function expectSparringCard(card: string, name: string) {
+  expect(playerNames(card)).toEqual([name]);
+  expect(card).not.toMatch(/(1400|1700|1900|2100|2300|2500)|about/);
   expect(card).toContain('<span class="liem-sparring-avatar" aria-hidden="true">♞</span>');
   expect(card).not.toContain("<img");
   expect(card).not.toContain('class="player__title"');
@@ -169,8 +170,8 @@ function expectLiemCard(card: string) {
   expect(detailText(card)).toBe(`${LIEM.entry.title} · ${LIEM.entry.rating}`);
 }
 
-/** The opponent's card at the default level, 2100: a sparring bot. */
-const expectHisCard = (card: string) => expectSparringCard(card, 2100);
+/** The opponent's card at the default level, 2100: the "Harder" sparring bot. */
+const expectHisCard = (card: string) => expectSparringCard(card, "Harder");
 
 function expectYourCard(card: string) {
   expect(playerNames(card)).toEqual(["You"]);
@@ -209,19 +210,26 @@ describe("board modes", () => {
   });
 
   it("sparring and Liem cards", () => {
-    // A 1400 game: the sparring bot's card.
+    // A game at the default level, 2100: the "Harder" sparring bot's card.
     const store = createAppStore();
-    store.dispatch(setStrength(1400));
     store.dispatch(startLiemGame());
     const sparring = cardsAround(render(store)).above[0];
-    expectSparringCard(sparring, 1400);
-    expect(sparring).toContain('aria-label="Clock for Sparring · 1400"');
+    expectSparringCard(sparring, "Harder");
+    expect(sparring).toContain('aria-label="Clock for Harder"');
 
-    // Each sparring level reads its own number, with the card open too.
-    for (const n of [1700, 1900, 2100, 2300, 2500] as const) {
+    // Each sparring level reads its own name, with the card open too.
+    const levels = [
+      [1400, "Easy"],
+      [1700, "Medium"],
+      [1900, "Hard"],
+      [2100, "Harder"],
+      [2300, "Expert"],
+      [2500, "Master"],
+    ] as const;
+    for (const [n, name] of levels) {
       const open = createAppStore();
       open.dispatch(setStrength(n));
-      expectSparringCard(cardsAround(render(open)).above[0], n);
+      expectSparringCard(cardsAround(render(open)).above[0], name);
     }
 
     // The Liem level: his own card, with the card open and in a game.
@@ -279,7 +287,7 @@ describe("board modes", () => {
     expect(his).toMatch(/player__time--running/);
     expectYourCard(yours);
     expect(yours).not.toMatch(/player__time--running/);
-    expect(playerNames(html)).toEqual(["Sparring · 2100", "You"]);
+    expect(playerNames(html)).toEqual(["Harder", "You"]);
   });
 
   it("setup cards follow the flip", () => {
