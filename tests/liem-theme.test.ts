@@ -80,9 +80,6 @@ const LOOK: Record<string, string> = {
   "--book-bar": "#BBBE64",
 };
 
-// The page: body's rgba(0, 0, 0, 0.8) over the white canvas.
-const PAGE = "#333333";
-
 const CONTRACT_CLASSES = [
   "liem-tabs",
   "liem-tab",
@@ -129,7 +126,8 @@ describe("liem theme", () => {
     const text = token("--liem-text");
     const soft = token("--liem-text-soft");
     const gold = token("--liem-gold");
-    for (const bg of [token("--liem-card"), token("--liem-note"), PAGE]) {
+    // the dark panels still in use until plan ui-refresh restyles them; the page is cream now
+    for (const bg of [token("--liem-card"), token("--liem-note")]) {
       expect(contrast(text, bg), `text on ${bg}`).toBeGreaterThanOrEqual(4.5);
       expect(contrast(soft, bg), `soft text on ${bg}`).toBeGreaterThanOrEqual(4.5);
     }
@@ -138,15 +136,13 @@ describe("liem theme", () => {
     expect(contrast(text, token("--liem-gold-tint")), "text on gold tint").toBeGreaterThanOrEqual(4.5);
   });
 
-  it("start pair matches the Play green", () => {
-    const start = token("--liem-start");
+  it("Start game uses the Look primary, not the old green", () => {
+    // Start game is a .button--play; plan ui-refresh drops the Play green (--liem-start) for --go.
     const button = stripComments(read("features", "board", "components", "Button.css"));
     const play = rules(button).find((r) => r.selector === ".button--play");
     const playBg = declarations(play?.body ?? "").find(([p]) => p === "background-color")?.[1];
-    expect(playBg?.toLowerCase()).toBe(start.toLowerCase());
-    const ratio = contrast(token("--liem-text"), start);
-    // white Start game text meets 4.5:1 (decisions 2026-10-10: app green darkened to #047A4F)
-    expect(ratio).toBeGreaterThanOrEqual(4.5);
+    expect(playBg).toBe("var(--go)");
+    expect(contrast(token("--go-ink"), token("--go"))).toBeGreaterThanOrEqual(4.5);
   });
 
   it("base control styles use only tokens", () => {

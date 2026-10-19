@@ -33,7 +33,7 @@ function textsWithRole(html: string, role: string): string[] {
   return Array.from(html.matchAll(re), (m) => m[1].replace(/<[^>]+>/g, ""));
 }
 
-/** The strength value's text, tags stripped and spaces squeezed. */
+/** The level value's text, tags stripped and spaces squeezed. */
 function valueText(html: string): string {
   const m = html.match(/<span class="setup-card__value">(.*?)<\/span><\/div>/);
   expect(m, "the strength value").not.toBeNull();
@@ -91,53 +91,55 @@ describe("setup card markup", () => {
     expect(tiles.map((t) => t.includes('tabindex="0"'))).toEqual([false, true, false]);
   });
 
-  it("renders 7 steps, the chosen checked and lit up to it, and Elo 2100", () => {
+  it("renders 7 steps, the chosen checked and lit up to it, and its name", () => {
     const html = render(liemStore(), <SetupCard />);
     const steps = tagsWithRole(html, "radio").filter((t) => t.includes("liem-step"));
     expect(steps).toHaveLength(7);
     expect(steps.map((t) => t.includes('aria-checked="true"'))).toEqual([false, false, false, true, false, false, false]);
     expect(steps.map((t) => t.includes("liem-step--lit"))).toEqual([true, true, true, true, false, false, false]);
-    expect(html).toMatch(/class="liem-elo"[^>]*>2100</);
+    expect(html).toMatch(/class="setup-card__name"[^>]*>Harder</);
     expect(html).not.toMatch(/>Full</);
   });
 
-  it("the Liem step lights every step and shows ★ Liem in gold", () => {
+  it("the Liem step lights every step and shows the starred name and his rating", () => {
     const store = liemStore();
     store.dispatch(setStrength("full"));
     const html = render(store, <SetupCard />);
     const steps = tagsWithRole(html, "radio").filter((t) => t.includes("liem-step"));
     expect(steps.every((t) => t.includes("liem-step--lit"))).toBe(true);
     expect(steps[6]).toContain('aria-checked="true"');
-    expect(html).toMatch(/class="liem-elo"[^>]*>★ Liem</);
+    expect(html).toContain(
+      '<span class="setup-card__value"><span class="liem-star" aria-hidden="true">★</span>' +
+        '<span class="setup-card__name">Liem</span><span class="setup-card__rating">GM · 2732</span></span>'
+    );
     expect(html).not.toMatch(/>Full</);
-    expect(html).not.toMatch(/class="liem-elo"[^>]*>2732</);
   });
 
   it("each step has an accessible name", () => {
     const html = render(liemStore(), <SetupCard />);
     const steps = tagsWithRole(html, "radio").filter((t) => t.includes("liem-step"));
     expect(steps.map((t) => t.match(/aria-label="([^"]+)"/)?.[1])).toEqual([
-      "1400",
-      "1700",
-      "1900",
-      "2100",
-      "2300",
-      "2500",
+      "Easy",
+      "Medium",
+      "Hard",
+      "Harder",
+      "Expert",
+      "Master",
       "Liem (2732)",
     ]);
   });
 
-  it("shows about before the Elo", () => {
+  it("shows the level's name, and a rating only at Liem", () => {
     const store = liemStore();
-    expect(valueText(render(store, <SetupCard />))).toBe("about 2100");
+    expect(valueText(render(store, <SetupCard />))).toBe("Harder");
     store.dispatch(setStrength(1400));
-    expect(valueText(render(store, <SetupCard />))).toBe("about 1400");
+    expect(valueText(render(store, <SetupCard />))).toBe("Easy");
     store.dispatch(setStrength("full"));
-    expect(valueText(render(store, <SetupCard />))).toBe("★ Liem");
+    expect(valueText(render(store, <SetupCard />))).toBe("★ Liem GM · 2732");
   });
 
   it("shows the engine line under the steps, above Start game", () => {
-    const LINE = "A sparring bot plays his openings, then Stockfish at about 2100.";
+    const LINE = "A sparring bot plays his openings, then Stockfish at the Harder level.";
     const html = render(liemStore(), <SetupCard />);
     const line = html.match(/<p class="([^"]*)">([^<]*)<\/p>/g)?.find((p) => p.includes("Stockfish"));
     expect(line).toBeDefined();
@@ -158,20 +160,29 @@ describe("setup card markup", () => {
         .filter((t) => t.includes("liem-step"))
         .map((t) => t.match(/aria-label="([^"]+)"/)?.[1]);
 
-    for (const n of [1400, 1700, 1900, 2100, 2300, 2500] as const) {
+    const levels = [
+      [1400, "Easy"],
+      [1700, "Medium"],
+      [1900, "Hard"],
+      [2100, "Harder"],
+      [2300, "Expert"],
+      [2500, "Master"],
+    ] as const;
+    for (const [n, name] of levels) {
       store.dispatch(setStrength(n));
       const html = render(store, <SetupCard />);
-      expect(valueText(html)).toBe(`about ${n}`);
-      expect(engineLine(html)).toBe(`A sparring bot plays his openings, then Stockfish at about ${n}.`);
-      expect(html).not.toContain("★ Liem");
+      expect(valueText(html)).toBe(name);
+      expect(engineLine(html)).toBe(`A sparring bot plays his openings, then Stockfish at the ${name} level.`);
+      // No rating at a sparring level: only his own line and his step's label name 2732.
+      expect(html).not.toMatch(/(1400|1700|1900|2100|2300|2500)|about/);
+      expect(html).not.toContain("setup-card__rating");
       // The dialog stays his challenge at every level.
       expect(tagsWithRole(html, "dialog")[0]).toContain('aria-label="Challenge Le Quang Liem"');
     }
 
     store.dispatch(setStrength("full"));
     const html = render(store, <SetupCard />);
-    expect(valueText(html)).toBe("★ Liem");
-    expect(html).not.toMatch(/class="setup-card__about"/);
+    expect(valueText(html)).toBe("★ Liem GM · 2732");
     expect(stepLabels(html)[6]).toBe("Liem (2732)");
     expect(engineLine(html)).toBe("Le Quang Liem: his openings, then full-strength Stockfish 18.");
     expect(tagsWithRole(html, "dialog")[0]).toContain('aria-label="Challenge Le Quang Liem"');
