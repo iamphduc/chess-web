@@ -1,286 +1,40 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const SRC = join(__dirname, "..", "src");
-const stripComments = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, "");
-const read = (...parts: string[]) => readFileSync(join(SRC, ...parts), "utf8");
-const indexCss = () => stripComments(read("index.css"));
-const liemCssPath = join(SRC, "styles", "liem.css");
-const liemCss = () => {
-  expect(existsSync(liemCssPath), "src/styles/liem.css exists").toBe(true);
-  return stripComments(readFileSync(liemCssPath, "utf8"));
-};
+import {
+  contrast,
+  declarations,
+  declsFor,
+  last,
+  lookViolations,
+  readCss,
+  rules,
+  SRC,
+  stripComments,
+  token,
+} from "./look-helpers";
 
-// Every custom property declared in any `:root { ... }` block, name -> raw values.
-// A token declared twice (in one block or across blocks) shows up as two values.
-function rootTokens(source: string): Record<string, string[]> {
-  const tokens: Record<string, string[]> = {};
-  for (const block of source.matchAll(/(^|[\s}]):root\s*\{([^}]*)\}/g)) {
-    for (const m of block[2].matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
-      (tokens[m[1]] ??= []).push(m[2].trim());
-    }
-  }
-  return tokens;
+// His player card and book note in the Look (plan ui-refresh, sprint refresh slice P1).
+
+const FILES = {
+  "Player.css": ["features", "board", "components", "Player.css"],
+  "Board.css": ["features", "board", "Board.css"],
+  "liem.css": ["styles", "liem.css"],
+  "BookNote.css": ["features", "liem", "components", "BookNote.css"],
+} as const;
+
+const css = (file: keyof typeof FILES) => readCss(...FILES[file]);
+const playerCss = () => css("Player.css");
+const liemCss = () => css("liem.css");
+
+/** A token's color, following var() links to the hex. */
+function resolve(value: string): string {
+  const m = value.trim().match(/^var\((--[\w-]+)\)$/);
+  return m ? resolve(token(m[1])) : value.trim();
 }
 
-function token(name: string): string {
-  const values = rootTokens(indexCss())[name] ?? [];
-  expect(values, `${name} declared once in :root`).toHaveLength(1);
-  return values[0];
-}
-
-// Top-level rules (selector -> body). Bodies have no nested braces.
-function rules(source: string): { selector: string; body: string }[] {
-  return [...source.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
-    selector: m[1].trim(),
-    body: m[2],
-  }));
-}
-
-// Declarations of a rule body, property -> value.
-function declarations(body: string): [string, string][] {
-  return body
-    .split(";")
-    .map((d) => d.trim())
-    .filter(Boolean)
-    .map((d) => {
-      const i = d.indexOf(":");
-      return [d.slice(0, i).trim().toLowerCase(), d.slice(i + 1).trim()];
-    });
-}
-
-// WCAG 2.x relative luminance of a #RRGGBB color.
-function luminance(hex: string): number {
-  const m = hex.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
-  if (!m) throw new Error(`not a #RRGGBB color: ${hex}`);
-  const [r, g, b] = m.slice(1).map((h) => {
-    const c = parseInt(h, 16) / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-function contrast(a: string, b: string): number {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-  return (hi + 0.05) / (lo + 0.05);
-}
-
-const LOOK: Record<string, string> = {
-  "--liem-card": "#1F1F1F",
-  "--liem-note": "#262626",
-  "--liem-text": "#FFFFFF",
-  "--liem-text-soft": "#B8B8B8",
-  "--liem-red": "#DA251D",
-  "--liem-gold": "#FFCD00",
-  "--liem-gold-tint": "#2F2A14",
-  "--liem-badge-bg": "#3A3214",
-  "--liem-line": "#474747",
-  "--liem-start": "#047A4F",
-  "--book-bar": "#BBBE64",
-};
-
-const CONTRACT_CLASSES = [
-  "liem-tabs",
-  "liem-tab",
-  "liem-card",
-  "liem-card__title",
-  "liem-star",
-  "liem-card__sub",
-  "liem-tiles",
-  "liem-tile",
-  "liem-tile__glyph",
-  "liem-steps",
-  "liem-step",
-  "liem-step--lit",
-  "liem-elo",
-  "liem-badge",
-  "liem-badge--engine",
-  "liem-note",
-  "liem-note--out",
-  "liem-note__row",
-  "liem-note__row--played",
-  "liem-note__bar",
-  "liem-note__count",
-  "liem-dimmed",
-];
-
-// Properties that paint a color. Their values must come from tokens.
-const COLOR_PROPS =
-  /^(color|background|background-color|border|border-(top|right|bottom|left)(-color)?|border-color|outline|outline-color|box-shadow|text-shadow|fill|stroke|text-decoration(-color)?|caret-color|accent-color)$/;
-// Words allowed next to the tokens in a color property: sizes, line styles, and no-color keywords.
-const NOT_A_COLOR = /^(-?[\d.]+(px|em|rem|%)?|solid|dashed|dotted|inset|none|transparent|currentcolor|inherit|initial|unset)$/i;
-
-describe("liem theme", () => {
-  it("liem tokens have the Look values", () => {
-    const tokens = rootTokens(indexCss());
-    const liem = Object.keys(tokens).filter((n) => n.startsWith("--liem-") || n === "--book-bar");
-    expect(liem.sort()).toEqual(Object.keys(LOOK).sort());
-    for (const [name, value] of Object.entries(LOOK)) {
-      expect(tokens[name], `${name} declared once in :root`).toHaveLength(1);
-      expect(tokens[name][0].toLowerCase(), name).toBe(value.toLowerCase());
-    }
-  });
-
-  it("text pairs meet 4.5:1", () => {
-    const text = token("--liem-text");
-    const soft = token("--liem-text-soft");
-    const gold = token("--liem-gold");
-    // the dark panels still in use until plan ui-refresh restyles them; the page is cream now
-    for (const bg of [token("--liem-card"), token("--liem-note")]) {
-      expect(contrast(text, bg), `text on ${bg}`).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(soft, bg), `soft text on ${bg}`).toBeGreaterThanOrEqual(4.5);
-    }
-    expect(contrast(gold, token("--liem-card")), "gold on card").toBeGreaterThanOrEqual(4.5);
-    expect(contrast(gold, token("--liem-badge-bg")), "gold on badge bg").toBeGreaterThanOrEqual(4.5);
-    expect(contrast(text, token("--liem-gold-tint")), "text on gold tint").toBeGreaterThanOrEqual(4.5);
-  });
-
-  it("Start game uses the Look primary, not the old green", () => {
-    // Start game is a .button--play; plan ui-refresh drops the Play green (--liem-start) for --go.
-    const button = stripComments(read("features", "board", "components", "Button.css"));
-    const play = rules(button).find((r) => r.selector === ".button--play");
-    const playBg = declarations(play?.body ?? "").find(([p]) => p === "background-color")?.[1];
-    expect(playBg).toBe("var(--go)");
-    expect(contrast(token("--go-ink"), token("--go"))).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it("base control styles use only tokens", () => {
-    const source = liemCss();
-    const all = rules(source);
-    const defined = new Set(all.flatMap((r) => [...r.selector.matchAll(/\.([\w-]+)/g)].map((m) => m[1])));
-    for (const cls of CONTRACT_CLASSES) expect(defined.has(cls), `.${cls} defined`).toBe(true);
-
-    // no color literals anywhere in the file
-    expect(source).not.toMatch(/#[0-9a-f]{3,8}\b/i);
-    expect(source).not.toMatch(/\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/i);
-
-    for (const { selector, body } of all) {
-      for (const [prop, value] of declarations(body)) {
-        if (!COLOR_PROPS.test(prop)) continue;
-        // anything left once the tokens are taken out must be a size, a style or a no-color keyword
-        const rest = value.replace(/var\(--[\w-]+\)/g, "").split(/[\s,]+/).filter(Boolean);
-        for (const word of rest) expect(word, `${selector} { ${prop}: ${value} }`).toMatch(NOT_A_COLOR);
-      }
-    }
-
-    // the stylesheet is loaded by the app
-    expect(read("index.tsx")).toMatch(/import\s+["']\.\/styles\/liem\.css["']/);
-  });
-
-  it("engine pill uses the neutral tokens", () => {
-    const all = rules(liemCss());
-    const pill = all.filter((r) => r.selector === ".liem-badge--engine");
-    expect(pill, ".liem-badge--engine defined once").toHaveLength(1);
-    const d = declarations(pill[0].body);
-    expect(d).toContainEqual(["color", "var(--liem-text-soft)"]);
-    expect(d).toContainEqual(["background-color", "var(--liem-note)"]);
-    expect(d.find(([p]) => p === "border")?.[1]).toMatch(/^1px solid var\(--liem-line\)$/);
-    // only those three tokens paint it: gold stays for his book
-    for (const [prop, value] of d) {
-      if (!COLOR_PROPS.test(prop)) continue;
-      for (const m of value.matchAll(/var\((--[\w-]+)\)/g)) {
-        expect(["--liem-text-soft", "--liem-note", "--liem-line"], `${prop}: ${value}`).toContain(m[1]);
-      }
-    }
-    // it comes after .liem-badge, so it wins when both classes are on the pill
-    const at = (sel: string) => all.findIndex((r) => r.selector === sel);
-    expect(at(".liem-badge--engine")).toBeGreaterThan(at(".liem-badge"));
-  });
-
-  it("engine pill keeps the badge's shape and size", () => {
-    const all = rules(liemCss());
-    const decl = (sel: string) => declarations(all.filter((r) => r.selector === sel).map((r) => r.body).join(";"));
-    const badge = decl(".liem-badge");
-    const pill = decl(".liem-badge--engine");
-    expect(pill.length, ".liem-badge--engine has declarations").toBeGreaterThan(0);
-    const px = (v: string | undefined) => (v ?? "").split(/\s+/).map((x) => parseFloat(x));
-    const get = (d: [string, string][], p: string) => d.find(([k]) => k === p)?.[1];
-    // the pill adds a border, so its padding shrinks by the border width: the outer box stays the same
-    const border = parseFloat(get(pill, "border") ?? "0");
-    const [bv, bh] = px(get(badge, "padding"));
-    const [pv, ph] = px(get(pill, "padding") ?? get(badge, "padding"));
-    expect(pv + border, "vertical size").toBe(bv);
-    expect(ph + border, "horizontal size").toBe(bh);
-    // nothing else about the shape or type changes
-    for (const p of ["display", "font-size", "font-weight", "border-radius", "gap", "align-items"]) {
-      expect(get(pill, p), `${p} not overridden`).toBeUndefined();
-    }
-  });
-
-  it("engine pill text meets 4.5:1", () => {
-    const pill = rules(liemCss()).find((r) => r.selector === ".liem-badge--engine");
-    const d = declarations(pill?.body ?? "");
-    const tokenOf = (p: string) => d.find(([k]) => k === p)?.[1].match(/^var\((--[\w-]+)\)$/)?.[1];
-    const fg = tokenOf("color");
-    const bg = tokenOf("background-color");
-    expect(fg, "pill text is a token").toBeDefined();
-    expect(bg, "pill background is a token").toBeDefined();
-    expect(contrast(token(fg!), token(bg!))).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it("red is never a text color", () => {
-    for (const { selector, body } of rules(liemCss())) {
-      for (const [prop, value] of declarations(body)) {
-        if (prop === "color" || prop === "-webkit-text-fill-color") {
-          expect(value, `${selector} { ${prop} }`).not.toMatch(/--liem-red/);
-        }
-      }
-    }
-  });
-
-  it("selected tab and tile follow the Look", () => {
-    const all = rules(liemCss());
-    const body = (sel: string) =>
-      declarations(all.filter((r) => r.selector.split(",").map((s) => s.trim()).includes(sel)).map((r) => r.body).join(";"));
-    const tab = body('.liem-tab[aria-selected="true"]');
-    expect(tab).toContainEqual(["color", "var(--liem-text)"]);
-    expect(tab.find(([p]) => p === "border-bottom-color")?.[1]).toBe("var(--liem-red)");
-    const tile = body('.liem-tile[aria-checked="true"]');
-    expect(tile).toContainEqual(["border-color", "var(--liem-gold)"]);
-    expect(tile).toContainEqual(["background-color", "var(--liem-gold-tint)"]);
-    expect(body(".liem-dimmed")).toContainEqual(["filter", "brightness(0.45)"]);
-  });
-
-  it("type sizes follow the Look", () => {
-    const all = rules(liemCss());
-    const font = (sel: string) => {
-      const d = declarations(all.filter((r) => r.selector === sel).map((r) => r.body).join(";"));
-      return {
-        size: d.find(([p]) => p === "font-size")?.[1],
-        weight: d.find(([p]) => p === "font-weight")?.[1],
-      };
-    };
-    expect(font(".liem-card__title")).toEqual({ size: "22px", weight: "700" });
-    expect(font(".liem-elo")).toEqual({ size: "28px", weight: "700" });
-    expect(font(".liem-tab")).toEqual({ size: "16px", weight: "700" });
-    expect(font(".liem-card__sub")).toEqual({ size: "16px", weight: "500" });
-    expect(font(".liem-note__count").size).toBe("15px");
-    expect(font(".liem-badge").size).toBe("14px");
-  });
-
-  it("controls get the focus ring and no browser defaults", () => {
-    const all = rules(liemCss());
-    const focus = all.filter((r) => /:focus-visible/.test(r.selector));
-    for (const cls of [".liem-tab", ".liem-tile", ".liem-step"]) {
-      const rule = focus.find((r) => r.selector.split(",").some((s) => s.trim() === `${cls}:focus-visible`));
-      expect(rule, `${cls}:focus-visible`).toBeDefined();
-      expect(declarations(rule!.body)).toContainEqual(["outline", "3px solid var(--board-focus)"]);
-    }
-    for (const cls of [".liem-tab", ".liem-tile", ".liem-step"]) {
-      const d = declarations(all.filter((r) => r.selector.split(",").some((s) => s.trim() === cls)).map((r) => r.body).join(";"));
-      expect(d, `${cls} resets appearance`).toContainEqual(["appearance", "none"]);
-      expect(d.find(([p]) => p === "font")?.[1] ?? d.find(([p]) => p === "font-family")?.[1], `${cls} font`).toMatch(
-        /inherit|Quicksand/
-      );
-    }
-  });
-});
-
-// His player card on the board: src/features/board/Board.css.
-const boardCss = () => stripComments(read("features", "board", "Board.css"));
-
-// The bodies of the `@media` blocks whose condition matches `when`, joined.
+/** The `@media` block bodies whose condition matches `when`, joined. */
 function mediaBlocks(source: string, when: RegExp): string {
   let out = "";
   for (const m of source.matchAll(/@media([^{]*)\{/g)) {
@@ -297,7 +51,7 @@ function mediaBlocks(source: string, when: RegExp): string {
   return out;
 }
 
-// The source with every `@media` block taken out.
+/** The source with every `@media` block taken out. */
 function outsideMedia(source: string): string {
   let out = source;
   for (;;) {
@@ -313,17 +67,7 @@ function outsideMedia(source: string): string {
   }
 }
 
-// Declarations of every rule that names `selector` (alone or in a comma list), in order.
-function declsFor(source: string, selector: string): [string, string][] {
-  return declarations(
-    rules(source)
-      .filter((r) => r.selector.split(",").map((s) => s.trim()).includes(selector))
-      .map((r) => r.body)
-      .join(";")
-  );
-}
-
-// Hidden from sight but still read out: the full line stays for screen readers.
+/** Hidden from sight but still read out: the whole line stays for screen readers. */
 function visuallyHidden(d: [string, string][]): boolean {
   const has = (p: string, v: string) => d.some(([k, x]) => k === p && x === v);
   return (
@@ -336,66 +80,91 @@ function visuallyHidden(d: [string, string][]): boolean {
   );
 }
 
-describe("his card on the board", () => {
-  const card = ".board > .player";
-  const PARTS = [".liem-detail__lead", ".liem-detail__short", ".liem-badge__count"];
-
-  it("a wide board shows the whole line: Plays Liem's openings and ★ Book · N", () => {
-    const wide = outsideMedia(boardCss());
-    for (const part of PARTS) {
-      expect(visuallyHidden(declsFor(wide, `${card} ${part}`)), `${part} shows outside the narrow rules`).toBe(false);
+describe("liem theme", () => {
+  it("player cards and book note follow the Look", () => {
+    for (const file of Object.keys(FILES) as (keyof typeof FILES)[]) {
+      const source = css(file);
+      expect(lookViolations(source), file).toEqual([]);
+      expect(source, `${file} uses no --liem-* token`).not.toMatch(/--liem-|--book-bar/);
+      for (const { selector, body } of rules(source)) {
+        for (const [prop, value] of declarations(body)) {
+          if (prop === "color") expect(value, `${file}: ${selector} { color }`).not.toMatch(/--gold/);
+        }
+        // the dead tab, setup card, tile, step, star and dimmed rules are gone
+        expect(selector, file).not.toMatch(/\.(liem-tabs?|liem-tiles?|liem-steps?|liem-card|liem-elo|liem-star|setup-card|liem-dimmed)\b/);
+      }
     }
-    // The old "~2100" line is gone with "playing about".
-    expect(boardCss()).not.toMatch(/liem-detail__(about|elo)/);
-  });
 
-  it("sparring detail on phones", () => {
-    const phone = mediaBlocks(boardCss(), /max-width:\s*767px/);
-    // "Plays " is hidden from sight only, so the line reads "Liem's openings" and is read out in full.
+    // the stylesheet is still loaded by the app
+    expect(stripComments(readFileSync(join(SRC, "index.tsx"), "utf8"))).toMatch(/import\s+["']\.\/styles\/liem\.css["']/);
+
+    // Every `.board > .player` rule moved from Board.css into Player.css.
+    expect(css("Board.css")).not.toMatch(/\.player\b/);
+    expect(rules(outsideMedia(playerCss())).some((r) => r.selector.startsWith(".board > .player"))).toBe(true);
+
+    // The ♞ avatar sits on the raised cream.
+    const avatar = declsFor(liemCss(), ".liem-sparring-avatar");
+    expect(last(avatar, "background-color")).toBe("var(--surface-2)");
+    expect(last(avatar, "color")).toBe("var(--ink)");
+
+    // "★ Book · N": ink text with an ochre border.
+    const badge = declsFor(liemCss(), ".liem-badge");
+    expect(last(badge, "color")).toBe("var(--ink)");
+    expect(last(badge, "border")).toBe("1px solid var(--gold)");
+
+    // The Stockfish pill: soft text, a hairline border, and the badge's outer size.
+    const pill = declsFor(liemCss(), ".liem-badge--engine");
+    expect(last(pill, "color")).toBe("var(--soft)");
+    expect(last(pill, "border-color")).toBe("var(--line)");
+    for (const p of ["padding", "border-width", "border", "height", "font-size", "border-radius"]) {
+      expect(last(pill, p), `the pill keeps the badge's ${p}`).toBeUndefined();
+    }
+
+    // The book note looks like a card, with a 3px ochre edge, red ink out of book, and ochre bars.
+    const note = declsFor(liemCss(), ".liem-note");
+    expect(last(note, "background-color")).toBe("var(--surface)");
+    expect(last(note, "border")).toBe("1px solid var(--line)");
+    expect(last(note, "border-radius")).toBe("var(--radius)");
+    expect(last(note, "padding")).toBe("var(--space-4)");
+    expect(last(note, "border-left")).toBe("3px solid var(--gold)");
+    const order = note.map(([p]) => p);
+    expect(order.lastIndexOf("border-left"), "the edge comes after the border").toBeGreaterThan(order.lastIndexOf("border"));
+    expect(last(declsFor(liemCss(), ".liem-note--out"), "border-left-color")).toBe("var(--accent)");
+    expect(last(declsFor(liemCss(), ".liem-note__bar"), "background-color")).toBe("var(--gold)");
+
+    // The GM tag: red ink with cream text.
+    const gm = declsFor(playerCss(), ".player__title");
+    expect(last(gm, "background-color")).toBe("var(--accent)");
+    expect(last(gm, "color")).toBe("var(--surface)");
+
+    // The phone rules still hide "Plays " / "GM · " and the badge count below 768px, and only there.
+    const card = ".board > .player";
+    const phone = mediaBlocks(playerCss(), /max-width:\s*767px/);
     expect(visuallyHidden(declsFor(phone, `${card} .liem-detail__lead`)), "lead hidden on phones").toBe(true);
-    expect(visuallyHidden(declsFor(phone, `${card} .liem-detail__short`)), "short part stays").toBe(false);
     expect(visuallyHidden(declsFor(phone, `${card} .liem-badge__count`)), "count hidden on phones").toBe(true);
-    // the line keeps body type; nothing drops below 14 px
-    for (const [p, v] of declarations(phone.replace(/[^{}]+\{|\}/g, ";"))) {
-      if (p === "font-size") expect(parseFloat(v), `font-size ${v}`).toBeGreaterThanOrEqual(14);
+    expect(visuallyHidden(declsFor(phone, `${card} .liem-detail__short`)), "short part stays").toBe(false);
+    const wide = outsideMedia(playerCss());
+    for (const part of [".liem-detail__lead", ".liem-detail__short", ".liem-badge__count"]) {
+      expect(visuallyHidden(declsFor(wide, `${card} ${part}`)), `${part} shows from 768px`).toBe(false);
     }
   });
 
-  it("from 768 px the sparring line is whole", () => {
-    // Only the phone rules hide a part of the line.
-    const others = mediaBlocks(boardCss(), /^(?![^]*max-width:\s*767px)/);
-    expect(others, "Board.css has other @media blocks").not.toBe("");
-    for (const part of PARTS) {
-      expect(visuallyHidden(declsFor(others, `${card} ${part}`)), `${part} outside the phone rules`).toBe(false);
-    }
-  });
+  it("badge and GM tag contrast", () => {
+    const gm = declsFor(playerCss(), ".player__title");
+    const [gmInk, gmBack] = [last(gm, "color"), last(gm, "background-color")];
+    expect(gmInk ?? "<unset>", "GM tag text is a token").toMatch(/^var\(--[\w-]+\)$/);
+    expect(gmBack ?? "<unset>", "GM tag fill is a token").toMatch(/^var\(--[\w-]+\)$/);
+    expect(contrast(resolve(gmInk!), resolve(gmBack!))).toBeGreaterThanOrEqual(4.5);
 
-  it("the Stockfish pill is the badge's outer size inside a player card", () => {
-    const board = outsideMedia(boardCss());
-    const all = rules(liemCss());
-    const base = (sel: string) =>
-      declarations(all.filter((r) => r.selector === sel).map((r) => r.body).join(";"));
-    // the cascade for each: liem.css first, then the card rules (more specific) in Board.css order
-    const badge = [...base(".liem-badge"), ...declsFor(board, `${card} .liem-badge`)];
-    const pill = [
-      ...base(".liem-badge"),
-      ...base(".liem-badge--engine"),
-      ...declsFor(board, `${card} .liem-badge`),
-      ...declsFor(board, `${card} .liem-badge--engine`),
-    ];
-    const last = (d: [string, string][], p: string) => [...d].reverse().find(([k]) => k === p)?.[1];
-    const pad = (d: [string, string][]) => {
-      const v = (last(d, "padding") ?? "0").split(/\s+/).map((x) => parseFloat(x));
-      return { v: v[0], h: v[1] ?? v[0] };
-    };
-    const border = (d: [string, string][]) => parseFloat(last(d, "border") ?? "0") || 0;
-    // outer height: a set height when the border sits inside it, else the line plus padding and border
-    const outerHeight = (d: [string, string][]) => {
-      const h = last(d, "height");
-      if (h && last(d, "box-sizing") === "border-box") return h;
-      return `line + ${2 * pad(d).v + 2 * border(d)}px`;
-    };
-    expect(outerHeight(pill), "same outer height").toBe(outerHeight(badge));
-    expect(pad(pill).h + border(pill), "same outer width per side").toBe(pad(badge).h + border(badge));
+    // The badge, the pill and "Thinking…" have no fill of their own: they read on the page and on a card.
+    for (const sel of [".liem-badge", ".liem-badge--engine", ".liem-detail__thinking", ".liem-detail__sub"]) {
+      const d = [...declsFor(liemCss(), sel), ...declsFor(css("BookNote.css"), sel)];
+      const fg = resolve(last(d, "color") ?? last(declsFor(liemCss(), ".liem-badge"), "color")!);
+      const bg = last(d, "background-color");
+      expect(bg === undefined || bg === "transparent", `${sel} has no fill`).toBe(true);
+      for (const back of ["--bg", "--surface", "--surface-2"]) {
+        expect(contrast(fg, resolve(token(back))), `${sel} on ${back}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 });
