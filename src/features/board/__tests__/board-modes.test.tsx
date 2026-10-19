@@ -63,7 +63,7 @@ function playerNames(html: string): string[] {
 
 /** The label of each button or link in `html`: its `aria-label`, else its text. */
 function controlLabels(html: string): string[] {
-  return Array.from(html.matchAll(/<(button|a)([^>]*)>([\s\S]*?)<\/>/g), (m) => {
+  return Array.from(html.matchAll(/<(button|a)\b([^>]*)>([\s\S]*?)<\/\1>/g), (m) => {
     const aria = m[2].match(/aria-label="([^"]*)"/)?.[1];
     return aria ?? m[3].replace(/<[^>]+>/g, "").trim();
   });
@@ -172,7 +172,7 @@ function detailText(card: string): string {
 /** A sparring bot's card named `name`: the knight, the level's name and his openings line; no GM, star, photo or rating. */
 function expectSparringCard(card: string, name: string) {
   expect(playerNames(card)).toEqual([name]);
-  expect(card).not.toMatch(/(1400|1700|1900|2100|2300|2500)|about/);
+  expect(card).not.toMatch(/\b(1400|1700|1900|2100|2300|2500)\b|about/);
   expect(card).toContain('<span class="liem-sparring-avatar" aria-hidden="true">♞</span>');
   expect(card).not.toContain("<img");
   expect(card).not.toContain('class="player__title"');

@@ -2,16 +2,13 @@ import React, { useMemo } from "react";
 import { AnimatePresence, MotionConfig } from "framer-motion";
 
 import "./Board.css";
-import { SQUARE_SIZE_MD, SQUARE_SIZE_XL, SQUARE_SIZE_XS } from "../../constants";
 import { PlayerInfo, players } from "game/players";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import type { PieceColor } from "game/engine/game-state";
 import type { StrengthStep } from "game/opponent/strength";
-import { ModeTabs } from "features/liem/components/ModeTabs";
-import { SetupCard } from "features/liem/components/SetupCard";
 import { BookNote } from "features/liem/components/BookNote";
 import { LiemCardDetail } from "features/liem/components/LiemCardDetail";
-import { newLiemGame } from "features/liem/liemActions";
+import { replayLiemGame } from "features/liem/liemActions";
 import { levelView } from "features/liem/levelView";
 import { useLiemOpponent } from "features/liem/useLiemOpponent";
 import { ReviewGraph } from "features/review/components/ReviewGraph";
@@ -23,7 +20,7 @@ import { AccuracyPanel } from "features/review/components/AccuracyPanel";
 import { MoveList } from "features/review/components/MoveList";
 import { LeftBookNote } from "features/review/components/LeftBookNote";
 import { keyMomentView } from "features/review/keyMomentView";
-import { backToGame, canOpenReview, openReview, selectPosition, steppingLocked } from "features/review/reviewActions";
+import { backToGame, canOpenReview, selectPosition, steppingLocked } from "features/review/reviewActions";
 import {
   analysisRetried,
   answerShown,
@@ -38,12 +35,14 @@ import { Square } from "./components/Square";
 import { Player } from "./components/Player";
 import { BoardSidebar } from "./components/BoardSidebar";
 import { Promotion } from "./components/Promotion";
-import { FallenPieces } from "./components/FallenPieces";
 import { Notation } from "./components/Notation";
 import { GameOver } from "./components/GameOver";
 import { Button, ButtonType } from "./components/Button";
+import { TopBar } from "./components/TopBar";
+import { hashFor } from "app/route";
 import { useMediaQuery } from "hooks/useMediaQuery";
 import { displayOrder } from "./orientation";
+import { squareSizeFor, WIDE_1200, WIDE_768 } from "./boardSize";
 import { useMoveSound } from "./useMoveSound";
 
 // Keyed by color, so each card (and its running clock) keeps its state when the cards swap.
@@ -77,14 +76,12 @@ const renderYou = (color: PieceColor) => (
   <Player key={color} name="You" title={null} avatar={null} isWhite={color === "white"} />
 );
 
-const ReviewGameButton = () => {
-  const dispatch = useAppDispatch();
-  return (
-    <button type="button" className="button button--play" onClick={() => dispatch(openReview())}>
-      Review game
-    </button>
-  );
-};
+/** A link: the route opens the review (`arriveAt("review")`). */
+const ReviewGameLink = () => (
+  <a className="button button--play" href={hashFor("review")}>
+    Review game
+  </a>
+);
 
 const BackToGameButton = () => {
   const dispatch = useAppDispatch();
@@ -113,10 +110,11 @@ const ReviewCard = ({ model, humanColor }: { model: ReviewModel; humanColor: Pie
   );
 };
 
+/** A new game at the same level and color (Random draws again). */
 const NewGameButton = () => {
   const dispatch = useAppDispatch();
   return (
-    <button type="button" className="button" onClick={() => dispatch(newLiemGame())}>
+    <button type="button" className="button" onClick={() => dispatch(replayLiemGame())}>
       New game
     </button>
   );
@@ -138,14 +136,11 @@ export const Board = () => {
   const { model, onTry } = useGameReview(analyse);
 
   const vsLiem = match.mode === "liem";
-  const setupOpen = vsLiem && match.setupOpen;
-  const liemHuman: PieceColor | null = vsLiem && !setupOpen ? humanColor : null;
+  // Before a game (home) the board isn't shown; App renders Home instead.
+  const liemHuman: PieceColor | null = vsLiem && !match.setupOpen ? humanColor : null;
 
-  const wide = useMediaQuery("only screen and (min-width: 768px)");
-  const extraWide = useMediaQuery("only screen and (min-width: 1200px)");
-  let squareSize = SQUARE_SIZE_XS;
-  if (wide) squareSize = SQUARE_SIZE_MD;
-  if (extraWide) squareSize = SQUARE_SIZE_XL;
+  const wide = useMediaQuery(WIDE_768);
+  const squareSize = squareSizeFor(wide, useMediaQuery(WIDE_1200));
 
   const squaresToRender = useMemo(() => {
     const current = history[history.length - 1];
@@ -193,7 +188,7 @@ export const Board = () => {
     top = renderPlayer(topColor === "white" ? white : black);
     bottom = renderPlayer(bottomColor === "white" ? white : black);
   } else {
-    // In a game, your color; with the card open, the color picked so far (Random shows White).
+    // In a game, your color; before one, the color picked so far (Random shows White).
     const yours: PieceColor = liemHuman ?? (match.colorPick === "black" ? "black" : "white");
     const cardFor = (c: PieceColor) => (c === yours ? renderYou(c) : renderLiem(c, match.strength));
     top = cardFor(topColor);
@@ -221,7 +216,6 @@ export const Board = () => {
           </div>
 
           <div className="board" style={{ width: squareSize * 8 }}>
-            <ModeTabs />
             {top}
             <div className="squares">
               <ReviewBoard
@@ -264,67 +258,56 @@ export const Board = () => {
     );
   }
 
+  const icons = (
+    <span className="moves-card__icons">
+      <Button type={ButtonType.Flip} />
+      <Button type={ButtonType.Sound} />
+    </span>
+  );
+  let foot: React.ReactNode;
+  if (!vsLiem) {
+    foot = (
+      <>
+        <Button type={ButtonType.Play} />
+        <Button type={ButtonType.Reset} />
+        {icons}
+      </>
+    );
+  } else if (liemHuman) {
+    foot = (
+      <>
+        {reviewable && <ReviewGameLink />}
+        <NewGameButton />
+        {icons}
+      </>
+    );
+  } else {
+    foot = icons;
+  }
+
   return (
     <MotionConfig reducedMotion="user">
-      <div className="board" style={{ width: squareSize * 8 }}>
-        <ModeTabs />
-        {top}
-        {/* One squares subtree in every state, so opening or closing the card never remounts a piece. */}
-        <div className="squares">
-          <div
-            className={`squares__grid${setupOpen ? " liem-dimmed" : ""}`}
-            aria-hidden={setupOpen || undefined}
-          >
-            <AnimatePresence>{squaresToRender}</AnimatePresence>
-          </div>
-          {setupOpen ? (
-            <div className="squares__overlay">
-              <SetupCard />
+      <TopBar />
+      <div className="board-screen">
+        <div className="board" style={{ width: squareSize * 8 }}>
+          {top}
+          {/* One squares subtree in every game, so a new game or a flip never remounts a square. */}
+          <div className="squares">
+            <div className="squares__grid">
+              <AnimatePresence>{squaresToRender}</AnimatePresence>
             </div>
-          ) : (
-            <>
-              <Promotion squareSize={squareSize} />
-              <GameOver />
-            </>
-          )}
+            <Promotion squareSize={squareSize} />
+            <GameOver />
+          </div>
+          {bottom}
         </div>
-        {bottom}
-      </div>
 
-      <div className="sidebar">
-        {liemHuman && (
-          <div className="liem-side">
-            <BookNote onRetry={retry} />
-          </div>
-        )}
-
-        <BoardSidebar title="">
-          <div className="buttons">
-            {vsLiem ? (
-              <>
-                {liemHuman && reviewable && <ReviewGameButton />}
-                {liemHuman && <NewGameButton />}
-                <Button type={ButtonType.Flip} />
-                <Button type={ButtonType.Sound} />
-              </>
-            ) : (
-              <>
-                <Button type={ButtonType.Play} />
-                <Button type={ButtonType.Reset} />
-                <Button type={ButtonType.Flip} />
-                <Button type={ButtonType.Sound} />
-              </>
-            )}
-          </div>
-        </BoardSidebar>
-
-        <BoardSidebar title="Fallen Pieces">
-          <FallenPieces />
-        </BoardSidebar>
-
-        <BoardSidebar title="Notation">
-          <Notation />
-        </BoardSidebar>
+        <div className="sidebar">
+          {liemHuman && <BookNote onRetry={retry} />}
+          <BoardSidebar title="Moves" className="moves-card" flush foot={foot}>
+            <Notation />
+          </BoardSidebar>
+        </div>
       </div>
     </MotionConfig>
   );

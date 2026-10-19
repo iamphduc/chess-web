@@ -28,7 +28,10 @@ describe("board size", () => {
     const store = createAppStore();
     store.dispatch(startLiemGame());
     const html = renderToStaticMarkup(
-      createElement(Provider, { store }, createElement(DndProvider, { backend: HTML5Backend }, createElement(Board)))
+      createElement(Provider, {
+        store,
+        children: createElement(DndProvider, { backend: HTML5Backend }, createElement(Board)),
+      })
     );
     expect(html).toMatch(/<div class="board" style="width:312px">/);
   });

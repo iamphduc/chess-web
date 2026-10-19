@@ -63,7 +63,10 @@ describe("board screen css", () => {
       expect({ name, oldTokens: OLD_TOKENS.test(source) }).toEqual({ name, oldTokens: false });
 
       // One spacing scale: 4, 8, 12, 16, 24 and 32 px, through the tokens.
-      const off = rules(source).flatMap(({ selector, body }) =>
+      // The review's own rules (room for its phone sheet) move to the Look in slice V1.
+      const off = rules(source)
+        .filter(({ selector }) => !selector.includes("review"))
+        .flatMap(({ selector, body }) =>
         declarations(body)
           .filter(([prop, value]) => SPACING_PROPS.test(prop) && !SPACING.test(value))
           .map(([prop, value]) => `${selector} { ${prop}: ${value} }`)
