@@ -14,6 +14,7 @@
 /* The avatar, the name block and the material line. The name and the glyphs give way first. */
 .player__info {
   display: flex;
+  flex-grow: 1;
   align-items: center;
   gap: var(--space-2);
   min-width: 0;
@@ -46,9 +47,11 @@
   border-radius: var(--radius);
 }
 
-/* "+N" and the pieces taken, in soft ink. "+N" is never cut; the glyphs end in an ellipsis. */
+/* "+N" and the pieces taken, in soft ink, filling the room up to the clock. "+N" is never
+   cut; the glyphs end in an ellipsis. */
 .player__material {
   display: flex;
+  flex-grow: 1;
   align-items: baseline;
   gap: var(--space-1);
   font-size: var(--text-small);
@@ -63,11 +66,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* No width of its own: the glyphs fill what the name leaves, so they give way first. */
 .player__captured {
+  flex-grow: 1;
+  width: 0;
   min-width: 0;
   overflow: hidden;
-  font-size: var(--text-body);
-  letter-spacing: -1px;
+  font-size: var(--text-title);
+  line-height: 1;
+  letter-spacing: -2px;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
