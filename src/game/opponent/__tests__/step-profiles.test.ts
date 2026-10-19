@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest";
+import { BLUNDER_LOSS, winPercent } from "../human-move";
 import { STEP_PROFILES, StepProfile } from "../step-profiles";
 import { STRENGTH_STEPS } from "../strength";
+
+const SPARRING = STRENGTH_STEPS.filter((s) => s !== "full");
+
+/** The cp score whose win % is `win` (the inverse of the Lichess formula). */
+const cpFor = (win: number) => {
+  const p = (win - 50) / 50;
+  return -Math.log((1 - p) / (1 + p)) / 0.00368208;
+};
+
+/**
+ * The fewest centipawns a cp-scored blunder can fall below the top line: a
+ * BLUNDER_LOSS drop centred on 50 % (the steepest part of the curve).
+ */
+const SMALLEST_BLUNDER_CP = cpFor(50 + BLUNDER_LOSS / 2) - cpFor(50 - BLUNDER_LOSS / 2);
 
 const isWhole = (n: number) => Number.isInteger(n);
 
@@ -16,7 +31,7 @@ describe("STEP_PROFILES", () => {
       const isChance = (n: unknown) => typeof n === "number" && n >= 0 && n <= 1;
       expect(isChance(mistakeChance), `${step} mistakeChance`).toBe(true);
       expect(isChance(blunderChance), `${step} blunderChance`).toBe(true);
-      expect((mistakeChance ?? NaN) + (blunderChance ?? NaN), `${step} chances sum`).toBeLessThanOrEqual(1);
+      expect(mistakeChance + blunderChance, `${step} chances sum`).toBeLessThanOrEqual(1);
       expect(typeof blunderMaxCp === "number" && blunderMaxCp >= 0, `${step} blunderMaxCp`).toBe(
         true
       );
@@ -46,14 +61,52 @@ describe("STEP_PROFILES", () => {
       expect(upper.slipChance, name).toBeLessThanOrEqual(lower.slipChance);
       expect(upper.slipMaxLoss, name).toBeLessThanOrEqual(lower.slipMaxLoss);
       expect(upper.temperature, name).toBeLessThanOrEqual(lower.temperature);
+      expect(upper.mistakeChance, `${name} mistakeChance`).toBeLessThanOrEqual(
+        lower.mistakeChance
+      );
+      expect(upper.blunderChance, `${name} blunderChance`).toBeLessThanOrEqual(
+        lower.blunderChance
+      );
+      expect(upper.blunderMaxCp, `${name} blunderMaxCp`).toBeLessThanOrEqual(
+        lower.blunderMaxCp
+      );
+      expect(upper.hangWeight, `${name} hangWeight`).toBeLessThanOrEqual(
+        lower.hangWeight
+      );
     }
   });
 
   it("mate and slip rules per step", () => {
-    expect(STEP_PROFILES.full?.slipChance).toBe(0);
-    expect(STEP_PROFILES.full?.forceMateIn).toBe(Infinity);
+    expect(STEP_PROFILES.full.slipChance).toBe(0);
+    expect(STEP_PROFILES.full.forceMateIn).toBe(Infinity);
     for (const step of STRENGTH_STEPS) {
-      expect(STEP_PROFILES[step]?.forceMateIn, String(step)).toBeGreaterThanOrEqual(1);
+      const least = step === "full" || step >= 1900 ? 2 : 1;
+      expect(STEP_PROFILES[step].forceMateIn, String(step)).toBeGreaterThanOrEqual(least);
     }
+  });
+
+  it("sparring levels make mistakes, Liem doesn't", () => {
+    expect(SMALLEST_BLUNDER_CP).toBeGreaterThan(330);
+    for (const step of SPARRING) {
+      const p = STEP_PROFILES[step];
+      expect(p.mistakeChance, `${step} mistakeChance`).toBeGreaterThan(0);
+      expect(p.blunderChance, `${step} blunderChance`).toBeGreaterThan(0);
+      // Under this cap no cp-scored blunder could ever be picked.
+      expect(p.blunderMaxCp, `${step} blunderMaxCp`).toBeGreaterThan(SMALLEST_BLUNDER_CP);
+    }
+    // Liem is exactly as before the ladder: full Stockfish, no bands.
+    expect(STEP_PROFILES.full).toEqual({
+      search: { depth: 18, multiPv: 4, movetimeMs: 1000 },
+      maxLoss: 0,
+      temperature: 0,
+      slipChance: 0,
+      slipMaxLoss: 0,
+      aheadMaxLoss: 0,
+      forceMateIn: Infinity,
+      mistakeChance: 0,
+      blunderChance: 0,
+      blunderMaxCp: 0,
+      hangWeight: 0,
+    });
   });
 });
