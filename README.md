@@ -19,22 +19,33 @@ This project was inspired by [chess.com](https://www.chess.com/)
 
 ## The ladder
 
-The page opens on **vs Liem**, a ladder that builds toward beating GM Le Quang Liem. Pick a level on the challenge card, then press **Start game**. **Two players** is one tab click away.
+The site opens on the home page. Pick a level and your color (White, Black or Random), then press **Play**. Bots play GM Le Quang Liem's opening lines from his real games, then Stockfish takes over at the level you pick, and every game ends with a review. **Two players on one board** is a link on the same page.
 
-- **Sparring levels:** "about 1400" up to "about 2500". Each is a sparring bot (the ♞ card, "Sparring · 1400") that plays Liem's openings, then plays at its level.
+- **Sparring levels:** Easy, Medium, Hard, Harder, Expert and Master. Each is a sparring bot (the ♞ card, "Plays Liem's openings") that plays Liem's openings, then plays at its level. The levels have names, not ratings.
 - **Liem:** the last step, "★ Liem", is the final boss: his photo and "GM · 2732" on the card, his openings, then full-strength Stockfish 18.
 - **His openings:** at every level, while the position is in his book, the moves come from his own games, picked by how often he played each one.
 - **After his book:** standard [Stockfish](https://stockfishchess.org/) 18 plays the rest of the game. It isn't fine-tuned or trained on his games. At each move it looks at its top few moves and picks one a player of that level would play.
-- The levels are approximate. They aren't Lichess or Chess.com ratings.
+- **In a game:** the top bar has **← Home** and what you're playing, for example "vs Medium · you play White". Each player card shows "+N" and the pieces that side has taken. **New game** starts again at the same level and color; go home to change them.
+
+## Links
+
+Each screen has its own link, so the browser's Back and Forward buttons move between them:
+
+- [`#/`](https://iamphduc.github.io/chess-web/#/): the home page
+- `#/play`: the game against a bot or Liem
+- [`#/two-players`](https://iamphduc.github.io/chess-web/#/two-players): two players on one board
+- `#/review`: the review of the game that just ended
+
+The page keeps no game between loads, so opening `#/play` or `#/review` with no game in progress (or any other link) shows the home page. Going home ends the game in progress.
 
 ## Game review
 
-After a vs-Liem game ends at any level (checkmate, stalemate or time), press **Review game**.
+After a vs-Liem game ends at any level (checkmate, stalemate or time), press **Review game** under the moves.
 
 - **Analysis:** Stockfish 18 at full strength checks every position of the game, about half a second each, on the same engine he plays with. A progress bar shows how far it has got, and you can start on the key moments before it finishes.
 - **Grades:** each of your moves gets a drop in win % from your side. A drop of 10 points or more is an inaccuracy (?!), 20 a mistake (?) and 30 a blunder (??). Win % and the per-move accuracy use the public Lichess formulas, and your accuracy for the game is the average. A move that keeps the game in his book is never marked.
-- **Key moments:** your three biggest drops. At each one the board shows the position before your move, and you try to find a better one. A move counts as found if it's Stockfish's move or loses less than 10 points. Then you see what you played, Stockfish's move and, when the position is in his book, what Liem played there. Each found move fills a gold star.
-- **The rest:** a win % graph (tap it to jump to a move), the move list with the marks, where the game left his book, and step buttons or the arrow keys to go through the game. **Back to game** returns to the finished board, and **New game** starts a new one. On a phone the key-moment card opens as a sheet from the bottom.
+- **Key moments:** your three biggest drops. At each one the board shows the position before your move, and you try to find a better one. A move counts as found if it's Stockfish's move or loses less than 10 points. Then you see what you played, Stockfish's move and, when the position is in his book, what Liem played there. Each found move fills a star.
+- **The rest:** the sidebar starts with a win % graph from your side (tap it to jump to a move), then the key-moment card, your accuracy, the move list with the marks, and where the game left his book. Step buttons or the arrow keys go through the game. **Back to game** returns to the finished board, and **Play again** in the top bar starts a new game at the same level and color. On a phone the graph and the key-moment card open as a sheet from the bottom.
 - Only the game that just ended can be reviewed. Reloading the page loses it.
 
 ## Licence

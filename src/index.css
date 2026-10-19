@@ -55,7 +55,7 @@
   /* Board on wood. Board, square, overlay and piece CSS use only these for color. */
   --board-light: #F0E3C8;
   --board-dark: #B98B5E;
-  --board-highlight: rgba(255, 255, 51, 0.5); /* last move and selected square */
+  --board-highlight: rgba(204, 153, 26, 0.5); /* last move and selected square: an ochre tint that reads on both woods */
   --board-hint: rgba(0, 0, 0, 0.14); /* legal-move dot and capture ring */
   --board-check: rgba(168, 50, 43, 0.55); /* a flat --accent tint on the king in check */
   --board-drop-edge: rgba(255, 255, 255, 0.65); /* inset edge on a legal drag-over square */
@@ -70,27 +70,6 @@
   --grade-book: #686A2D;
   --grade-ink: #FBF8F1;
   --review-scrim: rgba(0, 0, 0, 0.35);
-
-  /* Old tokens, kept until the components move to the Look (C1 removes them). No new uses. */
-  --background: #fff;
-  --text: rgba(0, 0, 0, 0.9);
-  --dark-background: rgba(0, 0, 0, 0.8);
-  --dark-text: #fff;
-  --dark-title: #595959;
-  --dark-surface: rgba(0, 0, 0, 0.24);
-  --board-sound-on: #047A4F;
-  --liem-card: #1F1F1F;
-  --liem-note: #262626;
-  --liem-text: #FFFFFF;
-  --liem-text-soft: #B8B8B8;
-  --liem-red: #DA251D;
-  --liem-gold: #FFCD00;
-  --liem-gold-tint: #2F2A14;
-  --liem-badge-bg: #3A3214;
-  --liem-line: #474747;
-  --liem-start: #047A4F;
-  --book-bar: #BBBE64;
-  --review-page: #333333;
 }
 
 body {
