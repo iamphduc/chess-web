@@ -1,6 +1,6 @@
 # Plan: UI refresh — home page, scorebook look, review sidebar
 
-_Generated: 2026-10-19 · Status: active · Grilled-with: grilling_
+_Generated: 2026-10-19 · Status: archived · Grilled-with: grilling_
 Port base: 3200
 
 ## Goal
