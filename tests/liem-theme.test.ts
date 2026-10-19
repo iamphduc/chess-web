@@ -149,6 +149,12 @@ describe("liem theme", () => {
     }
   });
 
+  it("the badge's star is an ochre shape", () => {
+    const star = declsFor(liemCss(), ".liem-badge__star");
+    expect(last(star, "fill") ?? "<unset>").toBe("var(--gold)");
+    expect(last(star, "color")).toBeUndefined();
+  });
+
   it("badge and GM tag contrast", () => {
     const gm = declsFor(playerCss(), ".player__title");
     const [gmInk, gmBack] = [last(gm, "color"), last(gm, "background-color")];
