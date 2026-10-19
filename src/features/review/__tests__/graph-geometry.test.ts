@@ -20,13 +20,8 @@ describe("points", () => {
     expect(positionX(0, 0, 400)).toBe(0);
   });
 
-  it("maps White's win % to the height, 100 at the top and 0 at the bottom", () => {
-    const points = graphPoints(WHITE_WIN, {
-      side: "white",
-      humanColor: "black",
-      width: 400,
-      height: 100,
-    });
+  it("maps your win % to the height, 100 at the top and 0 at the bottom", () => {
+    const points = graphPoints(WHITE_WIN, { humanColor: "white", width: 400, height: 100 });
     expect(points.map((p) => p && [p.index, p.x, p.y, p.win])).toEqual([
       [0, 0, 50, 50],
       [1, 100, 0, 100],
@@ -36,13 +31,8 @@ describe("points", () => {
     ]);
   });
 
-  it("flips to the human's side when he plays Black", () => {
-    const points = graphPoints(WHITE_WIN, {
-      side: "you",
-      humanColor: "black",
-      width: 400,
-      height: 150,
-    });
+  it("flips to your side when you play Black", () => {
+    const points = graphPoints(WHITE_WIN, { humanColor: "black", width: 400, height: 150 });
     expect(points.map((p) => p && [p.y, p.win])).toEqual([
       [75, 50],
       [150, 0],
@@ -52,31 +42,15 @@ describe("points", () => {
     ]);
   });
 
-  it("is White's view from the human's side when he plays White", () => {
-    const you = graphPoints(WHITE_WIN, {
-      side: "you",
-      humanColor: "white",
-      width: 400,
-      height: 100,
-    });
-    const white = graphPoints(WHITE_WIN, {
-      side: "white",
-      humanColor: "white",
-      width: 400,
-      height: 100,
-    });
-    expect(you).toEqual(white);
-  });
-
-  it("sideWin keeps null for an unanalysed position", () => {
-    expect(sideWin(null, "you", "black")).toBeNull();
-    expect(sideWin(30, "you", "black")).toBe(70);
-    expect(sideWin(30, "white", "black")).toBe(30);
+  it("sideWin is your win %, and keeps null for an unanalysed position", () => {
+    expect(sideWin(null, "black")).toBeNull();
+    expect(sideWin(null, "white")).toBeNull();
+    expect(sideWin(30, "black")).toBe(70);
+    expect(sideWin(30, "white")).toBe(30);
   });
 
   it("lineRuns breaks the line at unanalysed positions and drops lone points", () => {
     const points = graphPoints([10, 20, null, 30, null, 40, 50, 60], {
-      side: "white",
       humanColor: "white",
       width: 70,
       height: 100,
@@ -87,7 +61,7 @@ describe("points", () => {
     ]);
     expect(
       lineRuns(
-        graphPoints([null, null], { side: "white", humanColor: "white", width: 1, height: 1 })
+        graphPoints([null, null], { humanColor: "white", width: 1, height: 1 })
       )
     ).toEqual([]);
   });
