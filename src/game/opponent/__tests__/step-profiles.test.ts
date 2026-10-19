@@ -31,7 +31,7 @@ describe("STEP_PROFILES", () => {
       const isChance = (n: unknown) => typeof n === "number" && n >= 0 && n <= 1;
       expect(isChance(mistakeChance), `${step} mistakeChance`).toBe(true);
       expect(isChance(blunderChance), `${step} blunderChance`).toBe(true);
-      expect((mistakeChance ?? NaN) + (blunderChance ?? NaN), `${step} chances sum`).toBeLessThanOrEqual(1);
+      expect(mistakeChance + blunderChance, `${step} chances sum`).toBeLessThanOrEqual(1);
       expect(typeof blunderMaxCp === "number" && blunderMaxCp >= 0, `${step} blunderMaxCp`).toBe(
         true
       );
@@ -61,27 +61,27 @@ describe("STEP_PROFILES", () => {
       expect(upper.slipChance, name).toBeLessThanOrEqual(lower.slipChance);
       expect(upper.slipMaxLoss, name).toBeLessThanOrEqual(lower.slipMaxLoss);
       expect(upper.temperature, name).toBeLessThanOrEqual(lower.temperature);
-      expect(upper.mistakeChance ?? 0, `${name} mistakeChance`).toBeLessThanOrEqual(
-        lower.mistakeChance ?? 0
+      expect(upper.mistakeChance, `${name} mistakeChance`).toBeLessThanOrEqual(
+        lower.mistakeChance
       );
-      expect(upper.blunderChance ?? 0, `${name} blunderChance`).toBeLessThanOrEqual(
-        lower.blunderChance ?? 0
+      expect(upper.blunderChance, `${name} blunderChance`).toBeLessThanOrEqual(
+        lower.blunderChance
       );
-      expect(upper.blunderMaxCp ?? 0, `${name} blunderMaxCp`).toBeLessThanOrEqual(
-        lower.blunderMaxCp ?? 0
+      expect(upper.blunderMaxCp, `${name} blunderMaxCp`).toBeLessThanOrEqual(
+        lower.blunderMaxCp
       );
-      expect(upper.hangWeight ?? 0, `${name} hangWeight`).toBeLessThanOrEqual(
-        lower.hangWeight ?? 0
+      expect(upper.hangWeight, `${name} hangWeight`).toBeLessThanOrEqual(
+        lower.hangWeight
       );
     }
   });
 
   it("mate and slip rules per step", () => {
-    expect(STEP_PROFILES.full?.slipChance).toBe(0);
-    expect(STEP_PROFILES.full?.forceMateIn).toBe(Infinity);
+    expect(STEP_PROFILES.full.slipChance).toBe(0);
+    expect(STEP_PROFILES.full.forceMateIn).toBe(Infinity);
     for (const step of STRENGTH_STEPS) {
       const least = step === "full" || step >= 1900 ? 2 : 1;
-      expect(STEP_PROFILES[step]?.forceMateIn, String(step)).toBeGreaterThanOrEqual(least);
+      expect(STEP_PROFILES[step].forceMateIn, String(step)).toBeGreaterThanOrEqual(least);
     }
   });
 
@@ -89,10 +89,10 @@ describe("STEP_PROFILES", () => {
     expect(SMALLEST_BLUNDER_CP).toBeGreaterThan(330);
     for (const step of SPARRING) {
       const p = STEP_PROFILES[step];
-      expect(p.mistakeChance ?? 0, `${step} mistakeChance`).toBeGreaterThan(0);
-      expect(p.blunderChance ?? 0, `${step} blunderChance`).toBeGreaterThan(0);
+      expect(p.mistakeChance, `${step} mistakeChance`).toBeGreaterThan(0);
+      expect(p.blunderChance, `${step} blunderChance`).toBeGreaterThan(0);
       // Under this cap no cp-scored blunder could ever be picked.
-      expect(p.blunderMaxCp ?? 0, `${step} blunderMaxCp`).toBeGreaterThan(SMALLEST_BLUNDER_CP);
+      expect(p.blunderMaxCp, `${step} blunderMaxCp`).toBeGreaterThan(SMALLEST_BLUNDER_CP);
     }
     // Liem is exactly as before the ladder: full Stockfish, no bands.
     expect(STEP_PROFILES.full).toEqual({

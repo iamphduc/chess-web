@@ -4,6 +4,7 @@ import type { GameState } from "../../../src/game/engine/game-state";
 import type { EngineLine, Score } from "../../../src/game/opponent/engine/lines";
 import type { Analysis } from "../../../src/game/opponent/engine/move-engine";
 import { uciToMove } from "../../../src/game/opponent/position";
+import { STEP_PROFILES } from "../../../src/game/opponent/step-profiles";
 import type { StrengthStep } from "../../../src/game/opponent/strength";
 import { REVIEW_LIMITS } from "../../../src/features/review/reviewLimits";
 import { loadAccuracy } from "../accuracy";
@@ -251,7 +252,10 @@ describe("measure report", () => {
     expect(await runMeasure(args([1400, 1700]), deps)).toBe(0);
     const b1400 = block(out, 1400).join("\n");
     // Two fool's mates: 8 graded moves, 2 mistakes and 2 blunders = 10 per 40 each.
-    expect(b1400).toMatch(/mistake 0, blunder 0 up to 0 cp, hang weight 0/);
+    const p = STEP_PROFILES[1400];
+    expect(b1400).toContain(
+      `mistake ${p.mistakeChance}, blunder ${p.blunderChance} up to ${p.blunderMaxCp} cp, hang weight ${p.hangWeight}`,
+    );
     expect(b1400).toMatch(/games 2, errors 0, avg book plies 0\.0, graded moves 8/);
     expect(b1400).toMatch(/rate\s+bot\s+human\s+target\s+ok/);
     // Human 13.33 -> target 10.00: within. Human 20 -> target 15: outside.
