@@ -1,4 +1,4 @@
-import React, { type ReactNode, useEffect, useRef, useState } from "react";
+import React, { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import "./Player.css";
 import { useAppDispatch, useAppSelector } from "app/hooks";
@@ -15,6 +15,7 @@ import {
   tickInterval,
   TOTAL_MS,
 } from "../clock";
+import { CapturedKind, materialLine } from "../material";
 import { GameOverType } from "./GameOver";
 import { PlayerClock } from "./PlayerClock";
 import { avatarSrc as getAvatarSrc } from "./avatar";
@@ -47,6 +48,33 @@ export function clockForPhase(
   return isFresh ? clock : initialClock();
 }
 
+const GLYPHS: Record<"white" | "black", Record<CapturedKind, string>> = {
+  white: { queen: "♕", rook: "♖", bishop: "♗", knight: "♘", pawn: "♙" },
+  black: { queen: "♛", rook: "♜", bishop: "♝", knight: "♞", pawn: "♟" },
+};
+
+/** "+N" and the pieces this side has taken, drawn in the other side's color. */
+function Material({ isWhite }: { isWhite: boolean }) {
+  const engineHistory = useAppSelector((state) => state.board.engineHistory);
+  const position = engineHistory[engineHistory.length - 1];
+  const { captured, advantage } = useMemo(
+    () => materialLine(position, isWhite ? "white" : "black"),
+    [position, isWhite]
+  );
+  if (captured.length === 0 && advantage === 0) return null;
+  const glyphs = GLYPHS[isWhite ? "black" : "white"];
+  return (
+    <span className="player__material" data-material={advantage}>
+      {advantage > 0 && <span className="player__advantage">{`+${advantage}`}</span>}
+      {captured.length > 0 && (
+        <span className="player__captured" role="img" aria-label={`Captured: ${captured.join(", ")}`}>
+          {captured.map((kind) => glyphs[kind]).join("")}
+        </span>
+      )}
+    </span>
+  );
+}
+
 /** Delay until the shown value next changes: the next whole second (1000) or tenth (100). */
 export function msUntilNextTick(ms: number, interval: number): number {
   return (ms % interval) + 1;
@@ -67,9 +95,11 @@ export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) =
   const shownMs = remainingMs(clock, now);
   const interval = tickInterval(phase, shownMs);
 
-  // The timer reads the latest clock without being recreated on every tick.
+  // The clock itself: only the effect below writes it, and the timer reads it.
+  // `clock` state is a copy for rendering. Never copy the state back here: a
+  // render can run before the effect's setClock lands (his move right after a
+  // new game), and its old clock would undo the restart.
   const latestClock = useRef(clock);
-  latestClock.current = clock;
 
   // The game this clock last saw: a new id means a new game, so the time restarts.
   const seenGameId = useRef(gameId);
@@ -78,7 +108,6 @@ export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) =
     const t = Date.now();
     const isNewGame = seenGameId.current !== gameId;
     seenGameId.current = gameId;
-    // Set the ref too, so the timer effect below schedules from the new clock.
     const next = clockForPhase(phase, latestClock.current, t, isNewGame);
     latestClock.current = next;
     setClock(next);
@@ -127,6 +156,7 @@ export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) =
           {name}
           {detail != null && <div className="player__detail">{detail}</div>}
         </div>
+        <Material isWhite={isWhite} />
       </div>
       <PlayerClock remainingMs={shownMs} isActive={isActive} playerName={name} />
     </div>

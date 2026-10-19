@@ -3,209 +3,41 @@
   user-select: none;
 }
 
-/*
- * The squares sit in `.squares__grid` in every state. With the vs-Liem card open,
- * the grid dims and the card shares its grid cell, so on a small board the card
- * grows the box downward instead of being cut off.
- */
+/* The squares sit in `.squares__grid`; the promotion picker and the game-over notice sit over it. */
 .squares {
   display: grid;
   grid-template-columns: 1fr;
   position: relative;
 }
 
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-}
-
-.squares__grid,
-.squares__overlay {
-  grid-area: 1 / 1;
-}
-
 .squares__grid {
+  grid-area: 1 / 1;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   align-self: start;
 }
 
-.squares__grid.liem-dimmed {
-  pointer-events: none;
-}
-
-.squares__overlay {
-  /* Above the squares, whose pieces make their own stacking layers. */
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 12px 12px 0;
-}
-
-@media only screen and (min-width: 768px) {
-  .squares__overlay {
-    padding: 8% 6% 0;
-  }
-}
-
-/* vs Liem in a game: his book note, as wide as the sidebar boxes. */
-.liem-side {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: calc(13px * 24);
-  margin: 8px 0;
-}
-
-@media only screen and (min-width: 768px) {
-  .liem-side {
-    width: calc(13px * 32);
-  }
-}
-@media only screen and (min-width: 1200px) {
-  .liem-side {
-    width: calc(13px * 36);
-  }
-}
-
 /*
- * The cards above and below the board keep one height in every mode, so the
- * board never moves on a tab switch. Two-player cards are 56 px (a 40 px avatar
- * plus padding); his card fits the same by keeping its detail to one tight line.
+ * The game review (plan ui-refresh, ## Look) uses the board screen's layout: the
+ * board column with the step buttons under it, and the sidebar with the graph,
+ * the key-moment card, accuracy, the Moves card and "Left his book". Below
+ * 768 px the graph and the card are in the bottom sheet while it's open.
  */
-.board > .player {
-  height: 56px;
-  box-sizing: border-box;
-}
-
-.board > .player:has(.player__detail) .player__info,
-.board > .player:has(.player__detail) .player__name {
-  min-width: 0;
-}
-
-.board > .player:has(.player__detail) .player__name {
-  line-height: 1.2;
-}
-
-/* His name stays on one line (cut short on a narrow board), so his detail fits under it. */
-.board > .player .player__name:has(.liem-detail) {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.board > .player .liem-detail {
-  flex-wrap: nowrap;
-  margin-top: 1px;
-  line-height: 1.2;
-}
-
-/* The badge or "Thinking…" wins; the line ends in an ellipsis when it can't fit
-   (decision 2026-10-11), and screen readers still get the whole line. */
-.board > .player .liem-detail__sub {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.board > .player .liem-badge,
-.board > .player .liem-detail__thinking {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-/* One line tall in the card. The border sits inside the height, so the bordered
-   Stockfish pill is the badge's outer size. */
-.board > .player .liem-badge {
-  box-sizing: border-box;
-  height: 1.2em;
-  padding: 0 8px;
-}
-
-.board > .player .liem-badge--engine {
-  padding: 0 7px;
-}
-
-/* His gold star sits in the name line at the name's size. */
-.board > .player .liem-star {
-  font-size: inherit;
-  margin-right: 4px;
-}
-
-/* On a phone the 312 px board leaves the line about 136 px: "Liem's openings"
-   (or "GM · 2732") beside "★ Book", the Stockfish pill or "Thinking…". The note
-   below gives the game count. Hidden from sight, still read out. */
-@media only screen and (max-width: 767px) {
-  .board > .player .liem-detail__lead,
-  .board > .player .liem-badge__count {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
-
-/*
- * The game review (plan post-game-review, ## Look). Its root adds no box, so the
- * graph, the board and the sidebar stay items of `.app`: the graph runs full
- * width above the other two (App.css wraps the row), and below 992 px all three
- * stack. The sidebar holds the card, the accuracy, the move list, the book note
- * and the buttons; below 768 px the card is in the bottom sheet instead.
- */
-.review {
-  display: contents;
-}
-
-.review-top {
-  box-sizing: border-box;
-  width: calc(13px * 24);
-  max-width: 100%;
-}
-
 .review-board-steps {
-  margin-top: 10px;
+  margin-top: var(--space-3);
 }
 
-.review-side {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: calc(13px * 24);
-  margin: 8px 0;
+/* Play again, on the right of the review's top bar. */
+.top-bar > .top-bar__action {
+  flex-shrink: 0;
+  min-height: 40px;
+  margin-left: auto;
+  padding: var(--space-2) var(--space-3);
 }
 
-.review-side > .board-sidebar {
-  margin: 0;
-  min-height: 0;
-}
-
-@media only screen and (min-width: 768px) {
-  .review-top,
-  .review-side {
-    width: calc(13px * 32);
-  }
-}
-
-@media only screen and (min-width: 992px) {
-  .review-top {
-    grid-column: 1 / -1;
-    width: 100%;
-  }
-
-  .review-side {
-    margin-top: 0;
-  }
-}
-
-@media only screen and (min-width: 1200px) {
-  .review-side {
-    width: calc(13px * 36);
+/* On a phone, room below the page for the low sheet, so the board can scroll above it. */
+@media only screen and (max-width: 767px) {
+  .review:has(.review-sheet--low:not([hidden])) {
+    padding-bottom: 40vh;
   }
 }

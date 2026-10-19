@@ -131,8 +131,8 @@ function Rows({ rows, cursor, bookPlies, keyIndex, onSelect }: RowsProps) {
   return (
     <>
       {rows.map((row) => (
-        <div className="move-list__row" key={`${row.number}-${row.white?.ply ?? "b"}`}>
-          <span className="move-list__num">{row.number}.</span>
+        <div className="move-list__row scoresheet__row" key={`${row.number}-${row.white?.ply ?? "b"}`}>
+          <span className="move-list__num scoresheet__num">{row.number}.</span>
           {cell(row.white, row.black !== null)}
           {cell(row.black, false)}
         </div>
@@ -201,7 +201,7 @@ export const MoveList = ({ model, cursor, onSelect }: Props) => {
   const rowsProps = { cursor, bookPlies, keyIndex, onSelect };
 
   return (
-    <div className="move-list" ref={listRef} aria-label="Moves">
+    <div className="move-list scoresheet" ref={listRef} aria-label="Moves">
       {bookPlies > 0 && (
         <div className="move-list__fold">
           <button

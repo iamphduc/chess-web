@@ -62,7 +62,7 @@ function Body({ view, outText, onRetry }: { view: BookNoteView; outText: string;
   }
 }
 
-/** The margin note for his book: olive edge in book, red once he's out of it. */
+/** The margin note for his book: an ochre edge in book, red ink once he's out of it. */
 export const BookNote = ({ onRetry }: Props) => {
   const engineHistory = useAppSelector((s) => s.board.engineHistory);
   const gameId = useAppSelector((s) => s.board.gameId);

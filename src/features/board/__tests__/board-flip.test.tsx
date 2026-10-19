@@ -100,8 +100,10 @@ describe("board flip", () => {
   it("flip button reflects state", () => {
     const store = makeStore();
     const flipButton = (html: string) => {
-      const buttons = html.match(/<div class="buttons">[\s\S]*?<\/div>/)?.[0] ?? "";
-      return buttons.match(/<button[^>]*aria-label="Flip board"[^>]*>/)?.[0] ?? "";
+      // The Moves card's foot, the one row of controls on the board screen.
+      const foot = html.match(/<div class="card__foot">[\s\S]*?<\/div>/)?.[0] ?? "";
+      expect(html).not.toMatch(/class="buttons"/);
+      return foot.match(/<button[^>]*aria-label="Flip board"[^>]*>/)?.[0] ?? "";
     };
 
     const before = flipButton(render(store, <Board />));
@@ -109,7 +111,10 @@ describe("board flip", () => {
     expect(before).toMatch(/aria-pressed="false"/);
 
     store.dispatch(toggleFlip());
-    expect(flipButton(render(store, <Board />))).toMatch(/aria-pressed="true"/);
+    const flipped = render(store, <Board />);
+    expect(flipButton(flipped)).toMatch(/aria-pressed="true"/);
+    // The cards follow the flip: white on top.
+    expect(nameOrder(flipped)).toEqual(["white", "black"]);
   });
 
   it("promotion picker placed for flipped board", () => {

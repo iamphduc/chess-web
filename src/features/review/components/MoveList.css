@@ -1,44 +1,30 @@
 /*
- * Layout for the review's sidebar panels: the move list, the accuracy panel and
- * the step buttons' row (plan post-game-review, ## Look). The look itself
- * (.review-move, .review-grade--*, .review-step, .review-accuracy) is in
- * src/styles/review.css; colors here come only from tokens in src/index.css.
+ * Layout for the review's sidebar panels: the move list (a .scoresheet in the
+ * flush Moves card), the accuracy card and the step buttons' row (plan
+ * ui-refresh, ## Look). The look itself (.review-move, .review-grade--*,
+ * .review-step, .review-accuracy) is in src/styles/review.css; the rows, the
+ * move number and the card come from src/styles/look.css. Tokens only.
  */
 
-/* The move list: rows by move number, scrolling inside itself. */
+/* The move list: scoresheet rows by move number, scrolling inside the card. */
 .move-list {
   position: relative;
-  box-sizing: border-box;
   max-height: 300px;
   overflow-y: auto;
-  padding: 4px;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--liem-text);
-  background-color: var(--liem-note);
-  border-radius: 6px;
+  padding: var(--space-2) 0;
+  color: var(--ink);
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
 }
 
-.move-list__row {
+/* Number, White, Black: the same columns as the game's Moves card. */
+.move-list .move-list__row {
   display: grid;
-  grid-template-columns: 36px 1fr 1fr;
+  grid-template-columns: 2.5em 1fr 1fr;
   align-items: center;
-  gap: 4px;
-  min-height: 30px;
-  padding: 1px 4px;
-  border-radius: 4px;
-}
-
-.move-list__row:nth-child(even) {
-  background-color: var(--liem-card);
-}
-
-.move-list__num {
-  font-size: 15px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  color: var(--liem-text-soft);
+  gap: var(--space-1);
+  min-height: 32px;
+  padding: 0 var(--space-3);
 }
 
 .move-list__row > .review-move {
@@ -46,8 +32,8 @@
 }
 
 .move-list__gap {
-  padding: 0 8px;
-  color: var(--liem-text-soft);
+  padding: 0 var(--space-2);
+  color: var(--soft);
 }
 
 .move-list__book-icon {
@@ -62,21 +48,22 @@
   margin-left: 2px;
 }
 
-/* Key moment numbers, in the gold of his star. */
+/* Key moment numbers: ink on cream with an ochre ring, like his book badge. */
 .move-list__key {
-  margin-left: 4px;
+  margin-left: var(--space-1);
   padding: 0 5px;
-  font-size: 12px;
+  font-size: var(--text-small);
   font-weight: 700;
-  line-height: 16px;
-  color: var(--grade-ink);
-  background-color: var(--liem-gold);
+  line-height: 18px;
+  color: var(--ink);
+  background-color: var(--surface);
+  border: 1px solid var(--gold);
   border-radius: 999px;
 }
 
 /* The "In his book" fold. */
 .move-list__fold {
-  margin-bottom: 4px;
+  margin: 0 var(--space-3) var(--space-1);
 }
 
 .move-list__fold-button {
@@ -84,21 +71,20 @@
   -webkit-appearance: none;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  box-sizing: border-box;
+  gap: var(--space-2);
   width: 100%;
   margin: 0;
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-3);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--text-small);
   font-weight: 500;
   line-height: 1.35;
   text-align: left;
-  color: var(--liem-text);
-  background-color: var(--liem-card);
-  border: 0;
+  color: var(--ink);
+  background-color: var(--surface);
+  border: 1px solid var(--line);
   border-left: 3px solid var(--grade-book);
-  border-radius: 4px;
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
@@ -108,7 +94,7 @@
 }
 
 .move-list__fold-button:hover {
-  background-color: var(--liem-line);
+  background-color: var(--surface-2);
 }
 
 .move-list__fold-button:focus-visible {
@@ -122,56 +108,49 @@
 
 .move-list__fold-sub {
   display: block;
-  color: var(--liem-text-soft);
+  color: var(--soft);
 }
 
 .move-list__chevron {
   margin-left: auto;
-  color: var(--liem-text-soft);
+  color: var(--soft);
 }
 
 .move-list__fold-rows {
-  margin-top: 4px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--liem-line);
+  margin: var(--space-1) calc(-1 * var(--space-3)) 0;
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--line);
 }
 
-/* The accuracy panel: the 28 px number with its label, then the counts. */
-.accuracy-panel {
-  box-sizing: border-box;
-  padding: 10px 12px;
-  color: var(--liem-text);
-  background-color: var(--liem-note);
-  border-radius: 8px;
-}
-
+/* The accuracy card: the number with its label, then the counts on raised tiles. */
 .accuracy-panel__main {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .accuracy-panel__label {
-  font-size: 14px;
+  font-size: var(--text-small);
   font-weight: 700;
-  color: var(--liem-text-soft);
+  color: var(--soft);
 }
 
 .accuracy-panel__counts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 2px 16px;
-  margin: 8px 0 0;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
 }
 
 .accuracy-panel__count {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-  padding-top: 2px;
-  font-size: 15px;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  font-size: var(--text-small);
   font-weight: 700;
-  border-top: 1px solid var(--liem-line);
+  background-color: var(--surface-2);
+  border-radius: var(--radius);
 }
 
 .accuracy-panel__count dt,
@@ -187,7 +166,7 @@
 .review-steps {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 /* Text for screen readers only. */

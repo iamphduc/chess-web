@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI refresh: three looks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Source+Sans+3:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* Draft page chrome (neutral, not part of any direction) */
+  :root { --page-bg: #E9E9E6; --page-ink: #1A1A1A; --page-soft: #5C5C58; --page-line: #CFCFCA; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg: #121212; --page-ink: #EDEDED; --page-soft: #A0A0A0; --page-line: #2C2C2C; } }
+  :root[data-theme="dark"] { --page-bg: #121212; --page-ink: #EDEDED; --page-soft: #A0A0A0; --page-line: #2C2C2C; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page-bg); color: var(--page-ink); font: 15px/1.5 system-ui, sans-serif; }
+  .page { max-width: 1500px; margin: 0 auto; padding: 24px 16px 64px; }
+  .page > h1 { font-size: 22px; margin: 0 0 4px; }
+  .page > p { margin: 0 0 20px; color: var(--page-soft); max-width: 900px; }
+  .row-title { font: 600 13px/1 system-ui; letter-spacing: .06em; text-transform: uppercase; color: var(--page-soft); margin: 36px 0 10px; padding-top: 14px; border-top: 1px solid var(--page-line); }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 1100px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .cell { min-width: 0; }
+  .cell > .label { font: 700 13px/1.2 system-ui; margin: 0 0 8px; color: var(--page-ink); }
+  .scaler { overflow: hidden; border-radius: 10px; border: 1px solid var(--page-line); }
+  .scaler > .inner { transform-origin: 0 0; }
+
+  /* ---------- Direction tokens, scoped per column ---------- */
+  .dir-a { --bg:#191919; --surface:#232323; --surface-2:#2C2C2C; --line:#3A3A3A; --ink:#FFFFFF; --soft:#B8B8B8; --accent:#DA251D; --gold:#FFCD00; --go:#047A4F; --go-ink:#FFFFFF;
+    --sq-light:#EAF0CE; --sq-dark:#BBBE64; --display:'Quicksand',sans-serif; --body:'Quicksand',sans-serif; --radius:10px; --mono:'Quicksand',sans-serif; --good:#7AC74F; --bad:#E5534B; }
+  .dir-b { --bg:#F4EFE4; --surface:#FBF8F1; --surface-2:#EFE8D8; --line:#DCD2BD; --ink:#1E1B16; --soft:#6B6457; --accent:#A8322B; --gold:#B8860B; --go:#1E1B16; --go-ink:#FBF8F1;
+    --sq-light:#F0E3C8; --sq-dark:#B98B5E; --display:'Fraunces',serif; --body:'Source Sans 3',sans-serif; --radius:4px; --mono:'Fraunces',serif; --good:#3E7D3A; --bad:#A8322B; }
+  .dir-c { --bg:#0E1520; --surface:#162131; --surface-2:#1E2B3F; --line:#2A3A52; --ink:#E8EEF7; --soft:#8EA0B8; --accent:#2DD4BF; --gold:#F5C542; --go:#2DD4BF; --go-ink:#06201D;
+    --sq-light:#D5DEE9; --sq-dark:#6F86A6; --display:'Space Grotesk',sans-serif; --body:'Inter',sans-serif; --radius:14px; --mono:'Space Grotesk',sans-serif; --good:#4ADE80; --bad:#F87171; }
+
+  .app { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; }
+  .app h2, .app h3 { font-family: var(--display); margin: 0; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .dir-a .card.marked { border-top: 3px solid var(--accent); }
+  .dir-b .card { box-shadow: 0 1px 0 var(--line); }
+  .dir-c .card { border-color: transparent; background: linear-gradient(180deg, var(--surface-2), var(--surface)); }
+  .soft { color: var(--soft); }
+  .stack > * + * { margin-top: 12px; }
+
+  /* Buttons */
+  .btn { font: 700 15px/1 var(--body); border-radius: var(--radius); padding: 12px 18px; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .btn.primary { background: var(--go); color: var(--go-ink); }
+  .btn.primary.hover { filter: brightness(1.12); }
+  .btn.primary.pressed { filter: brightness(.88); transform: translateY(1px); }
+  .btn.secondary { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn.secondary.hover { background: var(--surface-2); }
+  .btn.secondary.pressed { background: var(--line); }
+  .btn.icon { padding: 10px; width: 40px; height: 40px; justify-content: center; background: var(--surface-2); color: var(--ink); }
+  .btn.icon.on { background: var(--go); color: var(--go-ink); }
+  .btn[disabled] { opacity: .4; cursor: default; }
+  .dir-c .btn.primary { box-shadow: 0 0 0 1px rgba(45,212,191,.35), 0 6px 24px rgba(45,212,191,.25); }
+  .dir-b .btn { text-transform: none; letter-spacing: .01em; }
+
+  /* Level picker */
+  .levels { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .lvl { border: 1px solid var(--line); border-radius: calc(var(--radius) - 2px); padding: 10px 2px 8px; text-align: center; font: 600 12px/1.2 var(--body); color: var(--soft); background: transparent; }
+  .lvl .bar { display: block; height: 4px; border-radius: 2px; margin: 0 6px 8px; background: var(--line); }
+  .lvl.sel { color: var(--ink); border-color: var(--ink); }
+  .lvl.sel .bar, .lvl.below .bar { background: var(--accent); }
+  .dir-a .lvl.sel .bar, .dir-a .lvl.below .bar { background: var(--gold); }
+  .lvl.hover { background: var(--surface-2); color: var(--ink); }
+  .lvl.boss { color: var(--gold); }
+  .lvl.boss .bar { background: var(--gold); opacity: .45; }
+  .dir-c .lvl.sel { box-shadow: 0 0 16px rgba(45,212,191,.35); border-color: var(--accent); }
+
+  /* Color tiles */
+  .colors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .tile { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 4px; text-align: center; font: 600 13px/1.2 var(--body); color: var(--soft); }
+  .tile b { display: block; font-size: 22px; line-height: 1.1; color: var(--ink); margin-bottom: 4px; }
+  .tile.sel { border-color: var(--gold); color: var(--ink); }
+  .dir-b .tile.sel { border-color: var(--ink); background: var(--surface-2); }
+  .dir-c .tile.sel { border-color: var(--accent); }
+  .tile.hover { background: var(--surface-2); }
+
+  /* Home */
+  .home { padding: 20px 16px 28px; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 700 16px/1 var(--display); }
+  .mark { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-2); color: var(--ink); font-size: 20px; }
+  .dir-a .mark { background: var(--accent); color: #fff; }
+  .dir-b .mark { background: var(--ink); color: var(--surface); border-radius: 50%; }
+  .dir-c .mark { background: var(--accent); color: var(--go-ink); }
+  .hero { margin: 28px 0 22px; }
+  .hero h2 { font-size: 30px; line-height: 1.1; letter-spacing: -.01em; }
+  .dir-b .hero h2 { font-size: 34px; font-weight: 500; }
+  .hero p { margin: 10px 0 0; color: var(--soft); }
+  .field-label { display: flex; justify-content: space-between; align-items: baseline; font: 700 13px/1 var(--body); margin: 18px 0 8px; }
+  .field-label span:last-child { font: 600 13px/1 var(--body); color: var(--soft); }
+  .play { width: 100%; justify-content: center; margin-top: 20px; padding: 15px; font-size: 16px; }
+  .alt { display: block; text-align: center; margin-top: 14px; color: var(--soft); font-weight: 600; font-size: 14px; }
+  .steps3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 26px; }
+  .steps3 div { font-size: 12px; color: var(--soft); border-top: 2px solid var(--line); padding-top: 8px; }
+  .steps3 b { display: block; color: var(--ink); font: 700 13px/1.3 var(--display); margin-bottom: 2px; }
+
+  /* Board */
+  .board { display: grid; grid-template-columns: repeat(8, 1fr); aspect-ratio: 1; border-radius: calc(var(--radius) / 2); overflow: hidden; }
+  .sq { display: grid; place-items: center; font-size: var(--pc, 26px); line-height: 1; position: relative; }
+  .sq.l { background: var(--sq-light); } .sq.d { background: var(--sq-dark); }
+  .sq.hl::after { content: ""; position: absolute; inset: 0; background: rgba(255, 220, 0, .38); }
+  .dir-c .sq.hl::after { background: rgba(45, 212, 191, .35); }
+  .sq .p { position: relative; z-index: 1; }
+  .sq .p.w { color: #FFFFFF; text-shadow: 0 0 1px #000, 0 0 1px #000, 0 1px 0 #000; }
+  .sq .p.b { color: #111111; }
+
+  /* Player card */
+  .player { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .ava { width: 40px; height: 40px; border-radius: 8px; background: var(--surface-2); display: grid; place-items: center; font-size: 24px; flex: 0 0 40px; color: var(--ink); }
+  .dir-b .ava { border-radius: 50%; }
+  .ava.photo { background: linear-gradient(135deg, #8a5a44, #d9a77a); color: transparent; }
+  .who { flex: 1; min-width: 0; }
+  .who b { display: block; font: 700 15px/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .who small { display: block; color: var(--soft); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gm { font: 700 10px/1 var(--body); background: var(--accent); color: #fff; padding: 2px 4px; border-radius: 3px; margin-right: 4px; vertical-align: 1px; }
+  .dir-c .gm { color: var(--go-ink); }
+  .mat { color: var(--soft); font-size: 13px; margin-left: 4px; letter-spacing: -1px; }
+  .clock { font: 700 20px/1 var(--mono); padding: 8px 12px; border-radius: calc(var(--radius) - 2px); background: var(--surface-2); color: var(--soft); min-width: 86px; text-align: right; font-variant-numeric: tabular-nums; }
+  .clock.run { background: var(--ink); color: var(--bg); }
+  .dir-c .clock.run { background: var(--accent); color: var(--go-ink); }
+  .pill { font: 600 11px/1 var(--body); border: 1px solid var(--line); border-radius: 99px; padding: 3px 7px; color: var(--soft); margin-left: 6px; }
+  .pill.book { color: var(--gold); border-color: var(--gold); }
+
+  /* Screen layout (desktop) */
+  .screen { width: 1280px; height: 800px; display: flex; flex-direction: column; }
+  .topbar { height: 56px; display: flex; align-items: center; gap: 14px; padding: 0 24px; border-bottom: 1px solid var(--line); }
+  .topbar .crumb { color: var(--soft); font-weight: 600; }
+  .topbar .grow { flex: 1; }
+  .main { flex: 1; display: grid; grid-template-columns: 600px 380px; gap: 24px; justify-content: center; padding: 24px; }
+  .main .boardcol { --pc: 52px; }
+  .side { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  .note h3 { font-size: 15px; margin-bottom: 4px; }
+  .note { font-size: 13.5px; }
+  .dir-a .note { border-left: 3px solid var(--gold); }
+  .dir-b .note { border-left: 3px solid var(--accent); }
+  .dir-c .note { border-left: 3px solid var(--accent); }
+  .moves { font: 500 14px/1 var(--mono); padding: 8px 0; }
+  .moves .r { display: grid; grid-template-columns: 34px 1fr 1fr; padding: 7px 16px; }
+  .moves .r:nth-child(odd) { background: var(--surface-2); }
+  .moves .n { color: var(--soft); }
+  .moves .cur { background: var(--ink); color: var(--bg); border-radius: 4px; padding: 2px 6px; margin: -2px -6px; }
+  .moves .q { color: var(--bad); font-weight: 700; }
+  .ctrls { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); }
+  .ctrls .grow { flex: 1; }
+  .movecard { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .movecard .head { padding: 12px 16px 4px; font: 700 13px/1 var(--display); color: var(--soft); text-transform: uppercase; letter-spacing: .06em; }
+  .dir-b .movecard .head { text-transform: none; letter-spacing: 0; font-size: 15px; color: var(--ink); }
+
+  /* Review sidebar */
+  .graph { padding: 12px 12px 8px; }
+  .graph .gh { display: flex; justify-content: space-between; font: 700 12px/1 var(--body); color: var(--soft); margin: 0 4px 8px; }
+  .graph svg { display: block; width: 100%; height: 80px; }
+  .kmc h3 { font-size: 20px; margin: 2px 0 4px; }
+  .acc { display: flex; align-items: baseline; gap: 10px; }
+  .acc b { font: 700 30px/1 var(--display); }
+  .counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; font-size: 13px; }
+  .counts div { background: var(--surface-2); border-radius: calc(var(--radius) - 4px); padding: 8px; }
+  .counts b { display: block; font: 700 18px/1 var(--display); margin-bottom: 4px; }
+
+  /* Phone screen */
+  .phone { width: 375px; }
+  .phone .topbar { height: 48px; padding: 0 16px; }
+  .phone .pmain { padding: 8px 16px 16px; --pc: 30px; }
+  .sheet { margin: 12px -16px -16px; border-radius: 16px 16px 0 0; padding: 14px 16px 20px; background: var(--surface); border-top: 1px solid var(--line); }
+
+  /* Palette + type rows */
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px; }
+  .sw { border-radius: 8px; border: 1px solid var(--line); overflow: hidden; font-size: 11.5px; }
+  .sw i { display: block; height: 44px; }
+  .sw span { display: block; padding: 6px 8px; }
+  .types { padding: 16px; }
+  .types > div { display: flex; gap: 12px; align-items: baseline; border-bottom: 1px solid var(--line); padding: 8px 0; }
+  .types small { width: 74px; color: var(--soft); font: 600 11px/1 var(--body); flex: 0 0 74px; }
+  .ctlgrid { padding: 16px; display: grid; gap: 14px; }
+  .ctlgrid .lab { font: 600 11px/1 var(--body); color: var(--soft); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .flexrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .thesis { padding: 16px 16px 0; }
+  .thesis b { font-family: var(--display); font-size: 18px; display: block; margin-bottom: 4px; }
+  .thesis p { margin: 0 0 6px; color: var(--soft); font-size: 13.5px; }
+  .asbuilt { font-size: 13px; color: var(--page-soft); margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>UI refresh: three looks</h1>
+  <p>The same screens drawn three ways: the new home page, the board screen with no tabs or challenge card, and the review with its graph moved into the sidebar. The levels show names, not ratings. The names here are placeholders until you pick them. Fallen pieces become a "+N" line on each player card. All three use one spacing scale (4, 8, 12, 16, 24 px).</p>
+
+  <div class="row-title">1 · Each look whole: idea and home page at 375 px</div>
+  <div class="grid" id="r-whole"></div>
+
+  <div class="row-title">2 · Palette</div>
+  <div class="grid" id="r-palette"></div>
+
+  <div class="row-title">3 · Type scale</div>
+  <div class="grid" id="r-type"></div>
+
+  <div class="row-title">4 · Controls in every state</div>
+  <div class="grid" id="r-controls"></div>
+
+  <div class="row-title">5 · Player cards (sparring bot, Liem, you)</div>
+  <div class="grid" id="r-players"></div>
+
+  <div class="row-title">6 · Board screen, desktop (1280 × 800, scaled)</div>
+  <div class="grid" id="r-desk"></div>
+
+  <div class="row-title">7 · Review, desktop: the graph in the sidebar (1280 × 800, scaled)</div>
+  <div class="grid" id="r-review"></div>
+
+  <div class="row-title">8 · Review on a phone (375 px): graph at the top of the sheet</div>
+  <div class="grid" id="r-phone-review"></div>
+</div>
+
+<script>
+const DIRS = [
+  { key: "a", name: "A · Club room", thesis: "Today's dark Liem look, cleaned up: one card style, one spacing scale, red for marks and gold for levels.",
+    detail: "A thin red rule on top of the card that needs you now (setup, key moment).",
+    palette: [["--bg","#191919","Page"],["--surface","#232323","Card"],["--surface-2","#2C2C2C","Raised"],["--ink","#FFFFFF","Text"],["--soft","#B8B8B8","Soft text"],["--accent","#DA251D","Red, marks"],["--gold","#FFCD00","Gold, levels"],["--go","#047A4F","Play"]],
+    fonts: "Quicksand 700 / Quicksand 500" },
+  { key: "b", name: "B · Scorebook", thesis: "A light, paper-like study: a serif scorebook for the moves, a wooden board, ink-black buttons.",
+    detail: "Moves set in a serif like a handwritten scoresheet; marks in red ink.",
+    palette: [["--bg","#F4EFE4","Page"],["--surface","#FBF8F1","Card"],["--surface-2","#EFE8D8","Raised"],["--ink","#1E1B16","Text"],["--soft","#6B6457","Soft text"],["--accent","#A8322B","Red ink"],["--gold","#B8860B","Ochre, levels"],["--go","#1E1B16","Play"]],
+    fonts: "Fraunces 500–700 / Source Sans 3 400–700" },
+  { key: "c", name: "C · Night match", thesis: "A cool, modern night theme: navy panels, a slate-blue board, one teal accent that glows on what you pick.",
+    detail: "The picked level and the running clock glow teal.",
+    palette: [["--bg","#0E1520","Page"],["--surface","#162131","Card"],["--surface-2","#1E2B3F","Raised"],["--ink","#E8EEF7","Text"],["--soft","#8EA0B8","Soft text"],["--accent","#2DD4BF","Teal"],["--gold","#F5C542","Gold, Liem"],["--go","#2DD4BF","Play"]],
+    fonts: "Space Grotesk 500–700 / Inter 400–700" },
+];
+const LEVELS = ["Easy","Medium","Hard","Harder","Expert","Master","★ Liem"];
+const SEL = 1;
+
+const P = { K:"♚",Q:"♛",R:"♜",B:"♝",N:"♞",P:"♟" };
+function board(fen, hl = []) {
+  const rows = fen.split(" ")[0].split("/"); let h = '<div class="board">';
+  rows.forEach((r, ri) => { let fi = 0; for (const ch of r) {
+    if (/\d/.test(ch)) { for (let k = 0; k < +ch; k++) { h += sq(ri, fi, ""); fi++; } }
+    else { const w = ch === ch.toUpperCase(); h += sq(ri, fi, `<span class="p ${w ? "w" : "b"}">${P[ch.toUpperCase()]}</span>`); fi++; } } });
+  function sq(r, f, inner) { const name = "abcdefgh"[f] + (8 - r); return `<div class="sq ${(r + f) % 2 ? "d" : "l"}${hl.includes(name) ? " hl" : ""}">${inner}</div>`; }
+  return h + "</div>";
+}
+const FEN_GAME = "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 5";
+const FEN_MATE = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3";
+
+const levelsHtml = (hover) => `<div class="levels">${LEVELS.map((l, i) =>
+  `<div class="lvl${i === SEL ? " sel" : ""}${i < SEL ? " below" : ""}${i === 6 ? " boss" : ""}${hover === i ? " hover" : ""}"><span class="bar"></span>${l}</div>`).join("")}</div>`;
+const colorsHtml = (hover) => `<div class="colors">${[["♔","White"],["♚","Black"],["?","Random"]].map(([g, n], i) =>
+  `<div class="tile${i === 0 ? " sel" : ""}${hover === i ? " hover" : ""}"><b>${g}</b>${n}</div>`).join("")}</div>`;
+
+function home(d) {
+  return `<div class="app dir-${d.key} home phone">
+    <div class="brand"><span class="mark">♞</span>Sparring</div>
+    <div class="hero"><h2>Practice a grandmaster's openings.</h2>
+      <p>Bots play GM Le Quang Liem's opening lines from his real games, then Stockfish takes over at the level you pick. Every game ends with a review.</p></div>
+    <div class="field-label"><span>Level</span><span>${LEVELS[SEL]}</span></div>
+    ${levelsHtml()}
+    <div class="field-label"><span>You play</span><span></span></div>
+    ${colorsHtml()}
+    <button class="btn primary play">Play</button>
+    <a class="alt">Two players on one board →</a>
+    <div class="steps3"><div><b>His openings</b>From 1,700+ of his games</div><div><b>Then Stockfish</b>At your level</div><div><b>Review</b>Find your better moves</div></div>
+  </div>`;
+}
+
+function player(kind) {
+  if (kind === "bot") return `<div class="player"><div class="ava">♞</div><div class="who"><b>Medium</b><small>Plays Liem's openings<span class="pill book">★ Book · 807</span></small></div><div class="clock">09:51</div></div>`;
+  if (kind === "liem") return `<div class="player"><div class="ava photo">L</div><div class="who"><b><span class="gm">GM</span>Le Quang Liem</b><small>2732<span class="pill">Stockfish</span></small></div><div class="clock">09:12</div></div>`;
+  return `<div class="player"><div class="ava">♙</div><div class="who"><b>You <span class="mat">+1 ♟</span></b><small>&nbsp;</small></div><div class="clock run">08:47</div></div>`;
+}
+
+function movesCard(withCtrls, review) {
+  const rows = review
+    ? [["1.","f3","e5"],["2.",'g4 <span class="q">??</span>','<span class="cur">Qh4#</span>']]
+    : [["1.","e4","e5"],["2.","Nf3","Nc6"],["3.","Bc4","Bc5"],["4.","d3",'<span class="cur">Nf6</span>']];
+  return `<div class="card movecard"><div class="head">Moves</div><div class="moves">${rows.map(r => `<div class="r"><span class="n">${r[0]}</span><span>${r[1]}</span><span>${r[2]}</span></div>`).join("")}</div>
+    ${withCtrls ? `<div class="ctrls"><button class="btn secondary">New game</button><span class="grow"></span><button class="btn icon" title="Flip">⇅</button><button class="btn icon on" title="Sound">🔊</button></div>` : ""}</div>`;
+}
+
+function graph() {
+  return `<div class="card graph"><div class="gh"><span>Win % · you</span><span>move 2 · −46</span></div>
+    <svg viewBox="0 0 300 80" preserveAspectRatio="none">
+      <line x1="0" y1="40" x2="300" y2="40" stroke="var(--line)" stroke-dasharray="3 3"/>
+      <path d="M0,38 L60,39 L120,40 L180,44 L240,78 L300,79 L300,80 L0,80 Z" fill="var(--surface-2)"/>
+      <path d="M0,38 L60,39 L120,40 L180,44 L240,78 L300,79" fill="none" stroke="var(--ink)" stroke-width="2"/>
+      <circle cx="240" cy="78" r="5" fill="var(--bad)"/>
+    </svg></div>`;
+}
+
+function deskScreen(d, review) {
+  const side = review
+    ? `${graph()}<div class="card marked kmc"><span class="soft" style="font-size:13px">1 key moment ready</span><h3>Find a better move</h3><p class="soft" style="margin:0 0 12px;font-size:13.5px">Move 2: you played g4??</p><button class="btn primary">Start with move 2</button></div>
+       <div class="card"><div class="acc"><b>27%</b><span class="soft">Your accuracy</span></div><div class="counts"><div><b>0</b>?! Inaccuracies</div><div><b>0</b>? Mistakes</div><div><b>1</b>?? Blunders</div></div></div>
+       ${movesCard(false, true)}`
+    : `<div class="card note"><h3>In his book</h3><span class="soft">In 807 of his games here, he played 4…Nf6 most.</span></div>${movesCard(true, false)}`;
+  return `<div class="app dir-${d.key} screen">
+    <div class="topbar"><button class="btn secondary" style="padding:8px 12px">← Home</button><span class="crumb">${review ? "Review · vs Medium" : "vs Medium · you play White"}</span><span class="grow"></span>${review ? `<button class="btn secondary" style="padding:8px 12px">Play again</button>` : ""}</div>
+    <div class="main"><div class="boardcol">${player(review ? "liem" : "bot")}${board(review ? FEN_MATE : FEN_GAME, review ? ["d8","h4"] : ["g8","f6"])}${player("you")}</div>
+      <div class="side">${side}</div></div></div>`;
+}
+
+function phoneReview(d) {
+  return `<div class="app dir-${d.key} phone">
+    <div class="topbar"><button class="btn secondary" style="padding:6px 10px">← Home</button><span class="crumb">Review</span></div>
+    <div class="pmain">${player("liem")}${board(FEN_MATE, ["d8","h4"])}${player("you")}
+      <div class="sheet stack">${graph()}<div><span class="soft" style="font-size:13px">1 key moment ready</span><h3 style="font-size:19px">Find a better move</h3></div><button class="btn primary" style="width:100%;justify-content:center">Start with move 2</button></div>
+    </div></div>`;
+}
+
+function controls(d) {
+  return `<div class="app dir-${d.key}"><div class="ctlgrid">
+    <div><div class="lab">Primary: default · hover · pressed · disabled</div><div class="flexrow"><button class="btn primary">Play</button><button class="btn primary hover">Play</button><button class="btn primary pressed">Play</button><button class="btn primary" disabled>Play</button></div></div>
+    <div><div class="lab">Secondary: default · hover · pressed</div><div class="flexrow"><button class="btn secondary">New game</button><button class="btn secondary hover">New game</button><button class="btn secondary pressed">New game</button></div></div>
+    <div><div class="lab">Icon buttons: flip · sound on</div><div class="flexrow"><button class="btn icon">⇅</button><button class="btn icon on">🔊</button><button class="btn icon">🔈</button></div></div>
+    <div><div class="lab">Level: picked "Medium", hover on "Hard"</div>${levelsHtml(2)}</div>
+    <div><div class="lab">You play: picked White, hover on Black</div>${colorsHtml(1)}</div>
+  </div></div>`;
+}
+
+function palette(d) {
+  return `<div class="app dir-${d.key}"><div class="swatches">${d.palette.map(([t, v, n]) => `<div class="sw"><i style="background:${v}"></i><span><b>${n}</b><br>${v}</span></div>`).join("")}
+    <div class="sw"><i style="background:linear-gradient(90deg,var(--sq-light) 50%,var(--sq-dark) 50%)"></i><span><b>Board</b><br>light / dark</span></div></div></div>`;
+}
+
+function type(d) {
+  return `<div class="app dir-${d.key}"><div class="types">
+    <div><small>Hero 30</small><h2 style="font-size:30px">Practice his openings</h2></div>
+    <div><small>Title 20</small><h3 style="font-size:20px">Find a better move</h3></div>
+    <div><small>Body 15</small><span>Stockfish takes over at the level you pick.</span></div>
+    <div><small>Soft 13</small><span class="soft" style="font-size:13px">In 807 of his games here, he played:</span></div>
+    <div><small>Moves 14</small><span style="font:500 14px/1 var(--mono)">1. e4 e5 2. Nf3 Nc6 3. Bc4</span></div>
+    <div><small>Clock 20</small><span class="clock run">08:47</span></div>
+    <div><small>Fonts</small><span class="soft" style="font-size:13px">${d.fonts}</span></div>
+  </div></div>`;
+}
+
+function scaled(html, w, h, colW) { return { html, w, h }; }
+
+function put(rowId, fn, opts = {}) {
+  const row = document.getElementById(rowId);
+  row.innerHTML = DIRS.map(d => `<div class="cell"><div class="label">${d.name}</div>${opts.scale ? `<div class="scaler" data-w="${opts.w}" data-h="${opts.h}"><div class="inner">${fn(d)}</div></div>` : `<div class="scaler">${fn(d)}</div>`}</div>`).join("");
+}
+
+document.getElementById("r-whole").innerHTML = DIRS.map(d => `<div class="cell"><div class="label">${d.name}</div>
+  <div class="app dir-${d.key} thesis"><b>${d.thesis}</b><p>Memorable detail: ${d.detail}</p></div>
+  <div class="scaler" data-w="375" data-h="900"><div class="inner">${home(d)}</div></div></div>`).join("");
+put("r-palette", palette);
+put("r-type", type);
+put("r-controls", controls);
+put("r-players", d => `<div class="app dir-${d.key}" style="padding:8px 16px">${player("bot")}${player("liem")}${player("you")}</div>`);
+put("r-desk", d => deskScreen(d, false), { scale: true, w: 1280, h: 800 });
+put("r-review", d => deskScreen(d, true), { scale: true, w: 1280, h: 800 });
+put("r-phone-review", phoneReview, { scale: true, w: 375, h: 900 });
+
+function fit() {
+  document.querySelectorAll(".scaler[data-w]").forEach(s => {
+    const w = +s.dataset.w, h = +s.dataset.h, avail = s.clientWidth;
+    const k = Math.min(1, avail / w);
+    const inner = s.firstElementChild; inner.style.width = w + "px"; inner.style.transform = `scale(${k})`;
+    s.style.height = Math.ceil(Math.min(h, inner.scrollHeight) * k) + "px";
+  });
+}
+addEventListener("resize", fit); document.fonts && document.fonts.ready.then(fit); fit();
+</script>
+</body>
+</html>

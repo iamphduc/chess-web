@@ -4,6 +4,7 @@ import { createAppStore } from "app/store";
 import { newGame, reset } from "features/board/BoardSlice";
 import { type GameState, initialGameState } from "game/engine/game-state";
 
+import * as slice from "../reviewSlice";
 import {
   analysisFailed,
   analysisFinished,
@@ -21,7 +22,6 @@ import {
   reviewOpened,
   reviewSlice,
   type ReviewState,
-  setGraphSide,
   sheetClosed,
   sheetOpened,
   stepBy,
@@ -55,7 +55,6 @@ describe("opening a new review", () => {
       status: "idle",
       evals: [],
       cursor: 0,
-      graphSide: "you",
       moments: {},
       active: null,
       sheetOpen: false,
@@ -69,7 +68,6 @@ describe("opening a new review", () => {
       status: "analysing",
       evals: Array(11).fill(null),
       cursor: 10,
-      graphSide: "you",
       moments: {},
       active: null,
       sheetOpen: true,
@@ -80,7 +78,6 @@ describe("opening a new review", () => {
     const old = apply(
       opened(7, 11),
       evalReceived({ gameId: 7, index: 0, eval: EVAL }),
-      setGraphSide("white"),
       momentOpened(3),
       analysisFailed({ gameId: 7 }),
     );
@@ -107,11 +104,10 @@ describe("back to game and review again", () => {
     expect(closed).toEqual({ ...before, open: false });
   });
 
-  it("reopening the same game keeps evals, moments, cursor, graph side and sheet", () => {
+  it("reopening the same game keeps evals, moments, cursor and sheet", () => {
     let s = apply(
       opened(),
       evalReceived({ gameId: 7, index: 2, eval: EVAL }),
-      setGraphSide("white"),
       momentOpened(4),
       momentSkipped(4),
       stepTo(6),
@@ -412,11 +408,16 @@ describe("moment transitions", () => {
   });
 });
 
-describe("graph side and sheet", () => {
-  it("sets the graph side", () => {
-    expect(reducer(opened(), setGraphSide("white")).graphSide).toBe("white");
-    expect(apply(opened(), setGraphSide("white"), setGraphSide("you")).graphSide).toBe("you");
+describe("no graph side", () => {
+  it("has no graphSide state and no setGraphSide action: the graph always shows your side", () => {
+    expect(initial()).not.toHaveProperty("graphSide");
+    expect(opened()).not.toHaveProperty("graphSide");
+    expect(slice).not.toHaveProperty("setGraphSide");
+    expect(Object.keys(reviewSlice.actions)).not.toContain("setGraphSide");
   });
+});
+
+describe("sheet", () => {
 
   it("closes and opens the sheet", () => {
     const closed = reducer(opened(), sheetClosed());

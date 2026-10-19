@@ -75,7 +75,10 @@ describe("BookNote and LiemCardDetail", () => {
     const badge = detail(inBook);
     expect(badge).toMatch(/class="liem-badge" data-book-games="312"/);
     expect(badge).not.toContain("data-engine");
-    expect(text(badge)).toContain("★ Book · 312");
+    expect(text(badge)).toContain("Book · 312");
+    // The ★ is an ochre shape, not ink text.
+    expect(text(badge)).not.toContain("★");
+    expect(badge).toMatch(/<svg class="liem-badge__star"[^>]*aria-hidden="true"/);
     expect(text(badge)).toContain("Plays Liem's openings");
 
     // Out of book: the red edge and his words.
@@ -153,23 +156,36 @@ describe("BookNote and LiemCardDetail", () => {
     const inBook = sparring();
     heMoved(inBook, "book");
     expect(detail(inBook)).toMatch(/class="liem-badge" data-book-games="312"/);
-    expect(text(detail(inBook))).toBe("Plays Liem's openings★ Book · 312");
+    expect(text(detail(inBook))).toBe("Plays Liem's openingsBook · 312");
 
     const out = sparring();
     heMoved(out, "engine");
     expect(detail(out)).toContain('<span class="liem-badge liem-badge--engine" data-engine="stockfish">Stockfish</span>');
-    expect(note(out)).toContain("Stockfish at about 1400 plays from here. It isn&#x27;t trained on his games.");
+    expect(note(out)).toContain("Stockfish at the Easy level plays from here. It isn&#x27;t trained on his games.");
 
     const thinking = sparring();
     thinking.dispatch(setOpponentStatus("thinking"));
     expect(text(detail(thinking))).toBe("Plays Liem's openingsThinking…");
   });
 
+  it("out of book names the level", () => {
+    const store = createAppStore();
+    store.dispatch(setStrength(1400));
+    store.dispatch(gameStarted());
+    store.dispatch(newGame({ humanColor: "black" }));
+    heMoved(store, "engine");
+    const out = text(note(store));
+    expect(out).toContain("Stockfish at the Easy level plays from here. It isn't trained on his games.");
+    expect(out).not.toMatch(/1400|about/);
+  });
+
   it("the book badge's count is its own part, so a phone can show just ★ Book", () => {
     const store = liemGame();
     heMoved(store, "book");
     expect(detail(store)).toContain(
-      '<span class="liem-badge" data-book-games="312"><span class="liem-badge__text">★ Book' +
+      '<span class="liem-badge" data-book-games="312"><svg class="liem-badge__star" viewBox="0 0 24 24" ' +
+        'aria-hidden="true" focusable="false"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7L2 9.5l7.1-.6z"></path></svg>' +
+        '<span class="liem-badge__text">Book' +
         '<span class="liem-badge__count"> · 312</span></span></span>'
     );
   });
@@ -181,13 +197,14 @@ describe("BookNote and LiemCardDetail", () => {
     expect(card).toContain(
       '<span class="liem-badge liem-badge--engine" data-engine="stockfish">Stockfish</span>'
     );
-    expect(text(card)).not.toContain("★ Book");
+    expect(text(card)).not.toContain("Book ·");
+    expect(card).not.toContain("liem-badge__star");
     expect(card).not.toContain("data-book-games");
 
     const html = note(out);
     expect(html).toMatch(/class="liem-note liem-note--out"[^>]*data-book-state="out"/);
     expect(html).toContain('<h3 class="book-note__title">Out of his book</h3>');
-    expect(html).toContain("Stockfish at about 2100 plays from here. It isn&#x27;t trained on his games.");
+    expect(html).toContain("Stockfish at the Harder level plays from here. It isn&#x27;t trained on his games.");
     expect(html).not.toContain("Standard Stockfish");
 
     // His own level: full-strength Stockfish.

@@ -1,24 +1,26 @@
 # Board loads
 
 ## What it is
-What a person sees on opening `/chess-web/`: the vs Liem tab is selected, and the "Challenge Le Quang Liem" setup card sits over the dimmed board in the start position. His card above the board shows the level picked so far (2100 at first, a sparring bot, so it reads "♞ · Sparring · 2100 · Plays Liem's openings"). Your card, "You", is below, and both clocks read `10:00`. Two players is one tab click away.
+What you see when a board screen opens, from home's **Play** or "Two players on one board →". A 56 px top bar holds "← Home" and the title: "vs Medium · you play White", "vs Liem · you play Black" or "Two players". Below it are the board column (a player card, 64 squares, a player card) and a sidebar: the book note (vs Liem only), then the Moves card. Both clocks read `10:00`. There are no mode tabs and no challenge card.
 
 ## How it works
-- The store's `match` slice (`src/features/liem/matchSlice.ts`) starts as `mode: "liem"` with `setupOpen: true`, playing White at 2100. Nothing saves the mode, so every load opens here.
-- With the card open, the squares are dimmed (`.squares__grid.liem-dimmed`) and take no clicks. His card follows the strength step picked on the card, and its words come from `levelView` (see [stockfish-is-named](stockfish-is-named.md)).
-- No Stockfish worker, WASM or book is requested before **Start game**. `liemOpponent.ts` loads through a dynamic `import()` once a game starts.
-- Clicking **Two players** gives the old layout: Play, Reset, Flip and Sound. Clicking the vs Liem tab while it's already open changes nothing.
+- `App.tsx` renders `<Home />` on home, or `.app[data-screen="play" | "two-players" | "review"]` holding `Board`.
+- `topBarTitle` (`src/features/board/topBar.ts`) builds the title from the mode, the level's `opponentName` and your color. Before a game a Random pick shows White.
+- Size: `squareSizeFor` (`boardSize.ts`) gives 39, 52 or 78 px squares, and the board is 8 × that. From 992 px up, the board column and a 380 px sidebar sit side by side; below that they stack.
+- No Stockfish worker, WASM or book is requested on home. `liemOpponent.ts` loads through a dynamic `import()` once a vs-Liem game starts.
+- A fresh store is the home state (`mode: "liem"`, `setupOpen: true`). `#/two-players` switches the mode and gives a fresh board.
 
 ## Why it's this way
-- **vs Liem first, not Two players** (the human's choice): the app is practice for beating Liem, so his ladder is the main screen. Turned down: keeping Two players as the default, as the 2026-10-10 decision had it. See `pod-docs/decisions.md` → "The page opens on vs Liem".
-- **The mode isn't saved:** this keeps the first screen the same on every load. The trade-off is that someone who mostly plays Two players needs a click each time. To remember the mode, save it the way the Sound setting is saved.
-- **Lazy engine:** see `pod-docs/decisions.md` → "The engine and books load when a vs-Liem game starts, not on page load". Opening on vs Liem must not undo this.
+- **Home first, no tabs or challenge card** (the human's choice). Turned down: opening on vs Liem with the card over a dimmed board. See `pod-docs/decisions.md` → "The site opens on the home page" and "The board screen has a top bar and one Moves card".
+- **Same square sizes as before:** the 380 px sidebar could shrink the board on mid-size screens, so the size rules were kept and checked at 992 px.
+- **Lazy engine:** see `pod-docs/decisions.md` → "The engine and books load when a vs-Liem game starts, not on page load". Home must not undo this.
 
 ## Watch out
-- A test that builds a fresh store starts in vs Liem with the card open. A two-player test must call `switchMode("two-player")` first. Don't weaken the test to get around this.
-- A smoke run must click **Two players** before the two-player steps in the brief's smoke recipe.
-- With the card open, the board's Play button and Start game share `.button--play`. Use `[role=dialog] .button--play` for Start game.
-- `.squares` must stay at the same height in both tabs, whether the card is open or a game is on. His two-line card is held to 56 px for this.
+- A test that builds a fresh store starts in the home state. A two-player test must call `switchMode("two-player")` first, and a vs-Liem test must start a game.
+- `.board` must stay `8 × square size` wide, with the cards inside it. His two-line card is held to 56 px so `.squares` doesn't move.
+- `ReviewTopBar` in `Board.tsx` copies `TopBar`'s markup. Change both, or give `TopBar` an `action` prop (queue, Someday).
+- Two players still names its players "Le Quang Liem" (with his photo) and "Me", from `src/game/players.ts`. That's an open question for the human: `pod-docs/decisions.md` → "Two players keeps "Le Quang Liem" and "Me" on the cards".
 
 ## History
 - 2026-10-18 · sparring-ladder · page opens on vs Liem with the setup card; his card shows the sparring bot at 2100 · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/chess-web/pull/79)
+- 2026-10-19 · ui-refresh · boards open from home; top bar with ← Home and the title; tabs and challenge card removed · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/chess-web/pull/84)

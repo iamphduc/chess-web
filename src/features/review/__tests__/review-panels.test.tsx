@@ -58,16 +58,9 @@ function sample(over: Partial<ReviewModel> = {}): ReviewModel {
   };
 }
 
-const graph = (model: ReviewModel, cursor: number, side: "you" | "white" = "you") =>
+const graph = (model: ReviewModel, cursor: number, humanColor: "white" | "black" = "white") =>
   renderToStaticMarkup(
-    <ReviewGraph
-      model={model}
-      humanColor="white"
-      side={side}
-      cursor={cursor}
-      onSelect={noop}
-      onSide={noop}
-    />
+    <ReviewGraph model={model} humanColor={humanColor} cursor={cursor} onSelect={noop} />
   );
 
 /** The `d` of every line path in the markup. */
@@ -121,23 +114,41 @@ describe("graph", () => {
     expect(linePaths(graph(none, 0))).toEqual([]);
   });
 
-  it("marks the chosen side in the White / You switch, and flips the points", () => {
-    const you = graph(sample(), 0, "you");
-    expect(you).toMatch(/aria-checked="true"[^>]*>You</);
-    expect(you).toMatch(/aria-checked="false"[^>]*>White</);
-    const asBlack = renderToStaticMarkup(
-      <ReviewGraph
-        model={sample()}
-        humanColor="black"
-        side="you"
-        cursor={0}
-        onSelect={noop}
-        onSide={noop}
-      />
-    );
-    // White's 28 % at position 5 is Black's 72 %: 28 % down from the top.
-    expect(asBlack).toMatch(/data-ply="4"[^>]*top:28%/);
-    expect(graph(sample(), 0, "white")).toMatch(/data-ply="4"[^>]*top:72%/);
+  it("graph shows your side", () => {
+    // No White / You switch any more.
+    const asWhite = graph(sample(), 0, "white");
+    expect(asWhite).not.toMatch(/role="radio"/);
+    expect(asWhite).not.toMatch(/review-graph__sides|Graph side/);
+    expect(asWhite).toContain("Win % · you");
+    // As White, White's 28 % at position 5 is your 28 %: 72 % down from the top.
+    expect(asWhite).toMatch(/data-ply="4"[^>]*top:72%/);
+    // As Black it's your 72 %: 28 % down from the top.
+    expect(graph(sample(), 0, "black")).toMatch(/data-ply="4"[^>]*top:28%/);
+  });
+
+  it("a click still selects the nearest position", () => {
+    const calls: number[] = [];
+    const el = ReviewGraph({ model: sample(), humanColor: "white", cursor: 0, onSelect: (n) => calls.push(n) });
+    // Find the plot's onClick in the element tree.
+    const find = (node: unknown): ((e: unknown) => void) | null => {
+      if (!node || typeof node !== "object") return null;
+      const props = (node as { props?: { className?: string; onClick?: (e: unknown) => void; children?: unknown } }).props;
+      if (props?.className === "review-graph__plot" && props.onClick) return props.onClick;
+      const kids = props?.children;
+      for (const kid of Array.isArray(kids) ? kids.flat(Infinity) : [kids]) {
+        const hit = find(kid);
+        if (hit) return hit;
+      }
+      return null;
+    };
+    const onClick = find(el);
+    expect(onClick).not.toBeNull();
+    const target = { getBoundingClientRect: () => ({ left: 100, width: 200 }) };
+    // 8 plies over 200 px: 25 px a position. 160 px in is position 6.4, so 6.
+    onClick!({ currentTarget: target, clientX: 260 });
+    // Past the right edge it clamps to the last position.
+    onClick!({ currentTarget: target, clientX: 500 });
+    expect(calls).toEqual([6, 8]);
   });
 });
 

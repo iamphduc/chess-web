@@ -19,8 +19,8 @@ function buttonsRow(store: ReturnType<typeof makeStore>): string {
       </DndProvider>
     </Provider>
   );
-  const row = html.match(/<div class="buttons">([\s\S]*?)<\/div>/)?.[1];
-  if (row === undefined) throw new Error("no .buttons row");
+  const row = html.match(/<div class="card__foot">([\s\S]*?)<\/div>/)?.[1];
+  if (row === undefined) throw new Error("no Moves card foot");
   return row;
 }
 
@@ -64,7 +64,7 @@ describe("sound button", () => {
     expect(offIcon).not.toEqual(onIcon);
   });
 
-  it("sound-on style uses the token", async () => {
+  it("sound-on style uses the Look primary pair", async () => {
     // node:fs through a plain string, since src/ tests only get the vite/client types.
     const fs = await import(/* @vite-ignore */ "node:fs" as string);
     const buttonCss: string = fs.readFileSync(
@@ -73,6 +73,9 @@ describe("sound button", () => {
     );
     const rule = buttonCss.match(/\.button--sound-on\s*\{([^}]*)\}/)?.[1];
     expect(rule).toBeDefined();
-    expect(rule).toMatch(/background(-color)?:\s*var\(--board-sound-on\)\s*;/);
+    // ink fill and cream icon, like Play; the old green is gone
+    expect(rule).toMatch(/background(-color)?:\s*var\(--go\)\s*;/);
+    expect(rule).toMatch(/(^|[\s;])color:\s*var\(--go-ink\)\s*;/);
+    expect(rule).not.toMatch(/--board-sound-on/);
   });
 });

@@ -1,46 +1,24 @@
+/* The Moves card's scoresheet (plan ui-refresh, ## Look). The rows, number and chip
+   come from .scoresheet in src/styles/look.css; this file lays out the columns. */
 .notation {
-  color: var(--dark-text);
-  overflow-y: auto;
   max-height: 330px;
-}
-/* Width */
-.notation::-webkit-scrollbar {
-  width: 5px;
-}
-/* Track */
-.notation::-webkit-scrollbar-track {
-  background: var(--dark-surface);
-}
-/* Handle */
-.notation::-webkit-scrollbar-thumb {
-  background: #888;
-}
-/* Handle on hover */
-.notation::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  overflow-y: auto;
+  padding: var(--space-2) 0;
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
 }
 
-.notation table {
-  width: 100%;
-  border-collapse: collapse;
+/* Number, White, Black: the same columns on every row. */
+.notation .scoresheet__row {
+  display: grid;
+  grid-template-columns: 2.5em 1fr 1fr;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4);
+  line-height: 1.75;
 }
 
-.notation tr:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.notation td {
-  width: fit-content;
-  padding: 5px 20px 5px 5px;
-}
-.notation td:last-child {
-  width: 100%;
-}
-.notation td:nth-child(2),
-.notation td:nth-child(3) {
-  min-width: 80px;
-}
-
-.notation__last {
-  background-color: rgba(255, 255, 255, 0.2);
+/* Before the first move the list is empty, and the box takes no room. */
+.notation:has(.scoresheet:empty) {
+  padding: 0;
 }
