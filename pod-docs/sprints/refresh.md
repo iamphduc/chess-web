@@ -1,7 +1,7 @@
 # Sprint: refresh
 
 _From plan: pod-docs/plans/ui-refresh.md · Slug: refresh · Status: active · Generated: 2026-10-19_
-<!-- autopilot-run: started=2026-10-19T09:41:08Z sprints=0 waves=3 -->
+<!-- autopilot-run: started=2026-10-19T09:41:08Z sprints=0 waves=4 -->
 
 ## Status board
 
@@ -14,8 +14,8 @@ _From plan: pod-docs/plans/ui-refresh.md · Slug: refresh · Status: active · G
 | 2 | B1 | Board screen: top bar, Moves card, no tabs or setup card | refresh-B1 | #81 | merged | medium | L1, N1, R1 |
 | 2 | P1 | Player cards with "+N", clocks, book note and badges in the Look | refresh-P1 | #81 | merged | medium | L1, N1 |
 | 2 | G1 | Board pieces in the Look: squares, promotion picker, game-over notice | refresh-G1 | #81 | merged | medium | L1 |
-| 3 | V1 | Review: graph in the sidebar and phone sheet, top bar, Look | refresh-V1 | — | in-progress | — | B1, P1, R1 |
-| 4 | C1 | Remove old tokens and styles; decisions, docs and README | refresh-C1 | — | pending | — | H1, B1, P1, G1, V1 |
+| 3 | V1 | Review: graph in the sidebar and phone sheet, top bar, Look | refresh-V1 | #82 | merged | medium | B1, P1, R1 |
+| 4 | C1 | Remove old tokens and styles; decisions, docs and README | refresh-C1 | — | in-progress | — | H1, B1, P1, G1, V1 |
 
 ## Shared contract
 
