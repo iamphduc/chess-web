@@ -1,26 +1,25 @@
+/* A sidebar card (plan ui-refresh, ## Look). The box is .card from src/styles/look.css. */
 .board-sidebar {
-  background-color: var(--dark-surface);
-  color: black;
-  padding: 10px;
-  width: calc(13px * 24);
-  height: fit-content;
-  min-height: 80px;
-  margin: 8px 0px;
-  border-radius: 6px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
-.board-sidebar__title {
-  margin: 0px 0px 10px 0px;
-  color: var(--dark-title);
+/* The move list's card clips its rows to the rounded corners. */
+.moves-card {
+  overflow: hidden;
 }
 
-@media only screen and (min-width: 768px) {
-  .board-sidebar {
-    width: calc(13px * 32);
-  }
+/* New game (and Play, Review game) on the left, Flip and Sound on the right. */
+.moves-card__icons {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
 }
-@media only screen and (min-width: 1200px) {
-  .board-sidebar {
-    width: calc(13px * 36);
+
+/* On a phone the card is 312 px, 278 px inside: Play, New game, Flip and Sound fit one row
+   only with 12 px button sides. Only the Two players foot has Play, so vs Liem keeps its own. */
+@media only screen and (max-width: 767px) {
+  .moves-card .card__foot:has(> .button--play) > .button:not(.button--icon) {
+    padding-inline: var(--space-3);
   }
 }

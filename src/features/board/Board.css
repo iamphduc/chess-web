@@ -32,10 +32,6 @@
   align-self: start;
 }
 
-.squares__grid.liem-dimmed {
-  pointer-events: none;
-}
-
 .squares__overlay {
   /* Above the squares, whose pieces make their own stacking layers. */
   position: relative;
@@ -69,86 +65,6 @@
 @media only screen and (min-width: 1200px) {
   .liem-side {
     width: calc(13px * 36);
-  }
-}
-
-/*
- * The cards above and below the board keep one height in every mode, so the
- * board never moves on a tab switch. Two-player cards are 56 px (a 40 px avatar
- * plus padding); his card fits the same by keeping its detail to one tight line.
- */
-.board > .player {
-  height: 56px;
-  box-sizing: border-box;
-}
-
-.board > .player:has(.player__detail) .player__info,
-.board > .player:has(.player__detail) .player__name {
-  min-width: 0;
-}
-
-.board > .player:has(.player__detail) .player__name {
-  line-height: 1.2;
-}
-
-/* His name stays on one line (cut short on a narrow board), so his detail fits under it. */
-.board > .player .player__name:has(.liem-detail) {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.board > .player .liem-detail {
-  flex-wrap: nowrap;
-  margin-top: 1px;
-  line-height: 1.2;
-}
-
-/* The badge or "Thinking…" wins; the line ends in an ellipsis when it can't fit
-   (decision 2026-10-11), and screen readers still get the whole line. */
-.board > .player .liem-detail__sub {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.board > .player .liem-badge,
-.board > .player .liem-detail__thinking {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-/* One line tall in the card. The border sits inside the height, so the bordered
-   Stockfish pill is the badge's outer size. */
-.board > .player .liem-badge {
-  box-sizing: border-box;
-  height: 1.2em;
-  padding: 0 8px;
-}
-
-.board > .player .liem-badge--engine {
-  padding: 0 7px;
-}
-
-/* His gold star sits in the name line at the name's size. */
-.board > .player .liem-star {
-  font-size: inherit;
-  margin-right: 4px;
-}
-
-/* On a phone the 312 px board leaves the line about 136 px: "Liem's openings"
-   (or "GM · 2732") beside "★ Book", the Stockfish pill or "Thinking…". The note
-   below gives the game count. Hidden from sight, still read out. */
-@media only screen and (max-width: 767px) {
-  .board > .player .liem-detail__lead,
-  .board > .player .liem-badge__count {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 }
 

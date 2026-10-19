@@ -19,8 +19,8 @@ function buttonsRow(store: ReturnType<typeof makeStore>): string {
       </DndProvider>
     </Provider>
   );
-  const row = html.match(/<div class="buttons">([\s\S]*?)<\/div>/)?.[1];
-  if (row === undefined) throw new Error("no .buttons row");
+  const row = html.match(/<div class="card__foot">([\s\S]*?)<\/div>/)?.[1];
+  if (row === undefined) throw new Error("no Moves card foot");
   return row;
 }
 

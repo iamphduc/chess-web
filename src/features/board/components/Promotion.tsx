@@ -20,6 +20,14 @@ export enum PiecePromoted {
   Knight = "KNIGHT",
 }
 
+/** The picker's buttons, in order, with their screen-reader names. */
+const CHOICES: [PiecePromoted, string][] = [
+  [PiecePromoted.Queen, "Queen"],
+  [PiecePromoted.Rook, "Rook"],
+  [PiecePromoted.Bishop, "Bishop"],
+  [PiecePromoted.Knight, "Knight"],
+];
+
 interface Props {
   squareSize: number;
 }
@@ -34,34 +42,31 @@ export const Promotion = ({ squareSize }: Props) => {
   // If pawn reach the 0th row, then it is white side
   const isWhite = y === 0;
 
-  const queenImage = isWhite ? WQueen : BQueen;
-  const rookImage = isWhite ? WRook : BRook;
-  const bishopImage = isWhite ? WBishop : BBishop;
-  const knightImage = isWhite ? WKnight : BKnight;
+  const images: Record<PiecePromoted, string> = {
+    [PiecePromoted.Queen]: isWhite ? WQueen : BQueen,
+    [PiecePromoted.Rook]: isWhite ? WRook : BRook,
+    [PiecePromoted.Bishop]: isWhite ? WBishop : BBishop,
+    [PiecePromoted.Knight]: isWhite ? WKnight : BKnight,
+  };
   const promotionPieceSize = { width: squareSize * 0.6, height: squareSize * 0.6 };
 
   return y !== -1 && x !== -1 ? (
-    <div className={`promotion`} style={promotionPlacement(y, x, flipped, squareSize)}>
-      <div
-        style={{ backgroundImage: `url(${queenImage})`, ...promotionPieceSize }}
-        className="promotion__piece"
-        onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Queen }))}
-      />
-      <div
-        style={{ backgroundImage: `url(${rookImage})`, ...promotionPieceSize }}
-        className="promotion__piece"
-        onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Rook }))}
-      />
-      <div
-        style={{ backgroundImage: `url(${bishopImage})`, ...promotionPieceSize }}
-        className="promotion__piece"
-        onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Bishop }))}
-      />
-      <div
-        style={{ backgroundImage: `url(${knightImage})`, ...promotionPieceSize }}
-        className="promotion__piece"
-        onClick={() => dispatch(promotePawn({ piecePromoted: PiecePromoted.Knight }))}
-      />
+    <div
+      className="promotion"
+      style={promotionPlacement(y, x, flipped, squareSize)}
+      role="group"
+      aria-label="Promote to"
+    >
+      {CHOICES.map(([piece, label]) => (
+        <button
+          key={piece}
+          type="button"
+          aria-label={label}
+          style={{ backgroundImage: `url(${images[piece]})`, ...promotionPieceSize }}
+          className="promotion__piece"
+          onClick={() => dispatch(promotePawn({ piecePromoted: piece }))}
+        />
+      ))}
     </div>
   ) : (
     <></>
