@@ -1,17 +1,17 @@
 /*
  * Layout for the book note and his card's detail. The look itself (edges, bars,
- * badge) is in src/styles/liem.css; colors here come only from its tokens.
+ * badge) is in src/styles/liem.css. Tokens only, from src/index.css.
  */
 .book-note__title {
-  margin: 0 0 6px;
-  font-size: 16px;
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-body);
   font-weight: 700;
 }
 
 .book-note__text {
-  margin: 0 0 8px;
-  font-size: 15px;
-  color: var(--liem-text-soft);
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-body);
+  color: var(--soft);
 }
 
 .book-note__text:last-child {
@@ -23,27 +23,28 @@
 }
 
 .book-note__retry {
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .liem-detail {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 8px;
-  margin-top: 4px;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-1);
 }
 
+/* "Plays Liem's openings" or "GM · 2732": a small soft label. */
 .liem-detail__sub {
-  font-size: 15px;
+  font-size: var(--text-small);
   font-weight: 500;
-  color: var(--liem-text-soft);
+  color: var(--soft);
 }
 
 .liem-detail__thinking {
-  font-size: 14px;
+  font-size: var(--text-small);
   font-weight: 700;
-  color: var(--liem-text-soft);
+  color: var(--soft);
 }
 
 /* Wider move column than the base row: labels such as "12...O-O-O" fit on one line. */

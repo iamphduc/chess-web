@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { lookViolations } from "./look-helpers";
+
 const css = () =>
   readFileSync(
     join(__dirname, "..", "src", "features", "board", "components", "Player.css"),
@@ -47,15 +49,25 @@ function rules(source: string): Rule[] {
 
 const isClockRule = (r: Rule) => /\.player__time|\.player__timer|\.clock-icon/.test(r.selector);
 
+/** Every top-level body for `selector`, joined. */
+const bodyOf = (all: Rule[], selector: string) =>
+  all
+    .filter((r) => r.selector === selector && r.media === null)
+    .map((r) => r.body)
+    .join(";");
+
 describe("Player.css", () => {
   it("clock styles use only the tokens", () => {
     const clock = rules(css()).filter(isClockRule);
     expect(clock.length).toBeGreaterThan(0);
     for (const r of clock) {
-      expect(r.body, r.selector).not.toMatch(/#[0-9a-f]{3,8}\b/i);
-      expect(r.body, r.selector).not.toMatch(/\b(rgba?|hsla?)\s*\(/i);
+      expect(lookViolations(`${r.selector}{${r.body}}`), r.selector).toEqual([]);
+      // Colors come only from the --clock-* tokens; sizes from the Look's space, radius and type.
       for (const v of r.body.matchAll(/var\((--[\w-]+)/g)) {
-        expect(v[1], r.selector).toMatch(/^--clock-/);
+        expect(v[1], r.selector).toMatch(/^--(clock-|space-|radius$|text-)/);
+      }
+      for (const d of r.body.matchAll(/(?:^|;)\s*(color|background-color|fill|stroke)\s*:\s*([^;]+)/g)) {
+        expect(d[2].trim(), `${r.selector} { ${d[1]} }`).toMatch(/^(var\(--clock-[\w-]+\)|currentColor|none)$/);
       }
     }
     const top = (sel: RegExp) => clock.find((r) => sel.test(r.selector) && r.media === null);
@@ -68,6 +80,9 @@ describe("Player.css", () => {
     const low = top(/\.player__time--low/);
     expect(low?.body).toMatch(/background-color:\s*var\(--clock-low-bg\)/);
     expect(low?.body).toMatch(/(^|[\s;])color:\s*var\(--clock-low-ink\)/);
+    // The Look's pill: its corner, and tabular figures so the digits don't shift.
+    expect(waiting?.body).toMatch(/border-radius:\s*var\(--radius\)/);
+    expect(top(/^\.player__timer$/)?.body).toMatch(/font-variant-numeric:\s*tabular-nums/);
   });
 
   it("hand jumps crisply and stays still with reduced motion", () => {
@@ -90,5 +105,21 @@ describe("Player.css", () => {
         /\.clock-icon__hand/.test(r.selector)
     );
     expect(still?.body).toMatch(/transform:\s*none\s*!important/);
+  });
+
+  it("the material line never cuts +N", () => {
+    const all = rules(css());
+    const material = bodyOf(all, ".player__material");
+    expect(material).toMatch(/(^|[\s;])color:\s*var\(--soft\)/);
+    expect(material).toMatch(/font-size:\s*var\(--text-small\)/);
+    expect(material).not.toMatch(/min-width:\s*0/); // its least width is "+N"
+    const plus = bodyOf(all, ".player__advantage");
+    expect(plus).toMatch(/flex-shrink:\s*0/);
+    expect(plus).toMatch(/white-space:\s*nowrap/);
+    const glyphs = bodyOf(all, ".player__captured");
+    expect(glyphs).toMatch(/overflow:\s*hidden/);
+    expect(glyphs).toMatch(/text-overflow:\s*ellipsis/);
+    expect(glyphs).toMatch(/white-space:\s*nowrap/);
+    expect(glyphs).toMatch(/min-width:\s*0/);
   });
 });
