@@ -54,8 +54,10 @@ describe("playAgain", () => {
   });
 
   it("replays the level and color, clears the review and goes to #/play", () => {
-    const location = { hash: "#/review" };
-    vi.stubGlobal("window", { location });
+    // A review with no #/play entry marked under it: #/review becomes #/play.
+    const location = { hash: "#/review", replace: (url: string) => (location.hash = url) };
+    const back = vi.fn();
+    vi.stubGlobal("window", { location, history: { state: null, back } });
     const store = finishedGame();
     store.dispatch(openReview());
     expect(store.getState().review.open).toBe(true);
@@ -74,5 +76,6 @@ describe("playAgain", () => {
     expect(review.gameId).toBeNull();
     expect(store.getState().view.flipped).toBe(true);
     expect(location.hash).toBe("#/play");
+    expect(back).not.toHaveBeenCalled();
   });
 });

@@ -14,7 +14,8 @@ export function useHashRoute(): Screen {
   const [screen, setScreen] = useState<Screen>("home");
 
   useBeforePaint(() => {
-    const follow = () => setScreen(followHash(dispatch, window));
+    const follow = (event?: HashChangeEvent) =>
+      setScreen(followHash(dispatch, window, event && new URL(event.oldURL).hash));
     follow();
     window.addEventListener("hashchange", follow);
     return () => window.removeEventListener("hashchange", follow);

@@ -5,7 +5,7 @@
 import type { AnyAction, ThunkAction } from "@reduxjs/toolkit";
 
 import type { RootState } from "app/store";
-import { goTo } from "app/route";
+import { leaveReviewForPlay } from "app/route";
 import { replayLiemGame } from "features/liem/liemActions";
 
 export type GraphPlace = "sidebar" | "sheet";
@@ -26,10 +26,13 @@ export function graphPlacement({ wide, sheetOpen, low }: GraphPlacementInput): G
   return !wide && sheetOpen && !low ? "sheet" : "sidebar";
 }
 
-/** Play again: a new game at the same level and color (Random draws again), then `#/play`. */
+/**
+ * Play again: a new game at the same level and color (Random draws again), then
+ * `#/play` with no new history entry, so one Back from the board goes home.
+ */
 export const playAgain =
   (random?: () => number): ThunkAction<void, RootState, unknown, AnyAction> =>
   (dispatch) => {
     dispatch(replayLiemGame(random));
-    goTo("play");
+    leaveReviewForPlay();
   };
