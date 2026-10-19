@@ -1,0 +1,105 @@
+/* Base classes of the Look (plan ui-refresh, ## Look): cards, the stack, the scoresheet
+   and the focus ring. Tokens only, from src/index.css. Buttons live in
+   src/features/board/components/Button.css. */
+
+/* Every button, link and radio step shows the ink ring. :where() keeps it at zero
+   specificity, so a component's own ring still wins. */
+:where(button:focus-visible, a:focus-visible, [role="radio"]:focus-visible) {
+  outline: 3px solid var(--board-focus);
+  outline-offset: 2px;
+}
+
+/* A card: cream on the page, a hairline edge. */
+.card {
+  background-color: var(--surface);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
+}
+
+/* No padding: the move lists run edge to edge. */
+.card--flush {
+  padding: 0;
+}
+
+/* The card's title row. */
+.card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-title);
+  font-weight: 700;
+}
+
+.card--flush > .card__head {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+/* A row of controls under the card's content. */
+.card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.card--flush > .card__foot {
+  margin-top: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+/* Cards in a column. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* The signature detail: the move list reads like a scoresheet. */
+.scoresheet {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.scoresheet__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4);
+}
+
+.scoresheet__row:nth-child(even) {
+  background-color: var(--surface-2);
+}
+
+/* The move number. */
+.scoresheet__num {
+  min-width: 2.5em;
+  color: var(--soft);
+  font-size: var(--text-small);
+}
+
+/* The current move: an ink chip. */
+.scoresheet__current {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius);
+  background-color: var(--ink);
+  color: var(--bg);
+}
+
+/* A mark on a move (?!, ?, ??): red ink. */
+.scoresheet__mark {
+  color: var(--accent);
+  font-weight: 700;
+}

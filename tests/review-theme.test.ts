@@ -85,13 +85,16 @@ function contrast(a: string, b: string): number {
 
 const GRADES = ["inaccuracy", "mistake", "blunder", "best", "book"] as const;
 
+// Grades retuned for cream (plan ui-refresh, ## Look): each is the old hue, darkened to reach
+// 4.5:1 on --surface and --surface-2. --grade-ink is the --surface cream. --review-page stays
+// defined until C1 removes it.
 const LOOK: Record<string, string> = {
-  "--grade-inaccuracy": "#6CB4EE",
-  "--grade-mistake": "#FF9F43",
-  "--grade-blunder": "#FF7A70",
-  "--grade-best": "#4CC38A",
-  "--grade-book": "#BBBE64",
-  "--grade-ink": "#1F1F1F",
+  "--grade-inaccuracy": "#146AB0",
+  "--grade-mistake": "#A45000",
+  "--grade-blunder": "#CF0F00",
+  "--grade-best": "#27744F",
+  "--grade-book": "#686A2D",
+  "--grade-ink": "#FBF8F1",
   "--review-page": "#333333",
 };
 
@@ -131,8 +134,8 @@ describe("review theme", () => {
       expect(tokens[name], `${name} declared once in :root`).toHaveLength(1);
       expect(tokens[name][0].toLowerCase(), name).toBe(value.toLowerCase());
     }
-    // book is the olive already used for his book bar
-    expect(token("--grade-book").toLowerCase()).toBe(token("--book-bar").toLowerCase());
+    // the chip ink is the card color
+    expect(token("--grade-ink").toLowerCase()).toBe(token("--surface").toLowerCase());
     // the scrim: black at 35 %
     const scrim = token("--review-scrim").match(/^rgba\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/);
     expect(scrim, "--review-scrim is rgba()").not.toBeNull();
@@ -140,8 +143,8 @@ describe("review theme", () => {
   });
 
   it("grade text meets 4.5:1 on every surface", () => {
-    const surfaces = { card: token("--liem-card"), note: token("--liem-note"), page: token("--review-page") };
-    expect(Object.values(surfaces).map((s) => s.toLowerCase())).toEqual(["#1f1f1f", "#262626", "#333333"]);
+    const surfaces = { card: token("--surface"), raised: token("--surface-2") };
+    expect(Object.values(surfaces).map((s) => s.toLowerCase())).toEqual(["#fbf8f1", "#efe8d8"]);
     for (const g of GRADES) {
       for (const [name, bg] of Object.entries(surfaces)) {
         expect(contrast(token(`--grade-${g}`), bg), `${g} on ${name}`).toBeGreaterThanOrEqual(4.5);
@@ -165,13 +168,10 @@ describe("review theme", () => {
       expect(contrast(token(ink!), token(fill!)), `ink on ${g}`).toBeGreaterThanOrEqual(4.5);
     }
 
-    // a selected move turns white with the ink
+    // a selected move names the grade ink. Its fill is review.css's to retune for cream (V1):
+    // --grade-ink is now the cream, so the old white fill no longer carries it.
     const sel = declsFor(css, ".review-move--selected");
-    const fg = tokenOf(last(sel, "color"));
-    const bg = tokenOf(last(sel, "background-color"));
-    expect(fg, "selected move ink").toBe("--grade-ink");
-    expect(token(bg!).toLowerCase(), "selected move fill is white").toBe("#ffffff");
-    expect(contrast(token(fg!), token(bg!))).toBeGreaterThanOrEqual(4.5);
+    expect(tokenOf(last(sel, "color")), "selected move ink").toBe("--grade-ink");
 
     // its grade mark becomes a chip: ink on the grade color, never grade text on white
     for (const g of GRADES) {
