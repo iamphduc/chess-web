@@ -1,4 +1,4 @@
-import React, { type ReactNode, useEffect, useRef, useState } from "react";
+import React, { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import "./Player.css";
 import { useAppDispatch, useAppSelector } from "app/hooks";
@@ -15,6 +15,7 @@ import {
   tickInterval,
   TOTAL_MS,
 } from "../clock";
+import { CapturedKind, materialLine } from "../material";
 import { GameOverType } from "./GameOver";
 import { PlayerClock } from "./PlayerClock";
 import { avatarSrc as getAvatarSrc } from "./avatar";
@@ -45,6 +46,33 @@ export function clockForPhase(
   if (phase === "paused") return pauseClock(clock, now);
   const isFresh = clock.startedAt === null && clock.remainingMs === TOTAL_MS;
   return isFresh ? clock : initialClock();
+}
+
+const GLYPHS: Record<"white" | "black", Record<CapturedKind, string>> = {
+  white: { queen: "♕", rook: "♖", bishop: "♗", knight: "♘", pawn: "♙" },
+  black: { queen: "♛", rook: "♜", bishop: "♝", knight: "♞", pawn: "♟" },
+};
+
+/** "+N" and the pieces this side has taken, drawn in the other side's color. */
+function Material({ isWhite }: { isWhite: boolean }) {
+  const engineHistory = useAppSelector((state) => state.board.engineHistory);
+  const position = engineHistory[engineHistory.length - 1];
+  const { captured, advantage } = useMemo(
+    () => materialLine(position, isWhite ? "white" : "black"),
+    [position, isWhite]
+  );
+  if (captured.length === 0 && advantage === 0) return null;
+  const glyphs = GLYPHS[isWhite ? "black" : "white"];
+  return (
+    <span className="player__material" data-material={advantage}>
+      {advantage > 0 && <span className="player__advantage">{`+${advantage}`}</span>}
+      {captured.length > 0 && (
+        <span className="player__captured" role="img" aria-label={`Captured: ${captured.join(", ")}`}>
+          {captured.map((kind) => glyphs[kind]).join("")}
+        </span>
+      )}
+    </span>
+  );
 }
 
 /** Delay until the shown value next changes: the next whole second (1000) or tenth (100). */
@@ -127,6 +155,7 @@ export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) =
           {name}
           {detail != null && <div className="player__detail">{detail}</div>}
         </div>
+        <Material isWhite={isWhite} />
       </div>
       <PlayerClock remainingMs={shownMs} isActive={isActive} playerName={name} />
     </div>

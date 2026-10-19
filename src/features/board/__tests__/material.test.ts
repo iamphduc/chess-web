@@ -83,10 +83,11 @@ describe("materialLine", () => {
     expect(materialLine(both, "black")).toEqual({ captured: ["pawn"], advantage: 0 });
     expect(materialLine(both, "white")).toEqual({ captured: ["knight"], advantage: 3 + 8 - 1 });
 
-    // Black then takes the new queen: it counts as a queen, not a pawn.
+    // Black then takes the new queen: it counts as a queen, not a pawn. White is still a
+    // knight for a pawn up.
     const retaken = edited({ a2: null, b8: null }, [1, 0, 0, 0, 0, 0, 0, 0]);
-    expect(materialLine(retaken, "black")).toEqual({ captured: ["queen"], advantage: 1 });
-    expect(materialLine(retaken, "white")).toEqual({ captured: ["knight"], advantage: 0 });
+    expect(materialLine(retaken, "black")).toEqual({ captured: ["queen"], advantage: 0 });
+    expect(materialLine(retaken, "white")).toEqual({ captured: ["knight"], advantage: 3 - 1 });
 
     // An under-promotion counts as its new kind too (Black's h-pawn became a knight).
     const knight = edited({ h7: null, h1: PieceType.BlackKnightPromoted1 }, [0, 0, 0, 0, 0, 0, 0, 1]);
