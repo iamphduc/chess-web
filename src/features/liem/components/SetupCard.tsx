@@ -154,8 +154,13 @@ export function SetupCard({ entry = LIEM.entry }: SetupCardProps) {
             Strength
           </span>
           <span className="setup-card__value">
-            {level.valueLead && <span className="setup-card__about">{level.valueLead}</span>}
-            <span className="liem-elo">{level.valueMain}</span>
+            {level.starred && (
+              <span className="liem-star" aria-hidden="true">
+                ★
+              </span>
+            )}
+            <span className="setup-card__name">{level.stepName}</span>
+            {level.rating && <span className="setup-card__rating">{level.rating}</span>}
           </span>
         </div>
         <RadioGroup<StrengthStep>
