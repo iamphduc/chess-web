@@ -1,6 +1,6 @@
 # Plan: Sparring ladder to Liem
 
-_Generated: 2026-10-17 · Status: active · Grilled-with: grilling (fast)_
+_Generated: 2026-10-17 · Status: archived · Grilled-with: grilling (fast)_
 <!-- autopilot-run: started=2026-10-18T10:31:18Z sprints=1 waves=3 -->
 
 ## Goal
