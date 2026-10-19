@@ -107,10 +107,10 @@ describe("chooser rates per level", () => {
         const blunders = (counts.get(BLUNDER_LINE.move) ?? 0) / N;
         // The blunder line is reachable only under the level's cp cap.
         const blunderChance =
-          cpDrop(BLUNDER_LINE.score) < (p.blunderMaxCp ?? 0) ? (p.blunderChance ?? 0) : 0;
+          cpDrop(BLUNDER_LINE.score) < p.blunderMaxCp ? p.blunderChance : 0;
         const label = `${step} ${name}`;
         expect(
-          Math.abs(mistakes - (p.mistakeChance ?? 0)),
+          Math.abs(mistakes - p.mistakeChance),
           `${label} mistakes`
         ).toBeLessThanOrEqual(0.015);
         expect(Math.abs(blunders - blunderChance), `${label} blunders`).toBeLessThanOrEqual(0.015);

@@ -19,107 +19,107 @@ export interface StepProfile {
   aheadMaxLoss: number;
   /** Always plays a seen mate in ≤ this many moves; Infinity = any; 0 = never forced. */
   forceMateIn: number;
-  /*
-   * The mistake and blunder bands (see `chooseHumanMove`). Every entry in
-   * STEP_PROFILES sets them; they are optional only so older hand-built
-   * profiles still type-check, and a missing one counts as 0.
-   */
+  /* The mistake and blunder bands (see `chooseHumanMove`). */
   /** 0–1, the chance per move of a mistake (a line losing 20 to 30 win %). */
-  mistakeChance?: number;
+  mistakeChance: number;
   /** 0–1, the chance per move of a blunder (losing 30 or more); with `mistakeChance` ≤ 1. */
-  blunderChance?: number;
+  blunderChance: number;
   /** cp ≥ 0: a blunder falls less than this many centipawns below the best line. */
-  blunderMaxCp?: number;
+  blunderMaxCp: number;
   /** 0–1, the pick weight of a band line that hangs material (1 = like any other). */
-  hangWeight?: number;
+  hangWeight: number;
 }
 
 /**
- * Set from `npm run calibrate` (pod-docs/decisions.md, 2026-10-12). Going up the
- * steps, depth never falls and the loss limits, slip chance, slip limit and
- * temperature never rise. A search stops at its depth or its `movetimeMs`,
- * whichever comes first. Full's real limit is time: at 1000 ms it stops at
- * depth 13 to 16 and never reaches 18, yet still plays Stockfish's best move.
- * The 1 s limit stays so phones answer quickly.
+ * Set from `npm run calibrate` and its measure mode (pod-docs/decisions.md,
+ * 2026-10-18 "Sparring step table tuned to 75 % of human mistake rates"). Each
+ * sparring level's mistake and blunder rates per 40 moves sit near 75 % of
+ * Lichess players at that rating. Going up the steps, depth never falls and the
+ * loss limits, slip chance, slip limit, temperature, both chances,
+ * `blunderMaxCp` and `hangWeight` never rise. A search stops at its depth or
+ * its `movetimeMs`, whichever comes first. Every sparring level asks for 10
+ * lines, so a band is rarely empty. Full's real limit is time: at 1000 ms it
+ * stops at depth 13 to 16 and never reaches 18, yet still plays Stockfish's
+ * best move. The 1 s limit stays so phones answer quickly.
  */
 export const STEP_PROFILES: Readonly<Record<StrengthStep, StepProfile>> = {
   1400: {
-    search: { depth: 8, multiPv: 4, movetimeMs: 400 },
+    search: { depth: 7, multiPv: 10, movetimeMs: 400 },
     maxLoss: 10,
     temperature: 5,
     slipChance: 0.05,
     slipMaxLoss: 15,
     aheadMaxLoss: 2,
     forceMateIn: 2,
-    mistakeChance: 0,
-    blunderChance: 0,
-    blunderMaxCp: 0,
-    hangWeight: 0,
+    mistakeChance: 0.4,
+    blunderChance: 0.36,
+    blunderMaxCp: 800,
+    hangWeight: 0.8,
   },
   1700: {
-    search: { depth: 9, multiPv: 4, movetimeMs: 500 },
+    search: { depth: 9, multiPv: 10, movetimeMs: 500 },
     maxLoss: 8,
     temperature: 4,
     slipChance: 0.04,
     slipMaxLoss: 12,
     aheadMaxLoss: 1.5,
     forceMateIn: 3,
-    mistakeChance: 0,
-    blunderChance: 0,
-    blunderMaxCp: 0,
-    hangWeight: 0,
+    mistakeChance: 0.36,
+    blunderChance: 0.33,
+    blunderMaxCp: 700,
+    hangWeight: 0.7,
   },
   1900: {
-    search: { depth: 10, multiPv: 4, movetimeMs: 600 },
+    search: { depth: 10, multiPv: 10, movetimeMs: 600 },
     maxLoss: 6,
     temperature: 3,
     slipChance: 0.03,
     slipMaxLoss: 10,
     aheadMaxLoss: 1.25,
     forceMateIn: 4,
-    mistakeChance: 0,
-    blunderChance: 0,
-    blunderMaxCp: 0,
-    hangWeight: 0,
+    mistakeChance: 0.28,
+    blunderChance: 0.26,
+    blunderMaxCp: 650,
+    hangWeight: 0.6,
   },
   2100: {
-    search: { depth: 11, multiPv: 4, movetimeMs: 700 },
+    search: { depth: 11, multiPv: 10, movetimeMs: 700 },
     maxLoss: 4.5,
     temperature: 2.2,
     slipChance: 0.02,
     slipMaxLoss: 8,
     aheadMaxLoss: 1,
     forceMateIn: 6,
-    mistakeChance: 0,
-    blunderChance: 0,
-    blunderMaxCp: 0,
-    hangWeight: 0,
+    mistakeChance: 0.28,
+    blunderChance: 0.22,
+    blunderMaxCp: 600,
+    hangWeight: 0.6,
   },
   2300: {
-    search: { depth: 12, multiPv: 4, movetimeMs: 800 },
+    search: { depth: 12, multiPv: 10, movetimeMs: 800 },
     maxLoss: 3,
     temperature: 1.5,
     slipChance: 0.015,
     slipMaxLoss: 6,
     aheadMaxLoss: 0.75,
     forceMateIn: 10,
-    mistakeChance: 0,
-    blunderChance: 0,
-    blunderMaxCp: 0,
-    hangWeight: 0,
+    mistakeChance: 0.25,
+    blunderChance: 0.22,
+    blunderMaxCp: 600,
+    hangWeight: 0.5,
   },
   2500: {
-    search: { depth: 14, multiPv: 4, movetimeMs: 900 },
+    search: { depth: 13, multiPv: 10, movetimeMs: 900 },
     maxLoss: 1.5,
     temperature: 0.75,
     slipChance: 0.01,
     slipMaxLoss: 4,
     aheadMaxLoss: 0.5,
     forceMateIn: Infinity,
-    mistakeChance: 0,
-    blunderChance: 0,
-    blunderMaxCp: 0,
-    hangWeight: 0,
+    mistakeChance: 0.25,
+    blunderChance: 0.22,
+    blunderMaxCp: 600,
+    hangWeight: 0.4,
   },
   full: {
     search: { depth: 18, multiPv: 4, movetimeMs: 1000 },

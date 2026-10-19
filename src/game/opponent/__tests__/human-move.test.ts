@@ -747,13 +747,13 @@ describe("chooseHumanMove: mistake and blunder bands", () => {
       chooseHumanMove(lines, START, zero, rec.random);
       expect(rec.draws.length - before).toBe(1);
     }
-    // Fields missing (older profiles) behave as zero.
-    const legacy: StepProfile = { ...zero };
+    // Fields missing (a profile from outside the type checker) behave as zero.
+    const legacy: Partial<StepProfile> = { ...zero };
     delete legacy.mistakeChance;
     delete legacy.blunderChance;
     delete legacy.blunderMaxCp;
     delete legacy.hangWeight;
-    expect(tally(lines, START, legacy, 38, 1000)).toEqual(tally(lines, START, zero, 38, 1000));
+    expect(tally(lines, START, legacy as StepProfile, 38, 1000)).toEqual(tally(lines, START, zero, 38, 1000));
 
     // Well ahead (top at exactly AHEAD_WIN, and above): no roll, and the
     // same picks draw for draw as with zero chances.
