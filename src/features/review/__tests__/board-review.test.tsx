@@ -97,11 +97,11 @@ describe("the Review game button", () => {
   it("never shows mid-game, with the card open, or in Two players", () => {
     expect(buttonLabels(render(liemGame(["f2f3", "e7e5"])))).not.toContain("Review game");
 
-    const card = createAppStore();
-    card.dispatch(switchMode("liem"));
-    expect(buttonLabels(render(card))).not.toContain("Review game");
+    // The card the page opens with.
+    expect(buttonLabels(render(createAppStore()))).not.toContain("Review game");
 
     const twoPlayers = createAppStore();
+    twoPlayers.dispatch(switchMode("two-player"));
     play(twoPlayers, FOOLS_MATE);
     expect(buttonLabels(render(twoPlayers))).toEqual(["Play", "Reset", "Flip board", "Sound"]);
   });

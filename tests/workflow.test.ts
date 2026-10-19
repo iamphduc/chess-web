@@ -30,8 +30,8 @@ const allSteps = () => Object.values(wf().jobs).flatMap((j) => j.steps ?? []);
 
 // The one command the smoke recipe says proves a change: "**Verification:** `<cmd>`".
 const verificationCommand = () => {
-  const m = /\*\*Verification:\*\*\s*`([^`]+)`/.exec(readFileSync(join(ROOT, "docs", "codebase-structure.md"), "utf8"));
-  if (!m) throw new Error("no Verification: command in docs/codebase-structure.md");
+  const m = /\*\*Verification:\*\*\s*`([^`]+)`/.exec(readFileSync(join(ROOT, "pod-docs", "codebase-structure.md"), "utf8"));
+  if (!m) throw new Error("no Verification: command in pod-docs/codebase-structure.md");
   return m[1];
 };
 

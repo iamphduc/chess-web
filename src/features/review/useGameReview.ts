@@ -15,18 +15,12 @@ import {
   analysisFinished,
   evalReceived,
   lockedPlies,
-  reviewSlice,
   type ReviewState,
   stepTo,
 } from "./reviewSlice";
 
-const NO_REVIEW = reviewSlice.getInitialState();
-
-/**
- * The review state. A store built without the `review` key (an older test's
- * hand-made store) reads as no review.
- */
-export const selectReview = (state: RootState): ReviewState => state.review ?? NO_REVIEW;
+/** The review state. */
+export const selectReview = (state: RootState): ReviewState => state.review;
 
 type Books = Record<BookName, Book>;
 

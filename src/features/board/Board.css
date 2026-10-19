@@ -104,8 +104,8 @@
   line-height: 1.2;
 }
 
-/* The badge or "Thinking…" wins; the narrow rules below keep his strength in full,
-   and the ellipsis is only a fallback. */
+/* The badge or "Thinking…" wins; the line ends in an ellipsis when it can't fit
+   (decision 2026-10-11), and screen readers still get the whole line. */
 .board > .player .liem-detail__sub {
   min-width: 0;
   overflow: hidden;
@@ -131,22 +131,17 @@
   padding: 0 7px;
 }
 
-/* Hidden from sight, still read out: the full line stays for screen readers. */
-@media only screen and (max-width: 1199px) {
-  .board > .player .liem-detail__lead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
+/* His gold star sits in the name line at the name's size. */
+.board > .player .liem-star {
+  font-size: inherit;
+  margin-right: 4px;
 }
 
-/* On a phone the 312 px board leaves his line 136 px: "~2100" beside "★ Book",
-   the Stockfish pill or "Thinking…". The note below gives the game count. */
+/* On a phone the 312 px board leaves the line about 136 px: "Liem's openings"
+   (or "GM · 2732") beside "★ Book", the Stockfish pill or "Thinking…". The note
+   below gives the game count. Hidden from sight, still read out. */
 @media only screen and (max-width: 767px) {
-  .board > .player .liem-detail__about,
+  .board > .player .liem-detail__lead,
   .board > .player .liem-badge__count {
     position: absolute;
     width: 1px;
@@ -154,10 +149,6 @@
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
-  }
-
-  .board > .player .liem-detail__elo::before {
-    content: "~" / "";
   }
 }
 

@@ -1,6 +1,6 @@
 // Relative imports only, no React.
 // Lichess's game accuracy: lila modules/analyse/src/main/AccuracyPercent.scala
-// and scalachess WinPercent. See docs/decisions.md (2026-10-16).
+// and scalachess WinPercent. See pod-docs/decisions.md (2026-10-16).
 import type { PieceColor } from "../engine/game-state";
 import type { Score } from "../opponent/engine/lines";
 

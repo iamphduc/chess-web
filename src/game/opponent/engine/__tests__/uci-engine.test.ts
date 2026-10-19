@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SearchLimits } from "../lines";
 import { EngineError, type Analysis, type MoveEngine } from "../move-engine";
-import { createUciEngine, type UciTransport } from "../uci-engine";
+import { MAX_MULTIPV, createUciEngine, type UciTransport } from "../uci-engine";
 
 const START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const OTHER = "8/8/8/8/8/8/8/K6k w - - 0 1";
@@ -167,11 +167,12 @@ describe("analyse sends the search", () => {
     expect(sent.filter((l) => l.startsWith("go"))).toEqual(["go depth 10 movetime 250", "go depth 10 movetime 1"]);
   });
 
-  it("accepts the bounds: depth 1 and 30, multiPv 1 and 6", async () => {
+  it("accepts the bounds: depth 1 and 30, multiPv 1 and 10", async () => {
     const { engine, sent, reply } = readyEngine();
+    expect(MAX_MULTIPV).toBe(10);
     for (const limits of [
       { depth: 1, multiPv: 1, movetimeMs: 100 },
-      { depth: 30, multiPv: 6, movetimeMs: 100 },
+      { depth: 30, multiPv: 10, movetimeMs: 100 },
     ]) {
       const p = engine.analyse(START, limits);
       reply("bestmove e2e4");
@@ -189,7 +190,7 @@ describe("analyse sends the search", () => {
       { ...LIM, depth: NaN },
       { ...LIM, depth: -3 },
       { ...LIM, multiPv: 0 },
-      { ...LIM, multiPv: 7 },
+      { ...LIM, multiPv: 11 },
       { ...LIM, multiPv: 1.5 },
       { ...LIM, multiPv: NaN },
       { ...LIM, movetimeMs: NaN },

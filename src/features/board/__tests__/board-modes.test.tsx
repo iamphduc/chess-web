@@ -10,7 +10,7 @@ import { LIEM } from "game/opponent/players";
 import { uciToMove } from "game/opponent/position";
 import type { MoveChoice } from "game/opponent/opponent";
 import { newLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
-import { setColorPick } from "features/liem/matchSlice";
+import { setColorPick, setStrength } from "features/liem/matchSlice";
 import { toggleFlip } from "../viewSlice";
 import type { LiemOpponent } from "features/liem/opponentController";
 import { createLiemController, liemGameId, syncLiemTurn } from "features/liem/useLiemOpponent";
@@ -54,7 +54,9 @@ function divWithClass(html: string, cls: string): string {
 /** The text of each player card's name, in order. */
 function playerNames(html: string): string[] {
   return Array.from(
-    html.matchAll(/class="player__name">(?:<span class="player__title">[^<]*<\/span>)?([^<]*)/g),
+    html.matchAll(
+      /class="player__name">(?:<span class="player__title">[^<]*<\/span>)?([^<]*)/g
+    ),
     (m) => m[1].trim()
   );
 }
@@ -93,6 +95,13 @@ function clockText(card: string): string {
   return card.match(/class="player__timer">([^<]*)</)?.[1] ?? "";
 }
 
+/** Two players, after one click on its tab. */
+function twoPlayers(): Store {
+  const store = createAppStore();
+  store.dispatch(switchMode("two-player"));
+  return store;
+}
+
 function liemGameAs(color: "white" | "black"): Store {
   const store = createAppStore();
   store.dispatch(switchMode("liem"));
@@ -128,12 +137,40 @@ function boardTop(html: string): string {
   return board.slice(0, m.index);
 }
 
-function expectHisCard(card: string) {
+/** The visible text of a card's detail line, tags stripped. */
+function detailText(card: string): string {
+  const at = card.indexOf('class="liem-detail__sub"');
+  if (at === -1) return "";
+  const m = card.slice(at).match(/^class="liem-detail__sub">((?:<span[^>]*>[^<]*<\/span>)*)<\/span>/);
+  return (m?.[1] ?? "").replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'");
+}
+
+/** A sparring bot's card at `elo`: the knight, "Sparring · N" and his openings line; no GM, star or photo. */
+function expectSparringCard(card: string, elo: number) {
+  expect(playerNames(card)).toEqual([`Sparring · ${elo}`]);
+  expect(card).toContain('<span class="liem-sparring-avatar" aria-hidden="true">♞</span>');
+  expect(card).not.toContain("<img");
+  expect(card).not.toContain('class="player__title"');
+  expect(card).not.toContain("liem-star");
+  expect(card).toMatch(/class="liem-detail"/);
+  expect(detailText(card)).toBe("Plays Liem's openings");
+}
+
+/** His own card: his photo, the GM tag and "GM · 2732". No star before his name, so it fits on a phone. */
+function expectLiemCard(card: string) {
   expect(playerNames(card)).toEqual([LIEM.entry.name]);
   expect(card).toContain(`<span class="player__title">${LIEM.entry.title}</span>`);
   expect(card).toContain(`src="${avatarSrc(LIEM.entry.avatar)}"`);
-  expect(card).toMatch(/class="liem-detail"/);
+  expect(card).not.toContain("liem-star");
+  expect(card).toContain(
+    `<div class="player__name"><span class="player__title">${LIEM.entry.title}</span>${LIEM.entry.name}<div class="player__detail">`
+  );
+  expect(card).not.toContain("liem-sparring-avatar");
+  expect(detailText(card)).toBe(`${LIEM.entry.title} · ${LIEM.entry.rating}`);
 }
+
+/** The opponent's card at the default level, 2100: a sparring bot. */
+const expectHisCard = (card: string) => expectSparringCard(card, 2100);
 
 function expectYourCard(card: string) {
   expect(playerNames(card)).toEqual(["You"]);
@@ -142,8 +179,14 @@ function expectYourCard(card: string) {
 }
 
 describe("board modes", () => {
-  it("two-player layout unchanged", () => {
-    const html = render(createAppStore());
+  it("two players unchanged after the switch", () => {
+    // The page opens on vs Liem: the card is up and there's no Play or Reset.
+    const load = render(createAppStore());
+    expect(load).toMatch(/role="dialog" aria-label="Challenge Le Quang Liem"/);
+    expect(buttonLabels(load)).toEqual(["Flip board", "Sound"]);
+
+    // One click on Two players gives the old layout.
+    const html = render(twoPlayers());
     const board = divWithClass(html, "board");
 
     expect(board).toMatch(/role="tablist"/);
@@ -163,6 +206,36 @@ describe("board modes", () => {
     expect(html).not.toMatch(/role="dialog"/);
     expect(html).not.toMatch(/data-book-state=/);
     expect(html).not.toMatch(/liem-dimmed/);
+  });
+
+  it("sparring and Liem cards", () => {
+    // A 1400 game: the sparring bot's card.
+    const store = createAppStore();
+    store.dispatch(setStrength(1400));
+    store.dispatch(startLiemGame());
+    const sparring = cardsAround(render(store)).above[0];
+    expectSparringCard(sparring, 1400);
+    expect(sparring).toContain('aria-label="Clock for Sparring · 1400"');
+
+    // Each sparring level reads its own number, with the card open too.
+    for (const n of [1700, 1900, 2100, 2300, 2500] as const) {
+      const open = createAppStore();
+      open.dispatch(setStrength(n));
+      expectSparringCard(cardsAround(render(open)).above[0], n);
+    }
+
+    // The Liem level: his own card, with the card open and in a game.
+    const him = createAppStore();
+    him.dispatch(setStrength("full"));
+    expectLiemCard(cardsAround(render(him)).above[0]);
+    him.dispatch(startLiemGame());
+    const liem = cardsAround(render(him)).above[0];
+    expectLiemCard(liem);
+    expect(detailText(liem)).not.toMatch(/playing|about/);
+
+    // Your card is the same at every level.
+    expectYourCard(cardsAround(render(store)).below[0]);
+    expectYourCard(cardsAround(render(him)).below[0]);
   });
 
   it("setup card over the dimmed board", () => {
@@ -206,7 +279,7 @@ describe("board modes", () => {
     expect(his).toMatch(/player__time--running/);
     expectYourCard(yours);
     expect(yours).not.toMatch(/player__time--running/);
-    expect(playerNames(html)).toEqual([LIEM.entry.name, "You"]);
+    expect(playerNames(html)).toEqual(["Sparring · 2100", "You"]);
   });
 
   it("setup cards follow the flip", () => {
@@ -269,7 +342,7 @@ describe("board modes", () => {
     reviewed.dispatch(openReview());
     reviewed.dispatch(backToGame());
     const states: [string, Store][] = [
-      ["two players", createAppStore()],
+      ["two players", twoPlayers()],
       ["vs Liem, card open", setup],
       ["vs Liem, card open, flipped", flippedSetup],
       ["vs Liem as White", liemGameAs("white")],
@@ -316,9 +389,11 @@ describe("liem opponent wiring", () => {
   it("liemGameId is set only during a vs-Liem game", () => {
     const store = createAppStore();
     const id = () => liemGameId(store.getState().board, store.getState().match);
+    expect(id()).toBeNull(); // page load: card open
+    store.dispatch(switchMode("two-player"));
     expect(id()).toBeNull(); // two players
     store.dispatch(switchMode("liem"));
-    expect(id()).toBeNull(); // card open
+    expect(id()).toBeNull(); // card open again
     store.dispatch(startLiemGame());
     expect(id()).toBe(store.getState().board.gameId);
     store.dispatch(newLiemGame());
@@ -375,9 +450,11 @@ describe("liem opponent wiring", () => {
     const controller = createLiemController(store.dispatch, load);
     const sync = () => syncLiemTurn(controller, store.getState().board, store.getState().match);
 
+    sync(); // page load: card open
+    store.dispatch(switchMode("two-player"));
     sync(); // two players
     store.dispatch(switchMode("liem"));
-    sync(); // card open
+    sync(); // card open again
     await flush();
     expect(load).not.toHaveBeenCalled();
 
