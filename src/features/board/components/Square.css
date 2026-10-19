@@ -1,6 +1,5 @@
-/* 
-  Board color scheme Wheat from http://omgchess.blogspot.com/2015/09/chess-board-color-schemes.html
-*/
+/* Squares in the Look: the wood board from --board-light / --board-dark, with ink labels.
+   Ink reads at 4.5:1 on both square colors (tests/board-css.test.ts). */
 .square {
   position: relative;
 }
@@ -12,18 +11,13 @@
 }
 
 .square__label {
-  font-size: 12px;
+  font-size: var(--text-small);
   font-weight: 700;
   line-height: 1;
+  color: var(--ink);
   position: absolute;
   z-index: 2;
   pointer-events: none;
-}
-.square--light .square__label {
-  color: var(--board-dark);
-}
-.square--dark .square__label {
-  color: var(--board-light);
 }
 .square__label--rank {
   top: 2px;
@@ -36,11 +30,11 @@
 
 @media only screen and (min-width: 768px) {
   .square__label {
-    font-size: 16px;
+    font-size: var(--text-body);
   }
 }
 @media only screen and (min-width: 1200px) {
   .square__label {
-    font-size: 20px;
+    font-size: var(--text-title);
   }
 }

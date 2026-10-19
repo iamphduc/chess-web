@@ -43,7 +43,11 @@ export interface PromotionPlacement {
   bottom: number | "unset";
 }
 
-/** Where the promotion picker sits for a pawn on board `[y, x]`, beside its display square. */
+/**
+ * Where the promotion picker sits for a pawn on board `[y, x]`, beside its display square.
+ * It starts half a square before the pawn's square, clamped to 0 so a picker on an edge
+ * file (a or h, flipped or not) stays inside the board.
+ */
 export function promotionPlacement(
   y: number,
   x: number,
@@ -52,8 +56,8 @@ export function promotionPlacement(
 ): PromotionPlacement {
   const [row, col] = toDisplay([y, x], flipped);
   return {
-    left: col <= 3 ? squareSize * col - squareSize / 2 : "unset",
-    right: col > 3 ? squareSize * (7 - col) - squareSize / 2 : "unset",
+    left: col <= 3 ? Math.max(0, squareSize * col - squareSize / 2) : "unset",
+    right: col > 3 ? Math.max(0, squareSize * (7 - col) - squareSize / 2) : "unset",
     top: row === 0 ? squareSize : "unset",
     bottom: row === 7 ? squareSize : "unset",
   };
