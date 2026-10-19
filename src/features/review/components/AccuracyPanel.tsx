@@ -10,11 +10,11 @@ const COUNTS: { grade: Grade; label: string }[] = [
   { grade: "blunder", label: "Blunders" },
 ];
 
-/** The game accuracy (28 px, "—" until every move of yours is graded) and the grade counts. */
+/** The game accuracy (30 px, "—" until every move of yours is graded) and the grade counts. */
 export const AccuracyPanel = ({ model }: { model: ReviewModel }) => {
   const bookMoves = model.moves.filter((m) => m.byHuman && m.bookGames !== null).length;
   return (
-    <section className="accuracy-panel" aria-label="Your accuracy">
+    <section className="accuracy-panel card" aria-label="Your accuracy">
       <div className="accuracy-panel__main">
         {model.accuracy === null ? (
           <>

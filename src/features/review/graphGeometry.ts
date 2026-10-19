@@ -4,32 +4,27 @@
  * to a click. No React, no DOM.
  */
 import type { PieceColor } from "game/engine/game-state";
-import type { GraphSide } from "./reviewSlice";
 
 export interface GraphPoint {
   /** Position index, 0 is the start. */
   index: number;
   x: number;
   y: number;
-  /** Win % from the graph's side. */
+  /** Your win %. */
   win: number;
 }
 
 export interface GraphFrame {
-  side: GraphSide;
+  /** The graph always shows your side. */
   humanColor: PieceColor;
   width: number;
   height: number;
 }
 
-/** White's win % seen from the graph's side; `null` stays `null`. */
-export function sideWin(
-  whiteWin: number | null,
-  side: GraphSide,
-  humanColor: PieceColor
-): number | null {
+/** White's win % seen from your side; `null` stays `null`. */
+export function sideWin(whiteWin: number | null, humanColor: PieceColor): number | null {
   if (whiteWin === null) return null;
-  return side === "you" && humanColor === "black" ? 100 - whiteWin : whiteWin;
+  return humanColor === "black" ? 100 - whiteWin : whiteWin;
 }
 
 /** The x of position `index` of `0..last`: the start at 0, the last position at the width. */
@@ -44,7 +39,7 @@ export function graphPoints(
 ): (GraphPoint | null)[] {
   const last = whiteWin.length - 1;
   return whiteWin.map((w, index) => {
-    const win = sideWin(w, frame.side, frame.humanColor);
+    const win = sideWin(w, frame.humanColor);
     if (win === null) return null;
     return {
       index,

@@ -1,13 +1,35 @@
+/*
+ * What the review screen shows where, and its top bar's Play again. Pure rules,
+ * so Board.tsx only wires them up.
+ */
 import type { AnyAction, ThunkAction } from "@reduxjs/toolkit";
 
 import type { RootState } from "app/store";
+import { goTo } from "app/route";
+import { replayLiemGame } from "features/liem/liemActions";
 
 export type GraphPlace = "sidebar" | "sheet";
 
-/** Stub: filled in by the feat commit. */
-export function graphPlacement(_: { wide: boolean; sheetOpen: boolean; low: boolean }): GraphPlace {
-  return "sidebar";
+export interface GraphPlacementInput {
+  /** 768 px and up: no bottom sheet. */
+  wide: boolean;
+  sheetOpen: boolean;
+  /** The sheet sits low while you try a move: only its title and buttons show. */
+  low: boolean;
 }
 
-/** Stub: filled in by the feat commit. */
-export const playAgain = (): ThunkAction<void, RootState, unknown, AnyAction> => () => {};
+/**
+ * Where the win % graph goes, so it shows exactly once: the top of the phone's
+ * sheet while the sheet is open and up, else the top of the sidebar.
+ */
+export function graphPlacement({ wide, sheetOpen, low }: GraphPlacementInput): GraphPlace {
+  return !wide && sheetOpen && !low ? "sheet" : "sidebar";
+}
+
+/** Play again: a new game at the same level and color (Random draws again), then `#/play`. */
+export const playAgain =
+  (random?: () => number): ThunkAction<void, RootState, unknown, AnyAction> =>
+  (dispatch) => {
+    dispatch(replayLiemGame(random));
+    goTo("play");
+  };
