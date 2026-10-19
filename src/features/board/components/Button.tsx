@@ -19,6 +19,11 @@ interface Props {
   type: ButtonType;
 }
 
+/** What each text button reads. Reset starts a new game, so it says so. */
+const LABELS: Partial<Record<ButtonType, string>> = {
+  [ButtonType.Reset]: "New game",
+};
+
 /** Two arrows, up and down: turn the board around. */
 const FlipIcon = () => (
   <svg
@@ -122,8 +127,8 @@ export const Button = ({ type }: Props) => {
   };
 
   return (
-    <button className={`button button--${type.toLowerCase()}`} onClick={handleClick}>
-      {type}
+    <button type="button" className={`button button--${type.toLowerCase()}`} onClick={handleClick}>
+      {LABELS[type] ?? type}
     </button>
   );
 };

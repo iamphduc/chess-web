@@ -1,37 +1,61 @@
+/*
+ * The board screen (plan ui-refresh, ## Look): the 56 px top bar across the page,
+ * then the board column and the sidebar. From 992 px up they sit side by side
+ * (the sidebar 380 px wide, a 24 px gap); below that they stack, board first.
+ */
 .app {
-  width: 100%;
-  padding-right: 15px;
-  padding-left: 15px;
-  margin-right: auto;
-  margin-left: auto;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  justify-content: center;
   align-items: center;
+  width: 100%;
+  min-height: 100vh;
 }
 
-@media only screen and (min-width: 600px) {
-  .app {
-    width: 540px;
-  }
+.board-screen {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  width: 100%;
+  padding: var(--space-5) var(--space-4) var(--space-6);
 }
+
+/* The sidebar's cards in a column, as wide as the board while they stack. */
+.sidebar {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 312px; /* the board: 8 x 39 px squares */
+}
+
 @media only screen and (min-width: 768px) {
-  .app {
-    width: 720px;
+  .sidebar {
+    max-width: 416px; /* the board: 8 x 52 px squares */
   }
 }
+
 @media only screen and (min-width: 992px) {
-  .app {
-    width: 960px;
+  .board-screen {
     flex-direction: row;
-    align-items: start;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .sidebar {
+    flex-shrink: 0;
+    width: 380px;
+    max-width: none;
   }
 }
-@media only screen and (min-width: 1200px) {
-  .app {
-    width: 1140px;
-  }
+
+/* The review keeps its own layout until it moves to the Look (slice V1). */
+.app:has(> .review) {
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-4);
 }
 
 /* In the review the graph takes a row of its own above the board and sidebar. */
@@ -41,7 +65,7 @@
     grid-template-columns: auto auto;
     justify-content: center;
     align-items: start;
-    gap: 20px 16px;
+    gap: var(--space-5) var(--space-4);
   }
 }
 
