@@ -1,25 +1,24 @@
-/* A's key-moment card: layout only; colors from the review and liem tokens. */
+/* The key-moment card: layout only; the look is .card and .review-card. Tokens only. */
 .key-moment__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .key-moment__step {
-  font-size: 15px;
+  font-size: var(--text-small);
   font-weight: 700;
-  color: var(--liem-text-soft);
+  color: var(--soft);
 }
 
 .key-moment__stars {
   display: inline-flex;
   gap: 2px;
-  letter-spacing: 1px;
 }
 
 .key-moment__progress {
-  margin: 6px 0 10px;
+  margin: var(--space-1) 0 var(--space-3);
 }
 
 .key-moment__text,
@@ -29,26 +28,26 @@
 }
 
 .key-moment__soft {
-  color: var(--liem-text-soft);
+  color: var(--soft);
 }
 
 .key-moment__meta {
-  margin-top: 6px;
-  font-size: 15px;
-  color: var(--liem-text-soft);
+  margin-top: var(--space-1);
+  font-size: var(--text-small);
+  color: var(--soft);
 }
 
 .key-moment__try {
-  margin: 10px 0 0;
-  padding: 8px 10px;
-  font-size: 15px;
-  color: var(--liem-text-soft);
-  background-color: var(--liem-note);
-  border-radius: 6px;
+  margin: var(--space-3) 0 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-small);
+  color: var(--ink);
+  background-color: var(--surface-2);
+  border-radius: var(--radius);
 }
 
 .key-moment__reveal {
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .key-moment__reveal span {
@@ -58,8 +57,8 @@
 .key-moment__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 14px;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
 }
 
 .key-moment__actions .button {
@@ -67,19 +66,12 @@
   font-family: inherit;
 }
 
-.key-moment__quiet {
-  color: var(--liem-text);
-  background-color: var(--liem-line);
-}
-
+/* Show answer is the plain secondary .button; Skip drops even its border. */
 .key-moment__ghost {
-  color: var(--liem-text);
-  background-color: transparent;
-  box-shadow: inset 0 0 0 1px var(--liem-line);
+  border-color: transparent;
 }
 
 .key-moment__actions .button:disabled {
   cursor: not-allowed;
   opacity: 0.4;
-  filter: none;
 }

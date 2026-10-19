@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Provider } from "react-redux";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createAppStore } from "app/store";
 import { Board } from "features/board/Board";
@@ -16,6 +16,8 @@ import { initialGameState } from "game/engine/game-state";
 import { positionKey, uciToMove } from "game/opponent/position";
 import type { Book, BookName } from "game/opponent/types";
 import { backToGame, openReview } from "../reviewActions";
+import { playAgain } from "../reviewLayout";
+import { sheetClosed } from "../reviewSlice";
 import { reviewBooks } from "../useGameReview";
 
 /** His books: after 1.f3 he has played 1...e5 in 10 games, and nothing more. */
@@ -49,17 +51,6 @@ function render(store: Store): string {
       </DndProvider>
     </Provider>
   );
-}
-
-/** The label of each button in the `.buttons` row. */
-function buttonLabels(html: string): string[] {
-  const at = html.indexOf('class="buttons"');
-  if (at === -1) throw new Error("no .buttons");
-  const row = html.slice(at, html.indexOf("</div>", at));
-  return Array.from(row.matchAll(/<button([^>]*)>([\s\S]*?)<\/button>/g), (m) => {
-    const aria = m[1].match(/aria-label="([^"]*)"/)?.[1];
-    return aria ?? m[2].replace(/<[^>]+>/g, "").trim();
-  });
 }
 
 /** The label of each control in the Moves card's foot (the game layout). */
@@ -159,7 +150,7 @@ describe("review layout", () => {
     expect(html).toMatch(/class="accuracy-panel/);
     expect(html).toMatch(/class="move-list/);
     expect(html).toMatch(/Left his book at move 2/);
-    expect(buttonLabels(html)).toEqual(["Back to game", "New game", "Flip board", "Sound"]);
+    expect(footLabels(html)).toEqual(["Back to game", "Flip board", "Sound"]);
     expect(html).not.toMatch(/Fallen Pieces/);
     expect(html).not.toMatch(/data-book-state=/);
   });
@@ -174,25 +165,113 @@ describe("review layout", () => {
   });
 });
 
-describe("new game from the review", () => {
-  it("clears the review and replays the level", () => {
-    const store = liemGame(FOOLS_MATE);
+/** The page as a desktop (768 px and up, and 1200 px up) or a phone sees it. */
+function onScreen(wide: boolean) {
+  vi.stubGlobal("window", {
+    matchMedia: () => ({ matches: wide, addEventListener: () => {}, removeEventListener: () => {} }),
+  });
+}
+
+/** Where each of `marks` first appears in `html`, after `from`. */
+function order(html: string, from: number, marks: readonly RegExp[]): number[] {
+  return marks.map((m) => {
+    const at = html.slice(from).search(m);
+    return at === -1 ? -1 : at + from;
+  });
+}
+
+const count = (html: string, re: RegExp) => (html.match(re) ?? []).length;
+
+function reviewed(): Store {
+  const store = liemGame(FOOLS_MATE);
+  store.dispatch(openReview());
+  return store;
+}
+
+describe("review screen", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("review sidebar order", () => {
+    onScreen(true);
+    const html = render(reviewed());
+    const sidebarAt = html.search(/class="sidebar[ "]/);
+    expect(sidebarAt).toBeGreaterThan(-1);
+    // Graph, key-moment card, accuracy, move list, then "Left his book".
+    const at = order(html, sidebarAt, [
+      /data-review-graph=/,
+      /data-moment-status=/,
+      /class="[^"]*accuracy-panel/,
+      /class="[^"]*move-list/,
+      /data-left-book=/,
+    ]);
+    expect(at.every((i) => i > -1), `all in the sidebar: ${at}`).toBe(true);
+    expect([...at].sort((x, y) => x - y)).toEqual(at);
+    // The graph shows once, in the sidebar: no full-width strip above the board.
+    expect(count(html, /data-review-graph=/g)).toBe(1);
+    expect(html).not.toMatch(/review-top/);
+    expect(html.search(/data-review-graph=/)).toBeGreaterThan(html.search(/class="board"/));
+    // No phone sheet on desktop.
+    expect(html).not.toMatch(/review-sheet/);
+  });
+
+  it("play again replays the level", () => {
+    const store = reviewed();
+    const html = render(store);
+    const bar = html.slice(html.indexOf("<header"), html.indexOf("</header>"));
+    expect(bar).toMatch(/class="top-bar"/);
+    expect(bar).toMatch(/<a class="button top-bar__home" href="#\/">← Home<\/a>/);
+    expect(bar).toContain("Review · vs Harder");
+    expect(bar).toMatch(/<button type="button" class="button top-bar__action">Play again<\/button>/);
+    // Nothing else plays again: the foot has no New game.
+    expect(html).not.toMatch(/>New game</);
+
     const { gameId } = store.getState().board;
-    store.dispatch(openReview());
-    const inReview = render(store);
-    expect(inReview).toMatch(/data-review-state=/);
-    expect(buttonLabels(inReview)).toContain("New game");
-    store.dispatch(replayLiemGame());
+    store.dispatch(playAgain());
     const { review, match, board } = store.getState();
     expect(review.open).toBe(false);
     expect(review.gameId).toBeNull();
     expect(match.setupOpen).toBe(false);
+    expect(match.strength).toBe(2100);
     expect(board.gameId).toBeGreaterThan(gameId);
     expect(board.humanColor).toBe("white");
+    const after = render(store);
+    expect(after).not.toMatch(/data-review-state=/);
+    expect(after).not.toMatch(/data-review-graph/);
+    expect(footLabels(after)).toEqual(["New game", "Flip board", "Sound"]);
+  });
+
+  it("moves card foot in the review", () => {
+    const html = render(reviewed());
+    expect(footLabels(html)).toEqual(["Back to game", "Flip board", "Sound"]);
+    // A link: the route closes the review and keeps its evals.
+    expect(html).toMatch(/<a class="button" href="#\/play">Back to game<\/a>/);
+    // The move list sits in the flush Moves card, as a scoresheet.
+    const cardAt = html.search(/class="card card--flush[^"]*moves-card/);
+    expect(cardAt).toBeGreaterThan(-1);
+    expect(html.slice(cardAt)).toMatch(/^[^]*?class="move-list scoresheet"/);
+  });
+
+  it("phone sheet starts with the graph", () => {
+    onScreen(false);
+    const store = reviewed();
+    expect(store.getState().review.sheetOpen).toBe(true);
     const html = render(store);
-    expect(html).not.toMatch(/data-review-state=/);
-    expect(html).not.toMatch(/data-review-graph/);
-    expect(html).not.toMatch(/role="dialog"/);
-    expect(footLabels(html)).toEqual(["New game", "Flip board", "Sound"]);
+    const sheetAt = html.search(/<section class="review-sheet/);
+    expect(sheetAt).toBeGreaterThan(-1);
+    const [graphAt, cardAt] = order(html, sheetAt, [/data-review-graph=/, /data-moment-status=/]);
+    expect(graphAt).toBeGreaterThan(sheetAt);
+    expect(cardAt).toBeGreaterThan(graphAt);
+    expect(count(html, /data-review-graph=/g)).toBe(1);
+
+    // Closed, the graph goes back to the top of the sidebar, still once.
+    store.dispatch(sheetClosed());
+    const closed = render(store);
+    expect(count(closed, /data-review-graph=/g)).toBe(1);
+    const sidebarAt = closed.search(/class="sidebar[ "]/);
+    const [g, acc] = order(closed, sidebarAt, [/data-review-graph=/, /class="[^"]*accuracy-panel/]);
+    expect(g).toBeGreaterThan(sidebarAt);
+    expect(acc).toBeGreaterThan(g);
   });
 });

@@ -11,7 +11,6 @@ import {
   positionX,
   type GraphPoint,
 } from "../graphGeometry";
-import type { GraphSide } from "../reviewSlice";
 import { GRADE_MARK } from "./MoveList";
 
 /** Up to 3 decimals, so the markup stays short. */
@@ -19,7 +18,7 @@ const n3 = (v: number): number => Math.round(v * 1000) / 1000;
 const pct = (v: number): string => `${n3(v)}%`;
 
 /**
- * The tooltip at the cursor: "27.Qe2?? −44 %". His moves show only the label, a
+ * The cursor's move, in the head: "27.Qe2?? −44 %". His moves show only the label, a
  * book move says so, and a drop under half a point isn't shown. `null` at the start.
  */
 export function cursorTip(model: ReviewModel, cursor: number): string | null {
@@ -41,44 +40,30 @@ function areaPath(run: readonly GraphPoint[]): string {
   return `M${n3(first.x)},100 ${linePath(run).replace(/^M/, "L")} L${n3(last.x)},100 Z`;
 }
 
-/** Keeps the tooltip inside the plot: pinned to an edge near the ends, below the point near the top. */
-function tipClass(x: number, y: number): string {
-  const h = x < 12 ? " review-graph__tip--start" : x > 88 ? " review-graph__tip--end" : "";
-  const v = y < 35 ? " review-graph__tip--below" : "";
-  return `review-graph__tip${h}${v}`;
-}
-
 interface Props {
   model: ReviewModel;
+  /** The graph shows your side: up is good for you. */
   humanColor: PieceColor;
-  side: GraphSide;
   /** Position index, 0 is the start. */
   cursor: number;
   /** Gets the position nearest to the click. */
   onSelect: (cursor: number) => void;
-  onSide: (side: GraphSide) => void;
 }
 
-const SIDES: { side: GraphSide; label: string }[] = [
-  { side: "white", label: "White" },
-  { side: "you", label: "You" },
-];
-
 /**
- * B's win % graph: the olive book band, a dashed 50 % line, the line and area
- * for the analysed positions, a point at each graded move, and the cursor with
- * its tooltip. Positions are laid out in percent, so it fills any width.
+ * The win % graph card, from your side: the cursor's move in the head, then the
+ * olive book band, a dashed 50 % line, the line and area for the analysed
+ * positions, a point at each graded move, and the cursor. Positions are laid out
+ * in percent, so it fills any width.
  */
-export const ReviewGraph = ({ model, humanColor, side, cursor, onSelect, onSide }: Props) => {
+export const ReviewGraph = ({ model, humanColor, cursor, onSelect }: Props) => {
   const last = model.whiteWin.length - 1;
-  const points = graphPoints(model.whiteWin, { side, humanColor, width: 100, height: 100 });
+  const points = graphPoints(model.whiteWin, { humanColor, width: 100, height: 100 });
   const runs = lineRuns(points);
   const band = model.bookPlies > 0 ? n3(positionX(model.bookPlies, last, 100)) : 0;
   const cursorX = positionX(cursor, last, 100);
   const tip = cursorTip(model, cursor);
-  const tipY = points[cursor]?.y ?? 0;
   const graded = model.moves.filter((m) => m.grade !== null && points[m.ply + 1] != null);
-  const sideName = side === "you" ? "your side" : "White's side";
 
   const select = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -86,33 +71,15 @@ export const ReviewGraph = ({ model, humanColor, side, cursor, onSelect, onSide 
   };
 
   return (
-    <section
-      className="review-graph"
-      data-review-graph="true"
-      data-side={side}
-      aria-label="Win % graph"
-    >
+    <section className="card review-graph" data-review-graph="true" aria-label="Win % graph">
       <div className="review-graph__head">
-        <span className="review-graph__label">Win %</span>
-        <div className="review-graph__sides" role="radiogroup" aria-label="Graph side">
-          {SIDES.map((s) => (
-            <button
-              key={s.side}
-              type="button"
-              role="radio"
-              aria-checked={side === s.side}
-              className="review-graph__side"
-              onClick={() => onSide(s.side)}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <span className="review-graph__label">Win % · you</span>
+        {tip !== null && <span className="review-graph__tip">{tip}</span>}
       </div>
       <div
         className="review-graph__plot"
         role="img"
-        aria-label={`Win % by move, from ${sideName}. Click to jump to a move.`}
+        aria-label="Win % by move, from your side. Click to jump to a move."
         onClick={select}
       >
         <svg
@@ -160,15 +127,6 @@ export const ReviewGraph = ({ model, humanColor, side, cursor, onSelect, onSide 
           ))}
         </svg>
         <span className="review-graph__mid" aria-hidden="true" />
-        <span className="review-graph__axis review-graph__axis--top" aria-hidden="true">
-          100
-        </span>
-        <span className="review-graph__axis review-graph__axis--mid" aria-hidden="true">
-          50
-        </span>
-        <span className="review-graph__axis review-graph__axis--bottom" aria-hidden="true">
-          0
-        </span>
         <span
           className="review-graph__cursor"
           data-cursor="true"
@@ -190,11 +148,6 @@ export const ReviewGraph = ({ model, humanColor, side, cursor, onSelect, onSide 
             />
           );
         })}
-        {tip !== null && (
-          <span className={tipClass(cursorX, tipY)} style={{ left: pct(cursorX), top: pct(tipY) }}>
-            {tip}
-          </span>
-        )}
       </div>
       <div className="review-graph__ticks" aria-hidden="true">
         {moveTicks(last).map((t) => {

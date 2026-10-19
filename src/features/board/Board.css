@@ -3,125 +3,41 @@
   user-select: none;
 }
 
-/*
- * The squares sit in `.squares__grid` in every state. With the vs-Liem card open,
- * the grid dims and the card shares its grid cell, so on a small board the card
- * grows the box downward instead of being cut off.
- */
+/* The squares sit in `.squares__grid`; the promotion picker and the game-over notice sit over it. */
 .squares {
   display: grid;
   grid-template-columns: 1fr;
   position: relative;
 }
 
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-}
-
-.squares__grid,
-.squares__overlay {
-  grid-area: 1 / 1;
-}
-
 .squares__grid {
+  grid-area: 1 / 1;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   align-self: start;
 }
 
-.squares__overlay {
-  /* Above the squares, whose pieces make their own stacking layers. */
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 12px 12px 0;
-}
-
-@media only screen and (min-width: 768px) {
-  .squares__overlay {
-    padding: 8% 6% 0;
-  }
-}
-
-/* vs Liem in a game: his book note, as wide as the sidebar boxes. */
-.liem-side {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: calc(13px * 24);
-  margin: 8px 0;
-}
-
-@media only screen and (min-width: 768px) {
-  .liem-side {
-    width: calc(13px * 32);
-  }
-}
-@media only screen and (min-width: 1200px) {
-  .liem-side {
-    width: calc(13px * 36);
-  }
-}
-
 /*
- * The game review (plan post-game-review, ## Look). Its root adds no box, so the
- * graph, the board and the sidebar stay items of `.app`: the graph runs full
- * width above the other two (App.css wraps the row), and below 992 px all three
- * stack. The sidebar holds the card, the accuracy, the move list, the book note
- * and the buttons; below 768 px the card is in the bottom sheet instead.
+ * The game review (plan ui-refresh, ## Look) uses the board screen's layout: the
+ * board column with the step buttons under it, and the sidebar with the graph,
+ * the key-moment card, accuracy, the Moves card and "Left his book". Below
+ * 768 px the graph and the card are in the bottom sheet while it's open.
  */
-.review {
-  display: contents;
-}
-
-.review-top {
-  box-sizing: border-box;
-  width: calc(13px * 24);
-  max-width: 100%;
-}
-
 .review-board-steps {
-  margin-top: 10px;
+  margin-top: var(--space-3);
 }
 
-.review-side {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: calc(13px * 24);
-  margin: 8px 0;
+/* Play again, on the right of the review's top bar. */
+.top-bar > .top-bar__action {
+  flex-shrink: 0;
+  min-height: 40px;
+  margin-left: auto;
+  padding: var(--space-2) var(--space-3);
 }
 
-.review-side > .board-sidebar {
-  margin: 0;
-  min-height: 0;
-}
-
-@media only screen and (min-width: 768px) {
-  .review-top,
-  .review-side {
-    width: calc(13px * 32);
-  }
-}
-
-@media only screen and (min-width: 992px) {
-  .review-top {
-    grid-column: 1 / -1;
-    width: 100%;
-  }
-
-  .review-side {
-    margin-top: 0;
-  }
-}
-
-@media only screen and (min-width: 1200px) {
-  .review-side {
-    width: calc(13px * 36);
+/* On a phone, room below the page for the low sheet, so the board can scroll above it. */
+@media only screen and (max-width: 767px) {
+  .review:has(.review-sheet--low:not([hidden])) {
+    padding-bottom: 40vh;
   }
 }

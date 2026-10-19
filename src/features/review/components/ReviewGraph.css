@@ -1,80 +1,50 @@
 /*
- * B's win % graph (plan post-game-review, ## Look): 150 px tall, 90 px below
- * 768 px, full width of its container. Colors come only from tokens in
- * src/index.css; flag red is never used here.
+ * The win % graph card (plan ui-refresh, ## Look): the top of the review sidebar,
+ * or of the phone sheet. The plot is 80 px tall and as wide as the card.
+ * Tokens only, from src/index.css. The box is .card from src/styles/look.css.
  */
 .review-graph {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  padding: 10px 0 8px;
-  color: var(--liem-text);
-  background-color: var(--liem-card);
-  border-radius: 10px;
+  padding: var(--space-3) var(--space-3) var(--space-2);
 }
 
+/* "Win % · you" on the left, the cursor's move on the right. */
 .review-graph__head {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 12px 8px;
+  gap: var(--space-2);
+  margin: 0 var(--space-1) var(--space-2);
 }
 
 .review-graph__label {
-  font-size: 14px;
+  flex-shrink: 0;
+  font-size: var(--text-small);
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--liem-text-soft);
+  color: var(--soft);
 }
 
-/* The White / You switch. */
-.review-graph__sides {
-  display: inline-flex;
-  padding: 2px;
-  background-color: var(--liem-note);
-  border-radius: 6px;
-}
-
-.review-graph__side {
-  appearance: none;
-  -webkit-appearance: none;
-  min-height: 32px;
-  margin: 0;
-  padding: 6px 12px;
-  font: inherit;
-  font-size: 14px;
+.review-graph__tip {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--text-small);
   font-weight: 700;
-  color: var(--liem-text-soft);
-  background: none;
-  border: 0;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.review-graph__side:hover {
-  color: var(--liem-text);
-  background-color: var(--liem-line);
-}
-
-.review-graph__side[aria-checked="true"],
-.review-graph__side[aria-checked="true"]:hover {
-  color: var(--grade-ink);
-  background-color: var(--liem-text);
-}
-
-.review-graph__side:focus-visible {
-  outline: 3px solid var(--board-focus);
-  outline-offset: 1px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink);
 }
 
 /* The plot: positions are placed in percent of its box. */
 .review-graph__plot {
   position: relative;
-  height: 150px;
-  overflow: hidden;
-  background-color: var(--liem-note);
+  height: 80px;
+  /* A point at 0 % or 100 % sits on the edge; it shows whole, over the card. */
+  overflow: visible;
+  background-color: var(--surface);
+  border-radius: var(--radius);
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -88,24 +58,23 @@
 }
 
 .review-graph__grid {
-  stroke: var(--liem-line);
+  stroke: var(--line);
   stroke-width: 1;
 }
 
 .review-graph__area {
-  fill: var(--liem-text);
-  fill-opacity: 0.85;
+  fill: var(--surface-2);
 }
 
 .review-graph__band {
   fill: var(--grade-book);
-  fill-opacity: 0.22;
+  fill-opacity: 0.18;
 }
 
 .review-graph__line {
   fill: none;
-  stroke: var(--liem-text);
-  stroke-width: 1.2;
+  stroke: var(--ink);
+  stroke-width: 2;
 }
 
 .review-graph__mid {
@@ -113,33 +82,8 @@
   top: 50%;
   right: 0;
   left: 0;
-  border-top: 1px dashed var(--liem-text-soft);
+  border-top: 1px dashed var(--soft);
   pointer-events: none;
-}
-
-.review-graph__axis {
-  position: absolute;
-  left: 6px;
-  padding: 0 3px;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--liem-text-soft);
-  background-color: var(--liem-card);
-  border-radius: 3px;
-  pointer-events: none;
-}
-
-.review-graph__axis--top {
-  top: 4px;
-}
-
-.review-graph__axis--mid {
-  top: calc(50% - 9px);
-}
-
-.review-graph__axis--bottom {
-  bottom: 4px;
 }
 
 .review-graph__cursor {
@@ -147,18 +91,18 @@
   top: 0;
   bottom: 0;
   width: 0;
-  border-left: 2px solid var(--liem-text);
+  border-left: 2px solid var(--ink);
   transform: translateX(-1px);
   pointer-events: none;
 }
 
-/* A point at each graded move, ink-ringed so it reads on the light area too. */
+/* A point at each graded move, cream-ringed so it reads on the line too. */
 .review-graph__dot {
   position: absolute;
   box-sizing: border-box;
   width: 10px;
   height: 10px;
-  border: 1.5px solid var(--grade-ink);
+  border: 1.5px solid var(--surface);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -179,79 +123,25 @@
 .review-graph__dot--selected {
   width: 14px;
   height: 14px;
-  border: 3px solid var(--liem-text);
-}
-
-/* The tooltip sits above the cursor's point, below it near the top, and pins to an edge near the ends. */
-.review-graph__tip {
-  position: absolute;
-  z-index: 1;
-  padding: 3px 8px;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.3;
-  white-space: nowrap;
-  color: var(--grade-ink);
-  background-color: var(--liem-text);
-  border-radius: 6px;
-  transform: translate(-50%, calc(-100% - 10px));
-  pointer-events: none;
-}
-
-.review-graph__tip--below {
-  transform: translate(-50%, 10px);
-}
-
-.review-graph__tip--start {
-  transform: translate(0, calc(-100% - 10px));
-}
-
-.review-graph__tip--start.review-graph__tip--below {
-  transform: translate(0, 10px);
-}
-
-.review-graph__tip--end {
-  transform: translate(-100%, calc(-100% - 10px));
-}
-
-.review-graph__tip--end.review-graph__tip--below {
-  transform: translate(-100%, 10px);
+  border: 3px solid var(--ink);
 }
 
 .review-graph__ticks {
   position: relative;
   height: 18px;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .review-graph__tick {
   position: absolute;
-  font-size: 14px;
+  font-size: var(--text-small);
   font-weight: 700;
   line-height: 18px;
   font-variant-numeric: tabular-nums;
-  color: var(--liem-text-soft);
+  color: var(--soft);
   transform: translateX(-50%);
 }
 
 .review-graph__tick--end {
   transform: translateX(-100%);
-}
-
-@media (max-width: 767px) {
-  .review-graph__plot {
-    height: 90px;
-  }
-
-  .review-graph__dot {
-    width: 7px;
-    height: 7px;
-    border-width: 1px;
-  }
-
-  .review-graph__dot--selected {
-    width: 11px;
-    height: 11px;
-    border-width: 2.5px;
-  }
 }

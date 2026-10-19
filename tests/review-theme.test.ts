@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { lookViolations, readCss, rules as lookRules } from "./look-helpers";
+
 // The game-review look (plan post-game-review, ## Look): the grade and review
 // tokens in src/index.css and the base classes in src/styles/review.css.
 
@@ -82,6 +84,12 @@ function contrast(a: string, b: string): number {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
 }
+
+/** A font size in px: a number, or a --text-* token. */
+const sizePx = (v: string) => {
+  const t = v.match(/^var\((--text-[\w-]+)\)$/);
+  return parseFloat(t ? token(t[1]) : v);
+};
 
 const GRADES = ["inaccuracy", "mistake", "blunder", "best", "book"] as const;
 
@@ -168,10 +176,11 @@ describe("review theme", () => {
       expect(contrast(token(ink!), token(fill!)), `ink on ${g}`).toBeGreaterThanOrEqual(4.5);
     }
 
-    // a selected move names the grade ink. Its fill is review.css's to retune for cream (V1):
-    // --grade-ink is now the cream, so the old white fill no longer carries it.
+    // a selected move is the scoresheet's ink chip: the cream grade ink on --ink
     const sel = declsFor(css, ".review-move--selected");
     expect(tokenOf(last(sel, "color")), "selected move ink").toBe("--grade-ink");
+    expect(tokenOf(last(sel, "background-color")), "selected move fill").toBe("--ink");
+    expect(contrast(token("--grade-ink"), token("--ink")), "cream on ink").toBeGreaterThanOrEqual(4.5);
 
     // its grade mark becomes a chip: ink on the grade color, never grade text on white
     for (const g of GRADES) {
@@ -198,27 +207,29 @@ describe("review theme", () => {
       }
     }
 
-    // flag red paints edges only: never text, fills or rings
-    for (const { selector, body } of all) {
-      for (const [prop, value] of declarations(body)) {
-        if (!/--liem-red\b/.test(value)) continue;
-        expect(prop, `${selector} { ${prop}: ${value} }`).toMatch(/^border(-top|-right|-bottom|-left)?(-color)?$/);
-      }
-    }
+    // no old token: the review moved to the Look's palette
+    expect(source).not.toMatch(/var\(--(dark-|liem-|book-bar|review-page)/);
 
-    // the card edges: red on a moment, gold when found, olive while waiting
+    // the card edges: red ink on a moment, ochre when found, olive while waiting
     const edge = (sel: string) => {
       const d = declsFor(source, sel);
-      return last(d, "border-top-color") ?? last(d, "border-top")?.match(/var\(--[\w-]+\)/)?.[0];
+      return last(d, "border-left-color") ?? last(d, "border-left")?.match(/var\(--[\w-]+\)/)?.[0];
     };
-    expect(edge(".review-card--red")).toBe("var(--liem-red)");
-    expect(edge(".review-card--gold")).toBe("var(--liem-gold)");
+    expect(edge(".review-card--red")).toBe("var(--accent)");
+    expect(edge(".review-card--gold")).toBe("var(--gold)");
     expect(edge(".review-card--olive")).toBe("var(--grade-book)");
-    expect(tokenOf(last(declsFor(source, ".review-star--found"), "color"))).toBe("--liem-gold");
+    // the found star is the shared SVG ★, filled ochre; ochre is never text
+    expect(tokenOf(last(declsFor(source, ".review-star--found"), "fill"))).toBe("--gold");
+    for (const { selector, body } of all) {
+      for (const [prop, value] of declarations(body)) {
+        if (/var\(--gold\)/.test(value)) expect(prop, `${selector} { ${prop}: ${value} }`).not.toBe("color");
+      }
+    }
     expect(tokenOf(last(declsFor(source, ".review-progress__bar"), "background-color"))).toBe("--grade-book");
     expect(tokenOf(last(declsFor(source, ".review-scrim"), "background-color"))).toBe("--review-scrim");
-    const sheetTop = last(declsFor(source, ".review-sheet"), "border-top");
-    expect(sheetTop).toBe("4px solid var(--liem-red)");
+    // the sheet is a cream card with a hairline top
+    expect(tokenOf(last(declsFor(source, ".review-sheet"), "background-color"))).toBe("--surface");
+    expect(last(declsFor(source, ".review-sheet"), "border-top")).toBe("1px solid var(--line)");
 
     // the stylesheet is loaded by the app, after the base tokens
     const entry = read("index.tsx");
@@ -232,15 +243,14 @@ describe("review theme", () => {
       const d = declsFor(css, sel);
       return { size: last(d, "font-size"), weight: last(d, "font-weight") };
     };
-    expect(font(".review-card__title")).toEqual({ size: "22px", weight: "700" });
-    expect(font(".review-sheet .review-card__title")).toEqual({ size: "20px", weight: "700" });
-    expect(font(".review-accuracy")).toEqual({ size: "28px", weight: "700" });
-    expect(font(".review-card")).toEqual({ size: "16px", weight: "500" });
-    expect(font(".review-move")).toEqual({ size: "16px", weight: "500" });
+    expect(font(".review-card__title")).toEqual({ size: "var(--text-title)", weight: "700" });
+    expect(font(".review-accuracy")).toEqual({ size: "var(--text-hero)", weight: "700" });
+    expect(font(".review-card")).toEqual({ size: "var(--text-body)", weight: "500" });
+    expect(font(".review-move")).toEqual({ size: "var(--text-body)", weight: "500" });
     for (const g of GRADES) {
       const chip = font(`.review-chip--${g}`);
       const base = font(".review-chip");
-      const size = parseFloat(chip.size ?? base.size ?? "0");
+      const size = sizePx(chip.size ?? base.size ?? "0");
       expect(size, `.review-chip--${g} label size`).toBeGreaterThanOrEqual(14);
       expect(size, `.review-chip--${g} label size`).toBeLessThanOrEqual(15);
       expect(chip.weight ?? base.weight, `.review-chip--${g} weight`).toBe("700");
@@ -286,5 +296,41 @@ describe("review theme", () => {
     const disabled = declsFor(css, ".review-step:disabled");
     expect(last(disabled, "cursor")).toBe("not-allowed");
     expect(parseFloat(last(disabled, "opacity") ?? "1")).toBeLessThan(1);
+  });
+
+  it("review follows the Look", () => {
+    // Every review stylesheet, plus the board screen's Board.css and App.css.
+    const FILES = [
+      ["styles", "review.css"],
+      ["features", "review", "components", "ReviewGraph.css"],
+      ["features", "review", "components", "BottomSheet.css"],
+      ["features", "review", "components", "KeyMomentCard.css"],
+      ["features", "review", "components", "MoveList.css"],
+      ["features", "review", "components", "ReviewBoard.css"],
+      ["features", "board", "Board.css"],
+      ["App.css"],
+    ];
+    for (const file of FILES) {
+      const name = file.join("/");
+      const source = readCss(...file);
+      expect({ name, violations: lookViolations(source) }).toEqual({ name, violations: [] });
+      expect({ name, old: /var\(--(dark-|liem-|book-bar|review-page|board-sound-on|background\)|text\))/.test(source) }).toEqual({
+        name,
+        old: false,
+      });
+      // No rule left for the old graph strip, the side switch, or the old board wrappers.
+      const selectors = lookRules(source).map((r) => r.selector).join(",");
+      expect({ name, selectors }).not.toEqual({
+        name,
+        selectors: expect.stringMatching(/\.(review-top|review-graph__sides|review-graph__side|squares__overlay|liem-side|buttons)/),
+      });
+    }
+
+    // The graph plot is 80 px tall, on a phone too.
+    const graph = readCss("features", "review", "components", "ReviewGraph.css");
+    const heights = lookRules(graph)
+      .filter((r) => r.selector.split(",").map((x) => x.trim()).includes(".review-graph__plot"))
+      .flatMap((r) => declarations(r.body).filter(([p]) => p === "height").map(([, v]) => v));
+    expect(heights).toEqual(["80px"]);
   });
 });
