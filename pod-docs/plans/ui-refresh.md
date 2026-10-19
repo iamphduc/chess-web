@@ -69,7 +69,7 @@ Constraints: static GitHub Pages site under `/chess-web/`, so no server routes; 
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| refresh | The scorebook look as tokens, hash screens with the home page, the reworked board screen and review sidebar, level names, and every old style removed | planned | — |
+| refresh | The scorebook look as tokens, hash screens with the home page, the reworked board screen and review sidebar, level names, and every old style removed | active | — |
 
 Status values: `planned` / `active` / `done`. The orchestrator only flips its row's Status — it does not rewrite Goal/Depends-on retroactively.
 
