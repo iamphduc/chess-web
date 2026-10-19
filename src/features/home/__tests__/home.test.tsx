@@ -59,7 +59,7 @@ describe("home", () => {
       "Bots play GM Le Quang Liem's opening lines from his real games, then Stockfish takes over at the level you pick. Every game ends with a review."
         .replace(/'/g, "&#x27;")
     );
-    const strip = [...html.matchAll(/<li class="home__step"><b>(.*?)<\/b>(.*?)<\/li>/g)].map((m) => [m[1], m[2]]);
+    const strip = Array.from(html.matchAll(/<li class="home__step"><b>(.*?)<\/b>(.*?)<\/li>/g)).map((m) => [m[1], m[2]]);
     expect(strip).toEqual([
       ["His openings", "From his real games"],
       ["Then Stockfish", "At your level"],
@@ -96,12 +96,14 @@ describe("home", () => {
     expect(steps.map((s) => s.includes("home__level--lit"))).toEqual([true, true, true, false, false, false, false]);
     // One tab stop: the checked step.
     expect(steps.map((s) => s.includes('tabindex="0"'))).toEqual([false, false, true, false, false, false, false]);
-    // The steps show their names; the last one is ★ Liem, the star drawn on its own.
-    const names = [...group(html, "Level").matchAll(/<span class="home__level-name">(.*?)<\/span><\/button>/g)].map(
+    // The steps show their names.
+    const names = Array.from(group(html, "Level").matchAll(/<span class="home__level-name">(.*?)<\/span><\/button>/g)).map(
       (m) => text(m[1])
     );
-    expect(names).toEqual(["Easy", "Medium", "Hard", "Harder", "Expert", "Master", "★ Liem"]);
-    expect(group(html, "Level")).toMatch(/<span class="home__star" aria-hidden="true">★<\/span>Liem/);
+    expect(names).toEqual(["Easy", "Medium", "Hard", "Harder", "Expert", "Master", "Liem"]);
+    // The ochre ★ is a shape before "Liem", on that step only.
+    expect(group(html, "Level")).toMatch(/<span class="home__level-name"><svg class="home__star"[^>]*aria-hidden="true"[^>]*><path[^>]*><\/path><\/svg>Liem<\/span>/);
+    expect(group(html, "Level").match(/home__star/g)).toHaveLength(1);
 
     // A sparring pick: its name beside the label, no rating, no "about", anywhere.
     for (const step of STRENGTH_STEPS.filter((s) => s !== "full")) {
@@ -110,12 +112,13 @@ describe("home", () => {
       expect(sparring).not.toMatch(/\b(1[4-9]\d\d|2[0-4]\d\d|2500)\b/);
       expect(sparring.toLowerCase()).not.toContain("about");
       expect(sparring).not.toContain("GM · 2732");
+      expect(sparring).not.toMatch(/data-field="level"><svg/);
     }
 
     // At Liem: the star, his name and "GM · 2732".
     const liem = render(storeAt("full"));
-    expect(fieldValue(liem, "level")).toBe("★ Liem GM · 2732");
-    expect(liem).toMatch(/data-field="level"><span class="home__star" aria-hidden="true">★<\/span>/);
+    expect(fieldValue(liem, "level")).toBe("Liem GM · 2732");
+    expect(liem).toMatch(/data-field="level"><svg class="home__star"/);
     expect(radios(group(liem, "Level")).every((s) => s.includes("home__level--lit"))).toBe(true);
   });
 
@@ -145,7 +148,7 @@ describe("home", () => {
   });
 
   it("color tiles read White, Black and Random", () => {
-    const tiles = [...group(render(), "You play").matchAll(/<button[^>]*>(.*?)<\/button>/g)].map((m) => text(m[1]));
+    const tiles = Array.from(group(render(), "You play").matchAll(/<button[^>]*>(.*?)<\/button>/g)).map((m) => text(m[1]));
     expect(tiles).toEqual(["♔ White", "♚ Black", "? Random"]);
   });
 
