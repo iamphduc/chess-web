@@ -307,3 +307,120 @@ describe("followHash", () => {
     expect(replaced).toEqual(["#/"]);
   });
 });
+
+/**
+ * A browser's hash history: setting `location.hash` pushes an entry, and every
+ * hash move but `replaceState` fires hashchange, which runs `followHash` as
+ * useHashRoute does.
+ */
+function browserHistory(store: Store, hash: string) {
+  const entries: { hash: string; state: unknown }[] = [{ hash, state: null }];
+  let index = 0;
+  const current = () => entries[index];
+  const change = (from: string) => followHash(store.dispatch, win, from);
+  const win = {
+    location: {
+      get hash() {
+        return current().hash;
+      },
+      set hash(next: string) {
+        const from = current().hash;
+        if (next === from) return;
+        entries.splice(index + 1);
+        entries.push({ hash: next, state: null });
+        index += 1;
+        change(from);
+      },
+      replace(url: string) {
+        const from = current().hash;
+        entries[index] = { hash: url, state: null };
+        if (url !== from) change(from);
+      },
+    },
+    history: {
+      get state() {
+        return current().state;
+      },
+      replaceState(state: unknown, _unused: string, url: string) {
+        entries[index] = { hash: url, state };
+      },
+      back() {
+        if (index === 0) throw new Error("left the app");
+        const from = current().hash;
+        index -= 1;
+        change(from);
+      },
+    },
+  };
+  followHash(store.dispatch, win); // the load
+  return { win, hashes: () => entries.map((e) => e.hash), at: () => index };
+}
+
+describe("browser Back after Play again", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("one Back from the board after Play again goes home", async () => {
+    const { playAgain } = await import("features/review/reviewLayout");
+    // Home, then Play: #/play over #/.
+    const store = createAppStore();
+    const browser = browserHistory(store, "#/");
+    vi.stubGlobal("window", browser.win);
+    store.dispatch(setColorPick("white"));
+    store.dispatch(startLiemGame());
+    browser.win.location.hash = "#/play";
+    play(store, FOOLS_MATE);
+
+    // Review game (a link to #/review), then Play again.
+    browser.win.location.hash = "#/review";
+    expect(store.getState().review.open).toBe(true);
+    store.dispatch(playAgain());
+    expect(browser.win.location.hash).toBe("#/play");
+    expect(store.getState().review.open).toBe(false);
+    expect(store.getState().match.setupOpen).toBe(false);
+    expect(store.getState().board.engineHistory).toHaveLength(1);
+
+    // One Back leaves the board for home, as Back from #/play does.
+    browser.win.history.back();
+    expect(browser.win.location.hash).toBe("#/");
+    expectHomeState(store);
+  });
+
+  it("Back to game, Review game again, then Play again: one Back still goes home", async () => {
+    const { playAgain } = await import("features/review/reviewLayout");
+    const store = createAppStore();
+    const browser = browserHistory(store, "#/");
+    vi.stubGlobal("window", browser.win);
+    store.dispatch(startLiemGame());
+    browser.win.location.hash = "#/play";
+    play(store, FOOLS_MATE);
+    browser.win.location.hash = "#/review";
+    browser.win.history.back(); // the browser's Back to the game
+    expect(browser.win.location.hash).toBe("#/play");
+    browser.win.location.hash = "#/review"; // Review game again
+
+    store.dispatch(playAgain());
+    expect(browser.win.location.hash).toBe("#/play");
+    browser.win.history.back();
+    expect(browser.win.location.hash).toBe("#/");
+    expectHomeState(store);
+  });
+
+  it("a review with no #/play under it is replaced by #/play, adding no entry", async () => {
+    const { playAgain } = await import("features/review/reviewLayout");
+    // A finished game reached at #/review straight from home (a typed hash).
+    const store = liemGame("white", FOOLS_MATE);
+    const browser = browserHistory(store, "#/");
+    vi.stubGlobal("window", browser.win);
+    // Home ended the game on load, so start and finish another, staying on #/.
+    store.dispatch(startLiemGame());
+    play(store, FOOLS_MATE);
+    browser.win.location.hash = "#/review";
+    expect(browser.hashes()).toEqual(["#/", "#/review"]);
+
+    store.dispatch(playAgain());
+    expect(browser.hashes()).toEqual(["#/", "#/play"]);
+    expect(browser.at()).toBe(1);
+  });
+});
