@@ -4,7 +4,14 @@ import { createAppStore } from "app/store";
 import { clickSquare, playOpponentMove, stop } from "features/board/BoardSlice";
 import { GameOverType } from "features/board/components/GameOver";
 import { startLiemGame, switchMode } from "features/liem/liemActions";
-import { setColorPick } from "features/liem/matchSlice";
+import { setColorPick, setStrength } from "features/liem/matchSlice";
+import { applyMove } from "game/engine/engine";
+import { initialGameState } from "game/engine/game-state";
+import { positionKey } from "game/opponent/position";
+import type { Book, BookName } from "game/opponent/types";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { LeftBookNote } from "../components/LeftBookNote";
 import type { GameState } from "game/engine/game-state";
 import { uciToMove } from "game/opponent/position";
 import type { ReviewModel } from "game/review/types";
@@ -108,6 +115,7 @@ describe("when the review opens", () => {
 
   it("never opens in two players", () => {
     const store = createAppStore();
+    store.dispatch(switchMode("two-player"));
     play(store, FOOLS_MATE);
     expect(store.getState().board.gameOver).toBe(GameOverType.Win);
     expect(can(store)).toBe(false);
@@ -306,5 +314,48 @@ describe("the review model", () => {
 
     // Positions that aren't one move apart.
     expect(reviewModel({ ...input, positions: [positions[0], positions[2]], evals: [null, null] })).toBeNull();
+  });
+});
+
+describe("a sparring game", () => {
+  /** His books: after 1.f3 he has played 1...e5 in 10 games, and nothing more. */
+  const afterF3 = positionKey(applyMove(initialGameState(), uciToMove(initialGameState(), "f2f3")!));
+  const book = (name: BookName): Book => ({
+    format: 1,
+    player: "le-quang-liem",
+    book: name,
+    minGames: 1,
+    games: 10,
+    gamesBySource: { otb: 0, lichess: 0, chesscom: 10 },
+    positions: { [afterF3]: [["e7e5", 5, 1, 4, 0, 0, 10]] },
+  });
+
+  it("review after a sparring game", () => {
+    // From the card the page opens with: 1400, White, Start game, then Fool's mate.
+    const store = createAppStore();
+    store.dispatch(setStrength(1400));
+    store.dispatch(startLiemGame());
+    play(store, FOOLS_MATE);
+    expect(store.getState().match.strength).toBe(1400);
+    expect(store.getState().board.gameOver).toBe(GameOverType.Win);
+
+    // Review game is offered and opens.
+    expect(can(store)).toBe(true);
+    store.dispatch(openReview());
+    expect(store.getState().review.open).toBe(true);
+
+    // The review builds with his books, and says where the game left them.
+    const positions = store.getState().board.engineHistory;
+    const model = reviewModel({
+      positions,
+      humanColor: "white",
+      evals: positions.map(() => null),
+      books: { slow: book("slow"), online: book("online") },
+      locked: [],
+    });
+    expect(model).not.toBeNull();
+    expect(model!.leftBook).not.toBeNull();
+    const note = renderToStaticMarkup(React.createElement(LeftBookNote, { model: model! }));
+    expect(note).toMatch(/Left his book at move \d/);
   });
 });

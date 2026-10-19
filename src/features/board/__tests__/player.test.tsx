@@ -25,6 +25,34 @@ describe("Player", () => {
   });
 });
 
+describe("Player avatar", () => {
+  const renderPlayer = (node: React.ReactElement) =>
+    renderToStaticMarkup(<Provider store={store}>{node}</Provider>);
+
+  it("image avatar unchanged", () => {
+    const html = renderPlayer(<Player name="Le Quang Liem" title="GM" avatar="le-quang-liem.png" isWhite={false} />);
+    expect(html).toMatch(
+      /^<div class="player"><div class="player__info"><img class="player__avatar" src="[^"]+" alt="Avatar" width="40" height="40"\/><div class="player__name"><span class="player__title">GM<\/span>Le Quang Liem<\/div><\/div>/
+    );
+    expect(html).not.toContain("liem-sparring-avatar");
+  });
+
+  it("a glyph avatar takes the image's place, hidden from screen readers", () => {
+    const html = renderPlayer(<Player name="Sparring · 1400" title={null} avatar={null} glyph="♞" isWhite={false} />);
+    expect(html).toContain(
+      '<div class="player__info"><span class="liem-sparring-avatar" aria-hidden="true">♞</span><div class="player__name">Sparring · 1400</div></div>'
+    );
+    expect(html).not.toContain("<img");
+    expect(html).toContain('aria-label="Clock for Sparring · 1400"');
+  });
+
+  it("the name line is the title then the name, with nothing between", () => {
+    const props = { name: "Le Quang Liem", title: "GM", avatar: null, isWhite: false, nameMark: <b>★</b> };
+    const html = renderPlayer(<Player {...props} />);
+    expect(html).toContain('<div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div>');
+  });
+});
+
 describe("clockForPhase", () => {
   const running = { remainingMs: 500000, startedAt: 1000 };
   const paused = { remainingMs: 500000, startedAt: null };

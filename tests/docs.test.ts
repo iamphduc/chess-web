@@ -5,7 +5,7 @@ import { parse } from "yaml";
 
 const ROOT = join(__dirname, "..");
 const read = (file: string) => readFileSync(join(ROOT, file), "utf8");
-const structure = () => read("docs/codebase-structure.md");
+const structure = () => read("pod-docs/codebase-structure.md");
 
 // The body of a "## <name>" section, up to the next "## " heading.
 function section(doc: string, name: string): string {
@@ -82,7 +82,7 @@ describe("docs", () => {
 
   it("decisions records the vite switch", () => {
     // \bVite\b: "Vitest" in an older heading must not count.
-    expect(read("docs/decisions.md")).toMatch(/^## .*\bVite\b/m);
+    expect(read("pod-docs/decisions.md")).toMatch(/^## .*\bVite\b/m);
   });
 
   it("CI section describes the workflow", () => {
@@ -112,7 +112,7 @@ describe("docs", () => {
   });
 
   it("decisions records the actions deploy", () => {
-    expect(read("docs/decisions.md")).toMatch(/^## (?=.*GitHub Actions)(?=.*\bPages\b).*$/m);
+    expect(read("pod-docs/decisions.md")).toMatch(/^## (?=.*GitHub Actions)(?=.*\bPages\b).*$/m);
   });
 
   it("engineAdapter header has no stale alias note", () => {

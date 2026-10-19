@@ -27,9 +27,10 @@ export interface MatchState {
   opponentStatus: OpponentStatus;
 }
 
+/** The page opens on vs Liem with the setup card up. Not saved: every load opens here. */
 const initialState: MatchState = {
-  mode: "two-player",
-  setupOpen: false,
+  mode: "liem",
+  setupOpen: true,
   colorPick: "white",
   strength: 2100,
   lastChoice: null,

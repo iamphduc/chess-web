@@ -4,6 +4,7 @@ import "features/board/components/Button.css";
 import "./BookNote.css";
 import { useAppSelector } from "app/hooks";
 import { bookNoteView, type BookNoteView } from "../bookNote";
+import { levelView } from "../levelView";
 
 interface Props {
   /** Asks him again after a failure. */
@@ -13,7 +14,7 @@ interface Props {
 const count = new Intl.NumberFormat("en-US");
 
 /** The book note's text for each state, from the plan's Look (draft A). */
-function Body({ view, onRetry }: { view: BookNoteView; onRetry: () => void }) {
+function Body({ view, outText, onRetry }: { view: BookNoteView; outText: string; onRetry: () => void }) {
   switch (view.kind) {
     case "waiting":
       return (
@@ -45,7 +46,7 @@ function Body({ view, onRetry }: { view: BookNoteView; onRetry: () => void }) {
       return (
         <>
           <h3 className="book-note__title">Out of his book</h3>
-          <p className="book-note__text">Standard Stockfish 18 plays from here. It isn't trained on his games.</p>
+          <p className="book-note__text">{outText}</p>
         </>
       );
     case "failed":
@@ -67,6 +68,7 @@ export const BookNote = ({ onRetry }: Props) => {
   const gameId = useAppSelector((s) => s.board.gameId);
   const lastChoice = useAppSelector((s) => s.match.lastChoice);
   const opponentStatus = useAppSelector((s) => s.match.opponentStatus);
+  const strength = useAppSelector((s) => s.match.strength);
   const view = useMemo(
     () => bookNoteView({ engineHistory, gameId }, { lastChoice, opponentStatus }),
     [engineHistory, gameId, lastChoice, opponentStatus]
@@ -78,7 +80,7 @@ export const BookNote = ({ onRetry }: Props) => {
       data-book-state={view.kind}
       aria-label="His book"
     >
-      <Body view={view} onRetry={onRetry} />
+      <Body view={view} outText={levelView(strength).outText} onRetry={onRetry} />
     </section>
   );
 };

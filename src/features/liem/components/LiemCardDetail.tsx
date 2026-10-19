@@ -2,9 +2,8 @@ import React, { useMemo } from "react";
 
 import "./BookNote.css";
 import { useAppSelector } from "app/hooks";
-import { LIEM } from "game/opponent/players";
-import { strengthElo } from "game/opponent/strength";
 import { bookNoteView, liemBadge, type LiemBadge } from "../bookNote";
+import { levelView } from "../levelView";
 
 const count = new Intl.NumberFormat("en-US");
 
@@ -27,8 +26,9 @@ function Badge({ badge }: { badge: LiemBadge }) {
 }
 
 /**
- * Under his name: "GM · playing about 2100", then the badge, or "Thinking…" while he loads or thinks.
- * Each part of the line has its own span, so a narrow board can show less of it (Board.css).
+ * Under the name: "Plays Liem's openings" for a sparring bot or "GM · 2732" for him, then the
+ * badge, or "Thinking…" while he loads or thinks. The part a phone drops ("Plays ") has its own
+ * span, so Board.css can hide it from sight and screen readers still read the whole line.
  */
 export const LiemCardDetail = () => {
   const strength = useAppSelector((s) => s.match.strength);
@@ -40,15 +40,14 @@ export const LiemCardDetail = () => {
     () => liemBadge(bookNoteView({ engineHistory, gameId }, { lastChoice, opponentStatus })),
     [engineHistory, gameId, lastChoice, opponentStatus]
   );
-  const { title, rating } = LIEM.entry;
+  const { detailLead, shortDetail } = levelView(strength);
   const thinking = opponentStatus === "loading" || opponentStatus === "thinking";
 
   return (
     <div className="liem-detail">
       <span className="liem-detail__sub">
-        <span className="liem-detail__lead">{`${title} · playing `}</span>
-        <span className="liem-detail__about">about </span>
-        <span className="liem-detail__elo">{strengthElo(strength, rating)}</span>
+        {detailLead && <span className="liem-detail__lead">{detailLead}</span>}
+        <span className="liem-detail__short">{shortDetail}</span>
       </span>
       {thinking ? (
         <span className="liem-detail__thinking">Thinking…</span>
