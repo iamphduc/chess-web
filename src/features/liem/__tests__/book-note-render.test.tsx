@@ -158,11 +158,22 @@ describe("BookNote and LiemCardDetail", () => {
     const out = sparring();
     heMoved(out, "engine");
     expect(detail(out)).toContain('<span class="liem-badge liem-badge--engine" data-engine="stockfish">Stockfish</span>');
-    expect(note(out)).toContain("Stockfish at about 1400 plays from here. It isn&#x27;t trained on his games.");
+    expect(note(out)).toContain("Stockfish at the Easy level plays from here. It isn&#x27;t trained on his games.");
 
     const thinking = sparring();
     thinking.dispatch(setOpponentStatus("thinking"));
     expect(text(detail(thinking))).toBe("Plays Liem's openingsThinking…");
+  });
+
+  it("out of book names the level", () => {
+    const store = createAppStore();
+    store.dispatch(setStrength(1400));
+    store.dispatch(gameStarted());
+    store.dispatch(newGame({ humanColor: "black" }));
+    heMoved(store, "engine");
+    const out = text(note(store));
+    expect(out).toContain("Stockfish at the Easy level plays from here. It isn't trained on his games.");
+    expect(out).not.toMatch(/1400|about/);
   });
 
   it("the book badge's count is its own part, so a phone can show just ★ Book", () => {
@@ -187,7 +198,7 @@ describe("BookNote and LiemCardDetail", () => {
     const html = note(out);
     expect(html).toMatch(/class="liem-note liem-note--out"[^>]*data-book-state="out"/);
     expect(html).toContain('<h3 class="book-note__title">Out of his book</h3>');
-    expect(html).toContain("Stockfish at about 2100 plays from here. It isn&#x27;t trained on his games.");
+    expect(html).toContain("Stockfish at the Harder level plays from here. It isn&#x27;t trained on his games.");
     expect(html).not.toContain("Standard Stockfish");
 
     // His own level: full-strength Stockfish.
