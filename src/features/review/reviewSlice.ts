@@ -12,7 +12,6 @@ export interface PositionEval {
 
 export type MomentStatus = "trying" | "checking" | "wrong" | "check-failed" | "found" | "revealed" | "skipped";
 export type ReviewStatus = "idle" | "analysing" | "done" | "failed";
-export type GraphSide = "you" | "white";
 
 export interface ReviewState {
   open: boolean;
@@ -23,7 +22,6 @@ export interface ReviewState {
   evals: (PositionEval | null)[];
   /** A position index, `0..evals.length - 1`. */
   cursor: number;
-  graphSide: GraphSide;
   /** Key moments opened so far, by ply. */
   moments: Record<number, MomentStatus>;
   active: number | null;
@@ -36,7 +34,6 @@ const initialState: ReviewState = {
   status: "idle",
   evals: [],
   cursor: 0,
-  graphSide: "you",
   moments: {},
   active: null,
   sheetOpen: false,
@@ -141,9 +138,6 @@ export const reviewSlice = createSlice({
     stepBy: (state, action: PayloadAction<number>) => {
       moveCursor(state, state.cursor + action.payload);
     },
-    setGraphSide: (state, action: PayloadAction<GraphSide>) => {
-      state.graphSide = action.payload;
-    },
     /** Opening a moment not yet done (again) puts it in `trying`; a done one keeps its status. */
     momentOpened: (state, action: PayloadAction<number>) => {
       const ply = action.payload;
@@ -191,7 +185,6 @@ export const {
   analysisRetried,
   stepTo,
   stepBy,
-  setGraphSide,
   momentOpened,
   moveTried,
   tryChecked,

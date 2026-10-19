@@ -4,6 +4,7 @@ import "features/board/components/Button.css";
 import "./KeyMomentCard.css";
 import type { PieceColor } from "game/engine/game-state";
 import type { ReviewModel } from "game/review/types";
+import { Star } from "features/liem/components/Star";
 import { isMomentDone, type ReviewState } from "../reviewSlice";
 import { keyMomentView, type KeyMomentView, type MomentDetail } from "../keyMomentView";
 
@@ -31,13 +32,8 @@ const Stars = ({ view }: { view: KeyMomentView }) =>
   view.stars.length === 0 ? null : (
     <span className="key-moment__stars" role="img" aria-label={view.foundLabel}>
       {view.stars.map((found, i) => (
-        <span
-          key={i}
-          className={`review-star${found ? " review-star--found" : ""}`}
-          data-found={found ? "true" : "false"}
-          aria-hidden="true"
-        >
-          ★
+        <span key={i} className="key-moment__star" data-found={found ? "true" : "false"}>
+          <Star className={`review-star${found ? " review-star--found" : ""}`} />
         </span>
       ))}
     </span>
@@ -188,7 +184,7 @@ export const KeyMomentCardBody = ({ view, ...handlers }: BodyHandlers & { view: 
   const buttons = actions(view, handlers);
   return (
     <article
-      className={`review-card review-card--${view.edge} key-moment`}
+      className={`card review-card review-card--${view.edge} key-moment`}
       data-moment-status={view.state}
       aria-live="polite"
     >

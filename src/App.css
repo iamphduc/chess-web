@@ -51,27 +51,3 @@
     max-width: none;
   }
 }
-
-/* The review keeps its own layout until it moves to the Look (slice V1). */
-.app:has(> .review) {
-  gap: var(--space-5);
-  padding: var(--space-5) var(--space-4);
-}
-
-/* In the review the graph takes a row of its own above the board and sidebar. */
-@media only screen and (min-width: 992px) {
-  .app:has(> .review) {
-    display: grid;
-    grid-template-columns: auto auto;
-    justify-content: center;
-    align-items: start;
-    gap: var(--space-5) var(--space-4);
-  }
-}
-
-/* On a phone, room below the page for the low sheet, so the board can scroll above it. */
-@media only screen and (max-width: 767px) {
-  .app:has(.review-sheet--low:not([hidden])) {
-    padding-bottom: 200px;
-  }
-}

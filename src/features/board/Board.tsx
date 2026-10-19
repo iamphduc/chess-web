@@ -20,13 +20,13 @@ import { AccuracyPanel } from "features/review/components/AccuracyPanel";
 import { MoveList } from "features/review/components/MoveList";
 import { LeftBookNote } from "features/review/components/LeftBookNote";
 import { keyMomentView } from "features/review/keyMomentView";
-import { backToGame, canOpenReview, selectPosition, steppingLocked } from "features/review/reviewActions";
+import { canOpenReview, selectPosition, steppingLocked } from "features/review/reviewActions";
+import { graphPlacement, playAgain } from "features/review/reviewLayout";
 import {
   analysisRetried,
   answerShown,
   momentOpened,
   momentSkipped,
-  setGraphSide,
   sheetClosed,
 } from "features/review/reviewSlice";
 import { selectReview, useGameReview } from "features/review/useGameReview";
@@ -39,6 +39,7 @@ import { Notation } from "./components/Notation";
 import { GameOver } from "./components/GameOver";
 import { Button, ButtonType } from "./components/Button";
 import { TopBar } from "./components/TopBar";
+import { topBarInput, topBarTitle } from "./topBar";
 import { hashFor } from "app/route";
 import { useMediaQuery } from "hooks/useMediaQuery";
 import { displayOrder } from "./orientation";
@@ -83,12 +84,27 @@ const ReviewGameLink = () => (
   </a>
 );
 
-const BackToGameButton = () => {
+/** A link: the route closes the review and keeps its evals (`arriveAt("play")`). */
+const BackToGameLink = () => (
+  <a className="button" href={hashFor("play")}>
+    Back to game
+  </a>
+);
+
+/** The review's top bar: ← Home, where you are, and Play again on the right. */
+const ReviewTopBar = () => {
   const dispatch = useAppDispatch();
+  const title = useAppSelector((state) => topBarTitle(topBarInput(state)));
   return (
-    <button type="button" className="button button--play" onClick={() => dispatch(backToGame())}>
-      Back to game
-    </button>
+    <header className="top-bar">
+      <a className="button top-bar__home" href={hashFor("home")}>
+        ← Home
+      </a>
+      <span className="top-bar__title">{title}</span>
+      <button type="button" className="button top-bar__action" onClick={() => dispatch(playAgain())}>
+        Play again
+      </button>
+    </header>
   );
 };
 
@@ -201,20 +217,21 @@ export const Board = () => {
     const cursor = Math.min(review.cursor, engineHistory.length - 1);
     const last = engineHistory.length - 1;
     const reviewCard = <ReviewCard model={model} humanColor={liemHuman} />;
+    const graph = <ReviewGraph model={model} humanColor={liemHuman} cursor={cursor} onSelect={select} />;
+    const graphIn = graphPlacement({ wide, sheetOpen: review.sheetOpen, low: card.low });
+    const foot = (
+      <>
+        <BackToGameLink />
+        <span className="moves-card__icons">
+          <Button type={ButtonType.Flip} />
+          <Button type={ButtonType.Sound} />
+        </span>
+      </>
+    );
     return (
       <MotionConfig reducedMotion="user">
-        <div className="review" data-review-state={review.status}>
-          <div className="review-top">
-            <ReviewGraph
-              model={model}
-              humanColor={liemHuman}
-              side={review.graphSide}
-              cursor={cursor}
-              onSelect={select}
-              onSide={(side) => dispatch(setGraphSide(side))}
-            />
-          </div>
-
+        <ReviewTopBar />
+        <div className="board-screen review" data-review-state={review.status}>
           <div className="board" style={{ width: squareSize * 8 }}>
             {top}
             <div className="squares">
@@ -233,23 +250,19 @@ export const Board = () => {
             </div>
           </div>
 
-          <div className="sidebar review-side">
+          <div className="sidebar">
+            {graphIn === "sidebar" && graph}
             {wide && reviewCard}
             <AccuracyPanel model={model} />
-            <MoveList model={model} cursor={cursor} onSelect={select} />
-            <LeftBookNote model={model} />
-            <BoardSidebar title="">
-              <div className="buttons">
-                <BackToGameButton />
-                <NewGameButton />
-                <Button type={ButtonType.Flip} />
-                <Button type={ButtonType.Sound} />
-              </div>
+            <BoardSidebar title="Moves" className="moves-card" flush foot={foot}>
+              <MoveList model={model} cursor={cursor} onSelect={select} />
             </BoardSidebar>
+            <LeftBookNote model={model} />
           </div>
 
           {!wide && (
             <BottomSheet open={review.sheetOpen} low={card.low} onClose={() => dispatch(sheetClosed())}>
+              {graphIn === "sheet" && graph}
               {reviewCard}
             </BottomSheet>
           )}

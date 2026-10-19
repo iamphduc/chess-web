@@ -1,30 +1,35 @@
-/* C's bottom sheet: layout only. The sheet, grab bar, close button and scrim come from review.css. */
+/* The phone bottom sheet: layout only. The sheet, grab bar, close button and scrim come from review.css. */
 .bottom-sheet[hidden] {
   display: none;
 }
 
 .bottom-sheet > .review-sheet__close {
   position: absolute;
-  top: 4px;
-  right: 8px;
+  top: var(--space-1);
+  right: var(--space-2);
 }
 
-/* The card sits flat in the sheet: the sheet has the red top edge and the background. */
+/* The grab bar's row holds the close button too, so the graph starts below both. */
+.bottom-sheet > .review-sheet__grab {
+  margin-bottom: var(--space-5);
+}
+
+/* The graph, then the card, 12 px apart. */
+.bottom-sheet > .review-graph {
+  margin-bottom: var(--space-3);
+}
+
+/* The card sits flat in the sheet: the sheet is the cream box. */
 .bottom-sheet .review-card {
   padding: 0;
   background: none;
-  border-top: 0;
+  border: 0;
   border-radius: 0;
-}
-
-/* Room for the close button beside the card's top line. */
-.bottom-sheet .key-moment__top {
-  padding-right: 44px;
 }
 
 /* Low: only the title and the buttons, so the board above stays in view. */
 .bottom-sheet--low {
-  padding-bottom: 16px;
+  padding-bottom: var(--space-4);
 }
 
 .bottom-sheet--low .key-moment > :not(.review-card__title):not(.key-moment__actions) {
@@ -32,5 +37,5 @@
 }
 
 .bottom-sheet--low .key-moment__actions {
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }
