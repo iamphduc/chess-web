@@ -94,8 +94,7 @@ const sizePx = (v: string) => {
 const GRADES = ["inaccuracy", "mistake", "blunder", "best", "book"] as const;
 
 // Grades retuned for cream (plan ui-refresh, ## Look): each is the old hue, darkened to reach
-// 4.5:1 on --surface and --surface-2. --grade-ink is the --surface cream. --review-page stays
-// defined until C1 removes it.
+// 4.5:1 on --surface and --surface-2. --grade-ink is the --surface cream.
 const LOOK: Record<string, string> = {
   "--grade-inaccuracy": "#146AB0",
   "--grade-mistake": "#A45000",
@@ -103,7 +102,6 @@ const LOOK: Record<string, string> = {
   "--grade-best": "#27744F",
   "--grade-book": "#686A2D",
   "--grade-ink": "#FBF8F1",
-  "--review-page": "#333333",
 };
 
 const CONTRACT_CLASSES = [
