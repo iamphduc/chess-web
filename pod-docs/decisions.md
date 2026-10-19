@@ -144,7 +144,7 @@ Context: With his card above the 312 px board, "Le Quang Liem" and "GM · playin
 Decision: Keep the card at the two-player card's 56 px height and cut long text with an ellipsis; the badge and "Thinking…" stay whole.
 Consequences: To show the strength line in full on phones, hide "GM · playing <elo>" under 600 px in `src/features/board/Board.css`, or let the card grow and accept a small board move on phones.
 
-## 2026-10-12 — Strength step table set from the first calibration runs (agent default — override anytime)
+## 2026-10-12 — Strength step table set from the first calibration runs (superseded by "Sparring step table tuned to 75 % of human mistake rates", 2026-10-18)
 Context: The human played the old 1400 step (Stockfish's `UCI_Elo` 1400) and said it "doesn't play like 1400": strange one-move blunders, and too weak overall. K1 added `npm run calibrate` and set `STEP_PROFILES` from it.
 Runs (lite single-thread Stockfish 18, seed 1, 6 games at a time, 8 openings each played once per color):
 - **Run 1**, H1's guesses, `npm run calibrate -- --games 4`, anchors at 500 ms a move, 10.8 min. Every step scored 87.5 to 100 % against the anchors at its own Elo and 200 above, so 500 ms anchors play far below their number. Each step scored 0 to 37.5 % against the next step up. 1400's largest slip lost 24 win % points (about a piece in a level position).
@@ -173,7 +173,7 @@ Context: The Look sets the line at 16/500. At 16 px on a 312 px board, it wraps 
 Decision: 14 px with an 18 px line height below 768 px, and 16/500 on desktop.
 To change: `.setup-card .setup-card__engine` in `src/features/liem/components/SetupCard.css`.
 
-## 2026-10-12 — The 1400 step plays like 1400 (confirmed by the human)
+## 2026-10-12 — The 1400 step plays like 1400 (confirmed by the human; superseded by "Sparring step table tuned to 75 % of human mistake rates", 2026-10-18)
 Context: The calibrated table had a risk that 1400 would play too strong (see the entry below). The human played it in `npm run dev` and said: "It feels like 1400 now".
 Decision: Keep the calibrated `STEP_PROFILES` as they are. The human's play check is the test for the steps, ahead of the Stockfish `UCI_Elo` anchors.
 
@@ -235,3 +235,35 @@ Decision: `src/features/liem/levelView.ts` holds every text a level shows, and t
 - **Setup card:** still "Challenge Le Quang Liem". Sparring steps read "about N" (`aria-label` "N"); the last step reads "★ Liem" in the gold Elo style (`aria-label` "Liem (2732)"). The line under the steps reads "A sparring bot plays his openings, then Stockfish at about N." or "Le Quang Liem: his openings, then full-strength Stockfish 18."
 - **Out of book:** "Stockfish at about N plays from here. It isn't trained on his games.", or "Full-strength Stockfish 18 plays from here. It isn't trained on his games." at the Liem level.
 Consequences: Liem's short name ("Liem") is the last word of `player.json`'s `name`. On a phone the sparring line next to "★ Book" ends as "Liem's …". To change a word, edit `levelView.ts` and `src/features/liem/__tests__/level-view.test.ts` together.
+
+## 2026-10-18 — Sparring step table tuned to 75 % of human mistake rates (agent default — override anytime)
+Context: Plan sparring-ladder: at every sparring level, his mistake and blunder rates per 40 moves after the book should be 75 % of Lichess players at that level, ±25 % of that target. C1 added the mistake and blunder bands to `chooseHumanMove`, H1 the human baselines, M1 `npm run calibrate -- --measure`. This entry supersedes "Strength step table set from the first calibration runs" (2026-10-12) and "The 1400 step plays like 1400" (2026-10-12): the band fields change how every sparring level plays, so the human's 1400 play check needs doing again.
+Baselines (`scripts/ladder/human-baselines.json`, generated 2026-10-18, Lichess rated blitz and rapid games with Lichess analysis, both players within ±100 of the level, graded from ply 10): 150 games at every level, none dropped, none `lowSample`. Bands and speeds (blitz/rapid): 1400 1300–1500, 103/47; 1700 1600–1800, 127/23; 1900 1800–2000, 141/9; 2100 2000–2200, 131/19; 2300 2200–2400, 143/7; 2500 2400–2600, 148/2. **Caveat:** the human rates are mostly blitz, and 2300 and 2500 come mostly from the opponents of arena players, so their time pressure adds mistakes a 10-minute game wouldn't have. The 75 % target allows for some of that.
+Targets per 40 (review mistake / blunder): 1400 1.00 / 1.10; 1700 0.77 / 1.07; 1900 0.81 / 0.78; 2100 0.68 / 0.65; 2300 0.59 / 0.62; 2500 0.61 / 0.62.
+Runs (lite single-thread Stockfish 18, `--jobs 10` on 12 cores, graded at depth 18 or 500 ms a position; measure runs seed 1):
+- **Run 1**, the earlier guess (chances 0.3 to 0.5, `blunderMaxCp` 600 to 800), `--measure --games 20`, 16.0 min. 1700, 1900 and 2100 blundered too often (up to 1.12 against 0.65 at 2100); 2500 at depth 14 made too few mistakes (0.43) with the same chances as 2300.
+- **Run 2**, chances cut, 2500 down to depth 12, `--measure --games 40`, 30.0 min. All 12 rates within tolerance, several near the edges.
+- **Run 3**, small nudges, `--measure --steps 1400,...,2500,full --games 40`, 43.1 min. 11 of 12 within; 2300 mistakes 0.74 against a limit of 0.736.
+- **Run 4**, `hangWeight` lowered to 0.6 → 0.3, same flags, 42.3 min. 1900 mistakes 1.10, 2100 blunders 0.43 and 2300 mistakes 0.79 out. Lower `hangWeight` barely cut hung pieces and cut 2100's counted blunders, so it was raised again.
+- **Run 5** (confirming run for 1400 to 2100 and Full), the table below with 1400 at depth 8 and 2300/2500 at mistake 0.24, depth 12, same flags, 43.5 min. All 12 within (table below). Full: mistakes 0.01, blunders 0.00 per 40.
+- **Run 6**, ladder, `--games 8 --anchors none`, 4.3 min. 1400 scored 62.5 % against 1700 and 2300 56.3 % against 2500 (2300 and 2500 had the same depth).
+- **Runs 7–9**, 2500 to depth 13, 2300/2500 at mistake 0.27 then 0.25: `--measure --steps 2300,2500 --games 40` (13.5 and 13.0 min) and `--steps 1400,2300 --games 16 --anchors none` (2.7 min). At 0.27, 2300's mistakes were 0.74 again; at 0.25 both levels are within (table below).
+- **Runs 10–11**, ladder on that table: `--games 8 --anchors none` (4.6 min): 1900 scored 68.8 % against 2100 and 2300 56.3 % against 2500; `--games 16 --anchors none --seed 2` (7.9 min): 1400 56.3 % against 1700, everything else 12.5 to 40.6 %. Eight games is ±12.5 % a game, so single cells swing that much on an unchanged table.
+- **Runs 12–13**, 1400 to depth 7: `--measure --steps 1400 --games 40` (4.2 min) and `--steps 1400 --games 16 --anchors none --seed 2` (0.3 min, 43.8 % against 1700).
+- **Run 14**, final ladder, `--games 8 --anchors none`, 4.6 min. Against the next step up: 1400 50.0 %, 1700 25.0 %, 1900 37.5 %, 2100 6.3 %, 2300 43.8 %, 2500 0.0 % (against Full). Average ms per move 29, 74, 132, 218, 317, 558 for 1400 to 2500, all under each level's `movetimeMs`.
+- Total run time about 4 h.
+Decision: Use these values (depth / movetime ms / mistakeChance / blunderChance / blunderMaxCp / hangWeight; multiPv 10 at every sparring level; maxLoss, temperature, slip, ahead and forceMateIn as in the 2026-10-12 table):
+- 1400: 7 / 400 / 0.40 / 0.36 / 800 / 0.8
+- 1700: 9 / 500 / 0.36 / 0.33 / 700 / 0.7
+- 1900: 10 / 600 / 0.28 / 0.26 / 650 / 0.6
+- 2100: 11 / 700 / 0.28 / 0.22 / 600 / 0.6
+- 2300: 12 / 800 / 0.25 / 0.22 / 600 / 0.5
+- 2500: 13 / 900 / 0.25 / 0.22 / 600 / 0.4
+- Full: unchanged (18 / 1000, multiPv 4, every band field 0).
+Measured review mistake / blunder per 40 on the final table (target ±25 %, all `ok = yes`): 1400 1.07 / 1.25 (run 12); 1700 0.59 / 0.97, 1900 0.83 / 0.72, 2100 0.78 / 0.77 (run 5); 2300 0.47 / 0.70, 2500 0.58 / 0.72 (run 9).
+Consequences:
+- 40 games still moves a rate by about ±10 % between runs of the same table, so a rate near its edge can read `no` on a rerun; 1700's mistakes (0.59 against a floor of 0.58) sit lowest. Rerun with more games before reading one cell.
+- Going up, the chances can't rise, yet the human targets barely fall from 2100 to 2500 and deeper searches make fewer counted mistakes for the same chance. So 2300 and 2500 share their chances and differ only by depth and the normal-path limits.
+- The bots hang pieces and miss captures more often than the humans (hung 0.5 to 0.9 per 40 against 0.3 to 0.7; missed captures 2 to 4 times the human rate). These rates aren't targets; `hangWeight` alone didn't move them much.
+- The biggest drops are missed tactics and loose pieces in sharp middlegames and endgames (a rook move that drops the h-pawn race, a king step into a fork), not a queen left for nothing.
+- **Play check** (agent, `npm run dev`, 1400, as White, two games played by a scripted Stockfish): in the second game, level at about 50 %, he played 13...Rxd2 and left his queen on a2 to 14.Qxa2. The review's graph shows his side drop 34 win % there, a blunder by the review's levels. The review grades only your own moves, so his slip shows in the graph, not as a mark in the move list. The human's own 1400 play check is still to do.
