@@ -1,7 +1,7 @@
 # Sprint: refresh
 
 _From plan: pod-docs/plans/ui-refresh.md · Slug: refresh · Status: active · Generated: 2026-10-19_
-<!-- autopilot-run: started=2026-10-19T09:41:08Z sprints=0 waves=4 -->
+<!-- autopilot-run: started=2026-10-19T09:41:08Z sprints=1 waves=4 -->
 
 ## Status board
 
@@ -15,7 +15,7 @@ _From plan: pod-docs/plans/ui-refresh.md · Slug: refresh · Status: active · G
 | 2 | P1 | Player cards with "+N", clocks, book note and badges in the Look | refresh-P1 | #81 | merged | medium | L1, N1 |
 | 2 | G1 | Board pieces in the Look: squares, promotion picker, game-over notice | refresh-G1 | #81 | merged | medium | L1 |
 | 3 | V1 | Review: graph in the sidebar and phone sheet, top bar, Look | refresh-V1 | #82 | merged | medium | B1, P1, R1 |
-| 4 | C1 | Remove old tokens and styles; decisions, docs and README | refresh-C1 | — | in-progress | — | H1, B1, P1, G1, V1 |
+| 4 | C1 | Remove old tokens and styles; decisions, docs and README | refresh-C1 | #83 | merged | medium | H1, B1, P1, G1, V1 |
 
 ## Shared contract
 
@@ -311,3 +311,22 @@ _From plan: pod-docs/plans/ui-refresh.md · Slug: refresh · Status: active · G
 - **Depends on:** H1, B1, P1, G1, V1
 - **One-way door:** none
 - **Model:** opus
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date (pod-staging was cut from main at the plan's start; no new commits)
+- **Slices shipped:** L1, N1, R1, H1, B1, P1, G1, V1, C1
+- **Queue entries:** resolved 2 (2026-10-06 promotion picker past the board edge — G1 clamps it; 2026-10-18 dead `.liem-star` rule — P1 removed it; the 2026-10-16 phone graph above the tabs is obsolete, tabs gone), deferred 0
+- **Slice log:**
+  - L1: opus · medium · test-first yes · runtime cream page, wood board, Quicksand at 1400/375 · 4 NOTEs · time lost none
+  - N1: opus · medium · test-first yes · runtime level names, Easy game out of book, no ratings in text or aria · 4 NOTEs · time lost none
+  - R1: opus · medium · test-first partly — two no-op guards green from the start · runtime hash rules with a temporary mount · 4 NOTEs · time lost none
+  - H1: opus · medium · test-first yes · runtime home → Play → back, keys, Two players link · 5 NOTEs · time lost none
+  - B1: opus · medium · test-first yes · runtime top bar, Moves card, New game, Two players, Flip at 1400/992/375 · 6 NOTEs · time lost none (one gate-1 exception: `sound-button.test.tsx` added to its files)
+  - P1: opus · medium · test-first yes · runtime "+N" in vs Harder, Liem and Two players at 1400/375 · 6 NOTEs + 1 PENDING (ochre ★, solved in the wave fix) · time lost none
+  - G1: opus · medium · test-first yes · runtime promotion picker clamped flipped and not, game-over card · 4 NOTEs · time lost none
+  - Wave 2 fix: opus · high · body margin 0, Two players foot on one row at 375, ochre ★ via shared `Star.tsx` · worktree folder left locked by vite (`refresh-w2-fix/`)
+  - V1: opus · medium · test-first yes (one click guard green from the start) · runtime full review at 1400/992/375 · 7 NOTEs · time lost none
+  - C1: opus · medium · test-first yes · runtime every features row on preview at 1400/992/375 · 4 NOTEs · time lost none (one gate-1 exception: two theme tests added to its files)
+  - Stalls: none
+- **Agent context at hand-back:** about 1.87M tokens (sum of each agent's final context size, not tokens billed)
