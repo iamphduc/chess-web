@@ -83,6 +83,11 @@ describe("look", () => {
     expect(last(body, "font-size")).toBe("var(--text-body)");
   });
 
+  it("the page has no margin, so nothing scrolls when it fits and the top bar runs edge to edge", () => {
+    const body = declsFor(readCss("index.css"), "body");
+    expect(last(body, "margin")).toBe("0");
+  });
+
   it("text pairs meet 4.5:1", () => {
     for (const fg of ["--ink", "--soft"]) {
       for (const bg of ["--bg", "--surface", "--surface-2"]) {

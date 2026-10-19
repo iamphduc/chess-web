@@ -7,6 +7,7 @@ import { LIEM } from "game/opponent/players";
 import { STRENGTH_STEPS, type StrengthStep } from "game/opponent/strength";
 import type { PlayerEntry } from "game/opponent/types";
 import { levelView } from "features/liem/levelView";
+import { Star } from "features/liem/components/Star";
 import { startLiemGame } from "features/liem/liemActions";
 import { type ColorPick, setColorPick, setStrength } from "features/liem/matchSlice";
 import { RadioGroup } from "./RadioGroup";
@@ -29,13 +30,6 @@ export function playFromHome(dispatch: AppDispatch, go: (screen: Screen) => void
   dispatch(startLiemGame());
   go("play");
 }
-
-/** The ochre ★, drawn as a shape: ochre is never a text color (it fails 4.5:1 on cream). */
-const Star = () => (
-  <svg className="home__star" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7L2 9.5l7.1-.6z" />
-  </svg>
-);
 
 interface HomeProps {
   /** His data; the app always passes `LIEM.entry` (the default). */
@@ -69,7 +63,7 @@ export function Home({ entry = LIEM.entry }: HomeProps) {
       <div className="home__field">
         <span className="home__label">Level</span>
         <span className="home__value" data-field="level">
-          {level.starred && <Star />}
+          {level.starred && <Star className="home__star" />}
           {level.stepName}
           {level.rating && <span className="home__rating">{level.rating}</span>}
         </span>
@@ -89,7 +83,7 @@ export function Home({ entry = LIEM.entry }: HomeProps) {
               <>
                 <span className="home__bar" aria-hidden="true" />
                 <span className="home__level-name">
-                  {view.starred && <Star />}
+                  {view.starred && <Star className="home__star" />}
                   {view.stepName}
                 </span>
               </>

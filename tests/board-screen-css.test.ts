@@ -91,6 +91,15 @@ describe("board screen css", () => {
     // Below 992 px they stack: board, then sidebar.
     expect(last(declsIn(app[0].body, ".board-screen"), "flex-direction")).toBe("column");
 
+    // On a phone the Two players foot (Play, New game, Flip, Sound) fits one row in the
+    // 278 px inside a 312 px card: its text buttons take 12 px sides, not 16 px. Only that
+    // foot has Play, so the vs Liem foot keeps its buttons.
+    const sidebarCss = mediaBlocks(css(FILES[3]));
+    const phone = sidebarCss.filter((b) => /max-width:\s*767px/.test(b.query));
+    const twoPlayers = ".moves-card .card__foot:has(> .button--play) > .button:not(.button--icon)";
+    const tight = phone.flatMap((b) => declsIn(b.body, twoPlayers));
+    expect(last(tight, "padding-inline") ?? "<unset>").toBe("var(--space-3)");
+
     // No rule for the old wrappers in these files.
     for (const file of FILES) {
       const selectors = rules(css(file)).map((r) => r.selector).join(",");
