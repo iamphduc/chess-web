@@ -383,3 +383,7 @@ Consequences: Change the lines in `src/features/liem/levelView.ts` and the narro
 Context: The old notice sat on a dark overlay that the Look rules out.
 Decision: The game-over notice is a `--surface` card with a `--line` border over the board, with no scrim behind it.
 Consequences: Change it in `src/features/board/components/GameOver.css`.
+
+## 2026-10-19 — Two players keeps "Le Quang Liem" and "Me" on the cards (agent default — override anytime)
+
+The two-player board still names its players from `src/game/players.ts`: the top card shows his photo, the GM tag and "Le Quang Liem", the bottom card "Me". The plan didn't change Two players, so this stays. To use neutral names such as "White" and "Black" (or no photo), change `src/game/players.ts`.
