@@ -1,15 +1,15 @@
 # Sprint: motion
 
-_From plan: pod-docs/plans/ui-motion.md · Slug: motion · Status: active · Generated: 2026-10-20_
-<!-- autopilot-run: started=2026-10-20T18:20:00Z sprints=0 waves=1 -->
+_From plan: pod-docs/plans/ui-motion.md · Slug: motion · Status: done · Generated: 2026-10-20_
+<!-- autopilot-run: started=2026-10-20T18:20:00Z sprints=1 waves=1 -->
 
 ## Status board
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | M1 | Material line under the name, pieces then "+N" | motion-M1 | — | pending | — | — |
-| 1 | G1 | Game-over entrance: pause, scrim fade, card rise | motion-G1 | — | pending | — | — |
-| 1 | P1 | 150 ms pieces, one-step review playback, Play again in the review foot | motion-P1 | — | pending | — | — |
+| 1 | M1 | Material line under the name, pieces then "+N" | motion-M1 | #97 | done | medium | — |
+| 1 | G1 | Game-over entrance: pause, scrim fade, card rise | motion-G1 | #97 | done | high | — |
+| 1 | P1 | 150 ms pieces, one-step review playback, Play again in the review foot | motion-P1 | #97 | done | medium | — |
 
 No `L1`: the Look's tokens, fonts and base controls shipped in `ui-refresh` and `ui-polish`, and this plan adds no token, font or control style. The motion values live in two small modules, each owned by the one slice that uses it. Every slice uses only the existing tokens and follows the plan's `## Look`.
 
@@ -119,3 +119,15 @@ Browser checks use `npx -y chrome-devtools-axi`, one session per agent (`pod-doc
 - **Depends on:** —
 - **One-way door:** none
 - **Model:** opus
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date
+- **Slices shipped:** M1, G1, P1 (wave 1, PR #97)
+- **Queue entries:** resolved 3 (folded in: `game-over.md` import-cycle line, the `gameEnd.ts`-first import test, the `Player` tick-timer `gameId` test), deferred 3 — the his-card default and the name-above-the-disc decision (both for the human), and `ReviewBoard`'s optional `gameId`/`ply` props (Fix next); see `pod-docs/handoff-queue.md`, sprint `motion`
+- **Slice log:**
+  - M1: sonnet · medium · test-first yes (some pinning tests green on first run) · runtime Two players and vs Liem cards at 1400 and 375 px · 4 NOTEs · time lost ~10 min (chrome-devtools-axi `eval` quoting on Windows, now `pod-docs/known-issues/chrome-devtools-axi-eval-quoting.md`)
+  - G1: opus · high · test-first yes (`reduced motion shows it at once` never went red against the stub) · runtime entrance sampled per frame at mate, time and resign, 1400 and 375 px, reduced motion forced · 5 NOTEs · time lost none
+  - P1: opus · medium · test-first yes · runtime piece transforms sampled per frame in play and the review, 1400 and 375 px, reduced motion forced · 3 NOTEs, 1 bug found and fixed in the slice (◀ after a capture left the piece invisible) · time lost none
+  - Wave fix: none. Stalls: none.
+- **Agent context at hand-back:** about 592,600 tokens summed over the sprint-planner and 3 slice engineers — *each agent's final context size, not tokens billed*
