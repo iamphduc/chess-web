@@ -154,6 +154,11 @@ describe("Player.css", () => {
     // One reserved height, so the name line stays put when the material line appears.
     expect(text).toMatch(/(^|[\s;])height:/);
     expect(bodyOf(all, ".player__sub")).toMatch(/display:\s*flex/);
+    // The material box is the second line's own height (20 px), so its top is the 4 px gap.
+    expect(bodyOf(all, ".player__sub")).toMatch(/(^|[\s;])height:\s*var\(--text-title\)/);
+    const material = bodyOf(all, ".player__material");
+    expect(material).toMatch(/align-self:\s*stretch/);
+    expect(material).toMatch(/line-height:\s*1(;|\s|$)/);
     const card = bodyOf(all, ".board > .player");
     expect(card).toMatch(/(^|[\s;])height:\s*56px/);
     expect(card).toMatch(/box-sizing:\s*border-box/);
