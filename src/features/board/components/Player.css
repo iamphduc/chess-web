@@ -83,10 +83,12 @@
 }
 
 /* The pieces taken, then "+N", in soft ink, next to each other, with his detail at the far end. "+N" is never
-   cut; the glyphs end in an ellipsis. */
+   cut; the glyphs end in an ellipsis. min-width: 0 lets the box shrink below the full glyph row,
+   so the glyphs (not "+N" or the detail) give way. No overflow here, so "+N" is never clipped. */
 .player__material {
   display: flex;
   flex: 0 1 auto;
+  min-width: 0;
   align-items: center;
   align-self: stretch;
   gap: var(--space-1);
