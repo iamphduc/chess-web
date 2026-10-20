@@ -22,6 +22,7 @@ import { PiecePromoted } from "./components/Promotion";
 import { GameOverType } from "./components/GameOver";
 import { isWhiteClockTurn } from "./clock";
 import { MoveSound, pickSound } from "./sound";
+import type { GameEnd } from "./gameEnd";
 
 interface PieceSelection {
   pieceType: PieceType;
@@ -92,6 +93,8 @@ interface BoardState {
   /** Set when a flag falls; kept if a pending promotion is finished afterwards. */
   flagFallWinner: "White" | "Black" | null;
   isPlaying: boolean;
+  /** How the game ended: set once, when it ends. Only `reset` and `newGame` clear it. */
+  result: GameEnd | null;
   /** The last completed ply's sound: a new object per ply, `null` before the first. */
   moveSound: MoveSound | null;
 }
@@ -119,6 +122,7 @@ function createInitialState(): BoardState {
     gameOver: GameOverType.Continue,
     flagFallWinner: null,
     isPlaying: false,
+    result: null,
     moveSound: null,
   };
 }
@@ -447,6 +451,8 @@ export const boardSlice = createSlice({
       state.possibleMoves = [];
     },
 
+    resign: () => {},
+
     /** His move, as one complete ply (a promotion included). */
     playOpponentMove: (state, action: PayloadAction<OpponentMove>) => {
       if (!acceptsOpponentMove(state, action.payload)) return;
@@ -502,6 +508,7 @@ export const {
   promotePawn,
   start,
   stop,
+  resign,
   reset,
   newGame,
   playOpponentMove,
