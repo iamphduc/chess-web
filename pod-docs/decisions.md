@@ -421,7 +421,7 @@ Consequences: `levelView` no longer has `detail`, `shortDetail`, `detailLead` or
 
 ## 2026-10-20 — No out-of-book note (default, recommended and accepted, plan ui-polish)
 Context: Once he left his book, the sidebar note turned red and said "Out of his book" with a Stockfish line. The human accepted that this hides that Stockfish plays; the home engine line still says so.
-Decision: The book note (`[data-book-state]`) shows `waiting`, `in-book` and `failed` (with Try again) as before. Out of his book it isn't rendered at all: no `out` state in the DOM and no "Out of his book" text. A new game brings back `waiting`.
+Decision: The book note (`[data-book-state]`) shows `waiting`, `in-book` and `failed` (with Try again) as before. Out of his book there is no note: no `out` state in the DOM and no "Out of his book" text. Below 992 px an empty slot keeps the note's tallest height for the rest of the game, so the page never gets shorter and never scrolls (review fix, PR #92); from 992 px the slot is hidden. A new game clears the slot and brings back `waiting`.
 Consequences: `bookNoteView` still returns `{ kind: "out" }`; `BookNote` renders `null` for it. `.liem-note--out` is gone from `src/styles/liem.css`.
 
 ## 2026-10-20 — Two players cards read White and Black (agent default from the sprint contract — override anytime)
