@@ -1,7 +1,7 @@
 # Sprint: polish
 
 _From plan: pod-docs/plans/ui-polish.md · Slug: polish · Status: active · Generated: 2026-10-20_
-<!-- autopilot-run: started=2026-10-20T06:21:43Z sprints=0 waves=2 -->
+<!-- autopilot-run: started=2026-10-20T06:21:43Z sprints=0 waves=3 -->
 
 ## Status board
 
@@ -10,10 +10,10 @@ _From plan: pod-docs/plans/ui-polish.md · Slug: polish · Status: active · Gen
 | 1 | L1 | Look: body text 600, Quicksand 600 file, game-over scrim token | polish-L1 | #88 | merged | medium | — |
 | 1 | S1 | Scroll jump: a move never scrolls the page | polish-S1 | #88 | merged | medium | — |
 | 1 | E1 | Game end: resign action and how the game ended | polish-E1 | #88 | merged | medium | — |
-| 2 | R1 | Resign button with a 3 s Confirm in the Moves card foot | polish-R1 | — | in-progress | — | L1, E1 |
-| 2 | G1 | Game-over card over a dimmed board | polish-G1 | — | in-progress | — | L1, E1 |
-| 3 | P1 | Calmer player cards: color discs, fixed clocks, no out-of-book note | polish-P1 | — | pending | — | L1 |
-| 3 | V1 | Review sidebar: key moment, summary, Moves | polish-V1 | — | pending | — | L1 |
+| 2 | R1 | Resign button with a 3 s Confirm in the Moves card foot | polish-R1 | #89 | merged | medium | L1, E1 |
+| 2 | G1 | Game-over card over a dimmed board | polish-G1 | #89 | merged | medium | L1, E1 |
+| 3 | P1 | Calmer player cards: color discs, fixed clocks, no out-of-book note | polish-P1 | — | in-progress | — | L1 |
+| 3 | V1 | Review sidebar: key moment, summary, Moves | polish-V1 | — | in-progress | — | L1 |
 
 P1 sits in wave 3 only because it shares `board-modes.test.tsx` with R1. V1 sits in wave 3 because it shares `Board.tsx` with R1.
 
