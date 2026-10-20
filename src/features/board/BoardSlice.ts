@@ -22,7 +22,7 @@ import { PiecePromoted } from "./components/Promotion";
 import { GameOverType } from "./components/GameOver";
 import { isWhiteClockTurn } from "./clock";
 import { MoveSound, pickSound } from "./sound";
-import type { GameEnd } from "./gameEnd";
+import { canResign, type GameEnd } from "./gameEnd";
 
 interface PieceSelection {
   pieceType: PieceType;
@@ -445,13 +445,29 @@ export const boardSlice = createSlice({
         // The side whose clock was running lost on time.
         const whiteFlagged = isWhiteClockTurn(state.history.length, state.pendingPromotion !== null);
         state.flagFallWinner = whiteFlagged ? "Black" : "White";
+        state.result = { winner: whiteFlagged ? "black" : "white", reason: "time" };
       }
       // Drop a piece still held, so no move hints stay on the board.
       state.selectedPiece = null;
       state.possibleMoves = [];
     },
 
-    resign: () => {},
+    /**
+     * You give up. vs Liem the loser is always you, even on his turn; in Two players
+     * it's the side whose clock runs (the mover while the picker is open). The clocks
+     * stop, no sound plays, and an open picker stays open (as after a flag fall).
+     */
+    resign: (state) => {
+      if (!canResign(state)) return;
+      const loser: PieceColor =
+        state.humanColor ??
+        (isWhiteClockTurn(state.history.length, state.pendingPromotion !== null) ? "white" : "black");
+      state.gameOver = GameOverType.Win;
+      state.result = { winner: loser === "white" ? "black" : "white", reason: "resigned" };
+      state.isPlaying = false;
+      state.selectedPiece = null;
+      state.possibleMoves = [];
+    },
 
     /** His move, as one complete ply (a promotion included). */
     playOpponentMove: (state, action: PayloadAction<OpponentMove>) => {
@@ -490,6 +506,8 @@ function appendCheckSuffix(
   const gameOver = gameOverFromStatus(next);
   state.gameOver = gameOver;
   state.pieceAttackedKing = checkedKing;
+  // The first ending sticks: a pick after a flag fall or a resign keeps that result.
+  if (state.result === null) state.result = endFromStatus(next, gameOver);
 
   if (gameOver === GameOverType.Win) {
     return notationString + SpecialCase.Checkmate;
@@ -498,6 +516,19 @@ function appendCheckSuffix(
     return notationString + SpecialCase.Check;
   }
   return notationString;
+}
+
+/** The result a move's position gives: the mover wins a mate, a stalemate is a draw. */
+function endFromStatus(next: GameState, gameOver: GameOverType): GameEnd | null {
+  switch (gameOver) {
+    case GameOverType.Win:
+      // After the mating move it's the mated side's turn.
+      return { winner: next.turn === "white" ? "black" : "white", reason: "checkmate" };
+    case GameOverType.Draw:
+      return { winner: null, reason: "stalemate" };
+    case GameOverType.Continue:
+      return null;
+  }
 }
 
 export const {
