@@ -3,8 +3,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { ReviewModel, ReviewMove } from "game/review/types";
-import { AccuracyPanel } from "../components/AccuracyPanel";
-import { LeftBookNote } from "../components/LeftBookNote";
 import { MoveList } from "../components/MoveList";
 import { ReviewGraph } from "../components/ReviewGraph";
 import { StepButtons, stepForKey } from "../components/StepButtons";
@@ -213,70 +211,136 @@ describe("move list", () => {
   });
 });
 
-describe("accuracy", () => {
-  const panel = (model: ReviewModel) => renderToStaticMarkup(<AccuracyPanel model={model} />);
+describe("accuracy line", () => {
+  /** The summary card's accuracy line, from the graph card's markup. */
+  const line = (model: ReviewModel) => {
+    const html = graph(model, 0);
+    const at = html.indexOf('class="review-summary__accuracy"');
+    expect(at, "the accuracy line is in the summary card").toBeGreaterThan(-1);
+    return html.slice(at, html.indexOf("</p>", at));
+  };
+  const text = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
-  it("shows the rounded game accuracy", () => {
-    expect(panel(sample({ accuracy: 71.4 }))).toMatch(/class="review-accuracy"[^>]*>71%</);
-    expect(panel(sample({ accuracy: 99.9999 }))).toMatch(/class="review-accuracy"[^>]*>100%</);
-    expect(panel(sample({ accuracy: 0 }))).toMatch(/class="review-accuracy"[^>]*>0%</);
+  it("sits under the graph, in the same card", () => {
+    const html = graph(sample(), 0);
+    expect(html.indexOf("review-summary__accuracy")).toBeGreaterThan(html.indexOf("review-graph__plot"));
+    expect(html.indexOf("review-summary__accuracy")).toBeLessThan(html.lastIndexOf("</section>"));
+    expect(html.match(/<section/g)).toHaveLength(1);
   });
 
-  it("shows — while it isn't ready", () => {
-    const html = panel(sample({ accuracy: null }));
+  it("reads the accuracy, then each grade's count in its grade color", () => {
+    const html = line(sample({ accuracy: 40, counts: { inaccuracy: 1, mistake: 0, blunder: 1 } }));
+    expect(html).toMatch(/class="review-accuracy"[^>]*>40 %</);
+    const parts = ["40 %", "?! 1", "? 0", "?? 1"];
+    const t = text(html);
+    let from = 0;
+    for (const p of parts) {
+      const at = t.indexOf(p, from);
+      expect(at, `"${p}" after ${from} in "${t}"`).toBeGreaterThanOrEqual(from);
+      from = at + p.length;
+    }
+    for (const [grade, mark, n] of [
+      ["inaccuracy", "?!", 1],
+      ["mistake", "?", 0],
+      ["blunder", "??", 1],
+    ] as const) {
+      expect(html).toMatch(
+        new RegExp(`data-count="${grade}"[^>]*class="review-grade--${grade}"[^>]*>${mark.replace(/\?/g, "\\?")} ${n}<`)
+      );
+    }
+    // No book-move count.
+    expect(html).not.toContain('data-count="book"');
+    expect(t).not.toMatch(/book/i);
+  });
+
+  it("rounds the accuracy and shows zeros", () => {
+    expect(line(sample({ accuracy: 71.4 }))).toMatch(/class="review-accuracy"[^>]*>71 %</);
+    expect(line(sample({ accuracy: 99.9999 }))).toMatch(/class="review-accuracy"[^>]*>100 %</);
+    expect(line(sample({ accuracy: 0 }))).toMatch(/class="review-accuracy"[^>]*>0 %</);
+    const zeros = text(line(sample({ counts: { inaccuracy: 0, mistake: 0, blunder: 0 } })));
+    expect(zeros).toContain("?! 0");
+    expect(zeros).toContain("? 0");
+    expect(zeros).toContain("?? 0");
+  });
+
+  it("shows — until it's ready", () => {
+    const html = line(sample({ accuracy: null }));
     expect(html).toMatch(/class="review-accuracy"[^>]*>—</);
     expect(html).toContain("Not ready yet");
-  });
-
-  it("shows each grade's count, and the book moves", () => {
-    const html = panel(sample());
-    expect(html).toMatch(
-      /data-count="inaccuracy">(?:(?!data-count).)*Inaccuracies<\/(?:span><\/)?dt><dd>0<\/dd>/
-    );
-    expect(html).toMatch(
-      /data-count="mistake">(?:(?!data-count).)*Mistakes<\/(?:span><\/)?dt><dd>1<\/dd>/
-    );
-    expect(html).toMatch(
-      /data-count="blunder">(?:(?!data-count).)*Blunders<\/(?:span><\/)?dt><dd>1<\/dd>/
-    );
-    expect(html).toMatch(
-      /data-count="book">(?:(?!data-count).)*Book moves<\/(?:span><\/)?dt><dd>2<\/dd>/
-    );
-    expect(
-      panel(sample({ moves: sample().moves.map((m) => ({ ...m, bookGames: null })) }))
-    ).not.toContain('data-count="book"');
+    expect(html).not.toMatch(/\d %/);
   });
 });
 
-describe("left his book note", () => {
-  const note = (model: ReviewModel) => renderToStaticMarkup(<LeftBookNote model={model} />);
+describe("left his book line", () => {
+  const list = (model: ReviewModel, cursor = 8) =>
+    renderToStaticMarkup(<MoveList model={model} cursor={cursor} onSelect={noop} />);
+  /** The list's first child, and its text. */
+  const first = (html: string) => {
+    const m = /^<div class="move-list scoresheet"[^>]*>(<(\w+)[^>]*>[\s\S]*?<\/\2>)/.exec(html);
+    expect(m, "the list has a first item").not.toBeNull();
+    return m![1];
+  };
+  const text = (html: string) => html.replace(/<[^>]+>/g, "");
 
-  it("says where he left his book, with his moves there and their share", () => {
-    const html = note(sample());
-    expect(html).toContain("Left his book at move 3");
-    expect(html).toContain("You played 3.Bc4. In his 80 games here, he played:");
-    expect(html).toMatch(/3\.Bb5<\/span><div class="liem-note__bar" style="width:75%"/);
-    expect(html).toMatch(/3\.d4<\/span><div class="liem-note__bar" style="width:25%"/);
-    expect(html).toContain(">60<");
+  it("left with his moves: his most-played move there and its games", () => {
+    const item = first(list(sample()));
+    expect(item).toMatch(/data-left-book="4"/);
+    expect(text(item)).toBe("Left his book at move 3 · he played 3.Bb5 in 60 games");
   });
 
-  it("names the move for a Black ply and copes with no moves of his there", () => {
-    const html = note(
-      sample({ leftBook: { ply: 1, played: { uci: "e7e5", label: "1...e5" }, his: [] } })
+  it("picks his most-played move even when it isn't listed first", () => {
+    const html = list(
+      sample({
+        leftBook: {
+          ply: 1,
+          played: { uci: "c7c5", label: "1...c5" },
+          his: [
+            { uci: "c7c6", label: "1...c6", games: 3 },
+            { uci: "e7e5", label: "1...e5", games: 1807 },
+            { uci: "d7d5", label: "1...d5", games: undefined },
+          ],
+        },
+        bookPlies: 1,
+      })
     );
-    expect(html).toContain("Left his book at move 1");
-    expect(html).toContain("You played 1...e5. He has no games from this position.");
-    expect(html).not.toContain("liem-note__bar");
+    expect(text(first(html))).toBe("Left his book at move 1 · he played 1...e5 in 1,807 games");
   });
 
-  it("says when the game stayed in his book", () => {
-    expect(note(sample({ leftBook: null, bookPlies: 8 }))).toContain(
-      "Stayed in his book the whole game"
+  it("says one game, not one games", () => {
+    const html = list(
+      sample({ leftBook: { ply: 4, played: { uci: "f1c4", label: "3.Bc4" }, his: [{ uci: "f1b5", label: "3.Bb5", games: 1 }] } })
     );
+    expect(text(first(html))).toBe("Left his book at move 3 · he played 3.Bb5 in 1 game");
   });
 
-  it("shows nothing without his books", () => {
-    expect(note(sample({ leftBook: null, bookPlies: 0 }))).toBe("");
+  it("left with none of his games there", () => {
+    for (const his of [[], [{ uci: "f1b5", label: "3.Bb5", games: undefined }], [{ uci: "f1b5", label: "3.Bb5", games: 0 }]]) {
+      const item = first(list(sample({ leftBook: { ply: 4, played: { uci: "f1c4", label: "3.Bc4" }, his } })));
+      expect(text(item)).toBe("Left his book at move 3");
+    }
+  });
+
+  it("stayed in his book", () => {
+    const item = first(list(sample({ leftBook: null, bookPlies: 8 })));
+    expect(item).toMatch(/data-left-book="stayed"/);
+    expect(text(item)).toBe("Stayed in his book the whole game");
+  });
+
+  it("no line without his books", () => {
+    const html = list(sample({ leftBook: null, bookPlies: 0 }));
+    expect(html).not.toContain("data-left-book");
+    expect(html).not.toMatch(/his book/i);
+  });
+
+  it("comes before the book fold and the moves", () => {
+    const html = list(sample());
+    const at = html.indexOf("data-left-book");
+    expect(at).toBeGreaterThan(-1);
+    expect(at).toBeLessThan(html.indexOf("move-list__fold"));
+    expect(at).toBeLessThan(html.indexOf("data-ply="));
+    // One line, not a card with his move bars.
+    expect(html).not.toContain("liem-note");
+    expect(html.match(/data-left-book/g)).toHaveLength(1);
   });
 });
 

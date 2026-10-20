@@ -1,6 +1,7 @@
 /*
- * The win % graph card (plan ui-refresh, ## Look): the top of the review sidebar,
- * or of the phone sheet. The plot is 80 px tall and as wide as the card.
+ * The summary card (plans ui-refresh and ui-polish, ## Look): the win % graph and
+ * the accuracy line, under the key-moment card in the review sidebar or the phone
+ * sheet. The plot is 80 px tall and as wide as the card.
  * Tokens only, from src/index.css. The box is .card from src/styles/look.css.
  */
 .review-graph {
@@ -144,4 +145,27 @@
 
 .review-graph__tick--end {
   transform: translateX(-100%);
+}
+
+/* The accuracy line under the graph (plan ui-polish, ## Look): 16 px ink, the grade marks in their grade colors. */
+.review-summary__accuracy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-2) var(--space-1) var(--space-1);
+  font-size: var(--text-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.review-summary__label {
+  font-size: var(--text-small);
+  color: var(--soft);
+}
+
+/* In the phone sheet the summary comes after the flat key-moment card, 16 px under it. */
+.review-sheet > .review-card + .review-graph {
+  margin-top: var(--space-4);
 }
