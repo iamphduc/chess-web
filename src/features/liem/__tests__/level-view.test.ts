@@ -21,16 +21,12 @@ describe("levelView", () => {
       title: null,
       glyph: "♞",
       avatar: null,
-      detail: "Plays Liem's openings",
-      shortDetail: "Liem's openings",
-      detailLead: "Plays ",
       stepName: "Medium",
       starred: false,
       opponentName: "Medium",
       rating: null,
       stepLabel: "Medium",
       engineLine: "A sparring bot plays his openings, then Stockfish at the Medium level.",
-      outText: "Stockfish at the Medium level plays from here. It isn't trained on his games.",
     });
 
     SPARRING.forEach((n, i) => {
@@ -43,7 +39,6 @@ describe("levelView", () => {
         starred: false,
         rating: null,
         engineLine: `A sparring bot plays his openings, then Stockfish at the ${name} level.`,
-        outText: `Stockfish at the ${name} level plays from here. It isn't trained on his games.`,
       });
     });
   });
@@ -55,17 +50,12 @@ describe("levelView", () => {
       title: "GM",
       glyph: null,
       avatar: LIEM.entry.avatar,
-      detail: "GM · 2732",
-      // The GM tag sits by his name, so phones keep just the rating.
-      shortDetail: "2732",
-      detailLead: "GM · ",
       stepName: "Liem",
       starred: true,
       opponentName: "Liem",
       rating: "GM · 2732",
       stepLabel: "Liem (2732)",
       engineLine: "Le Quang Liem: his openings, then full-strength Stockfish 18.",
-      outText: "Full-strength Stockfish 18 plays from here. It isn't trained on his games.",
     });
   });
 
@@ -92,11 +82,12 @@ describe("levelView", () => {
     expect(STRENGTH_STEPS.filter((s) => levelView(s).rating !== null)).toEqual(["full"]);
   });
 
-  it("the parts add up to the whole line, so phones and screen readers agree", () => {
+  it("each card has exactly one of the glyph and the photo, and no line under the name", () => {
     for (const step of STRENGTH_STEPS) {
       const v = levelView(step);
-      expect(v.detailLead + v.shortDetail).toBe(v.detail);
-      // Exactly one of the glyph and the photo.
+      for (const gone of ["detail", "shortDetail", "detailLead", "outText"]) {
+        expect(v, `${step} ${gone}`).not.toHaveProperty(gone);
+      }
       expect((v.glyph === null) !== (v.avatar === null)).toBe(true);
     }
   });
@@ -107,7 +98,6 @@ describe("levelView", () => {
     expect(him).toMatchObject({
       name: "Nguyen Van Test",
       title: "IM",
-      detail: "IM · 2500",
       stepName: "Test",
       opponentName: "Test",
       rating: "IM · 2500",
@@ -115,16 +105,14 @@ describe("levelView", () => {
       engineLine: "Nguyen Van Test: his openings, then full-strength Stockfish 18.",
     });
     // A sparring level keeps its own name whoever's openings it plays.
-    expect(levelView(1400, entry)).toMatchObject({
-      name: "Easy",
-      detail: "Plays Test's openings",
-      shortDetail: "Test's openings",
-    });
+    expect(levelView(1400, entry)).toMatchObject({ name: "Easy", glyph: "♞" });
   });
 
   it("a one-word name is its own short name", () => {
     const entry = { ...LIEM.entry, name: "Magnus" };
     expect(levelView("full", entry).stepName).toBe("Magnus");
-    expect(levelView(1700 as StrengthStep, entry).shortDetail).toBe("Magnus's openings");
+    expect(levelView(1700 as StrengthStep, entry).engineLine).toBe(
+      "A sparring bot plays his openings, then Stockfish at the Medium level."
+    );
   });
 });
