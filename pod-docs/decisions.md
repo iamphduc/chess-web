@@ -346,7 +346,7 @@ Context: The old `--board-highlight`, `rgba(255, 255, 51, 0.5)` yellow, was loud
 Decision: `--board-highlight` is `rgba(204, 153, 26, 0.5)`, an ochre tint close to `--gold`. It marks the last move and the selected square, and stays readable on both the light and the dark squares.
 Consequences: Change it in `src/index.css`. It must stay see-through so the square color shows.
 
-## 2026-10-19 — The board screen has a top bar and one Moves card (chosen by the human, plan ui-refresh) (the foot is updated by "Resign sits in the Moves card foot", 2026-10-20)
+## 2026-10-19 — The board screen has a top bar and one Moves card (chosen by the human, plan ui-refresh) (the foot is updated by "Resign sits in the Moves card foot", 2026-10-20; the "+N" order and place are superseded by "The material line sits under the name, pieces then +N", 2026-10-20; the review foot by "Play again sits in the review's Moves card foot", 2026-10-20)
 Context: The gaps around the tabs, the separate buttons box and the Fallen Pieces panel made the board screen uneven.
 Decision: A 56 px top bar holds ← Home and the title ("vs Medium · you play White"). Fallen Pieces becomes a "+N" line with the captured pieces on each player card. The buttons join the Moves card's foot. In vs Liem the foot is Review game (once the game can be reviewed), New game, Flip and Sound; in Two players it is Play, New game (the old Reset), Flip and Sound.
 Consequences: The review's foot is Back to game, Flip and Sound.
@@ -371,7 +371,7 @@ Context: The human found the full-width review graph "kinda far away from the an
 Decision: The win % graph is an 80 px card at the top of the review sidebar, above the key-moment card, and always shows your side (the "White / You" switch is gone). On phones it is at the top of the bottom sheet. `graphPlacement` (`src/features/review/reviewLayout.ts`) puts it in exactly one place: the sheet while it is open and up, else the sidebar (the sheet is closed, or sits low while you try a move).
 Consequences: Change the rule in `graphPlacement` and its test.
 
-## 2026-10-19 — The review's top bar has Play again; Back to game stays in the review (agent default — override anytime)
+## 2026-10-19 — The review's top bar has Play again; Back to game stays in the review (agent default — override anytime) (superseded by "Play again sits in the review's Moves card foot", 2026-10-20)
 Context: The review had New game and Back to game in its sidebar.
 Decision: The review's New game is replaced by Play again on the right of the top bar (a new game at the same level and color, then `#/play`). Back to game is a link to `#/play` in the Moves card foot, so it is the same as the browser's Back; Forward reopens the review where the pass was.
 Consequences: To change what Play again does, edit `playAgain` in `src/features/review/reviewLayout.ts`.
@@ -445,3 +445,33 @@ From 992 px the empty slot is hidden, so the Moves card moves up by the note's h
 
 ## 2026-10-20 — A key-moment try counts as found when it isn't an inaccuracy (agent default — override anytime)
 Any try that loses less than an inaccuracy (10 win-% points) counts as found, so a good move other than Stockfish's (for example 2.a3 when it names 2.d4) shows "You found it". This is the 2026-10-16 grade rule, unchanged. To require Stockfish's move, change the found rule in `src/game/review/`.
+
+## 2026-10-20 — The material line sits under the name, pieces then +N (chosen by the human, plan ui-motion)
+Context: The human found "+4" before the glyphs on the name's line "reversed" ("Easy +4 ♛♜♝♞♞♟").
+Decision: On every player card, in both modes and in the review, `.player__material` is its own line under the name, 4 px below it: the captured pieces first, then "+N" (for example `♛♜♝♞♞♟ +4`). The glyph colors and the counting (`material.ts`) don't change, and "+N" is never cut; the glyphs cut first. Every `.board > .player` stays 56 px. Supersedes the order and place in "The board screen has a top bar and one Moves card", 2026-10-19.
+Consequences: The layout lives in `Player.tsx` and `Player.css`; `tests/player-css.test.ts` pins the spacing and what gives way.
+
+## 2026-10-20 — His card's detail shares the material line, material first (agent default — override anytime)
+Context: His card already used its second line for "★ Book · N" or "Thinking…", and three lines don't fit the 56 px card.
+Decision: The material and his detail share the second line: the material first, the detail at the line's end, so neither moves when the other comes or goes. The other way (detail first) makes the material jump about 70 px each time "Thinking…" comes and goes.
+Consequences: To swap them, change the order in `Player.tsx` and its test (`player.test.tsx › with a detail, the material comes first on the second line`). Queued for the human in `handoff-queue.md`.
+
+## 2026-10-20 — The game-over card eases in after a short pause (chosen by the human, plan ui-motion)
+Context: The human found the end-of-game notice "too plain".
+Decision: After a 300 ms pause, so you see the last move, the scrim fades in over 200 ms, and the card fades in, rises 8 px and scales from 0.96 to 1 over 250 ms, ease-out with no overshoot. It runs once per game end (`data-entrance="animate"`); under `prefers-reduced-motion: reduce`, and on a later mount for the same ended game (such as back from the review), it shows at once (`data-entrance="instant"`). New game during the pause removes the card. Turned down: a bounce, and a king highlight.
+Consequences: The timings and the rule live in `src/features/board/gameOverEntrance.ts`; change them there and in its test.
+
+## 2026-10-20 — Pieces move in 150 ms with an ease-out (chosen by the human, plan ui-motion)
+Context: The human found piece movement "quite slow" with Framer Motion's default spring.
+Decision: Every piece move on the game board (click, tap, his move, castling's rook, en passant) is `PIECE_MOVE_TRANSITION`, a 0.15 s ease-out tween (`src/features/board/pieceMotion.ts`). The Flip stays instant, and a drag drop lands at once (the drag already carried the piece; castling's rook jumps with it on a drop). With reduced motion every piece jumps (`MotionConfig reducedMotion="user"`).
+Consequences: Change the speed in `pieceMotion.ts` and `piece-motion.test.tsx`; the review's one-step slide uses the same value.
+
+## 2026-10-20 — The review animates one-step moves only; jumps snap (chosen by the human, plan ui-motion)
+Context: The human: "the playback buttons doesn't play piece movement". Pieces keep their ids across positions, so a jump would sweep every piece across the board.
+Decision: `reviewStepMotion(prev, next)` slides only when the step is one ply (◀, ▶, an arrow key, an adjacent move in the list) of the same game at the same flip and square size; opening the review, a jump of 2 or more plies (a far move, First, Last, a key moment), a flip, a resize or another game snaps (`{ duration: 0 }`). Review pieces use the layout ids `review-<gameId>-<piece>`, so they never share a box with the game board's, and each piece has its own element, so a captured piece comes back on its square on ◀. A re-render of the same position (an eval arriving) keeps the step's motion, so a slide isn't cut short.
+Consequences: The rule lives in `pieceMotion.ts` (`reviewStepMotion`, `nextReviewStep`) and is tested in `review-board-motion.test.tsx`.
+
+## 2026-10-20 — Play again sits in the review's Moves card foot (chosen by the human, plan ui-motion)
+Context: The human: "What is the point of "Back to game" button? It should be the "Play again" button and remove that from the navbar".
+Decision: The review's Moves card foot is Play again (`button.button--play`, `playAgain`: a new game at the same level and color, then `#/play`), Flip and Sound. The review's top bar holds only ← Home and the title. There's no Back to game link; the browser's Back still goes to `#/play` with the finished board. Supersedes "The review's top bar has Play again; Back to game stays in the review", 2026-10-19.
+Consequences: `TopBar`'s `action` prop and the `.top-bar__action` CSS stay, unused (`tests/review-theme.test.ts` still reads them). To change what Play again does, edit `playAgain` in `src/features/review/reviewLayout.ts`.

@@ -1,5 +1,5 @@
 /*
- * What the review screen shows where, and its top bar's Play again. Pure rules,
+ * What the review screen shows where, and its Moves card foot's Play again. Pure rules,
  * so Board.tsx only wires them up.
  */
 import type { AnyAction, ThunkAction } from "@reduxjs/toolkit";

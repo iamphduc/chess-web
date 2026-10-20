@@ -84,12 +84,15 @@ const ReviewGameLink = () => (
   </a>
 );
 
-/** A link: the route closes the review and keeps its evals (`arriveAt("play")`). */
-const BackToGameLink = () => (
-  <a className="button" href={hashFor("play")}>
-    Back to game
-  </a>
-);
+/** The review foot's Play again: a new game at the same level and color, then `#/play`. */
+const PlayAgainButton = () => {
+  const dispatch = useAppDispatch();
+  return (
+    <button type="button" className="button button--play" onClick={() => dispatch(playAgain())}>
+      Play again
+    </button>
+  );
+};
 
 /** The key-moment card, wired to the review's actions. */
 const ReviewCard = ({ model, humanColor }: { model: ReviewModel; humanColor: PieceColor }) => {
@@ -128,6 +131,7 @@ export const Board = () => {
   const match = useAppSelector((state) => state.match);
   const review = useAppSelector(selectReview);
   const engineHistory = useAppSelector((state) => state.board.engineHistory);
+  const gameId = useAppSelector((state) => state.board.gameId);
   const reviewable = useAppSelector((state) => canOpenReview(state.board, state.match));
   const resignable = useAppSelector((state) => canResign(state.board));
   const over = useAppSelector((state) => state.board.gameOver !== GameOverType.Continue);
@@ -206,7 +210,7 @@ export const Board = () => {
     const graphIn = graphPlacement({ wide, sheetOpen: review.sheetOpen, low: card.low });
     const foot = (
       <>
-        <BackToGameLink />
+        <PlayAgainButton />
         <span className="moves-card__icons">
           <Button type={ButtonType.Flip} />
           <Button type={ButtonType.Sound} />
@@ -215,13 +219,16 @@ export const Board = () => {
     );
     return (
       <MotionConfig reducedMotion="user">
-        <TopBar action={{ label: "Play again", onClick: () => dispatch(playAgain()) }} />
+        {/* ← Home and the title only; Play again is in the Moves card foot. */}
+        <TopBar />
         <div className="board-screen review" data-review-state={review.status}>
           <div className="board" style={{ width: squareSize * 8 }}>
             {top}
             <div className="squares">
               <ReviewBoard
                 state={engineHistory[cursor]}
+                gameId={gameId}
+                ply={cursor}
                 flipped={flipped}
                 size={squareSize}
                 highlight={cursor > 0 ? model.moves[cursor - 1].uci : null}
