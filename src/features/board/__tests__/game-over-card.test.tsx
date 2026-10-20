@@ -1,13 +1,17 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Provider } from "react-redux";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { configureStore } from "@reduxjs/toolkit";
 
 import { createAppStore } from "app/store";
 import { startLiemGame, switchMode } from "features/liem/liemActions";
-import { setColorPick } from "features/liem/matchSlice";
-import { clickSquare, resign, start } from "../BoardSlice";
+import { matchSlice, setColorPick } from "features/liem/matchSlice";
+import { PieceType } from "../../../game/piece-type";
+import { boardSlice, clickSquare, movePiece, promotePawn, resign, selectPiece, start, stop } from "../BoardSlice";
 import { GameOver } from "../components/GameOver";
+import { PiecePromoted } from "../components/Promotion";
 import { gameOverNewGame } from "../gameOverView";
 
 type Store = ReturnType<typeof createAppStore>;
@@ -37,6 +41,43 @@ function twoPlayers(): Store {
   return store;
 }
 
+/** Freezes `Date.now()` at `ms`; React's scheduler keeps its real timers. */
+function at(ms: number) {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(ms);
+}
+
+/** The card's `data-entrance`, or null when no card renders. */
+const entranceOf = (html: string) => html.match(/<div class="game-over" data-entrance="(\w+)">/)?.[1] ?? null;
+
+/** Two players, Play pressed, 1.h4 g5 2.hxg5 h6 3.gxh6 Nf6 4.h7 Rg8 5.hxg8 with the piece not picked yet. */
+function pickingPromotion(): Store {
+  const { reducer } = boardSlice;
+  type BoardState = ReturnType<typeof reducer>;
+  const move = (s: BoardState, pieceType: PieceType, from: [number, number], to: [number, number]) =>
+    reducer(reducer(s, selectPiece({ pieceType, y: from[0], x: from[1] })), movePiece({ to }));
+  let s = reducer(reducer(undefined, { type: "@@INIT" }), start());
+  s = move(s, PieceType.WhitePawnH, [6, 7], [4, 7]);
+  s = move(s, PieceType.BlackPawnG, [1, 6], [3, 6]);
+  s = move(s, PieceType.WhitePawnH, [4, 7], [3, 6]);
+  s = move(s, PieceType.BlackPawnH, [1, 7], [2, 7]);
+  s = move(s, PieceType.WhitePawnH, [3, 6], [2, 7]);
+  s = move(s, PieceType.BlackKingKnight, [0, 6], [2, 5]);
+  s = move(s, PieceType.WhitePawnH, [2, 7], [1, 7]);
+  s = move(s, PieceType.BlackKingRook, [0, 7], [0, 6]);
+  s = move(s, PieceType.WhitePawnH, [1, 7], [0, 6]);
+  const match = { ...matchSlice.reducer(undefined, { type: "@@INIT" }), mode: "two-player" as const, setupOpen: false };
+  return configureStore({
+    reducer: { board: reducer, match: matchSlice.reducer },
+    preloadedState: { board: s, match },
+  }) as unknown as Store;
+}
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
+
 /** The position of each needle in `html`, in the order given; -1 when missing. */
 const positions = (html: string, needles: string[]) => needles.map((n) => html.indexOf(n));
 
@@ -56,7 +97,7 @@ describe("game-over card", () => {
     live.dispatch(resign());
     const html = markup(live);
     const order = positions(html, [
-      '<div class="game-over">',
+      '<div class="game-over" data-entrance="animate">',
       '<div class="game-over__card">',
       '<p class="game-over__title">Black wins</p>',
       '<p class="game-over__reason">Resigned</p>',
@@ -67,7 +108,7 @@ describe("game-over card", () => {
     expect(order.every((at) => at >= 0), html).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     // The scrim wraps the card, which wraps everything else.
-    expect(html.startsWith('<div class="game-over"><div class="game-over__card">')).toBe(true);
+    expect(html.startsWith('<div class="game-over" data-entrance="animate"><div class="game-over__card">')).toBe(true);
     expect(html.endsWith("</div></div></div>")).toBe(true);
 
     // Two players, over: New game only.
@@ -75,6 +116,7 @@ describe("game-over card", () => {
     const twoHtml = markup(two);
     expect(twoHtml).toContain('<p class="game-over__title">Black wins</p>');
     expect(twoHtml).toContain('<p class="game-over__reason">Resigned</p>');
+    expect(entranceOf(twoHtml)).toBe("animate");
     expect(twoHtml).not.toContain("Review game");
     expect(twoHtml).not.toContain("#/review");
     expect(twoHtml).toContain('<div class="game-over__actions"><button type="button" class="button">New game</button></div>');
@@ -109,5 +151,70 @@ describe("game-over card", () => {
     expect(board.history.length).toBe(1);
     expect(two.getState().match.mode).toBe("two-player");
     expect(markup(two)).toBe("");
+  });
+
+  it("reduced motion renders the card at once", () => {
+    const asked: string[] = [];
+    vi.stubGlobal("window", {
+      matchMedia: (query: string) => {
+        asked.push(query);
+        return { matches: query === "(prefers-reduced-motion: reduce)", addEventListener() {}, removeEventListener() {} };
+      },
+    });
+    const live = liemGame();
+    live.dispatch(resign());
+    expect(entranceOf(markup(live))).toBe("instant");
+    expect(asked).toContain("(prefers-reduced-motion: reduce)");
+
+    // The same end with no reduced motion asked for would have animated.
+    vi.stubGlobal("window", {
+      matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
+    });
+    const other = liemGame();
+    other.dispatch(resign());
+    expect(entranceOf(markup(other))).toBe("animate");
+  });
+
+  it("new game during the pause cancels the entrance", () => {
+    at(100_000);
+    const liem = liemGame();
+    liem.dispatch(resign());
+    expect(entranceOf(markup(liem))).toBe("animate");
+
+    // New game 100 ms after the end, inside the 300 ms pause: no card, now or later.
+    at(100_100);
+    liem.dispatch(gameOverNewGame("liem"));
+    expect(markup(liem)).toBe("");
+    at(100_600);
+    expect(markup(liem)).toBe("");
+
+    // The next game's end gets its own entrance, even soon after the last one.
+    liem.dispatch(resign());
+    expect(entranceOf(markup(liem))).toBe("animate");
+  });
+
+  it("plays once: a later mount for the same end shows the card at once", () => {
+    at(200_000);
+    const two = twoPlayers();
+    two.dispatch(start());
+    two.dispatch(resign());
+    expect(entranceOf(markup(two))).toBe("animate");
+    // StrictMode's second render, a moment later, still animates.
+    at(200_010);
+    expect(entranceOf(markup(two))).toBe("animate");
+    // Back from the review: the same end mounts again and shows at once.
+    at(201_000);
+    expect(entranceOf(markup(two))).toBe("instant");
+  });
+
+  it("the pause starts when the card is due, after a pending promotion pick", () => {
+    at(300_000);
+    const store = pickingPromotion();
+    store.dispatch(stop()); // White's flag falls with the picker open
+    expect(markup(store)).toBe("");
+    // The pick comes 5 s later; only then is the card due, and it animates.
+    at(305_000);
+    store.dispatch(promotePawn({ piecePromoted: PiecePromoted.Queen }));
+    expect(entranceOf(markup(store))).toBe("animate");
   });
 });
