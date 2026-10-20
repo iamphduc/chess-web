@@ -37,7 +37,7 @@
 /* "Plays Liem's openings" or "GM · 2732": a small soft label. */
 .liem-detail__sub {
   font-size: var(--text-small);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--soft);
 }
 

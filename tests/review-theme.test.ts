@@ -243,8 +243,8 @@ describe("review theme", () => {
     };
     expect(font(".review-card__title")).toEqual({ size: "var(--text-title)", weight: "700" });
     expect(font(".review-accuracy")).toEqual({ size: "var(--text-hero)", weight: "700" });
-    expect(font(".review-card")).toEqual({ size: "var(--text-body)", weight: "500" });
-    expect(font(".review-move")).toEqual({ size: "var(--text-body)", weight: "500" });
+    expect(font(".review-card")).toEqual({ size: "var(--text-body)", weight: "600" });
+    expect(font(".review-move")).toEqual({ size: "var(--text-body)", weight: "600" });
     for (const g of GRADES) {
       const chip = font(`.review-chip--${g}`);
       const base = font(".review-chip");

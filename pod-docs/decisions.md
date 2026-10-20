@@ -393,3 +393,8 @@ The two-player board still names its players from `src/game/players.ts`: the top
 ## 2026-10-20 — merge target: ui-polish-staging
 
 For plan ui-polish, autopilot merges land on `ui-polish-staging`, cut from `main`, so the staging branch names its feature (the human renamed the last one to `ui-refresh`). The human looks, then moves it to `main`, which deploys to GitHub Pages. (human, 2026-10-20)
+
+## 2026-10-20 — Body text is Quicksand 600 (chosen by the human, plan ui-polish ## Look)
+Context: Body text in Quicksand 500 read thin on the cream cards. The human picked option B in draft section 0 (`pod-docs/design-drafts/ui-polish.html`): "Let's do B".
+Decision: Body text is Quicksand 600 (`body { font-weight: 600 }`). Headings, buttons, names, clocks and other bold text stay 700. The app ships only the 600 and 700 woff2 files (from `@fontsource/quicksand` 5.3.0); the 500 file and its `@font-face` are gone, and no CSS under `src/` sets 500, 400 or `normal`. This updates "Quicksand is self-hosted" (2026-10-10), which named 500 and 700.
+Consequences: Every screen reads a little heavier with the same sizes and layout. To change the body weight, change `src/index.css` (the `body` rule and the 600 `@font-face`) and `tests/theme.test.ts`.

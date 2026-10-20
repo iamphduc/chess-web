@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 
 import "./Notation.css";
 import { useAppSelector } from "app/hooks";
-import { useMediaQuery } from "hooks/useMediaQuery";
+import { listScrollTop } from "../listScroll";
 
 /** One move cell; the last move played sits in the ink chip. */
 const Move = ({ text, current }: { text: string | undefined; current: boolean }) => (
@@ -13,10 +13,10 @@ const Move = ({ text, current }: { text: string | undefined; current: boolean })
 
 /** The game's moves as a scoresheet: one row per move number, White then Black. */
 export const Notation = () => {
-  const bottomRef = useRef<null | HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLOListElement>(null);
 
   const { notation } = useAppSelector((state) => state.board);
-  const isLargeScreen = useMediaQuery("only screen and (min-width: 1200px)");
   const last = notation.length - 1;
 
   const rows = [];
@@ -30,16 +30,27 @@ export const Notation = () => {
     );
   }
 
+  // Keep the last row in view by setting the box's own scrollTop. This used to call
+  // scrollIntoView on a marker under the list (from 1200 px), which scrolls every
+  // scrollable ancestor too: the page jumped back up to the Moves card on every move.
   useEffect(() => {
-    if (bottomRef.current && isLargeScreen) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end", inline: "nearest" });
-    }
-  }, [notation, isLargeScreen]);
+    const box = boxRef.current;
+    if (!box) return;
+    const row = listRef.current?.lastElementChild ?? null;
+    const boxTop = box.getBoundingClientRect().top;
+    const span = row && {
+      top: row.getBoundingClientRect().top - boxTop + box.scrollTop,
+      height: row.getBoundingClientRect().height,
+    };
+    const top = listScrollTop({ scrollTop: box.scrollTop, height: box.clientHeight }, span);
+    if (top !== box.scrollTop) box.scrollTop = top;
+  }, [notation]);
 
   return (
-    <div className="notation">
-      <ol className="scoresheet">{rows}</ol>
-      <div className="notation__bottom" ref={bottomRef}></div>
+    <div className="notation" ref={boxRef}>
+      <ol className="scoresheet" ref={listRef}>
+        {rows}
+      </ol>
     </div>
   );
 };

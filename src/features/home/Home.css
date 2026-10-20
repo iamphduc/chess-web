@@ -67,7 +67,7 @@
 .home__rating {
   margin-left: var(--space-1);
   color: var(--soft);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* The star before "Liem": an ochre shape, never ochre text. */
