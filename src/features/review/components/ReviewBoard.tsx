@@ -118,6 +118,9 @@ export const ReviewBoard = ({ state, gameId = 0, ply = 0, flipped, size, highlig
         {marks.check && <Overlay type={OverlayType.Check} />}
         {pieceType && (
           <motion.div
+            // Its own element per piece: reusing the taker's element for the piece it
+            // took (◀ from a capture) makes Framer fade the returning piece out.
+            key={pieceType}
             className={`piece piece__${pieceType}`}
             style={{ backgroundImage: `url(${pieceFactory.getPiece(pieceType).getImage()})` }}
             // Never the game board's `${gameId}-${pieceType}`, so the two boards share no box.
