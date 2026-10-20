@@ -129,7 +129,14 @@ describe("Player.css", () => {
     const material = bodyOf(all, ".player__material");
     expect(material).toMatch(/(^|[\s;])color:\s*var\(--soft\)/);
     expect(material).toMatch(/font-size:\s*var\(--text-small\)/);
-    expect(material).not.toMatch(/min-width:\s*0/); // its least width is "+N"
+    // Every flex box from the card down to the glyphs may shrink below its content
+    // (min-width: 0); one that can't keeps the glyphs whole, so their ellipsis never applies
+    // and "+N" or the detail is pushed past the line's end, under the clock.
+    for (const box of [".player__info", ".player__text", ".player__sub", ".player__material", ".player__captured"]) {
+      expect(bodyOf(all, box), box).toMatch(/(^|[\s;])min-width:\s*0(;|\s|$)/);
+    }
+    // The material box doesn't clip, so "+N" is never cut even when the line is tight.
+    expect(material).not.toMatch(/overflow\s*:\s*(hidden|clip)/);
     const plus = bodyOf(all, ".player__advantage");
     expect(plus).toMatch(/flex-shrink:\s*0/);
     expect(plus).toMatch(/white-space:\s*nowrap/);
