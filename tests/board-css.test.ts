@@ -27,7 +27,7 @@ const reducedMotionBlock = (css: string) => stripComments(css).match(REDUCED_BLO
 /** An `animation` shorthand split into its name, duration and delay (ms) and timing function. */
 function animation(value: string | undefined) {
   const v = value ?? "";
-  const ms = [...v.matchAll(/(\d*\.?\d+)(ms|s)/g)].map((m) => Number(m[1]) * (m[2] === "s" ? 1000 : 1));
+  const ms = [...v.matchAll(/(\d*\.?\d+)(ms|s)\b/g)].map((m) => Number(m[1]) * (m[2] === "s" ? 1000 : 1));
   const name = v.split(/\s+/).find((w) => /^[a-z][\w-]*$/i.test(w) && !/^(ease(-in|-out|-in-out)?|linear|both|forwards|backwards|none|normal|infinite)$/.test(w));
   return { name, duration: ms[0], delay: ms[1] ?? 0, timing: v };
 }
@@ -132,8 +132,8 @@ describe("board CSS", () => {
     const scrim = animation(last(declsFor(css, animate), "animation"));
     expect(scrim.duration).toBe(ENTRANCE.scrimMs);
     expect(scrim.delay).toBe(ENTRANCE.pauseMs);
-    expect(scrim.timing).toMatch(/ease-out/);
-    expect(scrim.timing, "the pause holds the first frame").toMatch(/(both|backwards)/);
+    expect(scrim.timing).toMatch(/\bease-out\b/);
+    expect(scrim.timing, "the pause holds the first frame").toMatch(/\b(both|backwards)\b/);
     const scrimFrames = frames[scrim.name ?? ""];
     expect(scrimFrames, "scrim keyframes").toBeDefined();
     expect(last(scrimFrames.from ?? scrimFrames["0%"], "opacity")).toBe("0");
@@ -143,8 +143,8 @@ describe("board CSS", () => {
     const card = animation(last(declsFor(css, `${animate} .game-over__card`), "animation"));
     expect(card.duration).toBe(ENTRANCE.cardMs);
     expect(card.delay).toBe(ENTRANCE.pauseMs);
-    expect(card.timing).toMatch(/ease-out/);
-    expect(card.timing).toMatch(/(both|backwards)/);
+    expect(card.timing).toMatch(/\bease-out\b/);
+    expect(card.timing).toMatch(/\b(both|backwards)\b/);
     const cardFrames = frames[card.name ?? ""];
     expect(cardFrames, "card keyframes").toBeDefined();
     const from = cardFrames.from ?? cardFrames["0%"];
@@ -168,7 +168,7 @@ describe("board CSS", () => {
     expect(css).not.toMatch(/spring|bounce|linear\(/i);
     for (const { body } of rules(css)) {
       for (const [prop, value] of declarations(body)) {
-        if (/^(animation|transition)/.test(prop)) expect(value, prop).not.toMatch(/ease-in|ease-in-out/);
+        if (/^(animation|transition)/.test(prop)) expect(value, prop).not.toMatch(/\bease-in\b|ease-in-out/);
       }
     }
 
