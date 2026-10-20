@@ -19,7 +19,8 @@ describe("Player", () => {
     );
     expect(html.match(/role="timer"/g)).toHaveLength(1);
     expect(html).toContain('aria-label="Clock for Me"');
-    expect(html).toMatch(/<span class="player__timer">10:00<\/span>/);
+    const timer = html.match(/<span class="player__timer">((?:<span class="player__timer-(?:digit|sep)">[^<]<\/span>)*)<\/span>/);
+    expect(timer?.[1].replace(/<[^>]+>/g, "")).toBe("10:00");
     // Exactly one svg in the card, and it is our clock icon; a react-icons
     // icon would be a second <svg> without that class.
     const svgs = html.match(/<svg[^>]*>/g) ?? [];
