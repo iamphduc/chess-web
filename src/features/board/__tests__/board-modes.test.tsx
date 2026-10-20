@@ -195,7 +195,7 @@ function expectLiemCard(card: string) {
   expect(card).toContain(`src="${avatarSrc(LIEM.entry.avatar)}"`);
   expect(card).not.toContain("liem-star");
   expect(card).toContain(
-    `<div class="player__name"><span class="player__title">${LIEM.entry.title}</span>${LIEM.entry.name}<div class="player__detail">`
+    `<div class="player__name"><span class="player__title">${LIEM.entry.title}</span>${LIEM.entry.name}</div><div class="player__sub"><div class="player__detail">`
   );
   expect(card).not.toContain("player__disc");
   expectNoOldLines(card);
