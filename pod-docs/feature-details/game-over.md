@@ -25,7 +25,8 @@ The card comes in once per game end: a 300 ms pause, so the last move is seen la
 - **A scrim that takes no clicks:** the board's marks stay visible and nothing on the board can be played anyway, so only the card needs clicks.
 - **The card waits for a promotion pick:** a flag fall or resign can land while the picker is open. Showing the card then would cover the picker.
 - **Phone buttons stack when they don't fit** (the plan's value in use for its open question).
-- **The entrance** (plan ui-motion, values chosen by the human): the pause lets the mating move land before the card covers the board. Ease-out only, with no bounce or overshoot (the plan's `## Look`).
+- **The entrance** (plan ui-motion, values chosen by the human): the pause lets the mating move land before the card covers the board. Ease-out only. Turned down: a bounce, and a king highlight (more motion, and against the Look's no-overshoot rule). See `pod-docs/decisions.md` → "The game-over card eases in after a short pause".
+- **CSS keyframes, not Framer Motion,** for the card: the timing is fixed and the CSS can be checked as text against `ENTRANCE` (`tests/board-css.test.ts`). The cost: the numbers live in two places, kept equal by that test.
 - **Instant, not a shorter animation, under reduced motion:** `MotionConfig reducedMotion="user"` keeps opacity fades, so the card reads the media query itself.
 - **Hidden during the pause:** the card is `visibility: hidden` until it starts to fade, so a fast second click on the board can't press an unseen New game.
 
@@ -34,8 +35,10 @@ The card comes in once per game end: a 300 ms pause, so the last move is seen la
 - **Plays once per end, by identity:** the entrance keys on the `result` object, which the board sets once per game end. Code that rebuilds `result` (a copy with the same fields) would replay the entrance on the next mount.
 - **The pause starts when the card is due**, not when the game ended: a flag fall or resign with the promotion picker open animates after the pick.
 - **Timing tests:** fake `Date` (`vi.useFakeTimers({ toFake: ["Date"] })`) to move between "the same end, 10 ms later" (still `animate`) and "back from the review" (`instant`), as `game-over-card.test.tsx` does.
+- **New game during the pause** removes the card, and nothing shows later for the old game: `gameOverView` returns `null` once `result` clears.
 - `flagFallWinner` ("White" | "Black") still exists next to `result`. Read `result` for new code.
 - The scrim token is the only color this plan added. Don't add a second one for the card.
 
 ## History
 - 2026-10-20 · ui-polish · scrim over the board; result and reason from `GameEnd`; Review game and New game on the card; resign counts as an ending · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/chess-web/pull/91)
+- 2026-10-20 · ui-motion · the entrance: 300 ms pause, scrim fade, card rise; instant under reduced motion and on a later mount; a test that imports `gameEnd.ts` first · [report](../reports/ui-motion.html), [PR #98](https://github.com/iamphduc/chess-web/pull/98), [PR #97](https://github.com/iamphduc/chess-web/pull/97)

@@ -1,6 +1,6 @@
 # Plan: UI motion — quicker pieces, a game-over entrance, a cleaner material line, Play again in the review
 
-_Generated: 2026-10-20 · Status: active · Grilled-with: grilling (fast)_
+_Generated: 2026-10-20 · Status: archived · Grilled-with: grilling (fast)_
 Port base: 3200
 
 ## Goal

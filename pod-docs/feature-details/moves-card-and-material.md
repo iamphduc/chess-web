@@ -29,6 +29,8 @@ The board screen's sidebar card, and the player cards around the board.
 - **Counted from the board** (a default): promotions count with no extra state. See ""+N" counts promotions".
 - **A disc, not a stock photo** (a default the human accepted): the cartoon picture didn't match his ♞ card. See "A color disc in place of a photo".
 - **A fixed clock** (the human's choice): a running clock must not "jump in out". Turned down in review: trusting `tabular-nums`, which Quicksand ignores; a font file with `tnum` was the other option.
+- **Pieces first, then "+N", under the name** (the human: "+4 feel like reversed"). Turned down: the 2026-10-19 "+N" before the glyphs on the name line. See `decisions.md` → "The material line sits under the name, pieces then +N".
+- **His detail shares the second line, material first** (agent default, override anytime): three lines don't fit 56 px, and detail-first would make the material jump about 70 px each time "Thinking…" comes and goes. See `decisions.md` → "His card's detail shares the material line, material first".
 - **The list scrolls itself** (sprint contract): `scrollIntoView` scrolled every scrollable parent, so the page jumped on each move.
 
 ## Watch out
@@ -36,10 +38,13 @@ The board screen's sidebar card, and the player cards around the board.
 - **`tabular-nums` does nothing in the self-hosted Quicksand** ("1" is 0.389 em, "0" 0.614 em at 700). `tests/clock-digits.test.ts` reads the real widths from the woff2; keep it if you change the font or the cells.
 - From 992 px every foot fits one row: its text buttons take 12 px sides and the row doesn't wrap. At 375 px it may wrap.
 - "+N" and the detail are never cut or wrapped. On a narrow card the glyphs give way first (ellipsis), and the name line cuts on its own.
+- **`min-width: 0` on every flex box from `.player__info` down to `.player__captured`.** Without it on `.player__material`, the box can't shrink below its glyph row, the ellipsis never applies, and at 375 px "+N" and his detail slide under the clock (or the page scrolls sideways). Don't add `overflow: hidden` to `.player__material`: it would clip "+N". `tests/player-css.test.ts` › `the material line never cuts +N` checks both. Found in review of PR #98, fixed in PR #99.
+- Below about 300 px of viewport his detail and "+N" could overlap (not reproduced; 320 and 375 px fit). Queued as Someday.
+- The second line is always kept, so on a card with no captures and no detail the name sits about 12 px above the disc's middle. That's on purpose: see `decisions.md` → "The name stays put on a card with no captures".
 - `BoardSlice.fallenPieces` is still filled, but nothing reads it (queue, Someday).
 - Never use `--gold` for text.
 
 ## History
 - 2026-10-19 · ui-refresh · Moves card scoresheet with controls in its foot; "+N" material on the player cards replaces Fallen Pieces · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/chess-web/pull/84)
 - 2026-10-20 · ui-polish · a move scrolls only the list; Resign in the foot, one row from 992 px; ♔/♚ discs; White and Black in Two players; fixed clock box and digit cells · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/chess-web/pull/91), [PR #92](https://github.com/iamphduc/chess-web/pull/92)
-- 2026-10-20 · ui-motion · the material line moves under the name, pieces then "+N"; his detail shares it; Review foot reads Play again, Flip, Sound · [plan](../plans/ui-motion.md)
+- 2026-10-20 · ui-motion · the material line moves under the name, pieces then "+N"; his detail shares it; Review foot reads Play again, Flip, Sound; `min-width: 0` fix so only the glyphs cut · [report](../reports/ui-motion.html), [PR #98](https://github.com/iamphduc/chess-web/pull/98), [PR #99](https://github.com/iamphduc/chess-web/pull/99)

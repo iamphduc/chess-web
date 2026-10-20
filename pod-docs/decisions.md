@@ -475,3 +475,13 @@ Consequences: The rule lives in `pieceMotion.ts` (`reviewStepMotion`, `nextRevie
 Context: The human: "What is the point of "Back to game" button? It should be the "Play again" button and remove that from the navbar".
 Decision: The review's Moves card foot is Play again (`button.button--play`, `playAgain`: a new game at the same level and color, then `#/play`), Flip and Sound. The review's top bar holds only ← Home and the title. There's no Back to game link; the browser's Back still goes to `#/play` with the finished board. Supersedes "The review's top bar has Play again; Back to game stays in the review", 2026-10-19.
 Consequences: `TopBar`'s `action` prop and the `.top-bar__action` CSS stay, unused (`tests/review-theme.test.ts` still reads them). To change what Play again does, edit `playAgain` in `src/features/review/reviewLayout.ts`.
+
+## 2026-10-20 — The name stays put on a card with no captures (agent default — override anytime)
+Context: plan ui-motion puts the material line under the name. Keeping that line's space on every card means the name never moves at the first capture.
+Decision: the second line is always kept, so on a card with no captures and no detail (You, White and Black at the start) the name sits about 12 px above the disc's middle.
+Consequences: the other way centers the name until the first capture, then moves it up once. To change it, edit `.player__text` and `.player__sub` in `src/features/board/components/Player.css` and `tests/player-css.test.ts`.
+
+## 2026-10-20 — One `generated` date for the whole baseline file (agent default — override anytime)
+Context: fix PR #94 makes `npm run baseline -- --levels <N>` merge into `scripts/ladder/human-baselines.json`.
+Decision: the file's `generated` date (and `skipPlies`) comes from the latest run, so a partial run sets it to today even when no other level changed.
+Consequences: the other way stores a date for each level. To change it, edit `mergeBaseline` in `scripts/ladder/baseline.ts` and its tests.
