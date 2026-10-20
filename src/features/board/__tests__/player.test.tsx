@@ -5,9 +5,10 @@ import { describe, expect, it } from "vitest";
 
 import { createAppStore, store } from "app/store";
 import { switchMode } from "features/liem/liemActions";
-import { clickSquare } from "../BoardSlice";
+import { clickSquare, resign, start } from "../BoardSlice";
 import { clockForPhase, msUntilNextTick, Player } from "../components/Player";
 import { initialClock, TOTAL_MS } from "../clock";
+import { gameEnd } from "../gameEnd";
 
 describe("Player", () => {
   it("player renders the new clock at start", () => {
@@ -18,7 +19,8 @@ describe("Player", () => {
     );
     expect(html.match(/role="timer"/g)).toHaveLength(1);
     expect(html).toContain('aria-label="Clock for Me"');
-    expect(html).toMatch(/<span class="player__timer">10:00<\/span>/);
+    const timer = html.match(/<span class="player__timer">((?:<span class="player__timer-(?:digit|sep)">[^<]<\/span>)*)<\/span>/);
+    expect(timer?.[1].replace(/<[^>]+>/g, "")).toBe("10:00");
     // Exactly one svg in the card, and it is our clock icon; a react-icons
     // icon would be a second <svg> without that class.
     const svgs = html.match(/<svg[^>]*>/g) ?? [];
@@ -36,16 +38,31 @@ describe("Player avatar", () => {
     expect(html).toMatch(
       /^<div class="player"><div class="player__info"><img class="player__avatar" src="[^"]+" alt="Avatar" width="40" height="40"\/><div class="player__name"><span class="player__title">GM<\/span>Le Quang Liem<\/div><\/div>/
     );
-    expect(html).not.toContain("liem-sparring-avatar");
+    expect(html).not.toContain("player__disc");
   });
 
   it("a glyph avatar takes the image's place, hidden from screen readers", () => {
     const html = renderPlayer(<Player name="Medium" title={null} avatar={null} glyph="♞" isWhite={false} />);
     expect(html).toContain(
-      '<div class="player__info"><span class="liem-sparring-avatar" aria-hidden="true">♞</span><div class="player__name">Medium</div></div>'
+      '<div class="player__info"><span class="player__disc liem-sparring-avatar" aria-hidden="true">♞</span><div class="player__name">Medium</div></div>'
     );
     expect(html).not.toContain("<img");
     expect(html).toContain('aria-label="Clock for Medium"');
+  });
+
+  it("color disc when no avatar", () => {
+    const white = renderPlayer(<Player name="You" title={null} avatar={null} isWhite={true} />);
+    expect(white).toContain(
+      '<div class="player__info"><span class="player__disc" aria-hidden="true">♔</span><div class="player__name">You</div></div>'
+    );
+    expect(white).not.toContain("<img");
+    const black = renderPlayer(<Player name="You" title={null} avatar={null} isWhite={false} />);
+    expect(black).toContain('<span class="player__disc" aria-hidden="true">♚</span>');
+    expect(black).not.toContain("<img");
+    // An avatar name with no image behind it falls back to the disc, never a broken image.
+    const unknown = renderPlayer(<Player name="X" title={null} avatar="nobody.png" isWhite={false} />);
+    expect(unknown).toContain('<span class="player__disc" aria-hidden="true">♚</span>');
+    expect(unknown).not.toContain("<img");
   });
 
   it("the name line is the title then the name, with nothing between", () => {
@@ -109,6 +126,41 @@ describe("material line", () => {
   it("the captured pieces are named for screen readers", () => {
     const s = boardAfter("e2e4", "g8f6", "b1c3", "f6g4", "d1g4");
     expect(card(s, true)).toMatch(/class="player__captured" role="img" aria-label="Captured: knight"/);
+  });
+});
+
+describe("finished game clocks", () => {
+  const sq = (name: string) => ({ y: 8 - Number(name[1]), x: "abcdefgh".indexOf(name[0]) });
+  const clock = (s: ReturnType<typeof createAppStore>, isWhite: boolean) =>
+    renderToStaticMarkup(
+      <Provider store={s}>
+        <Player name="P" title={null} avatar={null} isWhite={isWhite} />
+      </Provider>
+    ).match(/<div class="(player__time[^"]*)"/)![1];
+
+  it("a finished game shows no clock as running", () => {
+    // Two players with the clocks running: White's turn shows the running look.
+    const s = createAppStore();
+    s.dispatch(switchMode("two-player"));
+    s.dispatch(start());
+    expect(clock(s, true)).toBe("player__time player__time--running");
+    expect(clock(s, false)).toBe("player__time");
+    // White resigns on its own turn: both clocks stop, neither looks running.
+    s.dispatch(resign());
+    expect(clock(s, true)).toBe("player__time");
+    expect(clock(s, false)).toBe("player__time");
+
+    // A mate: the mated side is to move, and its clock doesn't look running either.
+    const m = createAppStore();
+    m.dispatch(switchMode("two-player"));
+    m.dispatch(start());
+    for (const [from, to] of [["f2", "f3"], ["e7", "e5"], ["g2", "g4"], ["d8", "h4"]]) {
+      m.dispatch(clickSquare(sq(from)));
+      m.dispatch(clickSquare(sq(to)));
+    }
+    expect(gameEnd(m.getState().board)?.reason).toBe("checkmate");
+    expect(clock(m, true)).toBe("player__time");
+    expect(clock(m, false)).toBe("player__time");
   });
 });
 

@@ -1,5 +1,6 @@
-/* The game-over notice: a card in the middle of the board. The final position stays
-   in view around it, and the board below takes no clicks once the game is over. */
+/* The game-over card over a dimmed board. The scrim takes no clicks, so the final
+   position, the last-move tint and the check glow show through it; only the card
+   takes clicks. */
 .game-over {
   position: absolute;
   inset: 0;
@@ -7,14 +8,21 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: var(--space-4);
+  background-color: var(--game-over-scrim);
   pointer-events: none;
 }
 
 .game-over__card {
-  padding: var(--space-4) var(--space-5);
+  box-sizing: border-box;
+  width: 320px;
+  max-width: 100%;
+  padding: var(--space-5);
   background-color: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  text-align: center;
+  pointer-events: auto;
 }
 
 .game-over__title {
@@ -22,4 +30,18 @@
   font-size: var(--text-title);
   font-weight: 700;
   color: var(--ink);
+}
+
+.game-over__reason {
+  margin: var(--space-1) 0 var(--space-4);
+  font-size: var(--text-body);
+  color: var(--soft);
+}
+
+/* A row when the buttons fit, stacked when they don't. */
+.game-over__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
 }

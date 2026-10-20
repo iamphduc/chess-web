@@ -244,7 +244,7 @@ Context: Levels 1400 to 2500 are sparring bots that play his openings; the last 
 Decision: `src/features/liem/levelView.ts` holds every text a level shows, and the components add no words of their own:
 - **Sparring card:** the ♞ glyph (`.liem-sparring-avatar`) in place of a photo, "Sparring · 1400", "Plays Liem's openings" ("Liem's openings" below 768 px). No GM tag and no star.
 - **Liem card:** his photo, the GM tag and "GM · 2732" (no "playing about"). No star by his name: the wave 2 fix removed it, since it cut his name on phones and the card had none before. Below 768 px the line reads "2732", since the GM tag already sits by his name.
-- **Both cards** keep "★ Book · N", the Stockfish pill and "Thinking…". Long lines end in an ellipsis (2026-10-11), and screen readers get the whole line.
+- **Both cards** keep "★ Book · N", the Stockfish pill (removed by "His card shows only his book or Thinking…", 2026-10-20) and "Thinking…". Long lines end in an ellipsis (2026-10-11), and screen readers get the whole line.
 - **Setup card:** still "Challenge Le Quang Liem". Sparring steps read "about N" (`aria-label` "N"); the last step reads "★ Liem" in the gold Elo style (`aria-label` "Liem (2732)"). The line under the steps reads "A sparring bot plays his openings, then Stockfish at about N." or "Le Quang Liem: his openings, then full-strength Stockfish 18."
 - **Out of book:** "Stockfish at about N plays from here. It isn't trained on his games.", or "Full-strength Stockfish 18 plays from here. It isn't trained on his games." at the Liem level.
 Consequences: Liem's short name ("Liem") is the last word of `player.json`'s `name`. On a phone the sparring line next to "★ Book" ends as "Liem's …". To change a word, edit `levelView.ts` and `src/features/liem/__tests__/level-view.test.ts` together.
@@ -321,7 +321,7 @@ Context: ← Home, the browser's Back from `#/play` and an edited hash all reach
 Decision: Arriving home resets the board (`goHome`). The level and color picks stay until a reload. The board unmounts on home, so the next game loads his engine again, from the browser cache.
 Consequences: There is no "resume game". To keep a game across home, stop `arriveAt("home")` from resetting and let `#/play` show the game in progress.
 
-## 2026-10-19 — Levels have names, not ratings (chosen by the human; the names are a default — override anytime)
+## 2026-10-19 — Levels have names, not ratings (chosen by the human; the names are a default — override anytime) (the card line and the out-of-book text are superseded by "His card shows only his book or Thinking…" and "No out-of-book note", 2026-10-20)
 Context: A 1000-rated player who beats "1400" easily would think the app is wrong. This replaces "Sparring and Liem labels".
 Decision: The seven steps read Easy, Medium, Hard, Harder, Expert, Master and ★ Liem (`LEVEL_NAMES` in `src/features/liem/levelView.ts`, the one place to change them). A bot's card reads its name with the ♞ and "Plays Liem's openings". The home engine line reads "A sparring bot plays his openings, then Stockfish at the Medium level.", and out of book "Stockfish at the Medium level plays from here. It isn't trained on his games." No sparring level puts a rating or "about" in any text or `aria-label`. Only Liem shows "GM · 2732"; the Liem texts don't change. "★ Liem" is ink text with an ochre ★ (`src/features/liem/components/Star.tsx`).
 Consequences: The numbers stay in code, `npm run calibrate` and the docs. To rename a level, edit `LEVEL_NAMES` and `src/features/liem/__tests__/level-view.test.ts` together.
@@ -346,7 +346,7 @@ Context: The old `--board-highlight`, `rgba(255, 255, 51, 0.5)` yellow, was loud
 Decision: `--board-highlight` is `rgba(204, 153, 26, 0.5)`, an ochre tint close to `--gold`. It marks the last move and the selected square, and stays readable on both the light and the dark squares.
 Consequences: Change it in `src/index.css`. It must stay see-through so the square color shows.
 
-## 2026-10-19 — The board screen has a top bar and one Moves card (chosen by the human, plan ui-refresh)
+## 2026-10-19 — The board screen has a top bar and one Moves card (chosen by the human, plan ui-refresh) (the foot is updated by "Resign sits in the Moves card foot", 2026-10-20)
 Context: The gaps around the tabs, the separate buttons box and the Fallen Pieces panel made the board screen uneven.
 Decision: A 56 px top bar holds ← Home and the title ("vs Medium · you play White"). Fallen Pieces becomes a "+N" line with the captured pieces on each player card. The buttons join the Moves card's foot. In vs Liem the foot is Review game (once the game can be reviewed), New game, Flip and Sound; in Two players it is Play, New game (the old Reset), Flip and Sound.
 Consequences: The review's foot is Back to game, Flip and Sound.
@@ -376,16 +376,72 @@ Context: The review had New game and Back to game in its sidebar.
 Decision: The review's New game is replaced by Play again on the right of the top bar (a new game at the same level and color, then `#/play`). Back to game is a link to `#/play` in the Moves card foot, so it is the same as the browser's Back; Forward reopens the review where the pass was.
 Consequences: To change what Play again does, edit `playAgain` in `src/features/review/reviewLayout.ts`.
 
-## 2026-10-19 — Phone lines after the refresh (agent default — override anytime)
+## 2026-10-19 — Phone lines after the refresh (agent default — override anytime) (the card parts are superseded by "His card shows only his book or Thinking…", 2026-10-20; "★ Book" below 768 px stays)
 Context: The refresh changed the phone layout that "~2100", "2732 on phones" and the setup card's 14 px line were set for.
 Decision: Below 768 px a bot's card reads "Liem's openings" (no rating), his card reads "2732" (the GM tag sits by his name) and the badge reads "★ Book"; screen readers get the whole line. The setup card is gone, so its 14 px line is gone too; nothing on any screen is under 14 px. On home at 375 px the level steps wrap 4 then 3.
 Consequences: Change the lines in `src/features/liem/levelView.ts` and the narrow rules in `src/features/board/components/Player.css`; the steps in `src/features/home/Home.css`.
 
-## 2026-10-19 — The game-over notice is a cream card with no scrim (agent default — override anytime)
+## 2026-10-19 — The game-over notice is a cream card with no scrim (agent default — override anytime) (superseded by "The game-over card dims the board", 2026-10-20)
 Context: The old notice sat on a dark overlay that the Look rules out.
 Decision: The game-over notice is a `--surface` card with a `--line` border over the board, with no scrim behind it.
 Consequences: Change it in `src/features/board/components/GameOver.css`.
 
-## 2026-10-19 — Two players keeps "Le Quang Liem" and "Me" on the cards (agent default — override anytime)
+## 2026-10-19 — Two players keeps "Le Quang Liem" and "Me" on the cards (agent default — override anytime) (superseded by "Two players cards read White and Black", 2026-10-20)
 
 The two-player board still names its players from `src/game/players.ts`: the top card shows his photo, the GM tag and "Le Quang Liem", the bottom card "Me". The plan didn't change Two players, so this stays. To use neutral names such as "White" and "Black" (or no photo), change `src/game/players.ts`.
+
+## 2026-10-20 — merge target: ui-polish-staging
+
+For plan ui-polish, autopilot merges land on `ui-polish-staging`, cut from `main`, so the staging branch names its feature (the human renamed the last one to `ui-refresh`). The human looks, then moves it to `main`, which deploys to GitHub Pages. (human, 2026-10-20)
+
+## 2026-10-20 — Body text is Quicksand 600 (chosen by the human, plan ui-polish ## Look)
+Context: Body text in Quicksand 500 read thin on the cream cards. The human picked option B in draft section 0 (`pod-docs/design-drafts/ui-polish.html`): "Let's do B".
+Decision: Body text is Quicksand 600 (`body { font-weight: 600 }`). Headings, buttons, names, clocks and other bold text stay 700. The app ships only the 600 and 700 woff2 files (from `@fontsource/quicksand` 5.3.0); the 500 file and its `@font-face` are gone, and no CSS under `src/` sets 500, 400 or `normal`. This updates "Quicksand is self-hosted" (2026-10-10), which named 500 and 700.
+Consequences: Every screen reads a little heavier with the same sizes and layout. To change the body weight, change `src/index.css` (the `body` rule and the 600 `@font-face`) and `tests/theme.test.ts`.
+
+## 2026-10-20 — Resign sits in the Moves card foot, with a 3 s red Confirm (default, recommended and accepted; the one width and the short "Confirm" chosen by the human, plan ui-polish)
+Context: The human asked for a resign button ("I need a resign button"). A longer "Confirm resign" label made the button grow onto two lines.
+Decision: **Resign** (`button.button.resign-button`) sits in the Moves card foot after New game, in both modes, while `canResign` holds: vs Liem from the first move, Two players only once **Play** starts the clocks. In Two players, Play now hides once the clocks run or the game is over. The first press turns it into a red **Confirm** (`--accent` text and border, `data-confirm="true"`, `aria-label="Confirm resign"`) for 3000 ms; a second press inside that time resigns once, and at 3000 ms it turns back. A new game or the end of the game turns it back; Flip and Sound don't. It is 104 px wide with no wrap, so the foot never moves. vs Liem the loser is you, even on his turn; in Two players it's the side whose clock runs. The feet are: vs Liem in progress New game, Resign, Flip, Sound; vs Liem over Review game (when the game can be reviewed), New game, Flip, Sound; Two players before Play: Play, New game, Flip, Sound; running: New game, Resign, Flip, Sound; over: New game, Flip, Sound. From 992 px up every foot fits one row: the foot's text buttons take 12 px sides and the row doesn't wrap.
+Consequences: The press rule is `src/features/board/resignConfirm.ts` (time passed in); `ResignButton.tsx` only owns the timer. The feet are in `src/features/board/Board.tsx`; the width and red ink in `ResignButton.css`; the one-row rule in `BoardSidebar.css`. At 375 px the foot may wrap.
+
+## 2026-10-20 — The game-over card dims the board (chosen by the human: dim the board; the card content is a default, plan ui-polish)
+Context: The human asked to "dim the board to make the endgame more prominent". This supersedes "The game-over notice is a cream card with no scrim" (2026-10-19).
+Decision: At the end of a game, `.game-over` fills `.squares` with `--game-over-scrim` (`--ink` at 40 %) and takes no clicks, so the final position, the last-move tint and the check glow show through. Inside sits a `--surface` card (`.game-over__card`) with the result ("White wins", "Black wins" or "Draw", in both modes), the reason ("Checkmate", "Stalemate", "On time" or "Resigned") and the actions: **Review game** (only when the game can be reviewed, so only vs Liem) and **New game** (`replayLiemGame` vs Liem, `reset` in Two players). The card waits for a pending promotion pick: until the pick is made it doesn't show, so the picker can still be clicked. On a phone the buttons sit in a row when they fit and stack otherwise.
+Consequences: The text and the rule for when it shows are `gameOverView` (`src/features/board/gameOverView.ts`); the look is `src/features/board/components/GameOver.css`.
+
+## 2026-10-20 — A color disc in place of a photo (default, recommended and accepted, plan ui-polish)
+Context: Your card showed a stock photo (`chess-player.png`) while his sparring card showed a ♞ disc, so the two cards didn't match.
+Decision: A card with no photo and no glyph shows a disc: `span.player__disc[aria-hidden="true"]` with ♔ for White or ♚ for Black. His ♞ is the same disc (`.player__disc.liem-sparring-avatar`). Every disc is 40 × 40 px, a `--surface-2` circle with an ink glyph. Only his card at the Liem step has a photo. `avatarSrc` returns `null` for an unknown name, and the card then shows the disc; `chess-player.png` is gone.
+Consequences: The disc look is `.player__disc` in `src/features/board/components/Player.css`; the markup is `Avatar` in `src/features/board/components/Player.tsx`.
+
+## 2026-10-20 — His card shows only his book or Thinking… (default, recommended and accepted; the fixed clock width chosen by the human, plan ui-polish)
+Context: Under his name the card read "Plays Liem's openings" or "GM · 2732", then "★ Book · N" or a grey "Stockfish" pill. The plan rules out pills on his card after his book. This supersedes the card lines of "Sparring and Liem labels" (2026-10-18), its Stockfish pill, and the card parts of "Phone lines after the refresh" (2026-10-19).
+Decision: His card shows the level's name with the ♞ disc, or at the Liem step his photo, the GM tag and "Le Quang Liem". Under the name there is only "★ Book · N" (`[data-book-games]`, "★ Book" below 768 px) while he's in his book, "Thinking…" while he loads or thinks, and otherwise nothing. No card shows "Plays Liem's openings", "Liem's openings", "GM · 2732" or `[data-engine]`. Every `.board > .player` stays 56 px tall. The clock pill is a fixed 112 px box with tabular figures, so it never changes width.
+Consequences: `levelView` no longer has `detail`, `shortDetail`, `detailLead` or `outText`; `rating` ("GM · 2732") stays for home. `liemBadge` returns `null` out of book. The line is `src/features/liem/components/LiemCardDetail.tsx`.
+
+## 2026-10-20 — No out-of-book note (default, recommended and accepted, plan ui-polish)
+Context: Once he left his book, the sidebar note turned red and said "Out of his book" with a Stockfish line. The human accepted that this hides that Stockfish plays; the home engine line still says so.
+Decision: The book note (`[data-book-state]`) shows `waiting`, `in-book` and `failed` (with Try again) as before. Out of his book there is no note: no `out` state in the DOM and no "Out of his book" text. Below 992 px an empty slot keeps the note's tallest height for the rest of the game, so the page never gets shorter and never scrolls (review fix, PR #92); from 992 px the slot is hidden. A new game clears the slot and brings back `waiting`.
+Consequences: `bookNoteView` still returns `{ kind: "out" }`; `BookNote` renders `null` for it. `.liem-note--out` is gone from `src/styles/liem.css`.
+
+## 2026-10-20 — Two players cards read White and Black (agent default from the sprint contract — override anytime)
+Context: The two-player board named its sides "Le Quang Liem" (with his photo and GM tag) and "Me". This supersedes the 2026-10-19 entry that kept "Le Quang Liem" and "Me" on the cards.
+Decision: In Two players the cards read "White" and "Black" (`src/game/players.ts`), each with its color disc, with no photo and no GM tag. "Thinking…" stays his status vs Liem only.
+Consequences: The clock `aria-label`s read "Clock for White" and "Clock for Black".
+
+## 2026-10-20 — The review sidebar is three cards (chosen by the human: key moment above the graph and fewer cards; the merge is a default, plan ui-polish)
+Context: From 768 px up the review sidebar held the graph, the key moment, the accuracy panel, the Moves card and a separate "Left his book" card.
+Decision: From 768 px up `.review .sidebar` holds exactly three cards: the key-moment card, the summary card (`section.card[data-review-graph]`: the 80 px graph, then the accuracy line "40 % · ?! N · ? N · ?? N" in grade colors, "—" until ready, no book-move count), and the Moves card, whose list starts with the left-book line ("Left his book at move N · he played X in G games", "Left his book at move N", "Stayed in his book the whole game", or no line without his books). `AccuracyPanel` and the left-book card are gone. Below 768 px the sheet holds the key moment and then the summary; `graphPlacement` still decides where the summary goes, so `[data-review-graph]` appears once.
+Consequences: Built by slice V1 (sprint polish); the review layout and smoke steps are in `pod-docs/codebase-structure.md`.
+
+## 2026-10-20 — The book note's space stays on phones after he leaves his book (agent default — override anytime)
+Below 992 px, once he leaves his book, an empty slot keeps the note's tallest height for the rest of the game, so the page never gets shorter and never scrolls. A new game clears it. To move the note under the Moves card on phones instead, change the order in `src/features/board/Board.tsx`; that still shortens the page when you're scrolled to the bottom.
+
+## 2026-10-20 — The book note may grow, and the Moves card moves down with it (agent default — override anytime)
+When the note grows (waiting → in his book, or more book rows later), the Moves card moves down; `scrollY` doesn't change. To stop it, give the note one fixed height for its tallest state in `src/features/liem/components/BookNote.css`, at the cost of more empty space early on.
+
+## 2026-10-20 — On desktop the Moves card moves up when he leaves his book (agent default — override anytime)
+From 992 px the empty slot is hidden, so the Moves card moves up by the note's height when he leaves his book; `scrollY` doesn't change. To keep the space on desktop too, drop the `display: none` rule for the slot in `src/features/liem/components/BookNote.css`.
+
+## 2026-10-20 — A key-moment try counts as found when it isn't an inaccuracy (agent default — override anytime)
+Any try that loses less than an inaccuracy (10 win-% points) counts as found, so a good move other than Stockfish's (for example 2.a3 when it names 2.d4) shows "You found it". This is the 2026-10-16 grade rule, unchanged. To require Stockfish's move, change the found rule in `src/game/review/`.

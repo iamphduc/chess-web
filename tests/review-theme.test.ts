@@ -242,9 +242,11 @@ describe("review theme", () => {
       return { size: last(d, "font-size"), weight: last(d, "font-weight") };
     };
     expect(font(".review-card__title")).toEqual({ size: "var(--text-title)", weight: "700" });
-    expect(font(".review-accuracy")).toEqual({ size: "var(--text-hero)", weight: "700" });
-    expect(font(".review-card")).toEqual({ size: "var(--text-body)", weight: "500" });
-    expect(font(".review-move")).toEqual({ size: "var(--text-body)", weight: "500" });
+    // The accuracy line is 16 px ink (plan ui-polish, ## Look): no hero number any more.
+    expect(font(".review-accuracy")).toEqual({ size: "var(--text-body)", weight: "700" });
+    expect(tokenOf(last(declsFor(css, ".review-accuracy"), "color"))).toBe("--ink");
+    expect(font(".review-card")).toEqual({ size: "var(--text-body)", weight: "600" });
+    expect(font(".review-move")).toEqual({ size: "var(--text-body)", weight: "600" });
     for (const g of GRADES) {
       const chip = font(`.review-chip--${g}`);
       const base = font(".review-chip");
@@ -306,6 +308,7 @@ describe("review theme", () => {
       ["features", "review", "components", "MoveList.css"],
       ["features", "review", "components", "ReviewBoard.css"],
       ["features", "board", "Board.css"],
+      ["features", "board", "components", "TopBar.css"],
       ["App.css"],
     ];
     for (const file of FILES) {
@@ -322,6 +325,50 @@ describe("review theme", () => {
         name,
         selectors: expect.stringMatching(/\.(review-top|review-graph__sides|review-graph__side|squares__overlay|liem-side|buttons)/),
       });
+    }
+
+    // Red ink (--accent) is never text in the review: only the key-moment card's edge.
+    for (const file of FILES) {
+      for (const { selector, body } of lookRules(readCss(...file))) {
+        for (const [prop, value] of declarations(body)) {
+          if (/var\(--accent\)/.test(value)) {
+            expect(prop, `${file.join("/")} ${selector} { ${prop}: ${value} }`).toMatch(/^border/);
+          }
+        }
+      }
+    }
+
+    // The summary card: the accuracy line under the graph, 16 px ink, its marks in grade colors.
+    const line = declarations(
+      lookRules(readCss("features", "review", "components", "ReviewGraph.css"))
+        .filter((r) => r.selector.split(",").map((x) => x.trim()).includes(".review-summary__accuracy"))
+        .map((r) => r.body)
+        .join(";")
+    );
+    expect(last(line, "font-size")).toBe("var(--text-body)");
+    expect(last(line, "color")).toBe("var(--ink)");
+    // The old accuracy card and left-book card rules are gone.
+    const moveList = readCss("features", "review", "components", "MoveList.css");
+    expect(lookRules(moveList).map((r) => r.selector).join(",")).not.toMatch(/accuracy-panel/);
+    // The top bar's action lives with the top bar, not in Board.css.
+    expect(readCss("features", "board", "Board.css")).not.toMatch(/top-bar__action/);
+    expect(readCss("features", "board", "components", "TopBar.css")).toMatch(/\.top-bar__action/);
+
+    // At 375 px "Review · vs Medium" (149 px at 16 px) fits between ← Home and Play again:
+    // below 768 px the bar's gap and the buttons' sides are 8 px and the title is 14 px.
+    const topBarCss = readCss("features", "board", "components", "TopBar.css");
+    const phone = /@media[^{]*max-width:\s*767px[^{]*\{([\s\S]*?)\n\}/.exec(topBarCss)?.[1] ?? "";
+    const inPhone = (sel: string) =>
+      declarations(
+        lookRules(phone)
+          .filter((r) => r.selector.split(",").map((x) => x.trim()).includes(sel))
+          .map((r) => r.body)
+          .join(";")
+      );
+    expect(last(inPhone(".top-bar"), "gap")).toBe("var(--space-2)");
+    expect(last(inPhone(".top-bar__title"), "font-size")).toBe("var(--text-small)");
+    for (const sel of [".top-bar__home", ".top-bar__action"]) {
+      expect(last(inPhone(sel), "padding"), sel).toBe("var(--space-2)");
     }
 
     // The graph plot is 80 px tall, on a phone too.
