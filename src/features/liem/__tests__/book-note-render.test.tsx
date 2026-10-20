@@ -204,7 +204,7 @@ describe("the note's slot after he leaves his book", () => {
     heMoved(store, "book");
     const { gameId } = store.getState().board;
     const inBook = bookNoteSlot(null, gameId, viewOf(store));
-    expect(inBook).toEqual({ kind: "note", view: viewOf(store) });
+    expect(inBook).toEqual({ kind: "note", view: viewOf(store), minHeight: 0 });
     const kept: KeptNote = { gameId, height: 230 };
 
     // His reply leaves his book: an empty slot, as tall as the note was.
@@ -221,13 +221,13 @@ describe("the note's slot after he leaves his book", () => {
     out.dispatch(newGame({ humanColor: "black" }));
     const next = out.getState().board.gameId;
     expect(next).not.toBe(gameId);
-    expect(bookNoteSlot(kept, next, viewOf(out))).toEqual({ kind: "note", view: { kind: "waiting" } });
+    expect(bookNoteSlot(kept, next, viewOf(out))).toEqual({ kind: "note", view: { kind: "waiting" }, minHeight: 0 });
   });
 
   it("the waiting note keeps its slot too (1.f3)", () => {
     const store = liemGame();
     const { gameId } = store.getState().board;
-    expect(bookNoteSlot(null, gameId, viewOf(store))).toEqual({ kind: "note", view: { kind: "waiting" } });
+    expect(bookNoteSlot(null, gameId, viewOf(store))).toEqual({ kind: "note", view: { kind: "waiting" }, minHeight: 0 });
     heMoved(store, "engine");
     expect(bookNoteSlot({ gameId, height: 120 }, gameId, viewOf(store))).toEqual({ kind: "gone", height: 120 });
   });
@@ -251,7 +251,34 @@ describe("the note's slot after he leaves his book", () => {
     expect(bookNoteSlot({ gameId, height: 230 }, gameId, viewOf(store))).toEqual({
       kind: "note",
       view: { kind: "failed" },
+      minHeight: 230,
     });
+  });
+
+  it("in a game the note never gets shorter", () => {
+    // Fewer book rows after a later move would shrink the page too: the note keeps its tallest height.
+    const store = liemGame();
+    heMoved(store, "book");
+    const { gameId } = store.getState().board;
+    expect(bookNoteSlot({ gameId, height: 230 }, gameId, viewOf(store))).toEqual({
+      kind: "note",
+      view: viewOf(store),
+      minHeight: 230,
+    });
+    // Not from another game.
+    expect(bookNoteSlot({ gameId: gameId - 1, height: 230 }, gameId, viewOf(store))).toEqual({
+      kind: "note",
+      view: viewOf(store),
+      minHeight: 0,
+    });
+    const tall = renderToStaticMarkup(
+      <BookNoteSlotView slot={{ kind: "note", view: { kind: "waiting" }, minHeight: 230 }} onRetry={() => {}} />
+    );
+    expect(tall).toMatch(/^<section class="liem-note" data-book-state="waiting" aria-label="His book" style="min-height:230px">/);
+    const plain = renderToStaticMarkup(
+      <BookNoteSlotView slot={{ kind: "note", view: { kind: "waiting" }, minHeight: 0 }} onRetry={() => {}} />
+    );
+    expect(plain).toMatch(/^<section class="liem-note" data-book-state="waiting" aria-label="His book">/);
   });
 
   it("the empty slot has no note in it", () => {
