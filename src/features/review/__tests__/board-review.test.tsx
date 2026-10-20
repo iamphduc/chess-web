@@ -151,7 +151,7 @@ describe("review layout", () => {
     expect(html).not.toMatch(/accuracy-panel/);
     expect(html).toMatch(/class="move-list/);
     expect(html).toMatch(/Left his book at move 2/);
-    expect(footLabels(html)).toEqual(["Back to game", "Flip board", "Sound"]);
+    expect(footLabels(html)).toEqual(["Play again", "Flip board", "Sound"]);
     expect(html).not.toMatch(/Fallen Pieces/);
     expect(html).not.toMatch(/data-book-state=/);
   });
@@ -222,9 +222,14 @@ describe("review screen", () => {
     const bar = html.slice(html.indexOf("<header"), html.indexOf("</header>"));
     expect(bar).toMatch(/class="top-bar"/);
     expect(bar).toMatch(/<a class="button top-bar__home" href="#\/">← Home<\/a>/);
-    expect(bar).toContain("Review · vs Harder");
-    expect(bar).toMatch(/<button type="button" class="button top-bar__action">Play again<\/button>/);
-    // Nothing else plays again: the foot has no New game.
+    // ← Home and the title only: Play again lives in the foot.
+    expect(bar).toBe(
+      '<header class="top-bar"><a class="button top-bar__home" href="#/">← Home</a>' +
+        '<span class="top-bar__title">Review · vs Harder</span>'
+    );
+    expect(html).not.toMatch(/top-bar__action/);
+    // One Play again, in the foot; nothing else plays again.
+    expect(html.match(/>Play again</g)).toHaveLength(1);
     expect(html).not.toMatch(/>New game</);
 
     const { gameId } = store.getState().board;
@@ -249,9 +254,11 @@ describe("review screen", () => {
 
   it("moves card foot in the review", () => {
     const html = render(reviewed());
-    expect(footLabels(html)).toEqual(["Back to game", "Flip board", "Sound"]);
-    // A link: the route closes the review and keeps its evals.
-    expect(html).toMatch(/<a class="button" href="#\/play">Back to game<\/a>/);
+    expect(footLabels(html)).toEqual(["Play again", "Flip board", "Sound"]);
+    // A button with the play style; no link back to the game (the browser's Back still is one).
+    expect(html).toMatch(/<button type="button" class="button button--play">Play again<\/button>/);
+    expect(html).not.toMatch(/href="#\/play"/);
+    expect(html).not.toMatch(/Back to game/);
     // The move list sits in the flush Moves card, as a scoresheet.
     const cardAt = html.search(/class="card card--flush[^"]*moves-card/);
     expect(cardAt).toBeGreaterThan(-1);
