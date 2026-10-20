@@ -116,8 +116,10 @@ describe("Player.css", () => {
     expect(box).toMatch(/font-variant-numeric:\s*tabular-nums/);
     expect(box).not.toMatch(/min-width|max-width/);
     expect(bodyOf(all, ".player__timer")).toMatch(/font-variant-numeric:\s*tabular-nums/);
-    // No rule elsewhere (a phone query, a state) changes its width.
-    for (const r of all.filter((x) => /\.player__time/.test(x.selector) && x.selector !== ".player__time")) {
+    // No rule elsewhere (a phone query, a state) changes its width. The digit cells inside it
+    // have fixed widths of their own, checked against the font in tests/clock-digits.test.ts.
+    const cell = /^\.player__timer-(digit|sep)$/;
+    for (const r of all.filter((x) => /\.player__time/.test(x.selector) && x.selector !== ".player__time" && !cell.test(x.selector))) {
       expect(r.body, r.selector).not.toMatch(/(^|[\s;])(min-|max-)?width\s*:/);
     }
   });

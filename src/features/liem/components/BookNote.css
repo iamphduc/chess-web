@@ -51,3 +51,12 @@
 .liem-note > .liem-note__row {
   grid-template-columns: 5.5em 1fr 44px;
 }
+
+/* Out of his book, the note's empty slot (BookNote.tsx): below 992 px the note sits above the
+   Moves card, so the slot keeps its height and the page doesn't shrink and scroll. From 992 px
+   the board column sets the page height, so the slot goes and the Moves card moves up. */
+@media only screen and (min-width: 992px) {
+  .liem-note-slot {
+    display: none;
+  }
+}

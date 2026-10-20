@@ -130,6 +130,22 @@
 .player__timer {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Quicksand has no tabular figures ("1" is 0.39 em, "0" 0.61 em at 700), so tabular-nums
+   alone lets the digits and the colon shift. Each digit is centred in a cell as wide as the
+   widest digit, and the colon or the tenths dot in its own cell (tests/clock-digits.test.ts). */
+.player__timer-digit {
+  display: inline-block;
+  width: 0.62em;
+  text-align: center;
+}
+
+.player__timer-sep {
+  display: inline-block;
+  width: 0.28em;
+  text-align: center;
 }
 
 .clock-icon {
