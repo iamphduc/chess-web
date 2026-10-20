@@ -100,17 +100,10 @@ export function bookNoteView(board: BookNoteBoard, match: BookNoteMatch): BookNo
   return { kind: "in-book", rows, total: choice.lookup.games };
 }
 
-/** His card's badge: the games behind the note in book, or the Stockfish pill out of it. */
-export type LiemBadge = { kind: "book"; games: number } | { kind: "engine" };
+/** His card's "★ Book · N" badge: the games behind the note. */
+export type LiemBadge = { kind: "book"; games: number };
 
-/** The badge for the note's state; `null` while waiting or after a failure. */
+/** The badge in book; `null` while waiting, out of book or after a failure (no pill in its place). */
 export function liemBadge(view: BookNoteView): LiemBadge | null {
-  switch (view.kind) {
-    case "in-book":
-      return { kind: "book", games: view.total };
-    case "out":
-      return { kind: "engine" };
-    default:
-      return null;
-  }
+  return view.kind === "in-book" ? { kind: "book", games: view.total } : null;
 }

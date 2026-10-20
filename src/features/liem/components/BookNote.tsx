@@ -4,7 +4,6 @@ import "features/board/components/Button.css";
 import "./BookNote.css";
 import { useAppSelector } from "app/hooks";
 import { bookNoteView, type BookNoteView } from "../bookNote";
-import { levelView } from "../levelView";
 
 interface Props {
   /** Asks him again after a failure. */
@@ -13,8 +12,11 @@ interface Props {
 
 const count = new Intl.NumberFormat("en-US");
 
-/** The book note's text for each state, from the plan's Look (draft A). */
-function Body({ view, outText, onRetry }: { view: BookNoteView; outText: string; onRetry: () => void }) {
+/** The shown note states: out of his book there is no note. */
+export type ShownBookNote = Exclude<BookNoteView, { kind: "out" }>;
+
+/** The book note's text for each shown state, from the plan's Look (draft A). */
+export function BookNoteBody({ view, onRetry }: { view: ShownBookNote; onRetry: () => void }) {
   switch (view.kind) {
     case "waiting":
       return (
@@ -42,13 +44,6 @@ function Body({ view, outText, onRetry }: { view: BookNoteView; outText: string;
           ))}
         </>
       );
-    case "out":
-      return (
-        <>
-          <h3 className="book-note__title">Out of his book</h3>
-          <p className="book-note__text">{outText}</p>
-        </>
-      );
     case "failed":
       return (
         <>
@@ -62,25 +57,21 @@ function Body({ view, outText, onRetry }: { view: BookNoteView; outText: string;
   }
 }
 
-/** The margin note for his book: an ochre edge in book, red ink once he's out of it. */
+/** The margin note for his book, with an ochre edge. Out of his book it isn't rendered at all. */
 export const BookNote = ({ onRetry }: Props) => {
   const engineHistory = useAppSelector((s) => s.board.engineHistory);
   const gameId = useAppSelector((s) => s.board.gameId);
   const lastChoice = useAppSelector((s) => s.match.lastChoice);
   const opponentStatus = useAppSelector((s) => s.match.opponentStatus);
-  const strength = useAppSelector((s) => s.match.strength);
   const view = useMemo(
     () => bookNoteView({ engineHistory, gameId }, { lastChoice, opponentStatus }),
     [engineHistory, gameId, lastChoice, opponentStatus]
   );
 
+  if (view.kind === "out") return null;
   return (
-    <section
-      className={view.kind === "out" ? "liem-note liem-note--out" : "liem-note"}
-      data-book-state={view.kind}
-      aria-label="His book"
-    >
-      <Body view={view} outText={levelView(strength).outText} onRetry={onRetry} />
+    <section className="liem-note" data-book-state={view.kind} aria-label="His book">
+      <BookNoteBody view={view} onRetry={onRetry} />
     </section>
   );
 };
