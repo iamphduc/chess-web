@@ -57,6 +57,31 @@ export function BookNoteBody({ view, onRetry }: { view: ShownBookNote; onRetry: 
   }
 }
 
+/** The last note shown in a game, and its height in px, kept for the slot. */
+export interface KeptNote {
+  gameId: number;
+  height: number;
+}
+
+/** What the note's place in the sidebar holds: the note, an empty slot as tall as it was, or nothing. */
+export type BookNoteSlot = { kind: "note"; view: ShownBookNote } | { kind: "gone"; height: number } | null;
+
+/** The slot for `view` in game `gameId`, given the note kept from earlier renders. */
+export function bookNoteSlot(_kept: KeptNote | null, _gameId: number, view: BookNoteView): BookNoteSlot {
+  if (view.kind === "out") return null;
+  return { kind: "note", view };
+}
+
+/** The slot's markup: the note card, or nothing. */
+export function BookNoteSlotView({ slot, onRetry }: { slot: BookNoteSlot; onRetry: () => void }) {
+  if (slot?.kind !== "note") return null;
+  return (
+    <section className="liem-note" data-book-state={slot.view.kind} aria-label="His book">
+      <BookNoteBody view={slot.view} onRetry={onRetry} />
+    </section>
+  );
+}
+
 /** The margin note for his book, with an ochre edge. Out of his book it isn't rendered at all. */
 export const BookNote = ({ onRetry }: Props) => {
   const engineHistory = useAppSelector((s) => s.board.engineHistory);
@@ -68,10 +93,5 @@ export const BookNote = ({ onRetry }: Props) => {
     [engineHistory, gameId, lastChoice, opponentStatus]
   );
 
-  if (view.kind === "out") return null;
-  return (
-    <section className="liem-note" data-book-state={view.kind} aria-label="His book">
-      <BookNoteBody view={view} onRetry={onRetry} />
-    </section>
-  );
+  return <BookNoteSlotView slot={bookNoteSlot(null, gameId, view)} onRetry={onRetry} />;
 };
