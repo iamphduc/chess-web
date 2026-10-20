@@ -123,9 +123,10 @@ async function mountYourClock(color: "white" | "black") {
       <HisFirstMove />
     </Provider>
   );
-  // Whole seconds on your clock (MM:SS, floored: a running clock reads 09:59 after 1 ms).
+  // Whole seconds on your clock (MM:SS, floored: a running clock reads 09:59 after 1 ms),
+  // after the color disc and the name.
   const shown = () => {
-    const [mm, ss] = fakeDocument.body.textContent.replace(/^You/, "").split(":").map(Number);
+    const [mm, ss] = fakeDocument.body.textContent.replace(/^[♔♚]?You/, "").split(":").map(Number);
     return mm * 60 + ss;
   };
   return { store, shown };
