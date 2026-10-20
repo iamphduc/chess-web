@@ -37,3 +37,35 @@ export const startLiemGame =
     dispatch(newGame({ humanColor }));
     dispatch(setFlipped(humanColor === "black"));
   };
+
+/** A vs-Liem game has started (running or over): the card is closed in liem mode. */
+export function liemGameStarted(match: Pick<RootState["match"], "mode" | "setupOpen">): boolean {
+  return match.mode === "liem" && !match.setupOpen;
+}
+
+/**
+ * The home state: vs Liem with the card open and no game or review. Two
+ * players switches back to vs Liem. The level and color picks stay.
+ */
+export const goHome = (): LiemThunk => (dispatch, getState) => {
+  if (getState().match.mode !== "liem") {
+    dispatch(switchMode("liem"));
+    return;
+  }
+  dispatch(reset());
+  dispatch(openSetup());
+};
+
+/**
+ * New game from the board: the same level and color pick (Random draws again),
+ * the board turned to the new color and any review cleared. Only with a
+ * vs-Liem game started; does nothing on home or in two players.
+ */
+export const replayLiemGame =
+  (random?: () => number): LiemThunk =>
+  (dispatch, getState) => {
+    if (!liemGameStarted(getState().match)) return;
+    dispatch(reset());
+    dispatch(openSetup());
+    dispatch(startLiemGame(random));
+  };

@@ -104,7 +104,7 @@ Context: The app was a two-player board until now, and its smoke recipe and test
 Decision: `match.mode` starts as `"two-player"` and isn't saved, so every load opens in Two players with the old layout. The `vs Liem` tab switches mode, which resets the board and opens the setup card.
 Consequences: Players who want him click the tab each visit. To open in vs Liem, change the `matchSlice` default (and the smoke recipe's first steps); to remember the last mode, save it like the Sound setting.
 
-## 2026-10-10 — App green darkened to #047A4F
+## 2026-10-10 — App green darkened to #047A4F (superseded by "The Look replaces the dark and vs-Liem tokens", 2026-10-19)
 Context: White text on the app green `#059862` is 3.7:1, under the 4.5:1 that normal-size text needs. The Play button, the Sound-on button and Start game all use it, and the plan had kept it as a recorded exception.
 Decision: The human chose `#047A4F` (5.38:1 with white). It replaces `#059862` everywhere the app uses it as a button color: `.button--play` in `src/features/board/components/Button.css`, and `--board-sound-on` and `--liem-start` in `src/index.css`, so the app keeps one green. Hover stays `filter: brightness(0.8)`, so it darkens in step. `tests/liem-theme.test.ts › start pair matches the Play green` and `tests/board-theme.test.ts` now require 4.5:1.
 Consequences: The green reads a little deeper next to the board's olive squares. To change it again, change all three values and the two theme tests together.
@@ -134,7 +134,7 @@ Context: After a vs-Liem game as Black the board is flipped. The sprint contract
 Decision: Keep the flip on a mode switch; Flip board turns it back.
 Consequences: To unflip on the switch to Two players, dispatch `setFlipped(false)` in `switchMode` in `src/features/liem/liemActions.ts`.
 
-## 2026-10-10 — vs-Liem player cards sit above and below the board
+## 2026-10-10 — vs-Liem player cards sit above and below the board (the sidebar part is superseded by "The board screen has a top bar and one Moves card", 2026-10-19)
 Context: vs Liem first put his card and yours in the sidebar, so the board had no card above it and jumped 56 px up on every switch from Two players (`.squares` top 100 px vs 44 px at 1400 px).
 Decision: The human chose to put the vs-Liem cards above and below the board, exactly where Two players puts them: his card on his color's side, yours on yours, following the flip, with the card open and in a game. The sidebar keeps the book note, then New game, Flip and Sound, Fallen Pieces and Notation.
 Consequences: Nothing around the board moves on a tab switch (`board-modes.test.tsx › the board's surroundings are the same in every mode`). His card keeps the plain card's 56 px height, so on a 312 px board his name and strength line are cut short.
@@ -163,12 +163,12 @@ Decision: Use these values (depth / movetime ms / maxLoss / temperature / slipCh
 Deeper search at the low steps removes the depth-5 tactical misses behind the "strange one-move blunders" and makes 1400 stronger; the slip limit falls from 25 to 15 points at 1400, so a slip costs about a pawn and a half at most, not a piece. In every run each step scored 50 % or less against the next step up, so the steps rise in strength.
 Consequences: Stockfish's `UCI_Elo` anchors in this build are not on a human scale (1400 beat SF 2400 three times in four), so the runs rank the steps against each other but don't pin their numbers; the step names stay "about N", with no rating claim. Four games per pairing is ±12.5 % a game, so single cells are noise; read the ladder. Next tuning should come from the human's play feel, then a rerun with more games (`--games 8` or more) on the steps that change.
 
-## 2026-10-12 — On phones, his card reads "~2100" and "★ Book" (agent default — override anytime)
+## 2026-10-12 — On phones, his card reads "~2100" and "★ Book" (agent default — override anytime) (superseded by "Phone lines after the refresh", 2026-10-19)
 Context: On a 312 px board, his name column is only 136 px wide, so "GM · playing about 2100" next to "★ Book · N", the "Stockfish" pill or "Thinking…" was cut to "GM · …".
 Decision: Below 768 px, the line reads "~2100" and the badge reads "★ Book" without its count. From 768 to 1199 px the line reads "about 2100", and from 1200 px it reads "GM · playing about 2100". Screen readers always get the full text. The book note below the board still shows the count.
 To change: `src/features/liem/components/LiemCardDetail.tsx` and the narrow rules in `src/features/board/Board.css`. To show the count on phones, something else has to shrink: the avatar, the clock or the card height.
 
-## 2026-10-12 — The setup card's Stockfish line is 14 px on phones (agent default — override anytime)
+## 2026-10-12 — The setup card's Stockfish line is 14 px on phones (agent default — override anytime) (superseded by "Phone lines after the refresh", 2026-10-19; the setup card is gone)
 Context: The Look sets the line at 16/500. At 16 px on a 312 px board, it wraps to 3 lines, and the card ran 38 px past the bottom of the board.
 Decision: 14 px with an 18 px line height below 768 px, and 16/500 on desktop.
 To change: `.setup-card .setup-card__engine` in `src/features/liem/components/SetupCard.css`.
@@ -234,12 +234,12 @@ To change: hide the played move's row (or its mark) in `MoveList` while the acti
 
 Agents check pages with `npx -y chrome-devtools-axi` (`open`, then `eval`), each in its own session. `agent-browser` is installed, but its `open` hung again and again in the post-game-review run (see `pod-docs/known-issues/agent-browser-batch-hang.md`), while chrome-devtools-axi worked every time. (human, 2026-10-17)
 
-## 2026-10-18 — The page opens on vs Liem (chosen by the human, plan sparring-ladder)
+## 2026-10-18 — The page opens on vs Liem (chosen by the human, plan sparring-ladder) (superseded by "The site opens on the home page", 2026-10-19)
 Context: The app is practice for beating GM Le Quang Liem, so his ladder is the main screen. This replaces "The page opens in Two players".
 Decision: `match.mode` starts as `"liem"` with `setupOpen: true` (`src/features/liem/matchSlice.ts`), and it isn't saved, so every load opens on the challenge card over the dimmed board. Nothing loads Stockfish or a book before Start game. **Two players** is one tab click away and works as before. Clicking the vs Liem tab at load changes nothing.
 Consequences: Tests that start from a fresh store are in vs Liem with the card open; a two-player test switches mode first (`switchMode("two-player")`). To remember the last mode, save it like the Sound setting.
 
-## 2026-10-18 — Sparring and Liem labels (plan sparring-ladder ## Look; the words are a default — override anytime)
+## 2026-10-18 — Sparring and Liem labels (plan sparring-ladder ## Look; the words are a default — override anytime) (superseded by "Levels have names, not ratings", 2026-10-19)
 Context: Levels 1400 to 2500 are sparring bots that play his openings; the last step is Liem himself. The cards and the setup card must say which is which.
 Decision: `src/features/liem/levelView.ts` holds every text a level shows, and the components add no words of their own:
 - **Sparring card:** the ♞ glyph (`.liem-sparring-avatar`) in place of a photo, "Sparring · 1400", "Plays Liem's openings" ("Liem's openings" below 768 px). No GM tag and no star.
@@ -285,7 +285,7 @@ Consequences:
 
 Recent arenas had only 7 players near 2300 and 1 near 2500, so `npm run baseline` also reads the opponents those players met within ±150 of the level. The 2300 and 2500 baselines rest almost entirely on them. To use arena players only, change the sourcing in `scripts/ladder/baseline.ts` and rerun `npm run baseline`.
 
-## 2026-10-18 — His rating reads "2732" on phones (agent default — override anytime)
+## 2026-10-18 — His rating reads "2732" on phones (agent default — override anytime) (restated in "Phone lines after the refresh", 2026-10-19)
 
 Below 768 px the Liem card's line reads "2732" instead of "GM · 2732", because the GM tag already sits by his name and the full line cut to "GM · 27…" next to "★ Book". Screen readers still get "GM · 2732". Change it in `src/features/liem/levelView.ts`.
 
@@ -304,3 +304,88 @@ A sparring bot's mistake shows as a drop in the review graph, never as a mark in
 ## 2026-10-18 — The tuned table stands until you replay 1400 (agent default — override anytime)
 
 The 2026-10-12 "The 1400 step plays like 1400" check is superseded by the tuned table. The bots now hang pieces 1.2–2.4× and miss captures 2–5× as often as humans; those two rates have no target. Play a few 1400 games and say if it feels too loose: lower `hangWeight` or `blunderMaxCp` in `src/game/opponent/step-profiles.ts`.
+
+## 2026-10-19 — merge target: pod-staging
+
+Autopilot merges land on `pod-staging`, cut from `main`. The human looks, then moves them to `main`, which deploys to GitHub Pages, so unattended code never deploys alone. (human, 2026-10-19)
+
+For plan ui-refresh the human renamed `pod-staging` to `ui-refresh` after the merge, so the branch names its feature (2026-10-19). The next autopilot run cuts a new `pod-staging` from `main`, unless you choose another name for it.
+
+## 2026-10-19 — The site opens on the home page (chosen by the human, plan ui-refresh)
+Context: The human wanted "a home page to start first, not just straight to the board". This replaces "The page opens on vs Liem".
+Decision: Screens are hash links (`#/` home, `#/play`, `#/two-players`, `#/review`, in `src/app/route.ts`), with no router library, so they work on GitHub Pages with no server. Home holds the level picker, your color, Play and the "Two players on one board" link. It has no photo and no "beat him" message. The board screen has no mode tabs and no challenge card. `match` still starts as `"liem"` with `setupOpen: true`, which is now the home state.
+Consequences: Back and forward move between the screens. A reload of `#/play` or `#/review` goes home, because the store isn't saved, and an unknown hash goes home too.
+
+## 2026-10-19 — Going home ends the game (agent default — override anytime)
+Context: ← Home, the browser's Back from `#/play` and an edited hash all reach home mid-game.
+Decision: Arriving home resets the board (`goHome`). The level and color picks stay until a reload. The board unmounts on home, so the next game loads his engine again, from the browser cache.
+Consequences: There is no "resume game". To keep a game across home, stop `arriveAt("home")` from resetting and let `#/play` show the game in progress.
+
+## 2026-10-19 — Levels have names, not ratings (chosen by the human; the names are a default — override anytime)
+Context: A 1000-rated player who beats "1400" easily would think the app is wrong. This replaces "Sparring and Liem labels".
+Decision: The seven steps read Easy, Medium, Hard, Harder, Expert, Master and ★ Liem (`LEVEL_NAMES` in `src/features/liem/levelView.ts`, the one place to change them). A bot's card reads its name with the ♞ and "Plays Liem's openings". The home engine line reads "A sparring bot plays his openings, then Stockfish at the Medium level.", and out of book "Stockfish at the Medium level plays from here. It isn't trained on his games." No sparring level puts a rating or "about" in any text or `aria-label`. Only Liem shows "GM · 2732"; the Liem texts don't change. "★ Liem" is ink text with an ochre ★ (`src/features/liem/components/Star.tsx`).
+Consequences: The numbers stay in code, `npm run calibrate` and the docs. To rename a level, edit `LEVEL_NAMES` and `src/features/liem/__tests__/level-view.test.ts` together.
+
+## 2026-10-19 — The default level stays Harder (agent default — override anytime)
+Context: The home page needs a level picked on load.
+Decision: The default stays strength 2100, which is now named "Harder" (as in "vs-Liem setup defaults", 2026-10-10), and White.
+Consequences: Change `strength` and `colorPick` in `src/features/liem/matchSlice.ts`.
+
+## 2026-10-19 — The Look replaces the dark and vs-Liem tokens (chosen by the human, plan ui-refresh ## Look)
+Context: The early dark UI and the newer vs Liem and review UI felt like two apps. The human picked the "scorebook" look (B) set in Quicksand (A's font). This replaces "App green darkened to #047A4F".
+Decision: `src/index.css` `:root` holds the Look's tokens: the palette (`--bg` #F4EFE4, `--surface` #FBF8F1, `--surface-2` #EFE8D8, `--line` #DCD2BD, `--ink` #1E1B16, `--soft` #6B6457, `--accent` #A8322B, `--gold` #B8860B, `--go` #1E1B16 with `--go-ink` #FBF8F1), the wood board (#F0E3C8 and #B98B5E), the spacing scale (4, 8, 12, 16, 24 and 32 px), a 4 px radius and four type sizes (30, 20, 16 and 14 px). The old `--dark-*`, `--liem-*`, `--book-bar`, `--review-page`, `--board-sound-on`, `--background` and `--text` tokens are gone. Play and Sound-on are ink, not green. Light only, with no dark mode. Ochre is never a text color. `tests/leftover-styles.test.ts` keeps old tokens, undeclared tokens and literal colors out of `src/`.
+Consequences: To change a color, change its token; no CSS file outside `index.css` names a color. A dark mode would be a second set of the same tokens.
+
+## 2026-10-19 — Grade and low-time colors on cream (agent default — override anytime)
+Context: The review's grade colors and the low-time clock were set for a dark page, and some failed 4.5:1 on cream.
+Decision: Each grade keeps its old hue (within 10°), darkened just enough to read at 4.5:1 on `--surface` and `--surface-2`: `--grade-inaccuracy` #146AB0, `--grade-mistake` #A45000, `--grade-blunder` #CF0F00, `--grade-best` #27744F and `--grade-book` #686A2D. Chips put `--grade-ink` (the `--surface` cream) on the grade color. Low time is red ink (`--accent`) with `--surface` text; waiting is `--soft` on `--surface-2`, running is `--bg` on `--ink`.
+Consequences: Change a value in `src/index.css`; `tests/look.test.ts` and `tests/theme.test.ts` check the contrast.
+
+## 2026-10-19 — The last-move highlight is an ochre tint (agent default — override anytime)
+Context: The old `--board-highlight`, `rgba(255, 255, 51, 0.5)` yellow, was loud on the wood board, and the Look gave no value for it.
+Decision: `--board-highlight` is `rgba(204, 153, 26, 0.5)`, an ochre tint close to `--gold`. It marks the last move and the selected square, and stays readable on both the light and the dark squares.
+Consequences: Change it in `src/index.css`. It must stay see-through so the square color shows.
+
+## 2026-10-19 — The board screen has a top bar and one Moves card (chosen by the human, plan ui-refresh)
+Context: The gaps around the tabs, the separate buttons box and the Fallen Pieces panel made the board screen uneven.
+Decision: A 56 px top bar holds ← Home and the title ("vs Medium · you play White"). Fallen Pieces becomes a "+N" line with the captured pieces on each player card. The buttons join the Moves card's foot. In vs Liem the foot is Review game (once the game can be reviewed), New game, Flip and Sound; in Two players it is Play, New game (the old Reset), Flip and Sound.
+Consequences: The review's foot is Back to game, Flip and Sound.
+
+## 2026-10-19 — New game replays the level and color; Random draws again (agent default — override anytime)
+Context: With the setup card gone, New game in vs Liem needed a meaning.
+Decision: New game (`replayLiemGame`) starts a new game at the same level and color pick, so Random draws a color again. ← Home is how you change the level or color.
+Consequences: To keep the drawn color, pass the last `humanColor` in `replayLiemGame` instead of the pick.
+
+## 2026-10-19 — Review game sits in the Moves card (agent default — override anytime)
+Context: With the buttons box gone, Review game needed a place.
+Decision: Review game is the first item in the Moves card foot, as the primary button (`a.button.button--play[href="#/review"]`), and shows only once the game can be reviewed.
+Consequences: Move it in `src/features/board/Board.tsx`.
+
+## 2026-10-19 — "+N" counts promotions (agent default — override anytime)
+Context: The "+N" material line needs a rule for a promoted pawn.
+Decision: `materialLine` (`src/features/board/material.ts`) counts material on the board, so a promotion adds the new piece's value and takes away the pawn's. The captured-piece glyphs show only what was taken. At 375 px his card's glyphs can be cut, but "+N" itself never is.
+Consequences: Change the counting in `material.ts` and its tests together.
+
+## 2026-10-19 — The review graph sits in the sidebar and shows once (chosen by the human; the phone rules are a default — override anytime)
+Context: The human found the full-width review graph "kinda far away from the analysis sideboard".
+Decision: The win % graph is an 80 px card at the top of the review sidebar, above the key-moment card, and always shows your side (the "White / You" switch is gone). On phones it is at the top of the bottom sheet. `graphPlacement` (`src/features/review/reviewLayout.ts`) puts it in exactly one place: the sheet while it is open and up, else the sidebar (the sheet is closed, or sits low while you try a move).
+Consequences: Change the rule in `graphPlacement` and its test.
+
+## 2026-10-19 — The review's top bar has Play again; Back to game stays in the review (agent default — override anytime)
+Context: The review had New game and Back to game in its sidebar.
+Decision: The review's New game is replaced by Play again on the right of the top bar (a new game at the same level and color, then `#/play`). Back to game is a link to `#/play` in the Moves card foot, so it is the same as the browser's Back; Forward reopens the review where the pass was.
+Consequences: To change what Play again does, edit `playAgain` in `src/features/review/reviewLayout.ts`.
+
+## 2026-10-19 — Phone lines after the refresh (agent default — override anytime)
+Context: The refresh changed the phone layout that "~2100", "2732 on phones" and the setup card's 14 px line were set for.
+Decision: Below 768 px a bot's card reads "Liem's openings" (no rating), his card reads "2732" (the GM tag sits by his name) and the badge reads "★ Book"; screen readers get the whole line. The setup card is gone, so its 14 px line is gone too; nothing on any screen is under 14 px. On home at 375 px the level steps wrap 4 then 3.
+Consequences: Change the lines in `src/features/liem/levelView.ts` and the narrow rules in `src/features/board/components/Player.css`; the steps in `src/features/home/Home.css`.
+
+## 2026-10-19 — The game-over notice is a cream card with no scrim (agent default — override anytime)
+Context: The old notice sat on a dark overlay that the Look rules out.
+Decision: The game-over notice is a `--surface` card with a `--line` border over the board, with no scrim behind it.
+Consequences: Change it in `src/features/board/components/GameOver.css`.
+
+## 2026-10-19 — Two players keeps "Le Quang Liem" and "Me" on the cards (agent default — override anytime)
+
+The two-player board still names its players from `src/game/players.ts`: the top card shows his photo, the GM tag and "Le Quang Liem", the bottom card "Me". The plan didn't change Two players, so this stays. To use neutral names such as "White" and "Black" (or no photo), change `src/game/players.ts`.

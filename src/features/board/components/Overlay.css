@@ -1,4 +1,4 @@
-/* Square marks, Look A. Colors come only from the --board-* tokens. */
+/* Square marks. Colors come only from the --board-* tokens; --board-check is a flat tint. */
 .overlay {
   position: absolute;
   inset: 0;

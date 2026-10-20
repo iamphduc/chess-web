@@ -20,8 +20,11 @@ export const GameOver = () => {
     <></>
   ) : (
     <div className="game-over">
-      {gameOver === GameOverType.Win && <div>{`${winner} Win!`}</div>}
-      {gameOver === GameOverType.Draw && <div>Draw!</div>}
+      <div className="game-over__card">
+        <p className="game-over__title">
+          {gameOver === GameOverType.Win ? `${winner} Win!` : "Draw!"}
+        </p>
+      </div>
     </div>
   );
 };

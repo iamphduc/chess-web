@@ -3,7 +3,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Provider } from "react-redux";
 import { describe, expect, it } from "vitest";
 
-import { store } from "app/store";
+import { createAppStore, store } from "app/store";
+import { switchMode } from "features/liem/liemActions";
+import { clickSquare } from "../BoardSlice";
 import { clockForPhase, msUntilNextTick, Player } from "../components/Player";
 import { initialClock, TOTAL_MS } from "../clock";
 
@@ -38,18 +40,75 @@ describe("Player avatar", () => {
   });
 
   it("a glyph avatar takes the image's place, hidden from screen readers", () => {
-    const html = renderPlayer(<Player name="Sparring · 1400" title={null} avatar={null} glyph="♞" isWhite={false} />);
+    const html = renderPlayer(<Player name="Medium" title={null} avatar={null} glyph="♞" isWhite={false} />);
     expect(html).toContain(
-      '<div class="player__info"><span class="liem-sparring-avatar" aria-hidden="true">♞</span><div class="player__name">Sparring · 1400</div></div>'
+      '<div class="player__info"><span class="liem-sparring-avatar" aria-hidden="true">♞</span><div class="player__name">Medium</div></div>'
     );
     expect(html).not.toContain("<img");
-    expect(html).toContain('aria-label="Clock for Sparring · 1400"');
+    expect(html).toContain('aria-label="Clock for Medium"');
   });
 
   it("the name line is the title then the name, with nothing between", () => {
     const props = { name: "Le Quang Liem", title: "GM", avatar: null, isWhite: false, nameMark: <b>★</b> };
     const html = renderPlayer(<Player {...props} />);
     expect(html).toContain('<div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div>');
+  });
+});
+
+describe("material line", () => {
+  const sq = (name: string) => ({ y: 8 - Number(name[1]), x: "abcdefgh".indexOf(name[0]) });
+
+  /** A two-player board after `moves` (UCI), each played by clicking its two squares. */
+  function boardAfter(...moves: string[]) {
+    const s = createAppStore();
+    s.dispatch(switchMode("two-player"));
+    for (const uci of moves) {
+      s.dispatch(clickSquare(sq(uci.slice(0, 2))));
+      s.dispatch(clickSquare(sq(uci.slice(2, 4))));
+    }
+    return s;
+  }
+
+  const card = (s: ReturnType<typeof createAppStore>, isWhite: boolean) =>
+    renderToStaticMarkup(
+      <Provider store={s}>
+        <Player name={isWhite ? "White" : "Black"} title={null} avatar={null} isWhite={isWhite} />
+      </Provider>
+    );
+
+  it("no material element at the start", () => {
+    const s = boardAfter();
+    expect(card(s, true)).not.toContain("player__material");
+    expect(card(s, false)).not.toContain("player__material");
+  });
+
+  it("+3 and the knight after White takes a knight, nothing for Black", () => {
+    // 1.e4 Nf6 2.Nc3 Ng4 3.Qxg4
+    const s = boardAfter("e2e4", "g8f6", "b1c3", "f6g4", "d1g4");
+    expect(s.getState().board.engineHistory).toHaveLength(6); // all five moves were played
+    const white = card(s, true);
+    expect(white).toMatch(/<span class="player__material" data-material="3">/);
+    expect(white).toMatch(/<span class="player__advantage">\+3<\/span>/);
+    expect(white).toMatch(/class="player__captured"[^>]*>♞<\/span>/);
+    // it sits beside the name, after it
+    expect(white.indexOf("player__material")).toBeGreaterThan(white.indexOf("player__name"));
+    expect(card(s, false)).not.toContain("player__material");
+  });
+
+  it("an equal trade lists the captures with no +N", () => {
+    // 1.e4 d5 2.exd5 Qxd5
+    const s = boardAfter("e2e4", "d7d5", "e4d5", "d8d5");
+    const white = card(s, true);
+    const black = card(s, false);
+    expect(white).toMatch(/data-material="0"/);
+    expect(white).toMatch(/class="player__captured"[^>]*>♟<\/span>/);
+    expect(black).toMatch(/class="player__captured"[^>]*>♙<\/span>/);
+    expect(white + black).not.toContain("player__advantage");
+  });
+
+  it("the captured pieces are named for screen readers", () => {
+    const s = boardAfter("e2e4", "g8f6", "b1c3", "f6g4", "d1g4");
+    expect(card(s, true)).toMatch(/class="player__captured" role="img" aria-label="Captured: knight"/);
   });
 });
 

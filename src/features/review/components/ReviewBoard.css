@@ -24,11 +24,11 @@
   position: absolute;
   z-index: 5;
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  background-color: var(--liem-card);
-  border: 1px solid var(--liem-line);
-  border-radius: 8px;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 .review-board__promote {
@@ -43,12 +43,12 @@
   background-repeat: no-repeat;
   background-size: 80%;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
 .review-board__promote:hover {
-  background-color: var(--liem-line);
+  background-color: var(--surface-2);
 }
 
 .review-board__promote:focus-visible {

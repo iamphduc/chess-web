@@ -1,46 +1,70 @@
+/* Buttons in the Look (plan ui-refresh, ## Look). Tokens only, from src/index.css.
+   .button is the secondary style; an <a class="button"> looks the same. */
 .button {
-  padding: 10px 20px;
-  font-size: 16px;
-  border: none;
-  outline: none;
-  border-radius: 6px;
-  font-weight: bold;
-  color: #fff;
-  background-color: var(--dark-surface);
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  min-height: 40px;
+  background-color: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: var(--text-body);
+  font-weight: 700;
+  line-height: 1.25;
+  text-decoration: none;
   cursor: pointer;
 }
 .button:hover {
-  filter: brightness(0.8);
-}
-.button--play {
-  background-color: #047A4F;
-}
-.button--reset {
-  background-color: #d9534f;
-}
-.button--undo {
-  border-radius: 0px;
+  background-color: var(--surface-2);
 }
 .button:focus-visible {
   outline: 3px solid var(--board-focus);
   outline-offset: 2px;
 }
-/* Icon-only button: square, same surface, radius and hover as .button. */
+.button:disabled,
+.button[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Primary: ink fill, cream text. */
+.button--play {
+  background-color: var(--go);
+  color: var(--go-ink);
+  border-color: var(--go);
+}
+.button--play:hover {
+  background-color: var(--go);
+  opacity: 0.88;
+}
+
+/* Icon-only: 40 x 40 on the raised cream. */
 .button--icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  /* one text line plus the 10px top and bottom padding, so it matches Play and Reset */
-  width: calc(1lh + 20px);
-  height: calc(1lh + 20px);
+  background-color: var(--surface-2);
 }
 .button--icon svg {
   display: block;
   width: 1em;
   height: 1em;
 }
-/* Sound on: the Play green from the board tokens; off keeps the dark surface. */
+
+/* Sound on: the primary pair; off keeps the icon style. */
 .button--sound-on {
-  background-color: var(--board-sound-on);
+  background-color: var(--go);
+  color: var(--go-ink);
+  border-color: var(--go);
+}
+.button--sound-on:hover {
+  background-color: var(--go);
+  opacity: 0.88;
 }
