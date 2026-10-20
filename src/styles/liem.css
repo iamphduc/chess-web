@@ -52,7 +52,7 @@
 .liem-note {
   padding: var(--space-4);
   font-size: var(--text-body);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--ink);
   background-color: var(--surface);
   border: 1px solid var(--line);
