@@ -433,3 +433,15 @@ Consequences: The clock `aria-label`s read "Clock for White" and "Clock for Blac
 Context: From 768 px up the review sidebar held the graph, the key moment, the accuracy panel, the Moves card and a separate "Left his book" card.
 Decision: From 768 px up `.review .sidebar` holds exactly three cards: the key-moment card, the summary card (`section.card[data-review-graph]`: the 80 px graph, then the accuracy line "40 % · ?! N · ? N · ?? N" in grade colors, "—" until ready, no book-move count), and the Moves card, whose list starts with the left-book line ("Left his book at move N · he played X in G games", "Left his book at move N", "Stayed in his book the whole game", or no line without his books). `AccuracyPanel` and the left-book card are gone. Below 768 px the sheet holds the key moment and then the summary; `graphPlacement` still decides where the summary goes, so `[data-review-graph]` appears once.
 Consequences: Built by slice V1 (sprint polish); the review layout and smoke steps are in `pod-docs/codebase-structure.md`.
+
+## 2026-10-20 — The book note's space stays on phones after he leaves his book (agent default — override anytime)
+Below 992 px, once he leaves his book, an empty slot keeps the note's tallest height for the rest of the game, so the page never gets shorter and never scrolls. A new game clears it. To move the note under the Moves card on phones instead, change the order in `src/features/board/Board.tsx`; that still shortens the page when you're scrolled to the bottom.
+
+## 2026-10-20 — The book note may grow, and the Moves card moves down with it (agent default — override anytime)
+When the note grows (waiting → in his book, or more book rows later), the Moves card moves down; `scrollY` doesn't change. To stop it, give the note one fixed height for its tallest state in `src/features/liem/components/BookNote.css`, at the cost of more empty space early on.
+
+## 2026-10-20 — On desktop the Moves card moves up when he leaves his book (agent default — override anytime)
+From 992 px the empty slot is hidden, so the Moves card moves up by the note's height when he leaves his book; `scrollY` doesn't change. To keep the space on desktop too, drop the `display: none` rule for the slot in `src/features/liem/components/BookNote.css`.
+
+## 2026-10-20 — A key-moment try counts as found when it isn't an inaccuracy (agent default — override anytime)
+Any try that loses less than an inaccuracy (10 win-% points) counts as found, so a good move other than Stockfish's (for example 2.a3 when it names 2.d4) shows "You found it". This is the 2026-10-16 grade rule, unchanged. To require Stockfish's move, change the found rule in `src/game/review/`.
