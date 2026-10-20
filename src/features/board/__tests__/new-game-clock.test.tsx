@@ -85,9 +85,9 @@ const fakeDocument = Object.assign(doc, {
 
 const globals = globalThis as Record<string, unknown>;
 // Only setTimeout and Date are faked, so the clock's timers and reads follow fake time
-// while React's scheduler (setImmediate / MessageChannel) keeps running on the real loop.
-const realSetImmediate = setImmediate;
-const flushReact = () => new Promise((resolve) => realSetImmediate(resolve));
+// while React's scheduler (its own timers) keeps running on the real loop.
+const realSetTimeout = setTimeout; // kept from before the fake is installed
+const flushReact = () => new Promise((resolve) => realSetTimeout(resolve, 0));
 /** Lets React finish mounting and the effects (his 1.e4, the clock restart) land at the current fake time. */
 async function settle() {
   for (let i = 0; i < 5; i++) await flushReact();
