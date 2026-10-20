@@ -17,9 +17,23 @@
 }
 
 /* On a phone the card is 312 px, 278 px inside: Play, New game, Flip and Sound fit one row
-   only with 12 px button sides. Only the Two players foot has Play, so vs Liem keeps its own. */
+   only with 12 px button sides. The vs-Liem foot after a game (Review game is .button--play)
+   takes them too; it may still wrap there. */
 @media only screen and (max-width: 767px) {
   .moves-card .card__foot:has(> .button--play) > .button:not(.button--icon) {
+    padding-inline: var(--space-3);
+  }
+}
+
+/* From 992 px the sidebar is 380 px, 346 px inside the foot. Review game, New game, Flip and
+   Sound need 358 px at 16 px button sides, so text buttons take 12 px (342 px) and the row
+   never wraps; Resign keeps its fixed width. */
+@media only screen and (min-width: 992px) {
+  .moves-card .card__foot {
+    flex-wrap: nowrap;
+  }
+
+  .moves-card .card__foot > .button:not(.button--icon):not(.resign-button) {
     padding-inline: var(--space-3);
   }
 }
