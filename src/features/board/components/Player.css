@@ -82,16 +82,17 @@
   height: var(--text-title);
 }
 
-/* The pieces taken, then "+N", in soft ink, filling the room up to his detail. "+N" is never
+/* The pieces taken, then "+N", in soft ink, next to each other, with his detail at the far end. "+N" is never
    cut; the glyphs end in an ellipsis. */
 .player__material {
   display: flex;
-  flex-grow: 1;
-  align-items: baseline;
+  flex: 0 1 auto;
+  align-items: center;
+  align-self: stretch;
   gap: var(--space-1);
   font-size: var(--text-small);
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1;
   color: var(--soft);
 }
 
@@ -101,10 +102,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* No width of its own: the glyphs fill what "+N" and the detail leave, so they give way first. */
+/* "+N" sits right after the glyphs. When the line is short the glyphs shrink first (ellipsis). */
 .player__captured {
-  flex-grow: 1;
-  width: 0;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   font-size: var(--text-title);
