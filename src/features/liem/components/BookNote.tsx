@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { forwardRef, useEffect, useMemo, useRef } from "react";
 
 import "features/board/components/Button.css";
 import "./BookNote.css";
@@ -57,7 +57,54 @@ export function BookNoteBody({ view, onRetry }: { view: ShownBookNote; onRetry: 
   }
 }
 
-/** The margin note for his book, with an ochre edge. Out of his book it isn't rendered at all. */
+/** The last note shown in a game, and its height in px, kept for the slot. */
+export interface KeptNote {
+  gameId: number;
+  height: number;
+}
+
+/** What the note's place in the sidebar holds: the note, an empty slot as tall as it was, or nothing. */
+export type BookNoteSlot =
+  | { kind: "note"; view: ShownBookNote; minHeight: number }
+  | { kind: "gone"; height: number }
+  | null;
+
+/**
+ * The slot for `view` in game `gameId`, given the note kept from earlier renders. Out of his
+ * book the note is gone, but below 992 px it sits above the Moves card, so its place stays as
+ * an empty slot as tall as it was until a new game: the page never shrinks and scrolls after his
+ * reply (body has `overflow-anchor: none`). For the same reason the note never gets shorter in a
+ * game (fewer book rows after a later move). Nothing is kept from another game or a note never measured.
+ */
+export function bookNoteSlot(kept: KeptNote | null, gameId: number, view: BookNoteView): BookNoteSlot {
+  const height = kept !== null && kept.gameId === gameId ? kept.height : 0;
+  if (view.kind !== "out") return { kind: "note", view, minHeight: height };
+  if (height <= 0) return null;
+  return { kind: "gone", height };
+}
+
+/** The slot's markup: the note card, an empty slot with no note in it, or nothing. */
+export const BookNoteSlotView = forwardRef<HTMLElement, { slot: BookNoteSlot; onRetry: () => void }>(
+  function BookNoteSlotView({ slot, onRetry }, ref) {
+    if (slot === null) return null;
+    if (slot.kind === "gone") {
+      return <div className="liem-note-slot" aria-hidden="true" style={{ height: `${slot.height}px` }} />;
+    }
+    return (
+      <section
+        ref={ref}
+        className="liem-note"
+        data-book-state={slot.view.kind}
+        aria-label="His book"
+        style={slot.minHeight > 0 ? { minHeight: `${slot.minHeight}px` } : undefined}
+      >
+        <BookNoteBody view={slot.view} onRetry={onRetry} />
+      </section>
+    );
+  }
+);
+
+/** The margin note for his book, with an ochre edge. Out of his book only its empty slot stays. */
 export const BookNote = ({ onRetry }: Props) => {
   const engineHistory = useAppSelector((s) => s.board.engineHistory);
   const gameId = useAppSelector((s) => s.board.gameId);
@@ -68,10 +115,14 @@ export const BookNote = ({ onRetry }: Props) => {
     [engineHistory, gameId, lastChoice, opponentStatus]
   );
 
-  if (view.kind === "out") return null;
-  return (
-    <section className="liem-note" data-book-state={view.kind} aria-label="His book">
-      <BookNoteBody view={view} onRetry={onRetry} />
-    </section>
-  );
+  const note = useRef<HTMLElement>(null);
+  const kept = useRef<KeptNote | null>(null);
+  const slot = bookNoteSlot(kept.current, gameId, view);
+  // After each render, keep the shown note's height (its tallest, as it has a min-height) for
+  // the slot; drop it once nothing shows.
+  useEffect(() => {
+    if (slot?.kind === "note" && note.current) kept.current = { gameId, height: note.current.offsetHeight };
+    else if (slot === null) kept.current = null;
+  });
+  return <BookNoteSlotView ref={note} slot={slot} onRetry={onRetry} />;
 };

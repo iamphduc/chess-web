@@ -8,7 +8,10 @@ interface Props {
   playerName: string;
 }
 
-/** The clock pill: a round face whose hand steps a quarter turn per second, then the digits. */
+/**
+ * The clock pill: a round face whose hand steps a quarter turn per second, then the digits.
+ * Each character gets its own fixed cell (Player.css): Quicksand has no tabular figures.
+ */
 export const PlayerClock = ({ remainingMs, isActive, playerName }: Props) => {
   const className = [
     "player__time",
@@ -33,7 +36,13 @@ export const PlayerClock = ({ remainingMs, isActive, playerName }: Props) => {
           />
           <circle className="clock-icon__pin" cx="12" cy="12" r="1.6" />
         </svg>
-        <span className="player__timer">{formatClock(remainingMs)}</span>
+        <span className="player__timer">
+          {Array.from(formatClock(remainingMs), (ch, i) => (
+            <span key={i} className={/\d/.test(ch) ? "player__timer-digit" : "player__timer-sep"}>
+              {ch}
+            </span>
+          ))}
+        </span>
       </div>
       <span className="player__alert" role="alert">
         {lowTimeAlert(remainingMs)}

@@ -117,7 +117,8 @@ function cardsAround(html: string): { above: string[]; below: string[] } {
 
 /** The digits on a card's clock. */
 function clockText(card: string): string {
-  return card.match(/class="player__timer">([^<]*)</)?.[1] ?? "";
+  const timer = card.match(/class="player__timer">((?:<span class="player__timer-(?:digit|sep)">[^<]<\/span>)*)<\/span>/);
+  return timer?.[1].replace(/<[^>]+>/g, "") ?? "";
 }
 
 /** Two players, after one click on its tab. */

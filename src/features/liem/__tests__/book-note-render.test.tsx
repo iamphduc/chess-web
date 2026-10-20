@@ -8,7 +8,8 @@ import { newGame, playOpponentMove } from "features/board/BoardSlice";
 import { Player } from "features/board/components/Player";
 import type { BookLookup } from "game/opponent/book";
 import type { BookMove } from "game/opponent/types";
-import { BookNote, BookNoteBody } from "../components/BookNote";
+import { bookNoteView } from "../bookNote";
+import { BookNote, BookNoteBody, bookNoteSlot, BookNoteSlotView, type KeptNote } from "../components/BookNote";
 import { LiemCardDetail } from "../components/LiemCardDetail";
 import { gameStarted, opponentMoved, setMode, setOpponentStatus, setStrength } from "../matchSlice";
 
@@ -188,9 +189,109 @@ describe("BookNote and LiemCardDetail", () => {
   });
 });
 
+/** The note's view for a store, as BookNote reads it. */
+const viewOf = (store: AppStore) => {
+  const { board, match } = store.getState();
+  return bookNoteView(board, match);
+};
+
+// At 375 px the note sits above the Moves card, and body has overflow-anchor: none, so a note
+// that unmounts after his reply shrinks the page and scrolls it. Its slot keeps its height.
+describe("the note's slot after he leaves his book", () => {
+  it("out of his book, the slot keeps the note's height until a new game", () => {
+    // In book (1.e4 as White in the review's repro): the note, measured at 230 px.
+    const store = liemGame();
+    heMoved(store, "book");
+    const { gameId } = store.getState().board;
+    const inBook = bookNoteSlot(null, gameId, viewOf(store));
+    expect(inBook).toEqual({ kind: "note", view: viewOf(store), minHeight: 0 });
+    const kept: KeptNote = { gameId, height: 230 };
+
+    // His reply leaves his book: an empty slot, as tall as the note was.
+    const out = liemGame();
+    heMoved(out, "engine");
+    const outView = viewOf(out);
+    expect(outView.kind).toBe("out");
+    expect(bookNoteSlot(kept, gameId, outView)).toEqual({ kind: "gone", height: 230 });
+    // Later moves out of book keep it, thinking included.
+    out.dispatch(setOpponentStatus("thinking"));
+    expect(bookNoteSlot(kept, gameId, viewOf(out))).toEqual({ kind: "gone", height: 230 });
+
+    // A new game brings the note back, not the slot.
+    out.dispatch(newGame({ humanColor: "black" }));
+    const next = out.getState().board.gameId;
+    expect(next).not.toBe(gameId);
+    expect(bookNoteSlot(kept, next, viewOf(out))).toEqual({ kind: "note", view: { kind: "waiting" }, minHeight: 0 });
+  });
+
+  it("the waiting note keeps its slot too (1.f3)", () => {
+    const store = liemGame();
+    const { gameId } = store.getState().board;
+    expect(bookNoteSlot(null, gameId, viewOf(store))).toEqual({ kind: "note", view: { kind: "waiting" }, minHeight: 0 });
+    heMoved(store, "engine");
+    expect(bookNoteSlot({ gameId, height: 120 }, gameId, viewOf(store))).toEqual({ kind: "gone", height: 120 });
+  });
+
+  it("no slot without a note from this game", () => {
+    const store = liemGame();
+    heMoved(store, "engine");
+    const { gameId } = store.getState().board;
+    // Nothing shown yet (the board opened out of book): no slot.
+    expect(bookNoteSlot(null, gameId, viewOf(store))).toBeNull();
+    // A note from another game, or one never measured, keeps nothing.
+    expect(bookNoteSlot({ gameId: gameId - 1, height: 230 }, gameId, viewOf(store))).toBeNull();
+    expect(bookNoteSlot({ gameId, height: 0 }, gameId, viewOf(store))).toBeNull();
+  });
+
+  it("a failure after he left his book shows the note again", () => {
+    const store = liemGame();
+    heMoved(store, "engine");
+    store.dispatch(setOpponentStatus("failed"));
+    const { gameId } = store.getState().board;
+    expect(bookNoteSlot({ gameId, height: 230 }, gameId, viewOf(store))).toEqual({
+      kind: "note",
+      view: { kind: "failed" },
+      minHeight: 230,
+    });
+  });
+
+  it("in a game the note never gets shorter", () => {
+    // Fewer book rows after a later move would shrink the page too: the note keeps its tallest height.
+    const store = liemGame();
+    heMoved(store, "book");
+    const { gameId } = store.getState().board;
+    expect(bookNoteSlot({ gameId, height: 230 }, gameId, viewOf(store))).toEqual({
+      kind: "note",
+      view: viewOf(store),
+      minHeight: 230,
+    });
+    // Not from another game.
+    expect(bookNoteSlot({ gameId: gameId - 1, height: 230 }, gameId, viewOf(store))).toEqual({
+      kind: "note",
+      view: viewOf(store),
+      minHeight: 0,
+    });
+    const tall = renderToStaticMarkup(
+      <BookNoteSlotView slot={{ kind: "note", view: { kind: "waiting" }, minHeight: 230 }} onRetry={() => {}} />
+    );
+    expect(tall).toMatch(/^<section class="liem-note" data-book-state="waiting" aria-label="His book" style="min-height:230px">/);
+    const plain = renderToStaticMarkup(
+      <BookNoteSlotView slot={{ kind: "note", view: { kind: "waiting" }, minHeight: 0 }} onRetry={() => {}} />
+    );
+    expect(plain).toMatch(/^<section class="liem-note" data-book-state="waiting" aria-label="His book">/);
+  });
+
+  it("the empty slot has no note in it", () => {
+    const html = renderToStaticMarkup(<BookNoteSlotView slot={{ kind: "gone", height: 230 }} onRetry={() => {}} />);
+    // No [data-book-state] and no text: the smoke checks still read "the note is gone".
+    expect(html).toBe('<div class="liem-note-slot" aria-hidden="true" style="height:230px"></div>');
+    expect(renderToStaticMarkup(<BookNoteSlotView slot={null} onRetry={() => {}} />)).toBe("");
+  });
+});
+
 // Today's markup, before `detail` existed.
 const TODAY =
-  '<div class="player"><div class="player__info"><span class="player__disc" aria-hidden="true">♚</span><div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div></div><div class="player__time" role="timer" aria-label="Clock for Le Quang Liem"><svg class="clock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="clock-icon__face" cx="12" cy="12" r="10.5"></circle><line class="clock-icon__hand" x1="12" y1="13.5" x2="12" y2="5" style="transform:rotate(0deg)"></line><circle class="clock-icon__pin" cx="12" cy="12" r="1.6"></circle></svg><span class="player__timer">10:00</span></div><span class="player__alert" role="alert"></span></div>';
+  '<div class="player"><div class="player__info"><span class="player__disc" aria-hidden="true">♚</span><div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div></div><div class="player__time" role="timer" aria-label="Clock for Le Quang Liem"><svg class="clock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="clock-icon__face" cx="12" cy="12" r="10.5"></circle><line class="clock-icon__hand" x1="12" y1="13.5" x2="12" y2="5" style="transform:rotate(0deg)"></line><circle class="clock-icon__pin" cx="12" cy="12" r="1.6"></circle></svg><span class="player__timer"><span class="player__timer-digit">1</span><span class="player__timer-digit">0</span><span class="player__timer-sep">:</span><span class="player__timer-digit">0</span><span class="player__timer-digit">0</span></span></div><span class="player__alert" role="alert"></span></div>';
 
 describe("Player", () => {
   it("player card detail", () => {

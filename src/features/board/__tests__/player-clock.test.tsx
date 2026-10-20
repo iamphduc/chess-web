@@ -21,9 +21,16 @@ function timerClasses(html: string): string[] {
   return cls ? cls[1].split(/\s+/).filter(Boolean) : [];
 }
 
+/** The clock's text, read through its digit cells. */
 function digits(html: string): string {
-  const m = html.match(/<span class="player__timer">([^<]*)<\/span>/);
-  return m ? m[1] : "<missing>";
+  const m = html.match(/<span class="player__timer">((?:<span class="player__timer-(?:digit|sep)">[^<]<\/span>)*)<\/span>/);
+  return m ? m[1].replace(/<[^>]+>/g, "") : "<missing>";
+}
+
+/** The clock's cells, as [class, character] pairs. */
+function cells(html: string): [string, string][] {
+  const m = html.match(/<span class="player__timer">(.*?)<\/span><\/div>/);
+  return Array.from((m?.[1] ?? "").matchAll(/<span class="([^"]+)">([^<]*)<\/span>/g), (c) => [c[1], c[2]]);
 }
 
 function handStyle(html: string): string {
@@ -78,6 +85,16 @@ describe("PlayerClock", () => {
     const b = render(0, true);
     expect(digits(b)).toBe("0.0");
     expect(timerClasses(b)).toContain("player__time--low");
+  });
+
+  it("each character of the clock sits in its own fixed cell", () => {
+    // Quicksand's digits differ in width; a cell per digit keeps the colon still on every tick.
+    const d = (c: string): [string, string] => ["player__timer-digit", c];
+    const sep = (c: string): [string, string] => ["player__timer-sep", c];
+    expect(cells(render(600000))).toEqual([d("1"), d("0"), sep(":"), d("0"), d("0")]);
+    expect(cells(render(71000))).toEqual([d("0"), d("1"), sep(":"), d("1"), d("1")]);
+    expect(cells(render(9800))).toEqual([d("9"), sep("."), d("8")]);
+    expect(cells(render(0))).toEqual([d("0"), sep("."), d("0")]);
   });
 
   it("hand angle follows the whole seconds", () => {
