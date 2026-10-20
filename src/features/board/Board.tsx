@@ -36,7 +36,9 @@ import { Player } from "./components/Player";
 import { BoardSidebar } from "./components/BoardSidebar";
 import { Promotion } from "./components/Promotion";
 import { Notation } from "./components/Notation";
-import { GameOver } from "./components/GameOver";
+import { GameOver, GameOverType } from "./components/GameOver";
+import { ResignButton } from "./components/ResignButton";
+import { canResign } from "./gameEnd";
 import { Button, ButtonType } from "./components/Button";
 import { TopBar } from "./components/TopBar";
 import { topBarInput, topBarTitle } from "./topBar";
@@ -146,6 +148,8 @@ export const Board = () => {
   const review = useAppSelector(selectReview);
   const engineHistory = useAppSelector((state) => state.board.engineHistory);
   const reviewable = useAppSelector((state) => canOpenReview(state.board, state.match));
+  const resignable = useAppSelector((state) => canResign(state.board));
+  const over = useAppSelector((state) => state.board.gameOver !== GameOverType.Continue);
   const dispatch = useAppDispatch();
   useMoveSound();
   const { retry, analyse } = useLiemOpponent();
@@ -277,20 +281,24 @@ export const Board = () => {
       <Button type={ButtonType.Sound} />
     </span>
   );
+  // The foot by state (sprint polish, "Moves card foot"): Resign while the clocks run,
+  // Play only before them in Two players, Review game once a vs-Liem game can be reviewed.
   let foot: React.ReactNode;
   if (!vsLiem) {
     foot = (
       <>
-        <Button type={ButtonType.Play} />
+        {!resignable && !over && <Button type={ButtonType.Play} />}
         <Button type={ButtonType.Reset} />
+        {resignable && <ResignButton />}
         {icons}
       </>
     );
   } else if (liemHuman) {
     foot = (
       <>
-        {reviewable && <ReviewGameLink />}
+        {!resignable && reviewable && <ReviewGameLink />}
         <NewGameButton />
+        {resignable && <ResignButton />}
         {icons}
       </>
     );

@@ -346,7 +346,7 @@ Context: The old `--board-highlight`, `rgba(255, 255, 51, 0.5)` yellow, was loud
 Decision: `--board-highlight` is `rgba(204, 153, 26, 0.5)`, an ochre tint close to `--gold`. It marks the last move and the selected square, and stays readable on both the light and the dark squares.
 Consequences: Change it in `src/index.css`. It must stay see-through so the square color shows.
 
-## 2026-10-19 — The board screen has a top bar and one Moves card (chosen by the human, plan ui-refresh)
+## 2026-10-19 — The board screen has a top bar and one Moves card (chosen by the human, plan ui-refresh) (the foot is updated by "Resign sits in the Moves card foot", 2026-10-20)
 Context: The gaps around the tabs, the separate buttons box and the Fallen Pieces panel made the board screen uneven.
 Decision: A 56 px top bar holds ← Home and the title ("vs Medium · you play White"). Fallen Pieces becomes a "+N" line with the captured pieces on each player card. The buttons join the Moves card's foot. In vs Liem the foot is Review game (once the game can be reviewed), New game, Flip and Sound; in Two players it is Play, New game (the old Reset), Flip and Sound.
 Consequences: The review's foot is Back to game, Flip and Sound.
@@ -381,7 +381,7 @@ Context: The refresh changed the phone layout that "~2100", "2732 on phones" and
 Decision: Below 768 px a bot's card reads "Liem's openings" (no rating), his card reads "2732" (the GM tag sits by his name) and the badge reads "★ Book"; screen readers get the whole line. The setup card is gone, so its 14 px line is gone too; nothing on any screen is under 14 px. On home at 375 px the level steps wrap 4 then 3.
 Consequences: Change the lines in `src/features/liem/levelView.ts` and the narrow rules in `src/features/board/components/Player.css`; the steps in `src/features/home/Home.css`.
 
-## 2026-10-19 — The game-over notice is a cream card with no scrim (agent default — override anytime)
+## 2026-10-19 — The game-over notice is a cream card with no scrim (agent default — override anytime) (superseded by "The game-over card dims the board", 2026-10-20)
 Context: The old notice sat on a dark overlay that the Look rules out.
 Decision: The game-over notice is a `--surface` card with a `--line` border over the board, with no scrim behind it.
 Consequences: Change it in `src/features/board/components/GameOver.css`.
@@ -398,3 +398,13 @@ For plan ui-polish, autopilot merges land on `ui-polish-staging`, cut from `main
 Context: Body text in Quicksand 500 read thin on the cream cards. The human picked option B in draft section 0 (`pod-docs/design-drafts/ui-polish.html`): "Let's do B".
 Decision: Body text is Quicksand 600 (`body { font-weight: 600 }`). Headings, buttons, names, clocks and other bold text stay 700. The app ships only the 600 and 700 woff2 files (from `@fontsource/quicksand` 5.3.0); the 500 file and its `@font-face` are gone, and no CSS under `src/` sets 500, 400 or `normal`. This updates "Quicksand is self-hosted" (2026-10-10), which named 500 and 700.
 Consequences: Every screen reads a little heavier with the same sizes and layout. To change the body weight, change `src/index.css` (the `body` rule and the 600 `@font-face`) and `tests/theme.test.ts`.
+
+## 2026-10-20 — Resign sits in the Moves card foot, with a 3 s red Confirm (default, recommended and accepted; the one width and the short "Confirm" chosen by the human, plan ui-polish)
+Context: The human asked for a resign button ("I need a resign button"). A longer "Confirm resign" label made the button grow onto two lines.
+Decision: **Resign** (`button.button.resign-button`) sits in the Moves card foot after New game, in both modes, while `canResign` holds: vs Liem from the first move, Two players only once **Play** starts the clocks. In Two players, Play now hides once the clocks run or the game is over. The first press turns it into a red **Confirm** (`--accent` text and border, `data-confirm="true"`, `aria-label="Confirm resign"`) for 3000 ms; a second press inside that time resigns once, and at 3000 ms it turns back. A new game or the end of the game turns it back; Flip and Sound don't. It is 104 px wide with no wrap, so the foot never moves. vs Liem the loser is you, even on his turn; in Two players it's the side whose clock runs. The feet are: vs Liem in progress New game, Resign, Flip, Sound; vs Liem over Review game (when the game can be reviewed), New game, Flip, Sound; Two players before Play: Play, New game, Flip, Sound; running: New game, Resign, Flip, Sound; over: New game, Flip, Sound. From 992 px up every foot fits one row: the foot's text buttons take 12 px sides and the row doesn't wrap.
+Consequences: The press rule is `src/features/board/resignConfirm.ts` (time passed in); `ResignButton.tsx` only owns the timer. The feet are in `src/features/board/Board.tsx`; the width and red ink in `ResignButton.css`; the one-row rule in `BoardSidebar.css`. At 375 px the foot may wrap.
+
+## 2026-10-20 — The game-over card dims the board (chosen by the human: dim the board; the card content is a default, plan ui-polish)
+Context: The human asked to "dim the board to make the endgame more prominent". This supersedes "The game-over notice is a cream card with no scrim" (2026-10-19).
+Decision: At the end of a game, `.game-over` fills `.squares` with `--game-over-scrim` (`--ink` at 40 %) and takes no clicks, so the final position, the last-move tint and the check glow show through. Inside sits a `--surface` card (`.game-over__card`) with the result ("White wins", "Black wins" or "Draw", in both modes), the reason ("Checkmate", "Stalemate", "On time" or "Resigned") and the actions: **Review game** (only when the game can be reviewed, so only vs Liem) and **New game** (`replayLiemGame` vs Liem, `reset` in Two players). The card waits for a pending promotion pick: until the pick is made it doesn't show, so the picker can still be clicked. On a phone the buttons sit in a row when they fit and stack otherwise.
+Consequences: The text and the rule for when it shows are `gameOverView` (`src/features/board/gameOverView.ts`); the look is `src/features/board/components/GameOver.css`.
