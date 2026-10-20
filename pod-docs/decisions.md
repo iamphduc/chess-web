@@ -389,3 +389,7 @@ Consequences: Change it in `src/features/board/components/GameOver.css`.
 ## 2026-10-19 — Two players keeps "Le Quang Liem" and "Me" on the cards (agent default — override anytime)
 
 The two-player board still names its players from `src/game/players.ts`: the top card shows his photo, the GM tag and "Le Quang Liem", the bottom card "Me". The plan didn't change Two players, so this stays. To use neutral names such as "White" and "Black" (or no photo), change `src/game/players.ts`.
+
+## 2026-10-20 — merge target: ui-polish-staging
+
+For plan ui-polish, autopilot merges land on `ui-polish-staging`, cut from `main`, so the staging branch names its feature (the human renamed the last one to `ui-refresh`). The human looks, then moves it to `main`, which deploys to GitHub Pages. (human, 2026-10-20)
