@@ -238,6 +238,31 @@ describe("ReviewBoard motion", () => {
     expect(await show(board(LAST, { flipped: true, size: 48, gameId: 8 }))).toEqual(SNAP);
   });
 
+  it("a piece that comes back on ◀ is a new element", async () => {
+    // Reusing the taker's element for the piece it took makes Framer fade the
+    // returning piece out as the taker leaves (seen in the browser): each piece
+    // needs its own element, keyed by its layout id.
+    const show = await mount();
+    const pieceOn = (square: string) => {
+      const find = (node: FakeNode): FakeNode | null => {
+        if (node.attributes["data-square"] === square) return node.childNodes.find((c) => c.attributes["data-layout-id"]) ?? null;
+        for (const c of node.childNodes) {
+          const hit = find(c);
+          if (hit) return hit;
+        }
+        return null;
+      };
+      return find(fakeDocument.body);
+    };
+    await show(board(3));
+    const taker = pieceOn("d5");
+    expect(taker?.attributes["data-layout-id"]).toBe(`review-7-${PieceType.WhitePawnE}`);
+    await show(board(2));
+    const back = pieceOn("d5");
+    expect(back?.attributes["data-layout-id"]).toBe(`review-7-${PieceType.BlackPawnD}`);
+    expect(back).not.toBe(taker);
+  });
+
   it("a re-render keeps the step's motion", async () => {
     // The evals arrive while a step slides: the same position again must not cut it short.
     const show = await mount();
