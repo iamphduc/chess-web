@@ -8,7 +8,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createAppStore } from "app/store";
 import { Board } from "features/board/Board";
 import { clickSquare, playOpponentMove, stop } from "features/board/BoardSlice";
-import { GameOverType } from "features/board/components/GameOver";
+import { GameOverType } from "features/board/gameOverType";
 import { replayLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
 import { setColorPick } from "features/liem/matchSlice";
 import { applyMove } from "game/engine/engine";

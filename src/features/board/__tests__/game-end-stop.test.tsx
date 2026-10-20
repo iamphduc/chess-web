@@ -7,7 +7,8 @@ import { describe, expect, it } from "vitest";
 import { matchSlice } from "features/liem/matchSlice";
 import { boardSlice, movePiece, selectPiece, start, stop } from "../BoardSlice";
 import { projectSquares } from "../engineAdapter";
-import { GameOver, GameOverType } from "../components/GameOver";
+import { GameOver } from "../components/GameOver";
+import { GameOverType } from "../gameOverType";
 import { PieceType } from "../../../game/piece-type";
 import { EngineSquare, GameState, initialGameState } from "../../../game/engine/game-state";
 

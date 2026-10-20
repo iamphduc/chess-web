@@ -1,7 +1,7 @@
 import type { AnyAction, ThunkAction } from "@reduxjs/toolkit";
 
 import type { RootState } from "app/store";
-import { GameOverType } from "features/board/components/GameOver";
+import { GameOverType } from "features/board/gameOverType";
 import { applyMove } from "game/engine/engine";
 import type { GameState, PieceColor } from "game/engine/game-state";
 import { uciToMove } from "game/opponent/position";

@@ -19,7 +19,7 @@ import {
   toPromotionKind,
 } from "./engineAdapter";
 import { PiecePromoted } from "./components/Promotion";
-import { GameOverType } from "./components/GameOver";
+import { GameOverType } from "./gameOverType";
 import { isWhiteClockTurn } from "./clock";
 import { MoveSound, pickSound } from "./sound";
 import { canResign, type GameEnd } from "./gameEnd";
