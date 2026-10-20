@@ -45,3 +45,46 @@
   justify-content: center;
   gap: var(--space-2);
 }
+
+/* The entrance (gameOverEntrance.ts holds the same numbers). After a 300 ms pause,
+   so the last move is seen landing, the scrim fades in over 200 ms and the card
+   fades in, rises 8 px and grows from 96 % over 250 ms. Ease-out only, no overshoot.
+   "both" holds the first frame through the pause and the last one after. The card
+   stays hidden through the pause, so its buttons can't be pressed unseen.
+   data-entrance="instant" (reduced motion, or back from the review) has no animation. */
+.game-over[data-entrance="animate"] {
+  animation: game-over-scrim-in 200ms ease-out 300ms both;
+}
+
+.game-over[data-entrance="animate"] .game-over__card {
+  animation: game-over-card-in 250ms ease-out 300ms both;
+}
+
+@keyframes game-over-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes game-over-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-over[data-entrance="animate"],
+  .game-over[data-entrance="animate"] .game-over__card {
+    animation: none;
+  }
+}
