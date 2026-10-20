@@ -245,7 +245,7 @@ describe("accuracy line", () => {
       ["blunder", "??", 1],
     ] as const) {
       expect(html).toMatch(
-        new RegExp(`data-count="${grade}"[^>]*class="review-grade--${grade}"[^>]*>${mark.replace(/\?/g, "\?")} ${n}<`)
+        new RegExp(`data-count="${grade}"[^>]*class="review-grade--${grade}"[^>]*>${mark.replace(/\?/g, "\\?")} ${n}<`)
       );
     }
     // No book-move count.
@@ -297,7 +297,7 @@ describe("left his book line", () => {
           his: [
             { uci: "c7c6", label: "1...c6", games: 3 },
             { uci: "e7e5", label: "1...e5", games: 1807 },
-            { uci: "d7d5", label: "1...d5", games: null },
+            { uci: "d7d5", label: "1...d5", games: undefined },
           ],
         },
         bookPlies: 1,
@@ -314,7 +314,7 @@ describe("left his book line", () => {
   });
 
   it("left with none of his games there", () => {
-    for (const his of [[], [{ uci: "f1b5", label: "3.Bb5", games: null }], [{ uci: "f1b5", label: "3.Bb5", games: 0 }]]) {
+    for (const his of [[], [{ uci: "f1b5", label: "3.Bb5", games: undefined }], [{ uci: "f1b5", label: "3.Bb5", games: 0 }]]) {
       const item = first(list(sample({ leftBook: { ply: 4, played: { uci: "f1c4", label: "3.Bc4" }, his } })));
       expect(text(item)).toBe("Left his book at move 3");
     }

@@ -354,6 +354,23 @@ describe("review theme", () => {
     expect(readCss("features", "board", "Board.css")).not.toMatch(/top-bar__action/);
     expect(readCss("features", "board", "components", "TopBar.css")).toMatch(/\.top-bar__action/);
 
+    // At 375 px "Review · vs Medium" (149 px at 16 px) fits between ← Home and Play again:
+    // below 768 px the bar's gap and the buttons' sides are 8 px and the title is 14 px.
+    const topBarCss = readCss("features", "board", "components", "TopBar.css");
+    const phone = /@media[^{]*max-width:\s*767px[^{]*\{([\s\S]*?)\n\}/.exec(topBarCss)?.[1] ?? "";
+    const inPhone = (sel: string) =>
+      declarations(
+        lookRules(phone)
+          .filter((r) => r.selector.split(",").map((x) => x.trim()).includes(sel))
+          .map((r) => r.body)
+          .join(";")
+      );
+    expect(last(inPhone(".top-bar"), "gap")).toBe("var(--space-2)");
+    expect(last(inPhone(".top-bar__title"), "font-size")).toBe("var(--text-small)");
+    for (const sel of [".top-bar__home", ".top-bar__action"]) {
+      expect(last(inPhone(sel), "padding"), sel).toBe("var(--space-2)");
+    }
+
     // The graph plot is 80 px tall, on a phone too.
     const graph = readCss("features", "review", "components", "ReviewGraph.css");
     const heights = lookRules(graph)
