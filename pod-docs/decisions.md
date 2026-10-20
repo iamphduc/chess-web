@@ -309,6 +309,8 @@ The 2026-10-12 "The 1400 step plays like 1400" check is superseded by the tuned 
 
 Autopilot merges land on `pod-staging`, cut from `main`. The human looks, then moves them to `main`, which deploys to GitHub Pages, so unattended code never deploys alone. (human, 2026-10-19)
 
+For plan ui-refresh the human renamed `pod-staging` to `ui-refresh` after the merge, so the branch names its feature (2026-10-19). The next autopilot run cuts a new `pod-staging` from `main`, unless you choose another name for it.
+
 ## 2026-10-19 — The site opens on the home page (chosen by the human, plan ui-refresh)
 Context: The human wanted "a home page to start first, not just straight to the board". This replaces "The page opens on vs Liem".
 Decision: Screens are hash links (`#/` home, `#/play`, `#/two-players`, `#/review`, in `src/app/route.ts`), with no router library, so they work on GitHub Pages with no server. Home holds the level picker, your color, Play and the "Two players on one board" link. It has no photo and no "beat him" message. The board screen has no mode tabs and no challenge card. `match` still starts as `"liem"` with `setupOpen: true`, which is now the home state.
