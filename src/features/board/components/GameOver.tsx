@@ -1,6 +1,8 @@
-import { useAppSelector } from "app/hooks";
+import { useAppDispatch, useAppSelector } from "app/hooks";
+import { hashFor } from "app/route";
 import React from "react";
 
+import { gameOverNewGame, gameOverView } from "../gameOverView";
 import "./GameOver.css";
 
 export enum GameOverType {
@@ -9,21 +11,32 @@ export enum GameOverType {
   Continue = "Continue",
 }
 
+/**
+ * The game-over card over a dimmed board. The scrim takes no clicks, so the
+ * final position shows through it; only the card's buttons take clicks.
+ */
 export const GameOver = () => {
-  const { history, gameOver, flagFallWinner } = useAppSelector((state) => state.board);
+  const dispatch = useAppDispatch();
+  const board = useAppSelector((state) => state.board);
+  const match = useAppSelector((state) => state.match);
+  const view = gameOverView(board, match);
+  if (view === null) return null;
 
-  // Checkmate: the side to move lost. A flag fall stores its own winner.
-  const isWhiteTurn = history.length % 2 === 1;
-  const winner = flagFallWinner ?? (isWhiteTurn ? "Black" : "White");
-
-  return gameOver === GameOverType.Continue ? (
-    <></>
-  ) : (
+  return (
     <div className="game-over">
       <div className="game-over__card">
-        <p className="game-over__title">
-          {gameOver === GameOverType.Win ? `${winner} Win!` : "Draw!"}
-        </p>
+        <p className="game-over__title">{view.title}</p>
+        <p className="game-over__reason">{view.reason}</p>
+        <div className="game-over__actions">
+          {view.review && (
+            <a className="button button--play" href={hashFor("review")}>
+              Review game
+            </a>
+          )}
+          <button type="button" className="button" onClick={() => dispatch(gameOverNewGame(match.mode))}>
+            New game
+          </button>
+        </div>
       </div>
     </div>
   );
