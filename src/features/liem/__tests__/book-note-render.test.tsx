@@ -291,7 +291,7 @@ describe("the note's slot after he leaves his book", () => {
 
 // Today's markup, before `detail` existed.
 const TODAY =
-  '<div class="player"><div class="player__info"><span class="player__disc" aria-hidden="true">♚</span><div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div></div><div class="player__time" role="timer" aria-label="Clock for Le Quang Liem"><svg class="clock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="clock-icon__face" cx="12" cy="12" r="10.5"></circle><line class="clock-icon__hand" x1="12" y1="13.5" x2="12" y2="5" style="transform:rotate(0deg)"></line><circle class="clock-icon__pin" cx="12" cy="12" r="1.6"></circle></svg><span class="player__timer"><span class="player__timer-digit">1</span><span class="player__timer-digit">0</span><span class="player__timer-sep">:</span><span class="player__timer-digit">0</span><span class="player__timer-digit">0</span></span></div><span class="player__alert" role="alert"></span></div>';
+  '<div class="player"><div class="player__info"><span class="player__disc" aria-hidden="true">♚</span><div class="player__text"><div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div></div></div><div class="player__time" role="timer" aria-label="Clock for Le Quang Liem"><svg class="clock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="clock-icon__face" cx="12" cy="12" r="10.5"></circle><line class="clock-icon__hand" x1="12" y1="13.5" x2="12" y2="5" style="transform:rotate(0deg)"></line><circle class="clock-icon__pin" cx="12" cy="12" r="1.6"></circle></svg><span class="player__timer"><span class="player__timer-digit">1</span><span class="player__timer-digit">0</span><span class="player__timer-sep">:</span><span class="player__timer-digit">0</span><span class="player__timer-digit">0</span></span></div><span class="player__alert" role="alert"></span></div>';
 
 describe("Player", () => {
   it("player card detail", () => {
@@ -303,11 +303,11 @@ describe("Player", () => {
       store,
       <Player name="Le Quang Liem" title="GM" avatar={null} isWhite={false} detail={<i>extra</i>} />
     );
-    // Under the name: inside the name block, after the name text.
+    // Under the name: the name line is the title then the name, and the detail is on the second line.
     expect(withDetail).toContain(
-      '<div class="player__name"><span class="player__title">GM</span>Le Quang Liem<div class="player__detail"><i>extra</i></div></div>'
+      '<div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div><div class="player__sub"><div class="player__detail"><i>extra</i></div></div></div>'
     );
     // Everything else is the same.
-    expect(withDetail.replace('<div class="player__detail"><i>extra</i></div>', "")).toBe(TODAY);
+    expect(withDetail.replace('<div class="player__sub"><div class="player__detail"><i>extra</i></div></div>', "")).toBe(TODAY);
   });
 });

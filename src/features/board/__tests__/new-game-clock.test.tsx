@@ -178,4 +178,16 @@ describe("New game restarts the clocks", () => {
     await tick(50);
     expect(shown()).toBeGreaterThanOrEqual(599);
   });
+
+  it("the first tick after New game lands when the digits change", { timeout: 10_000 }, async () => {
+    const { store, shown } = await mountYourClock("white");
+    await tick(2100); // the old game's timer is due again at about 3000 ms
+    store.dispatch(replayLiemGame());
+    await tick(300);
+    // The new clock reads 09:59 a millisecond after it starts. The old game's timer would only
+    // show it at about 3000 ms, so the restart has to schedule its own first tick.
+    expect(shown()).toBe(599);
+    await tick(1000);
+    expect(shown()).toBe(598);
+  });
 });

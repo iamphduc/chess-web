@@ -138,5 +138,34 @@ describe("Player.css", () => {
     expect(glyphs).toMatch(/text-overflow:\s*ellipsis/);
     expect(glyphs).toMatch(/white-space:\s*nowrap/);
     expect(glyphs).toMatch(/min-width:\s*0/);
+    // His detail ("★ Book · N", "Thinking…") is never cut or wrapped either, and sits at the line's end.
+    const detail = bodyOf(all, ".player__detail");
+    expect(detail).toMatch(/flex:\s*none/);
+    expect(detail).toMatch(/white-space:\s*nowrap/);
+    expect(detail).toMatch(/margin-left:\s*auto/);
+  });
+
+  it("the second line sits 4 px under the name in a 56 px card", () => {
+    const all = rules(css());
+    const text = bodyOf(all, ".player__text");
+    expect(text).toMatch(/flex-direction:\s*column/);
+    expect(text).toMatch(/gap:\s*var\(--space-1\)/); // 4 px
+    expect(text).toMatch(/min-width:\s*0/);
+    // One reserved height, so the name line stays put when the material line appears.
+    expect(text).toMatch(/(^|[\s;])height:/);
+    expect(bodyOf(all, ".player__sub")).toMatch(/display:\s*flex/);
+    // The material box is the second line's own height (20 px), so its top is the 4 px gap.
+    expect(bodyOf(all, ".player__sub")).toMatch(/(^|[\s;])height:\s*var\(--text-title\)/);
+    const material = bodyOf(all, ".player__material");
+    expect(material).toMatch(/align-self:\s*stretch/);
+    expect(material).toMatch(/line-height:\s*1(;|\s|$)/);
+    const card = bodyOf(all, ".board > .player");
+    expect(card).toMatch(/(^|[\s;])height:\s*56px/);
+    expect(card).toMatch(/box-sizing:\s*border-box/);
+    // The two lines plus the gap fit inside the card's padding: 19.2 + 4 + 20 <= 56 - 2 * padding.
+    const pad = bodyOf(all, ".player").match(/padding:\s*var\(--space-(\d)\)/);
+    expect(pad).not.toBeNull();
+    const px = [0, 4, 8, 12, 16, 24, 32][Number(pad![1])];
+    expect(Math.ceil(16 * 1.2) + 4 + 20).toBeLessThanOrEqual(56 - 2 * px);
   });
 });

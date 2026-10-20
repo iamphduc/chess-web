@@ -54,24 +54,32 @@ const GLYPHS: Record<"white" | "black", Record<CapturedKind, string>> = {
   black: { queen: "♛", rook: "♜", bishop: "♝", knight: "♞", pawn: "♟" },
 };
 
-/** "+N" and the pieces this side has taken, drawn in the other side's color. */
-function Material({ isWhite }: { isWhite: boolean }) {
+/** What this side has taken, from the board. Both lists are empty before any capture. */
+function useMaterial(isWhite: boolean) {
   const engineHistory = useAppSelector((state) => state.board.engineHistory);
   const position = engineHistory[engineHistory.length - 1];
-  const { captured, advantage } = useMemo(
-    () => materialLine(position, isWhite ? "white" : "black"),
-    [position, isWhite]
-  );
-  if (captured.length === 0 && advantage === 0) return null;
+  return useMemo(() => materialLine(position, isWhite ? "white" : "black"), [position, isWhite]);
+}
+
+/** The pieces this side has taken, drawn in the other side's color, then "+N" when ahead. */
+function Material({
+  isWhite,
+  captured,
+  advantage,
+}: {
+  isWhite: boolean;
+  captured: CapturedKind[];
+  advantage: number;
+}) {
   const glyphs = GLYPHS[isWhite ? "black" : "white"];
   return (
     <span className="player__material" data-material={advantage}>
-      {advantage > 0 && <span className="player__advantage">{`+${advantage}`}</span>}
       {captured.length > 0 && (
         <span className="player__captured" role="img" aria-label={`Captured: ${captured.join(", ")}`}>
           {captured.map((kind) => glyphs[kind]).join("")}
         </span>
       )}
+      {advantage > 0 && <span className="player__advantage">{`+${advantage}`}</span>}
     </span>
   );
 }
@@ -97,6 +105,8 @@ export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) =
     (state) => state.board
   );
   const dispatch = useAppDispatch();
+  const { captured, advantage } = useMaterial(isWhite);
+  const hasMaterial = captured.length > 0 || advantage > 0;
 
   const isActive = isWhite === isWhiteClockTurn(history.length, pendingPromotion !== null);
   const gameContinues = gameOver === GameOverType.Continue;
@@ -157,12 +167,18 @@ export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) =
     <div className="player">
       <div className="player__info">
         <Avatar avatar={avatar} glyph={glyph} isWhite={isWhite} />
-        <div className="player__name">
-          {title && <span className="player__title">{title}</span>}
-          {name}
-          {detail != null && <div className="player__detail">{detail}</div>}
+        <div className="player__text">
+          <div className="player__name">
+            {title && <span className="player__title">{title}</span>}
+            {name}
+          </div>
+          {(hasMaterial || detail != null) && (
+            <div className="player__sub">
+              {hasMaterial && <Material isWhite={isWhite} captured={captured} advantage={advantage} />}
+              {detail != null && <div className="player__detail">{detail}</div>}
+            </div>
+          )}
         </div>
-        <Material isWhite={isWhite} />
       </div>
       {/* Only a running game has a running clock: once it ends, both show their final time. */}
       <PlayerClock remainingMs={shownMs} isActive={isActive && gameContinues} playerName={name} />

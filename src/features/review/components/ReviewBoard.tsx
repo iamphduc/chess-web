@@ -1,4 +1,5 @@
 import React, { type CSSProperties, useState } from "react";
+import { motion } from "framer-motion";
 
 import "features/board/components/Square.css";
 import "features/board/components/Piece.css";
@@ -14,6 +15,7 @@ import BKnight from "assets/knight-black.svg";
 import { Overlay, OverlayType } from "features/board/components/Overlay";
 import { checkedKingPieceType } from "features/board/engineAdapter";
 import { displayOrder, promotionPlacement, squareLabels } from "features/board/orientation";
+import { nextReviewStep, transitionFor, type ReviewStepShown } from "features/board/pieceMotion";
 import { squareMarks } from "features/board/squareMarks";
 import type { GameState } from "game/engine/game-state";
 import { pieceFactory } from "game/piece-factory";
@@ -21,6 +23,13 @@ import { choosePromotion, clickSquare, NO_SELECTION, targetsOf, type PromotionPi
 
 interface Props {
   state: GameState;
+  /**
+   * The game under review: its pieces get their own layout ids. Optional only because
+   * `review-card.test.tsx` (outside this slice) renders the board without it.
+   */
+  gameId?: number;
+  /** Which position `state` is, so a one-ply step can slide. Left out, nothing slides. */
+  ply?: number;
   flipped: boolean;
   /** Square size in px. */
   size: number;
@@ -45,9 +54,16 @@ const PROMOTION_CHOICES: { piece: PromotionPiece; label: string; white: string; 
 /**
  * A board for one position of the review, drawn like the game board. When
  * `interactive`, click a piece of the side to move and then a target to try a
- * move; a promotion asks for the piece. No drag.
+ * move; a promotion asks for the piece. No drag. A one-ply step slides its move;
+ * any other change of position snaps (`reviewStepMotion`).
  */
-export const ReviewBoard = ({ state, flipped, size, highlight, interactive, onMove }: Props) => {
+export const ReviewBoard = ({ state, gameId = 0, ply = 0, flipped, size, highlight, interactive, onMove }: Props) => {
+  // Derived during render (like `held` below), so the step and its motion land together.
+  const [shown, setShown] = useState<ReviewStepShown | null>(null);
+  const next = nextReviewStep(shown, { gameId, ply, flipped, size });
+  if (next !== shown) setShown(next);
+  const transition = transitionFor(next.motion);
+
   // The selection belongs to one position; a new position starts with none.
   const [held, setHeld] = useState<{ position: GameState; selection: TrySelection }>({
     position: state,
@@ -101,9 +117,16 @@ export const ReviewBoard = ({ state, flipped, size, highlight, interactive, onMo
         {marks.highlight && <Overlay type={OverlayType.Highlight} />}
         {marks.check && <Overlay type={OverlayType.Check} />}
         {pieceType && (
-          <div
+          <motion.div
+            // Its own element per piece: reusing the taker's element for the piece it
+            // took (◀ from a capture) makes Framer fade the returning piece out.
+            key={pieceType}
             className={`piece piece__${pieceType}`}
             style={{ backgroundImage: `url(${pieceFactory.getPiece(pieceType).getImage()})` }}
+            // Never the game board's `${gameId}-${pieceType}`, so the two boards share no box.
+            layoutId={`review-${gameId}-${pieceType}`}
+            data-layout-id={`review-${gameId}-${pieceType}`}
+            transition={transition}
           />
         )}
         {marks.hint === "dot" && <Overlay type={OverlayType.Dot} />}

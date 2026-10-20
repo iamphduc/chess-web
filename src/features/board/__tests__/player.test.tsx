@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { createAppStore, store } from "app/store";
 import { switchMode } from "features/liem/liemActions";
-import { clickSquare, resign, start } from "../BoardSlice";
+import { clickSquare, reset, resign, start } from "../BoardSlice";
 import { clockForPhase, msUntilNextTick, Player } from "../components/Player";
 import { initialClock, TOTAL_MS } from "../clock";
 import { gameEnd } from "../gameEnd";
@@ -36,7 +36,7 @@ describe("Player avatar", () => {
   it("image avatar unchanged", () => {
     const html = renderPlayer(<Player name="Le Quang Liem" title="GM" avatar="le-quang-liem.png" isWhite={false} />);
     expect(html).toMatch(
-      /^<div class="player"><div class="player__info"><img class="player__avatar" src="[^"]+" alt="Avatar" width="40" height="40"\/><div class="player__name"><span class="player__title">GM<\/span>Le Quang Liem<\/div><\/div>/
+      /^<div class="player"><div class="player__info"><img class="player__avatar" src="[^"]+" alt="Avatar" width="40" height="40"\/><div class="player__text"><div class="player__name"><span class="player__title">GM<\/span>Le Quang Liem<\/div><\/div><\/div>/
     );
     expect(html).not.toContain("player__disc");
   });
@@ -44,7 +44,7 @@ describe("Player avatar", () => {
   it("a glyph avatar takes the image's place, hidden from screen readers", () => {
     const html = renderPlayer(<Player name="Medium" title={null} avatar={null} glyph="♞" isWhite={false} />);
     expect(html).toContain(
-      '<div class="player__info"><span class="player__disc liem-sparring-avatar" aria-hidden="true">♞</span><div class="player__name">Medium</div></div>'
+      '<div class="player__info"><span class="player__disc liem-sparring-avatar" aria-hidden="true">♞</span><div class="player__text"><div class="player__name">Medium</div></div></div>'
     );
     expect(html).not.toContain("<img");
     expect(html).toContain('aria-label="Clock for Medium"');
@@ -53,7 +53,7 @@ describe("Player avatar", () => {
   it("color disc when no avatar", () => {
     const white = renderPlayer(<Player name="You" title={null} avatar={null} isWhite={true} />);
     expect(white).toContain(
-      '<div class="player__info"><span class="player__disc" aria-hidden="true">♔</span><div class="player__name">You</div></div>'
+      '<div class="player__info"><span class="player__disc" aria-hidden="true">♔</span><div class="player__text"><div class="player__name">You</div></div></div>'
     );
     expect(white).not.toContain("<img");
     const black = renderPlayer(<Player name="You" title={null} avatar={null} isWhite={false} />);
@@ -69,6 +69,7 @@ describe("Player avatar", () => {
     const props = { name: "Le Quang Liem", title: "GM", avatar: null, isWhite: false, nameMark: <b>★</b> };
     const html = renderPlayer(<Player {...props} />);
     expect(html).toContain('<div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div>');
+    expect(html).not.toContain("player__sub");
   });
 });
 
@@ -99,17 +100,55 @@ describe("material line", () => {
     expect(card(s, false)).not.toContain("player__material");
   });
 
-  it("+3 and the knight after White takes a knight, nothing for Black", () => {
+  it("the material line lists the pieces, then +N", () => {
     // 1.e4 Nf6 2.Nc3 Ng4 3.Qxg4
     const s = boardAfter("e2e4", "g8f6", "b1c3", "f6g4", "d1g4");
     expect(s.getState().board.engineHistory).toHaveLength(6); // all five moves were played
     const white = card(s, true);
     expect(white).toMatch(/<span class="player__material" data-material="3">/);
-    expect(white).toMatch(/<span class="player__advantage">\+3<\/span>/);
-    expect(white).toMatch(/class="player__captured"[^>]*>♞<\/span>/);
-    // it sits beside the name, after it
-    expect(white.indexOf("player__material")).toBeGreaterThan(white.indexOf("player__name"));
+    expect(white).toMatch(
+      /<span class="player__material" data-material="3"><span class="player__captured"[^>]*>♞<\/span><span class="player__advantage">\+3<\/span><\/span>/
+    );
     expect(card(s, false)).not.toContain("player__material");
+  });
+
+  it("the material line sits under the name", () => {
+    const s = boardAfter("e2e4", "g8f6", "b1c3", "f6g4", "d1g4");
+    const white = card(s, true);
+    // In the block that holds the name, after the name line, and before the clock.
+    expect(white).toMatch(
+      /<div class="player__text"><div class="player__name">White<\/div><div class="player__sub"><span class="player__material"/
+    );
+    expect(white.indexOf("player__material")).toBeLessThan(white.indexOf("player__time"));
+    expect(white).not.toMatch(/<div class="player__name">[^]*?player__material[^]*?<\/div><div class="player__sub"/);
+  });
+
+  it("with a detail, the material comes first on the second line", () => {
+    const s = boardAfter("e2e4", "g8f6", "b1c3", "f6g4", "d1g4");
+    const html = renderToStaticMarkup(
+      <Provider store={s}>
+        <Player name="White" title={null} avatar={null} isWhite={true} detail={<i>extra</i>} />
+      </Provider>
+    );
+    expect(html).toMatch(
+      /<div class="player__sub"><span class="player__material"[^>]*>[^]*<\/span><div class="player__detail"><i>extra<\/i><\/div><\/div>/
+    );
+    // No material: the detail shows alone on the second line.
+    const alone = renderToStaticMarkup(
+      <Provider store={boardAfter()}>
+        <Player name="White" title={null} avatar={null} isWhite={true} detail={<i>extra</i>} />
+      </Provider>
+    );
+    expect(alone).toContain('<div class="player__sub"><div class="player__detail"><i>extra</i></div></div>');
+    expect(alone).not.toContain("player__material");
+  });
+
+  it("a new game clears the material line", () => {
+    const s = boardAfter("e2e4", "g8f6", "b1c3", "f6g4", "d1g4");
+    expect(card(s, true)).toContain("player__material");
+    s.dispatch(reset());
+    expect(card(s, true)).not.toContain("player__material");
+    expect(card(s, true)).not.toContain("player__sub");
   });
 
   it("an equal trade lists the captures with no +N", () => {
@@ -119,6 +158,7 @@ describe("material line", () => {
     const black = card(s, false);
     expect(white).toMatch(/data-material="0"/);
     expect(white).toMatch(/class="player__captured"[^>]*>♟<\/span>/);
+    expect(white).not.toContain("player__advantage");
     expect(black).toMatch(/class="player__captured"[^>]*>♙<\/span>/);
     expect(white + black).not.toContain("player__advantage");
   });
