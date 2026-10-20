@@ -15,7 +15,8 @@ import { toggleFlip } from "../viewSlice";
 import type { LiemOpponent } from "features/liem/opponentController";
 import { createLiemController, liemGameId, syncLiemTurn } from "features/liem/useLiemOpponent";
 import { backToGame, openReview } from "features/review/reviewActions";
-import { clickSquare, playOpponentMove, reset, start } from "../BoardSlice";
+import { clickSquare, playOpponentMove, reset, resign, start } from "../BoardSlice";
+import { gameEnd } from "../gameEnd";
 import { Board } from "../Board";
 import { avatarSrc } from "../components/avatar";
 import { players } from "../../../game/players";
@@ -221,6 +222,7 @@ describe("board modes", () => {
     expect(playerNames(board.slice(squaresAt))).toEqual([white.name]);
 
     expect(footLabels(html)).toEqual(["Play", "New game", "Flip board", "Sound"]);
+    expect(html).not.toMatch(/resign-button/);
     expect(html).not.toMatch(/data-book-state=/);
     expect(html).not.toMatch(/href="#\/review"/);
 
@@ -238,6 +240,31 @@ describe("board modes", () => {
     expect(after.gameId).toBe(before + 1);
     expect(store.getState().match.mode).toBe("two-player");
     expect(scoresheetRows(render(store))).toEqual([]);
+
+    // Clocks running: Play hides and Resign sits after New game.
+    store.dispatch(start());
+    const running = render(store);
+    expect(footLabels(running)).toEqual(["New game", "Resign", "Flip board", "Sound"]);
+    expect(divWithClass(movesCard(running), "card__foot")).toContain(
+      '<button type="button" class="button resign-button">Resign</button>'
+    );
+
+    // Over after a resign: New game, Flip and Sound.
+    store.dispatch(resign());
+    expect(gameEnd(store.getState().board)?.reason).toBe("resigned");
+    expect(footLabels(render(store))).toEqual(["New game", "Flip board", "Sound"]);
+
+    // New game brings Play back.
+    store.dispatch(reset());
+    expect(footLabels(render(store))).toEqual(["Play", "New game", "Flip board", "Sound"]);
+
+    // Over by a mate played without Play (clocks never ran): no Play, no Resign.
+    for (const [from, to] of [["f2", "f3"], ["e7", "e5"], ["g2", "g4"], ["d8", "h4"]]) {
+      store.dispatch(clickSquare(sq(from)));
+      store.dispatch(clickSquare(sq(to)));
+    }
+    expect(gameEnd(store.getState().board)?.reason).toBe("checkmate");
+    expect(footLabels(render(store))).toEqual(["New game", "Flip board", "Sound"]);
   });
 
   it("sparring and Liem cards", () => {
@@ -318,10 +345,30 @@ describe("board modes", () => {
   });
 
   it("moves card foot", () => {
-    // Mid-game: New game, Flip and Sound; no Review game.
+    // Mid-game, on his turn too: New game, Resign, Flip and Sound; no Review game.
     const mid = render(liemGameAs("black"));
-    expect(footLabels(mid)).toEqual(["New game", "Flip board", "Sound"]);
+    expect(footLabels(mid)).toEqual(["New game", "Resign", "Flip board", "Sound"]);
     expect(mid).not.toMatch(/href="#\/review"/);
+    expect(divWithClass(movesCard(mid), "card__foot")).toContain(
+      '<button type="button" class="button resign-button">Resign</button>'
+    );
+
+    // A resign before your first move: over, with nothing to review.
+    const early = liemGameAs("white");
+    early.dispatch(resign());
+    expect(footLabels(render(early))).toEqual(["New game", "Flip board", "Sound"]);
+
+    // A resign after a move of yours: Review game shows.
+    const resigned = liemGameAs("white");
+    resigned.dispatch(clickSquare(sq("e2")));
+    resigned.dispatch(clickSquare(sq("e4")));
+    resigned.dispatch(resign());
+    expect(gameEnd(resigned.getState().board)).toEqual({ winner: "black", reason: "resigned" });
+    expect(footLabels(render(resigned))).toEqual(["Review game", "New game", "Flip board", "Sound"]);
+
+    // New game from there: in progress again.
+    resigned.dispatch(replayLiemGame());
+    expect(footLabels(render(resigned))).toEqual(["New game", "Resign", "Flip board", "Sound"]);
 
     // After a finished game with a move of yours: Review game first, a link to #/review.
     const done = render(finishedLiemGame());
