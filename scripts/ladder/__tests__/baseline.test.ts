@@ -2,7 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   BaselineFile,
+  mergeBaseline,
   parseArgs,
+  parseExistingBaseline,
   runBaseline,
   serializeBaseline,
   SPARRING_LEVELS,
@@ -196,5 +198,56 @@ describe("committed baselines", () => {
         expect(typeof level.rates.per40.review[g as "mistake"]).toBe("number");
       }
     }
+  });
+});
+
+describe("mergeBaseline", () => {
+  const lvl = (games: number) => ({ games }) as unknown as BaselineFile["levels"]["1400"];
+  const file = (generated: string, levels: BaselineFile["levels"]): BaselineFile => ({
+    format: 1,
+    generated,
+    source: "src",
+    skipPlies: 10,
+    levels,
+  });
+
+  it("keeps unmeasured levels and replaces measured ones", () => {
+    const old = file("2026-10-18", { "1400": lvl(1), "1700": lvl(2), "2500": lvl(3) });
+    const run = file("2026-10-20", { "1700": lvl(99) });
+    const merged = mergeBaseline(old, run);
+    expect(merged.levels).toEqual({ "1400": lvl(1), "1700": lvl(99), "2500": lvl(3) });
+    expect(merged.generated).toBe("2026-10-20");
+  });
+
+  it("keeps an old level when the run kept no games for it", () => {
+    const old = file("2026-10-18", { "1400": lvl(1) });
+    expect(mergeBaseline(old, file("2026-10-20", {})).levels).toEqual({ "1400": lvl(1) });
+  });
+
+  it("writes levels in ascending order whatever order they arrive in", () => {
+    const old = file("2026-10-18", { "2500": lvl(3), "1400": lvl(1) });
+    const run = file("2026-10-20", { "1900": lvl(2), "1700": lvl(2) });
+    expect(Object.keys(mergeBaseline(old, run).levels)).toEqual(["1400", "1700", "1900", "2500"]);
+  });
+
+  it("starts from the run alone when there is no existing file", () => {
+    const run = file("2026-10-20", { "2300": lvl(5), "1400": lvl(4) });
+    const merged = mergeBaseline(null, run);
+    expect(Object.keys(merged.levels)).toEqual(["1400", "2300"]);
+    expect(merged.generated).toBe("2026-10-20");
+  });
+});
+
+describe("parseExistingBaseline", () => {
+  it("returns null for missing, broken or wrong-shaped text", () => {
+    expect(parseExistingBaseline(null)).toBeNull();
+    expect(parseExistingBaseline("{ nope")).toBeNull();
+    expect(parseExistingBaseline('{"format":2,"levels":{}}')).toBeNull();
+    expect(parseExistingBaseline('{"format":1,"levels":[]}')).toBeNull();
+  });
+
+  it("reads a good file", () => {
+    const text = serializeBaseline({ format: 1, generated: "d", source: "s", skipPlies: 10, levels: {} });
+    expect(parseExistingBaseline(text)?.generated).toBe("d");
   });
 });
