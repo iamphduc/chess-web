@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { describe, expect, it } from "vitest";
 
+import { matchSlice } from "features/liem/matchSlice";
 import { boardSlice, movePiece, promotePawn, reset, selectPiece, start, stop } from "../BoardSlice";
 import { GameOver, GameOverType } from "../components/GameOver";
 import { Player } from "../components/Player";
@@ -34,7 +35,11 @@ function whitePickingPromotion(): BoardState {
 }
 
 function render(board: BoardState, node: React.ReactElement): string {
-  const store = configureStore({ reducer: { board: reducer }, preloadedState: { board } });
+  const match = { ...matchSlice.reducer(undefined, { type: "@@INIT" }), mode: "two-player" as const, setupOpen: false };
+  const store = configureStore({
+    reducer: { board: reducer, match: matchSlice.reducer },
+    preloadedState: { board, match },
+  });
   return renderToStaticMarkup(<Provider store={store}>{node}</Provider>);
 }
 
@@ -64,19 +69,21 @@ describe("clocks while the promotion picker is open", () => {
     // Player.tsx dispatches stop() when the running (White's) clock reaches 0.
     let s = reducer(whitePickingPromotion(), stop());
     expect(s.gameOver).toBe(GameOverType.Win);
-    expect(render(s, <GameOver />)).toContain("Black Win!");
+    // The card waits for the pick, so the picker can still be clicked.
+    expect(render(s, <GameOver />)).toBe("");
 
     // Promotion after the flag fall stays allowed; the result does not change.
     s = reducer(s, promotePawn({ piecePromoted: PiecePromoted.Queen }));
     expect(s.notation[s.notation.length - 1]).toBe("hxg8=Q");
-    expect(render(s, <GameOver />)).toContain("Black Win!");
+    expect(render(s, <GameOver />)).toContain('<p class="game-over__title">Black wins</p>');
+    expect(render(s, <GameOver />)).toContain('<p class="game-over__reason">On time</p>');
   });
 
   it("a flag fall without a picker is still the side to move's loss", () => {
     let s = reducer(reducer(undefined, { type: "@@INIT" }), start());
     s = move(s, PieceType.WhitePawnH, [6, 7], [4, 7]); // h4, Black's clock runs
     s = reducer(s, stop());
-    expect(render(s, <GameOver />)).toContain("White Win!");
+    expect(render(s, <GameOver />)).toContain('<p class="game-over__title">White wins</p>');
   });
 
   it("reset clears a flag-fall result", () => {

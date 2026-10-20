@@ -56,14 +56,42 @@ describe("board CSS", () => {
     expect(last(declsFor(css, ".promotion__piece:hover"), "background-color")).toBe("var(--surface-2)");
   });
 
-  it("game-over notice is a card with a 20px title", () => {
+  it("game-over card dims the board", () => {
     const css = read("GameOver.css");
+    expect(lookViolations(css)).toEqual([]);
+
+    const scrim = declsFor(css, ".game-over");
+    expect(last(scrim, "background-color")).toBe("var(--game-over-scrim)");
+    expect(last(scrim, "pointer-events")).toBe("none");
+
     const card = declsFor(css, ".game-over__card");
+    expect(last(card, "pointer-events")).toBe("auto");
     expect(last(card, "background-color")).toBe("var(--surface)");
     expect(last(card, "border")).toBe("1px solid var(--line)");
     expect(last(card, "border-radius")).toBe("var(--radius)");
+    expect(last(card, "padding")).toBe("var(--space-5)");
+    expect(token("--space-5")).toBe("24px");
+
     const title = declsFor(css, ".game-over__title");
     expect(last(title, "font-size")).toBe("var(--text-title)");
     expect(last(title, "color")).toBe("var(--ink)");
+    const reason = declsFor(css, ".game-over__reason");
+    expect(last(reason, "font-size")).toBe("var(--text-body)");
+    expect(last(reason, "color")).toBe("var(--soft)");
+
+    const actions = declsFor(css, ".game-over__actions");
+    expect(last(actions, "display")).toBe("flex");
+    expect(last(actions, "flex-wrap")).toBe("wrap");
+    expect(last(actions, "gap")).toBe("var(--space-2)");
+    expect(token("--space-2")).toBe("8px");
+
+    // Tokens only: every color, size and space is a var(), never a literal (a 1px border aside).
+    for (const { selector } of rules(css)) {
+      for (const [prop, value] of declsFor(css, selector)) {
+        if (/color|background|border$|font-size|padding|margin|gap/.test(prop)) {
+          expect(value, `${selector} ${prop}`).not.toMatch(/#[0-9a-f]{3,6}\b|rgba?\(|\b([2-9]|\d{2,})px\b/i);
+        }
+      }
+    }
   });
 });
