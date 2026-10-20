@@ -1,7 +1,7 @@
 # Sprint: polish
 
 _From plan: pod-docs/plans/ui-polish.md · Slug: polish · Status: active · Generated: 2026-10-20_
-<!-- autopilot-run: started=2026-10-20T06:21:43Z sprints=0 waves=3 -->
+<!-- autopilot-run: started=2026-10-20T06:21:43Z sprints=1 waves=3 -->
 
 ## Status board
 
@@ -12,8 +12,8 @@ _From plan: pod-docs/plans/ui-polish.md · Slug: polish · Status: active · Gen
 | 1 | E1 | Game end: resign action and how the game ended | polish-E1 | #88 | merged | medium | — |
 | 2 | R1 | Resign button with a 3 s Confirm in the Moves card foot | polish-R1 | #89 | merged | medium | L1, E1 |
 | 2 | G1 | Game-over card over a dimmed board | polish-G1 | #89 | merged | medium | L1, E1 |
-| 3 | P1 | Calmer player cards: color discs, fixed clocks, no out-of-book note | polish-P1 | — | in-progress | — | L1 |
-| 3 | V1 | Review sidebar: key moment, summary, Moves | polish-V1 | — | in-progress | — | L1 |
+| 3 | P1 | Calmer player cards: color discs, fixed clocks, no out-of-book note | polish-P1 | #90 | merged | medium | L1 |
+| 3 | V1 | Review sidebar: key moment, summary, Moves | polish-V1 | #90 | merged | medium | L1 |
 
 P1 sits in wave 3 only because it shares `board-modes.test.tsx` with R1. V1 sits in wave 3 because it shares `Board.tsx` with R1.
 
@@ -244,3 +244,20 @@ P1 sits in wave 3 only because it shares `board-modes.test.tsx` with R1. V1 sits
 - **Depends on:** L1
 - **One-way door:** none
 - **Model:** opus
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date (`ui-polish-staging` was cut from main at the plan's start; no new commits)
+- **Slices shipped:** L1, S1, E1, R1, G1, P1, V1
+- **Queue entries:** resolved 4 (2026-10-19 Moves card foot wrap at 1400 px, fixed by R1; review title cut at 375 px, fixed by V1; the `ReviewTopBar` copy, removed by V1's `TopBar` action prop; the long "Left his book" list, now one line), deferred 4 — the flaky `new-game-clock` test, the `GameOverType` import cycle, the "found" rule question, and the other refresh leftovers (all in `pod-docs/handoff-queue.md`)
+- **Slice log:**
+  - L1: opus · high · test-first yes · runtime body 600 and the 600 font file at 1400/375 · 3 NOTEs · time lost none
+  - S1: opus · medium · test-first yes · runtime scrollY before/after moves in every mode at 1400/375, cause proven with scroll-call logs · 1 PENDING (scroll anchoring, fixed in the wave fix) + 5 NOTEs · time lost none
+  - E1: opus · medium · test-first yes · runtime fool's mate and a book reply (resign has no UI yet) · 3 NOTEs · time lost none
+  - Wave 1 fix: opus · medium · `body { overflow-anchor: none }` · runtime scrollY 231 → 231 at 375 px
+  - R1: opus · medium · test-first yes · runtime every foot state at 1400/992/375, resign in both modes · 5 NOTEs · time lost none (one gate-1 exception: `board-review.test.tsx` added to its files)
+  - G1: opus · medium · test-first yes · runtime mate, time and New game from the card at 1400/375 · 3 PENDINGs (import cycle queued; stray log outside the repo; features row, updated by the orchestrator) + 4 NOTEs · time lost none
+  - P1: opus · medium · test-first yes · runtime both modes, 22 clock ticks, resign and mate with no running clock, 375 px · 1 PENDING (one-line fix in an unowned test helper) + 4 NOTEs · time lost none
+  - V1: opus · medium · test-first yes · runtime full review at 1400/992/375 · 3 PENDINGs (docs outside its files, updated by the orchestrator) + 5 NOTEs · time lost one 90 s eval timeout
+  - Stalls: none
+- **Agent context at hand-back:** about 1.47M tokens (sum of each agent's final context size, not tokens billed)
