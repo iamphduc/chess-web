@@ -1,17 +1,17 @@
 /*
  * The player card (plan ui-refresh, ## Look; plan ui-polish, draft section 1): the photo or
- * the color disc, the name with its "+N" line, and the clock pill. Tokens only, from src/index.css.
+ * the color disc, the name with its material line under it, and the clock pill. Tokens only, from src/index.css.
  */
 .player {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-2) 0;
+  padding: var(--space-1) 0;
   color: var(--ink);
 }
 
-/* The avatar, the name block and the material line. The name and the glyphs give way first. */
+/* The avatar and the text column (the name line, then the material line). */
 .player__info {
   display: flex;
   flex-grow: 1;
@@ -41,12 +41,23 @@
   user-select: none;
 }
 
+/* The name line and the second line, 4 px apart. The height is the two lines plus the gap and
+   never changes, so the name stays put when the second line appears: 16 px * 1.2, 4 px, 20 px. */
+.player__text {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  height: 44px;
+}
+
 .player__name {
   min-width: 0;
   overflow: hidden;
   font-size: var(--text-body);
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -62,16 +73,28 @@
   border-radius: var(--radius);
 }
 
-/* "+N" and the pieces taken, in soft ink, filling the room up to the clock. "+N" is never
-   cut; the glyphs end in an ellipsis. */
+/* The second line: the pieces taken and "+N" first, then his detail at the end. */
+.player__sub {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  height: var(--text-title);
+}
+
+/* The pieces taken, then "+N", in soft ink, next to each other, with his detail at the far end. "+N" is never
+   cut; the glyphs end in an ellipsis. min-width: 0 lets the box shrink below the full glyph row,
+   so the glyphs (not "+N" or the detail) give way. No overflow here, so "+N" is never clipped. */
 .player__material {
   display: flex;
-  flex-grow: 1;
-  align-items: baseline;
+  flex: 0 1 auto;
+  min-width: 0;
+  align-items: center;
+  align-self: stretch;
   gap: var(--space-1);
   font-size: var(--text-small);
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1;
   color: var(--soft);
 }
 
@@ -81,10 +104,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* No width of its own: the glyphs fill what the name leaves, so they give way first. */
+/* "+N" sits right after the glyphs. When the line is short the glyphs shrink first (ellipsis). */
 .player__captured {
-  flex-grow: 1;
-  width: 0;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   font-size: var(--text-title);
@@ -94,9 +116,11 @@
   text-overflow: ellipsis;
 }
 
-/* On his two-line card, the material line sits on the name's line. */
-.player:has(.player__detail:not(:empty)) .player__material {
-  align-self: flex-start;
+/* His "★ Book · N" or "Thinking…": at the line's end, never cut or wrapped. */
+.player__detail {
+  flex: none;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 /* Clock pill: colors only from the --clock-* tokens in src/index.css. One fixed box (the
@@ -192,21 +216,16 @@
 
 /*
  * The cards above and below the board keep one height in every mode, so the
- * board never moves. Plain cards are 56 px (a 40 px avatar plus padding); his
- * card fits the same by keeping its detail to one tight line.
+ * board never moves. Every card is 56 px: a 4 px pad, the 44 px text column and a 4 px pad.
  */
 .board > .player {
   height: 56px;
   box-sizing: border-box;
 }
 
-.board > .player:has(.player__detail:not(:empty)) .player__name {
-  line-height: 1.2;
-}
-
 .board > .player .liem-detail {
   flex-wrap: nowrap;
-  margin-top: 1px;
+  margin-top: 0;
   line-height: 1.2;
 }
 
