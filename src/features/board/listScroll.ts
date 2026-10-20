@@ -10,7 +10,15 @@ export interface RowSpan {
   height: number;
 }
 
-/** Not built yet (test first). */
-export function listScrollTop(_view: ListView, _last: RowSpan | null): number {
-  return 0;
+/**
+ * The box's new `scrollTop` so the last row shows. A row below the view (or cut off by
+ * its bottom) lands at the box bottom; a row above the view lands at the box top; a row
+ * in view leaves the box where it is. An empty list (`null`, a new game) goes back to 0.
+ */
+export function listScrollTop(view: ListView, last: RowSpan | null): number {
+  if (last === null) return 0;
+  const bottom = last.top + last.height;
+  if (bottom > view.scrollTop + view.height) return Math.max(0, bottom - view.height);
+  if (last.top < view.scrollTop) return Math.max(0, last.top);
+  return view.scrollTop;
 }

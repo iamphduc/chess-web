@@ -215,9 +215,9 @@ describe("listScrollTop keeps the last row in view", () => {
 describe("Notation scrolls only its own box", () => {
   it("a move scrolls only the move list", { timeout: 10_000 }, async () => {
     const { you, him, box, pageScrolls, otherScrolled } = await mountNotation();
-    for (const [i, [from, to]] of GAME.entries()) {
-      if (i % 2 === 0) you(from, to);
-      else him(from, to);
+    for (let i = 0; i < GAME.length; i++) {
+      if (i % 2 === 0) you(...GAME[i]);
+      else him(...GAME[i]);
       await tick(20);
     }
     expect(pageScrolls()).toBe(0);
