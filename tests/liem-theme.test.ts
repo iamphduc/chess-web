@@ -102,22 +102,26 @@ describe("liem theme", () => {
     expect(css("Board.css")).not.toMatch(/\.player\b/);
     expect(rules(outsideMedia(playerCss())).some((r) => r.selector.startsWith(".board > .player"))).toBe(true);
 
-    // The ♞ avatar sits on the raised cream.
-    const avatar = declsFor(liemCss(), ".liem-sparring-avatar");
-    expect(last(avatar, "background-color")).toBe("var(--surface-2)");
-    expect(last(avatar, "color")).toBe("var(--ink)");
+    // Every disc (♔, ♚ and his ♞) is 40 px, on the raised cream with an ink glyph.
+    const disc = declsFor(playerCss(), ".player__disc");
+    expect(last(disc, "width")).toBe("40px");
+    expect(last(disc, "height")).toBe("40px");
+    expect(last(disc, "background-color")).toBe("var(--surface-2)");
+    expect(last(disc, "color")).toBe("var(--ink)");
+    expect(last(disc, "border-radius")).toBe("50%");
+    expect(last(disc, "flex-shrink") ?? last(disc, "flex")).toMatch(/^(0|none)$/);
+    // His ♞ adds no look of its own: it is the same disc.
+    expect(declsFor(liemCss(), ".liem-sparring-avatar")).toEqual([]);
+    expect(declsFor(playerCss(), ".liem-sparring-avatar")).toEqual([]);
 
     // "★ Book · N": ink text with an ochre border.
     const badge = declsFor(liemCss(), ".liem-badge");
     expect(last(badge, "color")).toBe("var(--ink)");
     expect(last(badge, "border")).toBe("1px solid var(--gold)");
 
-    // The Stockfish pill: soft text, a hairline border, and the badge's outer size.
-    const pill = declsFor(liemCss(), ".liem-badge--engine");
-    expect(last(pill, "color")).toBe("var(--soft)");
-    expect(last(pill, "border-color")).toBe("var(--line)");
-    for (const p of ["padding", "border-width", "border", "height", "font-size", "border-radius"]) {
-      expect(last(pill, p), `the pill keeps the badge's ${p}`).toBeUndefined();
+    // No Stockfish pill, no out-of-book edge and no openings line any more.
+    for (const file of Object.keys(FILES) as (keyof typeof FILES)[]) {
+      expect(css(file), file).not.toMatch(/\.liem-badge--engine|\.liem-note--out|\.liem-detail__(lead|short)/);
     }
 
     // The book note looks like a card, with a 3px ochre edge, red ink out of book, and ochre bars.
@@ -129,7 +133,6 @@ describe("liem theme", () => {
     expect(last(note, "border-left")).toBe("3px solid var(--gold)");
     const order = note.map(([p]) => p);
     expect(order.lastIndexOf("border-left"), "the edge comes after the border").toBeGreaterThan(order.lastIndexOf("border"));
-    expect(last(declsFor(liemCss(), ".liem-note--out"), "border-left-color")).toBe("var(--accent)");
     expect(last(declsFor(liemCss(), ".liem-note__bar"), "background-color")).toBe("var(--gold)");
 
     // The GM tag: red ink with cream text.
@@ -137,16 +140,11 @@ describe("liem theme", () => {
     expect(last(gm, "background-color")).toBe("var(--accent)");
     expect(last(gm, "color")).toBe("var(--surface)");
 
-    // The phone rules still hide "Plays " / "GM · " and the badge count below 768px, and only there.
+    // Below 768px the badge reads just "★ Book": the count is hidden from sight, still read out.
     const card = ".board > .player";
     const phone = mediaBlocks(playerCss(), /max-width:\s*767px/);
-    expect(visuallyHidden(declsFor(phone, `${card} .liem-detail__lead`)), "lead hidden on phones").toBe(true);
     expect(visuallyHidden(declsFor(phone, `${card} .liem-badge__count`)), "count hidden on phones").toBe(true);
-    expect(visuallyHidden(declsFor(phone, `${card} .liem-detail__short`)), "short part stays").toBe(false);
-    const wide = outsideMedia(playerCss());
-    for (const part of [".liem-detail__lead", ".liem-detail__short", ".liem-badge__count"]) {
-      expect(visuallyHidden(declsFor(wide, `${card} ${part}`)), `${part} shows from 768px`).toBe(false);
-    }
+    expect(visuallyHidden(declsFor(outsideMedia(playerCss()), `${card} .liem-badge__count`)), "count shows from 768px").toBe(false);
   });
 
   it("the badge's star is an ochre shape", () => {
@@ -162,8 +160,8 @@ describe("liem theme", () => {
     expect(gmBack ?? "<unset>", "GM tag fill is a token").toMatch(/^var\(--[\w-]+\)$/);
     expect(contrast(resolve(gmInk!), resolve(gmBack!))).toBeGreaterThanOrEqual(4.5);
 
-    // The badge, the pill and "Thinking…" have no fill of their own: they read on the page and on a card.
-    for (const sel of [".liem-badge", ".liem-badge--engine", ".liem-detail__thinking", ".liem-detail__sub"]) {
+    // The badge and "Thinking…" have no fill of their own: they read on the page and on a card.
+    for (const sel of [".liem-badge", ".liem-detail__thinking"]) {
       const d = [...declsFor(liemCss(), sel), ...declsFor(css("BookNote.css"), sel)];
       const fg = resolve(last(d, "color") ?? last(declsFor(liemCss(), ".liem-badge"), "color")!);
       const bg = last(d, "background-color");

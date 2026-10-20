@@ -5,17 +5,18 @@ export interface PlayerInfo {
   avatar: string | null;
 }
 
+/** The two sides in Two players: named for their color, each with its color disc (no photo). */
 export const players: [PlayerInfo, PlayerInfo] = [
   {
-    name: "Me",
+    name: "White",
     title: null,
     isWhite: true,
     avatar: null,
   },
   {
-    name: "Le Quang Liem",
-    title: "GM",
+    name: "Black",
+    title: null,
     isWhite: false,
-    avatar: "le-quang-liem.png",
+    avatar: null,
   },
 ];

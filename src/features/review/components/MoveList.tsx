@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef, useState } from "react";
 
 import "./MoveList.css";
 import type { Grade, ReviewModel, ReviewMove } from "game/review/types";
+import { LeftBookNote } from "./LeftBookNote";
 
 export const GRADE_MARK: Record<Grade, string> = { inaccuracy: "?!", mistake: "?", blunder: "??" };
 
@@ -165,8 +166,8 @@ interface Props {
 }
 
 /**
- * The game's moves by move number with their grade marks. The plies in his book
- * fold into one "In his book" row, which opens on a click or when the selected
+ * The game's moves by move number with their grade marks, under one line on
+ * where the game left his book. The plies in his book fold into one "In his book" row, which opens on a click or when the selected
  * move is inside it.
  */
 export const MoveList = ({ model, cursor, onSelect }: Props) => {
@@ -202,6 +203,7 @@ export const MoveList = ({ model, cursor, onSelect }: Props) => {
 
   return (
     <div className="move-list scoresheet" ref={listRef} aria-label="Moves">
+      <LeftBookNote model={model} />
       {bookPlies > 0 && (
         <div className="move-list__fold">
           <button

@@ -107,6 +107,21 @@ describe("Player.css", () => {
     expect(still?.body).toMatch(/transform:\s*none\s*!important/);
   });
 
+  it("clock keeps one width", () => {
+    const all = rules(css());
+    const box = bodyOf(all, ".player__time");
+    // A fixed box (the draft's 112 px), so 10:00, 09:59, 0:59 and the tenths never move it.
+    expect(box).toMatch(/(^|[\s;])width:\s*112px/);
+    expect(box).toMatch(/(^|[\s;])flex:\s*none/);
+    expect(box).toMatch(/font-variant-numeric:\s*tabular-nums/);
+    expect(box).not.toMatch(/min-width|max-width/);
+    expect(bodyOf(all, ".player__timer")).toMatch(/font-variant-numeric:\s*tabular-nums/);
+    // No rule elsewhere (a phone query, a state) changes its width.
+    for (const r of all.filter((x) => /\.player__time/.test(x.selector) && x.selector !== ".player__time")) {
+      expect(r.body, r.selector).not.toMatch(/(^|[\s;])(min-|max-)?width\s*:/);
+    }
+  });
+
   it("the material line never cuts +N", () => {
     const all = rules(css());
     const material = bodyOf(all, ".player__material");

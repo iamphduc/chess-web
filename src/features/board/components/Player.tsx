@@ -24,10 +24,11 @@ interface Props {
   name: string;
   title: string | null;
   avatar: string | null;
-  /** A glyph shown in place of the avatar image, such as the sparring bot's ♞. */
+  /** The glyph on the disc in place of a photo, such as the sparring bot's ♞. Without it (and
+   * without a photo) the disc shows the side's king: ♔ for White, ♚ for Black. */
   glyph?: string;
   isWhite: boolean;
-  /** Extra lines under the name, such as his strength and Book badge. */
+  /** A line under the name, such as his Book badge or "Thinking…". */
   detail?: ReactNode;
 }
 
@@ -78,6 +79,17 @@ function Material({ isWhite }: { isWhite: boolean }) {
 /** Delay until the shown value next changes: the next whole second (1000) or tenth (100). */
 export function msUntilNextTick(ms: number, interval: number): number {
   return (ms % interval) + 1;
+}
+
+/** The photo when there is one, else a 40 px disc with `glyph` or the side's king. */
+function Avatar({ avatar, glyph, isWhite }: { avatar: string | null; glyph?: string; isWhite: boolean }) {
+  const src = glyph ? null : getAvatarSrc(avatar);
+  if (src) return <img className="player__avatar" src={src} alt="Avatar" width={40} height={40} />;
+  return (
+    <span className={glyph ? "player__disc liem-sparring-avatar" : "player__disc"} aria-hidden="true">
+      {glyph ?? (isWhite ? "♔" : "♚")}
+    </span>
+  );
 }
 
 export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) => {
@@ -144,13 +156,7 @@ export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) =
   return (
     <div className="player">
       <div className="player__info">
-        {glyph ? (
-          <span className="liem-sparring-avatar" aria-hidden="true">
-            {glyph}
-          </span>
-        ) : (
-          <img className="player__avatar" src={getAvatarSrc(avatar)} alt="Avatar" width={40} height={40} />
-        )}
+        <Avatar avatar={avatar} glyph={glyph} isWhite={isWhite} />
         <div className="player__name">
           {title && <span className="player__title">{title}</span>}
           {name}
@@ -158,7 +164,8 @@ export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) =
         </div>
         <Material isWhite={isWhite} />
       </div>
-      <PlayerClock remainingMs={shownMs} isActive={isActive} playerName={name} />
+      {/* Only a running game has a running clock: once it ends, both show their final time. */}
+      <PlayerClock remainingMs={shownMs} isActive={isActive && gameContinues} playerName={name} />
     </div>
   );
 };

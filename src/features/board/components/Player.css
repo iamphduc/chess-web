@@ -1,6 +1,6 @@
 /*
- * The player card (plan ui-refresh, ## Look): the avatar, the name with its "+N" line,
- * and the clock pill. Tokens only, from src/index.css.
+ * The player card (plan ui-refresh, ## Look; plan ui-polish, draft section 1): the photo or
+ * the color disc, the name with its "+N" line, and the clock pill. Tokens only, from src/index.css.
  */
 .player {
   display: flex;
@@ -24,6 +24,21 @@
   flex: none;
   object-fit: cover;
   border-radius: 50%;
+}
+
+/* The disc in place of a photo: ♔, ♚ or his ♞, all the same 40 px circle on the raised cream. */
+.player__disc {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ink);
+  background-color: var(--surface-2);
+  border-radius: 50%;
+  user-select: none;
 }
 
 .player__name {
@@ -80,17 +95,21 @@
 }
 
 /* On his two-line card, the material line sits on the name's line. */
-.player:has(.player__detail) .player__material {
+.player:has(.player__detail:not(:empty)) .player__material {
   align-self: flex-start;
 }
 
-/* Clock pill: colors only from the --clock-* tokens in src/index.css. */
+/* Clock pill: colors only from the --clock-* tokens in src/index.css. One fixed box (the
+   draft's 112 px) with tabular digits, so 10:00, 09:59, 0:59 and 9.9 never move it. */
 .player__time {
   box-sizing: border-box;
   display: flex;
   flex: none;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
+  width: 112px;
+  font-variant-numeric: tabular-nums;
   min-height: 40px;
   padding: var(--space-1) var(--space-3);
   font-size: var(--text-title);
@@ -165,7 +184,7 @@
   box-sizing: border-box;
 }
 
-.board > .player:has(.player__detail) .player__name {
+.board > .player:has(.player__detail:not(:empty)) .player__name {
   line-height: 1.2;
 }
 
@@ -175,33 +194,21 @@
   line-height: 1.2;
 }
 
-/* The badge or "Thinking…" wins; the line ends in an ellipsis when it can't fit
-   (decision 2026-10-11), and screen readers still get the whole line. */
-.board > .player .liem-detail__sub {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .board > .player .liem-badge,
 .board > .player .liem-detail__thinking {
   flex-shrink: 0;
   white-space: nowrap;
 }
 
-/* One line tall in the card. The border sits inside the height, so the badge and
-   the Stockfish pill are the same outer size. */
+/* One line tall in the card, its border inside the height. */
 .board > .player .liem-badge {
   box-sizing: border-box;
   height: 1.3em;
 }
 
-/* On a phone the 312 px board leaves the line about 136 px: "Liem's openings"
-   (or "2732") beside "★ Book", the Stockfish pill or "Thinking…". The note
-   below gives the game count. Hidden from sight, still read out. */
+/* On a phone the badge reads just "★ Book"; the note below gives the game count.
+   Hidden from sight, still read out. */
 @media only screen and (max-width: 767px) {
-  .board > .player .liem-detail__lead,
   .board > .player .liem-badge__count {
     position: absolute;
     width: 1px;

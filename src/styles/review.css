@@ -232,16 +232,16 @@
   }
 }
 
-/* The game accuracy number. */
+/* The game accuracy, first on the summary card's accuracy line. */
 .review-accuracy {
-  font-size: var(--text-hero);
+  font-size: var(--text-body);
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
 
-/* The phone bottom sheet: the graph, then the key-moment card, with the scrim behind it. */
+/* The phone bottom sheet: the key-moment card, then the summary, with the scrim behind it. */
 .review-sheet {
   position: fixed;
   right: 0;

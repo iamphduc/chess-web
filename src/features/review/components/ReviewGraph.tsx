@@ -2,7 +2,7 @@ import React from "react";
 
 import "./ReviewGraph.css";
 import type { PieceColor } from "game/engine/game-state";
-import type { ReviewModel } from "game/review/types";
+import type { Grade, ReviewModel } from "game/review/types";
 import {
   graphPoints,
   lineRuns,
@@ -30,6 +30,35 @@ export function cursorTip(model: ReviewModel, cursor: number): string | null {
   return drop > 0 ? `${move.label}${mark} −${drop} %` : `${move.label}${mark}`;
 }
 
+const GRADES: readonly { grade: Grade; name: string }[] = [
+  { grade: "inaccuracy", name: "inaccuracies" },
+  { grade: "mistake", name: "mistakes" },
+  { grade: "blunder", name: "blunders" },
+];
+
+/** "40 % · ?! 1 · ? 0 · ?? 1": your game accuracy ("—" until it's ready), then each grade's count. */
+const AccuracyLine = ({ model }: { model: ReviewModel }) => (
+  <p className="review-summary__accuracy">
+    {model.accuracy === null ? (
+      <>
+        <span className="review-accuracy" aria-hidden="true">
+          —
+        </span>
+        <span className="review-sr-only">Not ready yet</span>
+      </>
+    ) : (
+      <span className="review-accuracy">{`${Math.round(model.accuracy)} %`}</span>
+    )}
+    <span className="review-summary__label">accuracy</span>
+    {GRADES.map(({ grade, name }) => (
+      <span key={grade} data-count={grade} className={`review-grade--${grade}`}>
+        {`${GRADE_MARK[grade]} ${model.counts[grade]}`}
+        <span className="review-sr-only"> {name}</span>
+      </span>
+    ))}
+  </p>
+);
+
 function linePath(run: readonly GraphPoint[]): string {
   return run.map((p, i) => `${i === 0 ? "M" : "L"}${n3(p.x)},${n3(p.y)}`).join(" ");
 }
@@ -51,10 +80,10 @@ interface Props {
 }
 
 /**
- * The win % graph card, from your side: the cursor's move in the head, then the
- * olive book band, a dashed 50 % line, the line and area for the analysed
- * positions, a point at each graded move, and the cursor. Positions are laid out
- * in percent, so it fills any width.
+ * The summary card, from your side: the cursor's move in the head, then the win %
+ * graph (the olive book band, a dashed 50 % line, the line and area for the analysed
+ * positions, a point at each graded move, and the cursor), then the accuracy
+ * line. Positions are laid out in percent, so it fills any width.
  */
 export const ReviewGraph = ({ model, humanColor, cursor, onSelect }: Props) => {
   const last = model.whiteWin.length - 1;
@@ -71,7 +100,7 @@ export const ReviewGraph = ({ model, humanColor, cursor, onSelect }: Props) => {
   };
 
   return (
-    <section className="card review-graph" data-review-graph="true" aria-label="Win % graph">
+    <section className="card review-graph" data-review-graph="true" aria-label="Summary">
       <div className="review-graph__head">
         <span className="review-graph__label">Win % · you</span>
         {tip !== null && <span className="review-graph__tip">{tip}</span>}
@@ -165,6 +194,7 @@ export const ReviewGraph = ({ model, humanColor, cursor, onSelect }: Props) => {
           );
         })}
       </div>
+      <AccuracyLine model={model} />
     </section>
   );
 };

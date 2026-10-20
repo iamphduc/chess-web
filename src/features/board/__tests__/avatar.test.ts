@@ -2,30 +2,22 @@ import { describe, expect, it } from "vitest";
 
 import { avatarSrc } from "../components/avatar";
 import { players } from "../../../game/players";
-import defaultAvatar from "../../../assets/chess-player.png";
 import leQuangLiem from "../../../assets/le-quang-liem.png";
 
+// No default picture: a player without a known avatar gets a color disc (Player.tsx).
 describe("avatarSrc", () => {
-  it("returns the default avatar for null", () => {
-    expect(avatarSrc(null)).toBe(defaultAvatar);
-  });
-
-  it("returns the default avatar for an empty name", () => {
-    expect(avatarSrc("")).toBe(defaultAvatar);
+  it("returns null for null or an empty name", () => {
+    expect(avatarSrc(null)).toBeNull();
+    expect(avatarSrc("")).toBeNull();
   });
 
   it("returns the matching image for a known avatar name", () => {
     expect(avatarSrc("le-quang-liem.png")).toBe(leQuangLiem);
-    expect(avatarSrc("le-quang-liem.png")).not.toBe(defaultAvatar);
   });
 
-  it("falls back to the default for an unknown avatar name", () => {
-    expect(() => avatarSrc("nobody.png")).not.toThrow();
-    expect(avatarSrc("nobody.png")).toBe(defaultAvatar);
-  });
-
-  it("falls back to the default for near-miss and object-key names", () => {
+  it("returns null for unknown, near-miss and object-key names", () => {
     for (const name of [
+      "nobody.png",
       "Le-Quang-Liem.png",
       " le-quang-liem.png",
       "le-quang-liem",
@@ -34,18 +26,11 @@ describe("avatarSrc", () => {
       "__proto__",
       "constructor",
     ]) {
-      expect(avatarSrc(name)).toBe(defaultAvatar);
+      expect(avatarSrc(name), name).toBeNull();
     }
   });
 
-  it("every configured player avatar is registered", () => {
-    const named = players.filter((p) => p.avatar !== null);
-    expect(named.length).toBeGreaterThan(0);
-    for (const p of named) {
-      const src = avatarSrc(p.avatar);
-      expect(typeof src).toBe("string");
-      expect(src).not.toBe("");
-      expect(src).not.toBe(defaultAvatar);
-    }
+  it("the board's own players have no photo", () => {
+    expect(players.map((p) => p.avatar)).toEqual([null, null]);
   });
 });

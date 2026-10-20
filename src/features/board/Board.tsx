@@ -16,9 +16,7 @@ import { ReviewBoard } from "features/review/components/ReviewBoard";
 import { StepButtons } from "features/review/components/StepButtons";
 import { KeyMomentCard } from "features/review/components/KeyMomentCard";
 import { BottomSheet } from "features/review/components/BottomSheet";
-import { AccuracyPanel } from "features/review/components/AccuracyPanel";
 import { MoveList } from "features/review/components/MoveList";
-import { LeftBookNote } from "features/review/components/LeftBookNote";
 import { keyMomentView } from "features/review/keyMomentView";
 import { canOpenReview, selectPosition, steppingLocked } from "features/review/reviewActions";
 import { graphPlacement, playAgain } from "features/review/reviewLayout";
@@ -41,7 +39,6 @@ import { ResignButton } from "./components/ResignButton";
 import { canResign } from "./gameEnd";
 import { Button, ButtonType } from "./components/Button";
 import { TopBar } from "./components/TopBar";
-import { topBarInput, topBarTitle } from "./topBar";
 import { hashFor } from "app/route";
 import { useMediaQuery } from "hooks/useMediaQuery";
 import { displayOrder } from "./orientation";
@@ -92,23 +89,6 @@ const BackToGameLink = () => (
     Back to game
   </a>
 );
-
-/** The review's top bar: ← Home, where you are, and Play again on the right. */
-const ReviewTopBar = () => {
-  const dispatch = useAppDispatch();
-  const title = useAppSelector((state) => topBarTitle(topBarInput(state)));
-  return (
-    <header className="top-bar">
-      <a className="button top-bar__home" href={hashFor("home")}>
-        ← Home
-      </a>
-      <span className="top-bar__title">{title}</span>
-      <button type="button" className="button top-bar__action" onClick={() => dispatch(playAgain())}>
-        Play again
-      </button>
-    </header>
-  );
-};
 
 /** The key-moment card, wired to the review's actions. */
 const ReviewCard = ({ model, humanColor }: { model: ReviewModel; humanColor: PieceColor }) => {
@@ -234,7 +214,7 @@ export const Board = () => {
     );
     return (
       <MotionConfig reducedMotion="user">
-        <ReviewTopBar />
+        <TopBar action={{ label: "Play again", onClick: () => dispatch(playAgain()) }} />
         <div className="board-screen review" data-review-state={review.status}>
           <div className="board" style={{ width: squareSize * 8 }}>
             {top}
@@ -254,20 +234,19 @@ export const Board = () => {
             </div>
           </div>
 
+          {/* Three cards (sprint polish, "Review sidebar"): key moment, summary, Moves. */}
           <div className="sidebar">
-            {graphIn === "sidebar" && graph}
             {wide && reviewCard}
-            <AccuracyPanel model={model} />
+            {graphIn === "sidebar" && graph}
             <BoardSidebar title="Moves" className="moves-card" flush foot={foot}>
               <MoveList model={model} cursor={cursor} onSelect={select} />
             </BoardSidebar>
-            <LeftBookNote model={model} />
           </div>
 
           {!wide && (
             <BottomSheet open={review.sheetOpen} low={card.low} onClose={() => dispatch(sheetClosed())}>
-              {graphIn === "sheet" && graph}
               {reviewCard}
+              {graphIn === "sheet" && graph}
             </BottomSheet>
           )}
         </div>

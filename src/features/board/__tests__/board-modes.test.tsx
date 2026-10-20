@@ -162,27 +162,32 @@ function boardTop(html: string): string {
   return board.slice(0, m.index);
 }
 
-/** The visible text of a card's detail line, tags stripped. */
+/** The visible text under a card's name (its `.player__detail`), tags stripped. */
 function detailText(card: string): string {
-  const at = card.indexOf('class="liem-detail__sub"');
+  const at = card.indexOf('<div class="player__detail">');
   if (at === -1) return "";
-  const m = card.slice(at).match(/^class="liem-detail__sub">((?:<span[^>]*>[^<]*<\/span>)*)<\/span>/);
-  return (m?.[1] ?? "").replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'");
+  return outerDiv(card, at).replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'");
 }
 
-/** A sparring bot's card named `name`: the knight, the level's name and his openings line; no GM, star, photo or rating. */
+/** What his card must never say again (plan ui-polish, ## Look): no openings line, rating or Stockfish pill. */
+function expectNoOldLines(card: string) {
+  expect(card).not.toMatch(/openings|2732|GM · /);
+  expect(card).not.toContain("data-engine");
+  expect(card).not.toContain("liem-detail__sub");
+}
+
+/** A sparring bot's card named `name`: the ♞ disc and the level's name; no GM, star, photo or rating. */
 function expectSparringCard(card: string, name: string) {
   expect(playerNames(card)).toEqual([name]);
-  expect(card).not.toMatch(/\b(1400|1700|1900|2100|2300|2500)\b|about/);
-  expect(card).toContain('<span class="liem-sparring-avatar" aria-hidden="true">♞</span>');
+  expect(card).not.toMatch(/(1400|1700|1900|2100|2300|2500)|about/);
+  expect(card).toContain('<span class="player__disc liem-sparring-avatar" aria-hidden="true">♞</span>');
   expect(card).not.toContain("<img");
   expect(card).not.toContain('class="player__title"');
   expect(card).not.toContain("liem-star");
-  expect(card).toMatch(/class="liem-detail"/);
-  expect(detailText(card)).toBe("Plays Liem's openings");
+  expectNoOldLines(card);
 }
 
-/** His own card: his photo, the GM tag and "GM · 2732". No star before his name, so it fits on a phone. */
+/** His own card: his photo, the GM tag and his name. No star before his name, no rating line. */
 function expectLiemCard(card: string) {
   expect(playerNames(card)).toEqual([LIEM.entry.name]);
   expect(card).toContain(`<span class="player__title">${LIEM.entry.title}</span>`);
@@ -191,16 +196,20 @@ function expectLiemCard(card: string) {
   expect(card).toContain(
     `<div class="player__name"><span class="player__title">${LIEM.entry.title}</span>${LIEM.entry.name}<div class="player__detail">`
   );
-  expect(card).not.toContain("liem-sparring-avatar");
-  expect(detailText(card)).toBe(`${LIEM.entry.title} · ${LIEM.entry.rating}`);
+  expect(card).not.toContain("player__disc");
+  expectNoOldLines(card);
 }
 
 /** The opponent's card at the default level, 2100: the "Harder" sparring bot. */
 const expectHisCard = (card: string) => expectSparringCard(card, "Harder");
 
-function expectYourCard(card: string) {
+const DISC = { white: "♔", black: "♚" } as const;
+
+/** Your card: "You" with your color's disc, no picture and no detail line. */
+function expectYourCard(card: string, color: "white" | "black") {
   expect(playerNames(card)).toEqual(["You"]);
-  expect(card).toContain(`src="${avatarSrc(null)}"`);
+  expect(card).toContain(`<span class="player__disc" aria-hidden="true">${DISC[color]}</span>`);
+  expect(card).not.toContain("<img");
   expect(card).not.toMatch(/class="liem-detail"/);
 }
 
@@ -267,6 +276,27 @@ describe("board modes", () => {
     expect(footLabels(render(store))).toEqual(["New game", "Flip board", "Sound"]);
   });
 
+  it("two players cards", () => {
+    const store = twoPlayers();
+    const expectColorCard = (card: string, color: "white" | "black") => {
+      expect(playerNames(card)).toEqual([color === "white" ? "White" : "Black"]);
+      expect(card).toContain(`<span class="player__disc" aria-hidden="true">${DISC[color]}</span>`);
+      expect(card).not.toContain("<img");
+      expect(card).not.toContain('class="player__title"');
+      expect(card).not.toContain("player__detail");
+    };
+    let { above, below } = cardsAround(render(store));
+    expectColorCard(above[0], "black");
+    expectColorCard(below[0], "white");
+    expect(above[0]).toContain('aria-label="Clock for Black"');
+    // Flipped: White on top, each card keeps its own disc.
+    store.dispatch(toggleFlip());
+    ({ above, below } = cardsAround(render(store)));
+    expectColorCard(above[0], "white");
+    expectColorCard(below[0], "black");
+    expect(players.map((p) => p.name)).toEqual(["White", "Black"]);
+  });
+
   it("sparring and Liem cards", () => {
     // A game at the default level, 2100: the "Harder" sparring bot's card.
     const store = createAppStore();
@@ -298,10 +328,13 @@ describe("board modes", () => {
     const liem = cardsAround(render(him)).above[0];
     expectLiemCard(liem);
     expect(detailText(liem)).not.toMatch(/playing|about/);
+    // At the start of a game, before his first move, nothing sits under either name.
+    expect(detailText(sparring)).toBe("");
+    expect(detailText(liem)).toBe("");
 
     // Your card is the same at every level.
-    expectYourCard(cardsAround(render(store)).below[0]);
-    expectYourCard(cardsAround(render(him)).below[0]);
+    expectYourCard(cardsAround(render(store)).below[0], "white");
+    expectYourCard(cardsAround(render(him)).below[0], "white");
   });
 
   it("vs Liem board screen", () => {
@@ -454,9 +487,12 @@ describe("board modes", () => {
     expectHisCard(his);
     // White moves first and the clocks run at once, so his (White) clock is the running one.
     expect(his).toMatch(/player__time--running/);
-    expectYourCard(yours);
+    expectYourCard(yours, "black");
     expect(yours).not.toMatch(/player__time--running/);
     expect(playerNames(html)).toEqual(["Harder", "You"]);
+
+    // Once the game is over (his mate here), neither clock looks running.
+    expect(render(finishedLiemGame())).not.toMatch(/player__time--running/);
   });
 
   it("setup cards follow the flip", () => {
@@ -465,7 +501,7 @@ describe("board modes", () => {
     store.dispatch(toggleFlip());
     store.dispatch(switchMode("liem"));
     let { above, below } = cardsAround(render(store));
-    expectYourCard(above[0]);
+    expectYourCard(above[0], "white");
     expectHisCard(below[0]);
 
     // Unflipped with Black picked: Black (you) is on top, White (him) below.
@@ -473,14 +509,14 @@ describe("board modes", () => {
     unflipped.dispatch(switchMode("liem"));
     unflipped.dispatch(setColorPick("black"));
     ({ above, below } = cardsAround(render(unflipped)));
-    expectYourCard(above[0]);
+    expectYourCard(above[0], "black");
     expectHisCard(below[0]);
   });
 
   it("vs-Liem as White puts him on Black, above the board", () => {
     const { above, below } = cardsAround(render(liemGameAs("white")));
     expectHisCard(above[0]);
-    expectYourCard(below[0]);
+    expectYourCard(below[0], "white");
     expect(below[0]).toMatch(/player__time--running/);
   });
 
@@ -488,7 +524,7 @@ describe("board modes", () => {
     const store = liemGameAs("black");
     store.dispatch(toggleFlip()); // unflipped: Black (you) on top, White (him) below
     const { above, below } = cardsAround(render(store));
-    expectYourCard(above[0]);
+    expectYourCard(above[0], "black");
     expectHisCard(below[0]);
     expect(below[0]).toMatch(/player__time--running/);
   });
