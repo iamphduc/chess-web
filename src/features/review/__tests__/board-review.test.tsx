@@ -104,7 +104,7 @@ describe("the Review game link", () => {
 
   it("never shows mid-game, before a game, or in Two players", () => {
     const mid = render(liemGame(["f2f3", "e7e5"]));
-    expect(footLabels(mid)).toEqual(["New game", "Flip board", "Sound"]);
+    expect(footLabels(mid)).toEqual(["New game", "Resign", "Flip board", "Sound"]);
     expect(mid).not.toMatch(/href="#\/review"/);
 
     // Before a game (the home state).
@@ -114,7 +114,7 @@ describe("the Review game link", () => {
     twoPlayers.dispatch(switchMode("two-player"));
     play(twoPlayers, FOOLS_MATE);
     const two = render(twoPlayers);
-    expect(footLabels(two)).toEqual(["Play", "New game", "Flip board", "Sound"]);
+    expect(footLabels(two)).toEqual(["New game", "Flip board", "Sound"]);
     expect(two).not.toMatch(/href="#\/review"/);
   });
 
@@ -239,7 +239,7 @@ describe("review screen", () => {
     const after = render(store);
     expect(after).not.toMatch(/data-review-state=/);
     expect(after).not.toMatch(/data-review-graph/);
-    expect(footLabels(after)).toEqual(["New game", "Flip board", "Sound"]);
+    expect(footLabels(after)).toEqual(["New game", "Resign", "Flip board", "Sound"]);
   });
 
   it("moves card foot in the review", () => {
