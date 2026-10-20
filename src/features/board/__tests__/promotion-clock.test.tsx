@@ -6,7 +6,8 @@ import { describe, expect, it } from "vitest";
 
 import { matchSlice } from "features/liem/matchSlice";
 import { boardSlice, movePiece, promotePawn, reset, selectPiece, start, stop } from "../BoardSlice";
-import { GameOver, GameOverType } from "../components/GameOver";
+import { GameOver } from "../components/GameOver";
+import { GameOverType } from "../gameOverType";
 import { Player } from "../components/Player";
 import { PiecePromoted } from "../components/Promotion";
 import { PieceType } from "../../../game/piece-type";

@@ -1,20 +1,17 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-function sourceFiles(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name);
-    if (statSync(path).isDirectory()) return name === "__tests__" ? [] : sourceFiles(path);
-    return /\.tsx?$/.test(name) ? [path] : [];
-  });
-}
+const sources = import.meta.glob(["/src/**/*.ts", "!/src/**/__tests__/**"], {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
 
 describe("GameOver import cycle", () => {
-  it("only .tsx components import the GameOver component; plain modules take GameOverType from gameOverType", () => {
-    const offenders = sourceFiles("src")
-      .filter((file) => file.endsWith(".ts"))
-      .filter((file) => /from\s+["'][^"']*components\/GameOver["']/.test(readFileSync(file, "utf8")));
+  it("plain .ts modules never import the GameOver component; they take GameOverType from gameOverType", () => {
+    const offenders = Object.entries(sources)
+      .filter(([, text]) => /from\s+["'][^"']*components\/GameOver["']/.test(text))
+      .map(([file]) => file);
+    expect(Object.keys(sources).length).toBeGreaterThan(10);
     expect(offenders).toEqual([]);
   });
 

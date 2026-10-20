@@ -16,7 +16,7 @@ import {
   TOTAL_MS,
 } from "../clock";
 import { CapturedKind, materialLine } from "../material";
-import { GameOverType } from "./GameOver";
+import { GameOverType } from "../gameOverType";
 import { PlayerClock } from "./PlayerClock";
 import { avatarSrc as getAvatarSrc } from "./avatar";
 

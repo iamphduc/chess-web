@@ -5,12 +5,6 @@ import React from "react";
 import { gameOverNewGame, gameOverView } from "../gameOverView";
 import "./GameOver.css";
 
-export enum GameOverType {
-  Win = "WIN",
-  Draw = "Draw",
-  Continue = "Continue",
-}
-
 /**
  * The game-over card over a dimmed board. The scrim takes no clicks, so the
  * final position shows through it; only the card's buttons take clicks.

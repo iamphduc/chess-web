@@ -1,5 +1,5 @@
 import type { PieceColor } from "game/engine/game-state";
-import { GameOverType } from "./components/GameOver";
+import { GameOverType } from "./gameOverType";
 
 /** How a game ended. */
 export type EndReason = "checkmate" | "stalemate" | "time" | "resigned";

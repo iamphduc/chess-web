@@ -7,7 +7,7 @@ import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import { pickUp } from "../BoardSlice";
-import { GameOverType } from "./GameOver";
+import { GameOverType } from "../gameOverType";
 
 interface Props {
   pieceType: PieceType;
