@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 import { Provider } from "react-redux";
 import type { Root } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createAppStore } from "app/store";
 import { useAppDispatch, useAppSelector } from "app/hooks";
@@ -84,7 +84,23 @@ const fakeDocument = Object.assign(doc, {
 });
 
 const globals = globalThis as Record<string, unknown>;
-const tick = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+// Only setTimeout and Date are faked, so the clock's timers and reads follow fake time
+// while React's scheduler (its own timers) keeps running on the real loop.
+const realSetTimeout = setTimeout; // kept from before the fake is installed
+const flushReact = () => new Promise((resolve) => realSetTimeout(resolve, 0));
+/** Lets React finish mounting and the effects (his 1.e4, the clock restart) land at the current fake time. */
+async function settle() {
+  for (let i = 0; i < 5; i++) await flushReact();
+}
+/** Moves fake time forward by `ms`, in 100 ms steps, letting React render between steps. */
+async function tick(ms: number) {
+  await settle();
+  for (let left = ms; left > 0; left -= 100) {
+    await vi.advanceTimersByTimeAsync(Math.min(100, left));
+    await flushReact();
+  }
+  await flushReact();
+}
 
 /** Plays his 1.e4 from an effect as soon as it's his first move, as the opponent controller does. */
 function HisFirstMove() {
@@ -100,7 +116,12 @@ function HisFirstMove() {
 
 let root: Root | null = null;
 
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+});
+
 afterEach(() => {
+  vi.useRealTimers();
   root?.unmount();
   root = null;
   delete globals.window;
