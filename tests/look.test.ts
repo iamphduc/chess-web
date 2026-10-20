@@ -90,6 +90,13 @@ describe("look", () => {
     expect(last(body, "margin")).toBe("0");
   });
 
+  it("the page turns off scroll anchoring, so a move that grows the page never scrolls it", () => {
+    // plan ui-polish: Chrome's scroll anchoring moved scrollY 231 -> 303 on a move at 375 px.
+    // Only `body` (or `html`) stops it; on .app or .sidebar the page still shifts.
+    const body = declsFor(readCss("index.css"), "body");
+    expect(last(body, "overflow-anchor")).toBe("none");
+  });
+
   it("text pairs meet 4.5:1", () => {
     for (const fg of ["--ink", "--soft"]) {
       for (const bg of ["--bg", "--surface", "--surface-2"]) {
