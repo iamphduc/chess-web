@@ -39,7 +39,7 @@ Constraints: the `ui-refresh` Look with the `ui-polish` change (body text 600), 
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| motion | Material line under the name; game-over entrance; 150 ms piece moves; one-step review playback motion; Play again in the review foot | planned | — |
+| motion | Material line under the name; game-over entrance; 150 ms piece moves; one-step review playback motion; Play again in the review foot | active | — |
 
 Status values: `planned` / `active` / `done`. The orchestrator only flips its row's Status — it does not rewrite Goal/Depends-on retroactively.
 
