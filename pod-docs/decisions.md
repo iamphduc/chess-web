@@ -230,7 +230,7 @@ Context: At a key moment the card says "Your move is hidden", but the move list 
 Decision: Keep showing it. You already know what you played, and the mark only says it was a mistake.
 To change: hide the played move's row (or its mark) in `MoveList` while the active moment is `trying`, and reword the card's "Your move is hidden" if needed.
 
-## 2026-10-17 — browser: chrome-devtools-axi
+## 2026-10-17 — browser: chrome-devtools-axi (superseded by "browser: agent-browser", 2026-10-21)
 
 Agents check pages with `npx -y chrome-devtools-axi` (`open`, then `eval`), each in its own session. `agent-browser` is installed, but its `open` hung again and again in the post-game-review run (see `pod-docs/known-issues/agent-browser-batch-hang.md`), while chrome-devtools-axi worked every time. (human, 2026-10-17)
 
@@ -485,3 +485,9 @@ Consequences: the other way centers the name until the first capture, then moves
 Context: fix PR #94 makes `npm run baseline -- --levels <N>` merge into `scripts/ladder/human-baselines.json`.
 Decision: the file's `generated` date (and `skipPlies`) comes from the latest run, so a partial run sets it to today even when no other level changed.
 Consequences: the other way stores a date for each level. To change it, edit `mergeBaseline` in `scripts/ladder/baseline.ts` and its tests.
+
+## 2026-10-21 — browser: agent-browser
+Agents check pages with `agent-browser` again, each in its own session (`--session pod-<name>`), always through the Bash tool and never with its output piped or captured (`| head`, `| tail`, `$(…)`). pod 0.3.0's probe (open and close `about:blank` twice, plain calls through the Bash tool) passed on 2026-10-21 with agent-browser 0.39.0, and a `batch` of `open`, `wait` and `eval` after a `close` returned at once. A piped or captured `open` still hangs (see `pod-docs/known-issues/agent-browser-batch-hang.md`). Supersedes "browser: chrome-devtools-axi" (2026-10-17). (human, 2026-10-21)
+
+## 2026-10-21 — merge target: ui-feel-staging
+Plan ui-feel merges into `ui-feel-staging`, cut from `main` after PR #93 merged; the human merges it into `main`. (human, 2026-10-21)

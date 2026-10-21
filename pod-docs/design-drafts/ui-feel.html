@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI feel draft</title>
+<style>
+@font-face { font-family: "Quicksand"; font-weight: 600; src: url("../../src/assets/fonts/quicksand-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Quicksand"; font-weight: 700; src: url("../../src/assets/fonts/quicksand-latin-700-normal.woff2") format("woff2"); }
+:root {
+  --bg: #F4EFE4; --surface: #FBF8F1; --surface-2: #EFE8D8; --line: #DCD2BD; --ink: #1E1B16; --soft: #6B6457;
+  --gold: #B8860B; --go: #1E1B16; --go-ink: #FBF8F1;
+  --board-light: #F0E3C8; --board-dark: #B98B5E;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --radius: 4px;
+  --font: "Quicksand", sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: var(--space-5) var(--space-4); background: var(--bg); color: var(--ink); font: 600 16px/1.5 var(--font); }
+h1 { font-size: 30px; margin: 0 0 var(--space-2); }
+h2 { font-size: 20px; margin: var(--space-6) 0 var(--space-2); }
+p.note { color: var(--soft); margin: 0 0 var(--space-4); max-width: 760px; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+.col h3 { font-size: 16px; margin: 0 0 var(--space-1); }
+.col .why { color: var(--soft); font-size: 14px; margin: 0 0 var(--space-3); }
+.frame { width: 343px; max-width: 100%; }
+.board { display: grid; grid-template-columns: repeat(8, 1fr); aspect-ratio: 8 / 3; }
+.board i:nth-child(16n+1), .board i:nth-child(16n+3), .board i:nth-child(16n+5), .board i:nth-child(16n+7),
+.board i:nth-child(16n+10), .board i:nth-child(16n+12), .board i:nth-child(16n+14), .board i:nth-child(16n+16) { background: var(--board-light); }
+.board i { background: var(--board-dark); }
+
+/* The player card, as built (Player.css) with the option's values as custom properties. */
+.player { display: flex; align-items: center; justify-content: space-between; gap: var(--row-gap); padding: var(--row-pad) 0; }
+.info { display: flex; align-items: center; gap: var(--avatar-gap); min-width: 0; flex: 1; }
+.disc { display: grid; place-items: center; flex: none; width: 40px; height: 40px; font-size: 24px; line-height: 1; background: var(--surface-2); border-radius: var(--avatar-radius); }
+.photo { width: 40px; height: 40px; flex: none; border-radius: var(--avatar-radius); background: linear-gradient(160deg, #8a7a66, #4a3f33); }
+.text { display: flex; flex-direction: column; gap: var(--space-1); height: 44px; min-width: 0; }
+.name { font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.name .gm { color: #A8322B; margin-right: var(--space-1); }
+.sub { display: flex; align-items: center; height: 20px; gap: var(--space-2); font-size: 20px; line-height: 1; color: var(--soft); }
+.sub .adv { font-size: 14px; font-weight: 700; }
+.sub .detail { margin-left: auto; font-size: 14px; }
+.clock { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3); min-height: 40px; border-radius: var(--radius); background: var(--surface-2); color: var(--soft); font-weight: 700; font-size: 20px; }
+.clock.run { background: var(--ink); color: var(--bg); }
+
+.A { --avatar-radius: 50%; --avatar-gap: var(--space-2); --row-gap: var(--space-3); --row-pad: var(--space-1); }
+.B { --avatar-radius: var(--radius); --avatar-gap: var(--space-2); --row-gap: var(--space-3); --row-pad: var(--space-2); }
+.C { --avatar-radius: var(--radius); --avatar-gap: var(--space-3); --row-gap: var(--space-4); --row-pad: var(--space-2); }
+.measure { font-size: 14px; color: var(--soft); margin-top: var(--space-2); }
+
+/* Home: Play, then the Two players button. */
+.home { width: 343px; max-width: 100%; }
+.btn { appearance: none; display: flex; align-items: center; justify-content: center; width: 100%; padding: var(--space-2) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius); background: transparent; color: var(--ink); font: 700 16px/1.25 var(--font); }
+.btn.play { min-height: 48px; background: var(--go); color: var(--go-ink); border-color: var(--go); }
+.btn.alt { min-height: 48px; margin-top: var(--space-3); }
+.btn.alt.small { min-height: 40px; }
+.link { display: block; margin-top: var(--space-3); text-align: center; color: var(--soft); font-size: 14px; font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>UI feel draft</h1>
+<p class="note">Plan <code>ui-feel</code>. One correction first: the space between the avatar and the name is 8 px today; the 12 px is between the name side and the clock. The real "gap" choices are the avatar's corners, the avatar-to-name space, and the space above and below each card (4 px today, so the card nearly touches the board). Each column shows his card above the board edge and yours below it, at 343 px (a 375 px phone).</p>
+
+<h2>1. Player row</h2>
+<div class="grid">
+  <div class="col A">
+    <h3>A · As built</h3>
+    <p class="why">Round avatars, 8 px to the name, 4 px above and below.</p>
+    <div class="frame">
+      <div class="player"><div class="info"><span class="photo"></span><div class="text"><span class="name"><span class="gm">GM</span>Le Quang Liem</span><span class="sub">♙♙<span class="detail">★ Book · 807</span></span></div></div><span class="clock run">◷ 9:42</span></div>
+      <div class="board"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="player"><div class="info"><span class="disc">♔</span><div class="text"><span class="name">You</span><span class="sub">♛♟<span class="adv">+8</span></span></div></div><span class="clock">◷ 9:51</span></div>
+    </div>
+    <p class="measure">radius 50 % · avatar→name 8 px · card padding 4 px · name→clock 12 px</p>
+  </div>
+  <div class="col B">
+    <h3>B · Square, more air (recommended)</h3>
+    <p class="why">Square avatars with the 4 px button corner, 8 px to the name, 8 px above and below so the card stops touching the board.</p>
+    <div class="frame">
+      <div class="player"><div class="info"><span class="photo"></span><div class="text"><span class="name"><span class="gm">GM</span>Le Quang Liem</span><span class="sub">♙♙<span class="detail">★ Book · 807</span></span></div></div><span class="clock run">◷ 9:42</span></div>
+      <div class="board"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="player"><div class="info"><span class="disc">♔</span><div class="text"><span class="name">You</span><span class="sub">♛♟<span class="adv">+8</span></span></div></div><span class="clock">◷ 9:51</span></div>
+    </div>
+    <p class="measure">radius 4 px · avatar→name 8 px · card padding 8 px · name→clock 12 px</p>
+  </div>
+  <div class="col C">
+    <h3>C · Square, wider</h3>
+    <p class="why">Square avatars, 12 px to the name, 8 px above and below, 16 px to the clock. Roomier, but the name and material get less width on a phone.</p>
+    <div class="frame">
+      <div class="player"><div class="info"><span class="photo"></span><div class="text"><span class="name"><span class="gm">GM</span>Le Quang Liem</span><span class="sub">♙♙<span class="detail">★ Book · 807</span></span></div></div><span class="clock run">◷ 9:42</span></div>
+      <div class="board"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="player"><div class="info"><span class="disc">♔</span><div class="text"><span class="name">You</span><span class="sub">♛♟<span class="adv">+8</span></span></div></div><span class="clock">◷ 9:51</span></div>
+    </div>
+    <p class="measure">radius 4 px · avatar→name 12 px · card padding 8 px · name→clock 16 px</p>
+  </div>
+</div>
+
+<h2>2. Two players on the home page</h2>
+<div class="grid">
+  <div class="col">
+    <h3>As built</h3>
+    <p class="why">A 14 px soft-gray text link.</p>
+    <div class="home"><button class="btn play">Play</button><a class="link">Two players on one board →</a></div>
+  </div>
+  <div class="col">
+    <h3>Full-width secondary button, 48 px (recommended)</h3>
+    <p class="why">Outlined like New game, the same height as Play, 12 px under it.</p>
+    <div class="home"><button class="btn play">Play</button><button class="btn alt">Two players on one board</button></div>
+  </div>
+  <div class="col">
+    <h3>Full-width secondary button, 40 px</h3>
+    <p class="why">The standard button height, so Play stays the bigger one.</p>
+    <div class="home"><button class="btn play">Play</button><button class="btn alt small">Two players on one board</button></div>
+  </div>
+</div>
+
+<h2>3. Piece motion (not drawable)</h2>
+<p class="note">Game-board moves: 200 ms, ease-in-out (cubic), so the piece starts gently instead of leaping off its square. The review's ◀ ▶ playback keeps 150 ms ease-out. Measured on 2026-10-21: chess.com ≈155 ms ease-in-out; ours ≈125–150 ms, about 20 % of the way in the first frame.</p>
+</body>
+</html>
