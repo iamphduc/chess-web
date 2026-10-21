@@ -108,7 +108,7 @@ describe("liem theme", () => {
     expect(last(disc, "height")).toBe("40px");
     expect(last(disc, "background-color")).toBe("var(--surface-2)");
     expect(last(disc, "color")).toBe("var(--ink)");
-    expect(last(disc, "border-radius")).toBe("50%");
+    expect(last(disc, "border-radius")).toBe("var(--radius)");
     expect(last(disc, "flex-shrink") ?? last(disc, "flex")).toMatch(/^(0|none)$/);
     // His ♞ adds no look of its own: it is the same disc.
     expect(declsFor(liemCss(), ".liem-sparring-avatar")).toEqual([]);

@@ -19,6 +19,23 @@ describe("home css", () => {
     }
   });
 
+  it("two players is a full-width 48 px button", () => {
+    const button = declsFor(css(), ".home__two-players");
+    expect(last(button, "width")).toBe("100%");
+    expect(last(button, "min-height")).toBe("48px");
+    expect(last(button, "margin-top")).toBe("var(--space-3)");
+    // The same box as Play above it.
+    const play = declsFor(css(), ".home__play");
+    expect(last(play, "width")).toBe("100%");
+    expect(last(play, "min-height")).toBe("48px");
+    // It keeps the secondary .button look: no fill, color or border of its own.
+    for (const [prop] of button) {
+      expect(prop, `.home__two-players { ${prop} }`).not.toMatch(/^(color|background|border|text-decoration)/);
+    }
+    // The old link is gone.
+    expect(css()).not.toMatch(/\.home__alt/);
+  });
+
   it("only the Look's spacing and type tokens", () => {
     for (const { selector, body } of rules(css())) {
       for (const m of body.matchAll(/(?:^|;)\s*(gap|margin[\w-]*|padding[\w-]*|font-size)\s*:\s*([^;]+)/g)) {
