@@ -7,7 +7,8 @@ import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import { pickUp } from "../BoardSlice";
-import { GameOverType } from "./GameOver";
+import { GameOverType } from "../gameOverType";
+import { PIECE_MOVE_TRANSITION } from "../pieceMotion";
 
 interface Props {
   pieceType: PieceType;
@@ -59,6 +60,7 @@ export const Piece = ({ pieceType, y, x, isWhiteTurn }: Props) => {
         }}
         data-layout-id={layoutId}
         layoutId={layoutId}
+        transition={PIECE_MOVE_TRANSITION}
         key={layoutId}
       />
     </>

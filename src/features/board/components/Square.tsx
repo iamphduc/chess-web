@@ -1,5 +1,6 @@
 import React, { CSSProperties, memo } from "react";
 import { useDrop } from "react-dnd";
+import { useInstantLayoutTransition } from "framer-motion";
 
 import "./Square.css";
 import { PieceType } from "game/piece-type";
@@ -32,11 +33,16 @@ export const Square = memo(
       (state) => state.board.selectedPiece?.y === y && state.board.selectedPiece?.x === x
     );
 
+    // The drag already carried the piece here, so the drop lands at once instead of
+    // sliding again from the source square (castling's rook jumps with it).
+    const startInstantLayoutTransition = useInstantLayoutTransition();
+
     const [{ isOver, canDrop }, drop] = useDrop(
       () => ({
         accept: Object.values(PieceType),
         canDrop: () => isPossibleMove,
         drop: () => {
+          startInstantLayoutTransition();
           dispatch(movePiece({ to: [y, x] }));
         },
         collect: (monitor) => ({

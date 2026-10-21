@@ -262,6 +262,33 @@ export function serializeBaseline(file: BaselineFile): string {
   return `${JSON.stringify(file, round, 2)}\n`;
 }
 
+/** Reads a saved baseline file; null when missing, unreadable or not format 1. */
+export function parseExistingBaseline(text: string | null): BaselineFile | null {
+  if (text === null) return null;
+  try {
+    const f = JSON.parse(text) as Partial<BaselineFile> | null;
+    if (f === null || f.format !== 1) return null;
+    if (typeof f.levels !== "object" || f.levels === null || Array.isArray(f.levels)) return null;
+    return f as BaselineFile;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Puts the levels a run measured over the saved file and keeps the rest.
+ * Levels come out in ascending order; the header comes from the new run.
+ */
+export function mergeBaseline(existing: BaselineFile | null, measured: BaselineFile): BaselineFile {
+  const all = { ...existing?.levels, ...measured.levels };
+  const levels: BaselineFile["levels"] = {};
+  for (const level of SPARRING_LEVELS) {
+    const key = String(level) as LevelKey;
+    if (all[key] !== undefined) levels[key] = all[key];
+  }
+  return { ...measured, levels };
+}
+
 const fmt = (n: number | null, digits = 2) => (n === null ? "-" : n.toFixed(digits));
 
 /** One line per sparring level, for the console and the PR body. */
@@ -313,9 +340,14 @@ async function main(): Promise<void> {
     today: () => new Date(),
     log: (line) => console.log(line),
   });
-  await writeFile(OUT, serializeBaseline(file));
+  // A run of some levels merges into the saved file; a run of all six writes it whole.
+  const partial = SPARRING_LEVELS.some((l) => !opts.levels.includes(l));
+  const existing = partial
+    ? parseExistingBaseline(await readFile(OUT, "utf8").catch(() => null))
+    : null;
+  await writeFile(OUT, serializeBaseline(partial ? mergeBaseline(existing, file) : file));
   console.log(`\nwrote ${OUT} in ${Math.round((Date.now() - started) / 60_000)} min`);
-  for (const line of summaryLines(file)) console.log(line);
+  for (const line of summaryLines(partial ? mergeBaseline(existing, file) : file)) console.log(line);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

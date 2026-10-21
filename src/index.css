@@ -1,10 +1,10 @@
-/* Quicksand 500 and 700, latin, served from the app (SIL OFL 1.1, see assets/fonts/OFL.txt). */
+/* Quicksand 600 and 700, latin, served from the app (SIL OFL 1.1, see assets/fonts/OFL.txt). */
 @font-face {
   font-family: "Quicksand";
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   font-display: swap;
-  src: url("./assets/fonts/quicksand-latin-500-normal.woff2") format("woff2");
+  src: url("./assets/fonts/quicksand-latin-600-normal.woff2") format("woff2");
 }
 
 @font-face {
@@ -38,7 +38,7 @@
   --space-6: 32px;
   --radius: 4px;
 
-  --font: "Quicksand", sans-serif; /* weights 500 and 700 only */
+  --font: "Quicksand", sans-serif; /* weights 600 (body) and 700 (bold) only */
   --text-hero: 30px;
   --text-title: 20px;
   --text-body: 16px;
@@ -70,15 +70,19 @@
   --grade-book: #686A2D;
   --grade-ink: #FBF8F1;
   --review-scrim: rgba(0, 0, 0, 0.35);
+
+  /* The game-over scrim over the board: the --ink value at 40 %, so the final position shows through. */
+  --game-over-scrim: rgba(30, 27, 22, 0.4);
 }
 
 body {
   margin: 0; /* full bleed: the top bar runs edge to edge and a screen that fits doesn't scroll */
   font-family: var(--font);
   font-size: var(--text-body);
-  font-weight: 500;
+  font-weight: 600;
   background-color: var(--bg);
   color: var(--ink);
+  overflow-anchor: none; /* Chrome's scroll anchoring scrolled the page when a move grew it; only body or html stops it */
 }
 
 *,

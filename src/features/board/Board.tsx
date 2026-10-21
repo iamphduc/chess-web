@@ -16,9 +16,7 @@ import { ReviewBoard } from "features/review/components/ReviewBoard";
 import { StepButtons } from "features/review/components/StepButtons";
 import { KeyMomentCard } from "features/review/components/KeyMomentCard";
 import { BottomSheet } from "features/review/components/BottomSheet";
-import { AccuracyPanel } from "features/review/components/AccuracyPanel";
 import { MoveList } from "features/review/components/MoveList";
-import { LeftBookNote } from "features/review/components/LeftBookNote";
 import { keyMomentView } from "features/review/keyMomentView";
 import { canOpenReview, selectPosition, steppingLocked } from "features/review/reviewActions";
 import { graphPlacement, playAgain } from "features/review/reviewLayout";
@@ -37,9 +35,11 @@ import { BoardSidebar } from "./components/BoardSidebar";
 import { Promotion } from "./components/Promotion";
 import { Notation } from "./components/Notation";
 import { GameOver } from "./components/GameOver";
+import { GameOverType } from "./gameOverType";
+import { ResignButton } from "./components/ResignButton";
+import { canResign } from "./gameEnd";
 import { Button, ButtonType } from "./components/Button";
 import { TopBar } from "./components/TopBar";
-import { topBarInput, topBarTitle } from "./topBar";
 import { hashFor } from "app/route";
 import { useMediaQuery } from "hooks/useMediaQuery";
 import { displayOrder } from "./orientation";
@@ -84,27 +84,13 @@ const ReviewGameLink = () => (
   </a>
 );
 
-/** A link: the route closes the review and keeps its evals (`arriveAt("play")`). */
-const BackToGameLink = () => (
-  <a className="button" href={hashFor("play")}>
-    Back to game
-  </a>
-);
-
-/** The review's top bar: ← Home, where you are, and Play again on the right. */
-const ReviewTopBar = () => {
+/** The review foot's Play again: a new game at the same level and color, then `#/play`. */
+const PlayAgainButton = () => {
   const dispatch = useAppDispatch();
-  const title = useAppSelector((state) => topBarTitle(topBarInput(state)));
   return (
-    <header className="top-bar">
-      <a className="button top-bar__home" href={hashFor("home")}>
-        ← Home
-      </a>
-      <span className="top-bar__title">{title}</span>
-      <button type="button" className="button top-bar__action" onClick={() => dispatch(playAgain())}>
-        Play again
-      </button>
-    </header>
+    <button type="button" className="button button--play" onClick={() => dispatch(playAgain())}>
+      Play again
+    </button>
   );
 };
 
@@ -145,7 +131,10 @@ export const Board = () => {
   const match = useAppSelector((state) => state.match);
   const review = useAppSelector(selectReview);
   const engineHistory = useAppSelector((state) => state.board.engineHistory);
+  const gameId = useAppSelector((state) => state.board.gameId);
   const reviewable = useAppSelector((state) => canOpenReview(state.board, state.match));
+  const resignable = useAppSelector((state) => canResign(state.board));
+  const over = useAppSelector((state) => state.board.gameOver !== GameOverType.Continue);
   const dispatch = useAppDispatch();
   useMoveSound();
   const { retry, analyse } = useLiemOpponent();
@@ -221,7 +210,7 @@ export const Board = () => {
     const graphIn = graphPlacement({ wide, sheetOpen: review.sheetOpen, low: card.low });
     const foot = (
       <>
-        <BackToGameLink />
+        <PlayAgainButton />
         <span className="moves-card__icons">
           <Button type={ButtonType.Flip} />
           <Button type={ButtonType.Sound} />
@@ -230,13 +219,16 @@ export const Board = () => {
     );
     return (
       <MotionConfig reducedMotion="user">
-        <ReviewTopBar />
+        {/* ← Home and the title only; Play again is in the Moves card foot. */}
+        <TopBar />
         <div className="board-screen review" data-review-state={review.status}>
           <div className="board" style={{ width: squareSize * 8 }}>
             {top}
             <div className="squares">
               <ReviewBoard
                 state={engineHistory[cursor]}
+                gameId={gameId}
+                ply={cursor}
                 flipped={flipped}
                 size={squareSize}
                 highlight={cursor > 0 ? model.moves[cursor - 1].uci : null}
@@ -250,20 +242,19 @@ export const Board = () => {
             </div>
           </div>
 
+          {/* Three cards (sprint polish, "Review sidebar"): key moment, summary, Moves. */}
           <div className="sidebar">
-            {graphIn === "sidebar" && graph}
             {wide && reviewCard}
-            <AccuracyPanel model={model} />
+            {graphIn === "sidebar" && graph}
             <BoardSidebar title="Moves" className="moves-card" flush foot={foot}>
               <MoveList model={model} cursor={cursor} onSelect={select} />
             </BoardSidebar>
-            <LeftBookNote model={model} />
           </div>
 
           {!wide && (
             <BottomSheet open={review.sheetOpen} low={card.low} onClose={() => dispatch(sheetClosed())}>
-              {graphIn === "sheet" && graph}
               {reviewCard}
+              {graphIn === "sheet" && graph}
             </BottomSheet>
           )}
         </div>
@@ -277,20 +268,24 @@ export const Board = () => {
       <Button type={ButtonType.Sound} />
     </span>
   );
+  // The foot by state (sprint polish, "Moves card foot"): Resign while the clocks run,
+  // Play only before them in Two players, Review game once a vs-Liem game can be reviewed.
   let foot: React.ReactNode;
   if (!vsLiem) {
     foot = (
       <>
-        <Button type={ButtonType.Play} />
+        {!resignable && !over && <Button type={ButtonType.Play} />}
         <Button type={ButtonType.Reset} />
+        {resignable && <ResignButton />}
         {icons}
       </>
     );
   } else if (liemHuman) {
     foot = (
       <>
-        {reviewable && <ReviewGameLink />}
+        {!resignable && reviewable && <ReviewGameLink />}
         <NewGameButton />
+        {resignable && <ResignButton />}
         {icons}
       </>
     );

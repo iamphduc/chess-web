@@ -38,12 +38,6 @@ export interface LevelView {
   glyph: string | null;
   /** His photo's file name, or `null` when the card shows `glyph`. */
   avatar: string | null;
-  /** The card's line under the name, in full (read out at every width). */
-  detail: string;
-  /** The line on phones: the end of `detail`. */
-  shortDetail: string;
-  /** What phones leave out: `detail` is `detailLead + shortDetail`. */
-  detailLead: string;
   /** The level picker's name for the step: "Medium", or "Liem". */
   stepName: string;
   /** Only at his step: an ochre ★ is drawn before `stepName`. */
@@ -56,54 +50,38 @@ export interface LevelView {
   stepLabel: string;
   /** The line under the level picker. */
   engineLine: string;
-  /** The book note's text once the game leaves his book. */
-  outText: string;
 }
-
-const NOT_TRAINED = "It isn't trained on his games.";
 
 export function levelView(step: StrengthStep, entry: PlayerEntry = LIEM.entry): LevelView {
   const short = shortName(entry);
   if (step === "full") {
-    // On phones the title is left out: it already sits by his name.
-    const detailLead = `${entry.title} · `;
-    const shortDetail = String(entry.rating);
     return {
       sparring: false,
       name: entry.name,
       title: entry.title,
       glyph: null,
       avatar: entry.avatar,
-      detail: detailLead + shortDetail,
-      shortDetail,
-      detailLead,
       stepName: short,
       starred: true,
       opponentName: short,
-      rating: detailLead + shortDetail,
+      rating: `${entry.title} · ${entry.rating}`,
       stepLabel: `${short} (${entry.rating})`,
       engineLine: `${entry.name}: his openings, then full-strength Stockfish 18.`,
-      outText: `Full-strength Stockfish 18 plays from here. ${NOT_TRAINED}`,
     };
   }
 
   const level = LEVEL_NAMES[step];
-  const shortDetail = `${short}'s openings`;
   return {
     sparring: true,
     name: level,
     title: null,
     glyph: "♞",
     avatar: null,
-    detail: `Plays ${shortDetail}`,
-    shortDetail,
-    detailLead: "Plays ",
     stepName: level,
     starred: false,
     opponentName: level,
     rating: null,
     stepLabel: level,
     engineLine: `A sparring bot plays his openings, then Stockfish at the ${level} level.`,
-    outText: `Stockfish at the ${level} level plays from here. ${NOT_TRAINED}`,
   };
 }

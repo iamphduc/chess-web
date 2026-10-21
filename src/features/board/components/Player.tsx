@@ -16,7 +16,7 @@ import {
   TOTAL_MS,
 } from "../clock";
 import { CapturedKind, materialLine } from "../material";
-import { GameOverType } from "./GameOver";
+import { GameOverType } from "../gameOverType";
 import { PlayerClock } from "./PlayerClock";
 import { avatarSrc as getAvatarSrc } from "./avatar";
 
@@ -24,10 +24,11 @@ interface Props {
   name: string;
   title: string | null;
   avatar: string | null;
-  /** A glyph shown in place of the avatar image, such as the sparring bot's ♞. */
+  /** The glyph on the disc in place of a photo, such as the sparring bot's ♞. Without it (and
+   * without a photo) the disc shows the side's king: ♔ for White, ♚ for Black. */
   glyph?: string;
   isWhite: boolean;
-  /** Extra lines under the name, such as his strength and Book badge. */
+  /** A line under the name, such as his Book badge or "Thinking…". */
   detail?: ReactNode;
 }
 
@@ -53,24 +54,32 @@ const GLYPHS: Record<"white" | "black", Record<CapturedKind, string>> = {
   black: { queen: "♛", rook: "♜", bishop: "♝", knight: "♞", pawn: "♟" },
 };
 
-/** "+N" and the pieces this side has taken, drawn in the other side's color. */
-function Material({ isWhite }: { isWhite: boolean }) {
+/** What this side has taken, from the board. Both lists are empty before any capture. */
+function useMaterial(isWhite: boolean) {
   const engineHistory = useAppSelector((state) => state.board.engineHistory);
   const position = engineHistory[engineHistory.length - 1];
-  const { captured, advantage } = useMemo(
-    () => materialLine(position, isWhite ? "white" : "black"),
-    [position, isWhite]
-  );
-  if (captured.length === 0 && advantage === 0) return null;
+  return useMemo(() => materialLine(position, isWhite ? "white" : "black"), [position, isWhite]);
+}
+
+/** The pieces this side has taken, drawn in the other side's color, then "+N" when ahead. */
+function Material({
+  isWhite,
+  captured,
+  advantage,
+}: {
+  isWhite: boolean;
+  captured: CapturedKind[];
+  advantage: number;
+}) {
   const glyphs = GLYPHS[isWhite ? "black" : "white"];
   return (
     <span className="player__material" data-material={advantage}>
-      {advantage > 0 && <span className="player__advantage">{`+${advantage}`}</span>}
       {captured.length > 0 && (
         <span className="player__captured" role="img" aria-label={`Captured: ${captured.join(", ")}`}>
           {captured.map((kind) => glyphs[kind]).join("")}
         </span>
       )}
+      {advantage > 0 && <span className="player__advantage">{`+${advantage}`}</span>}
     </span>
   );
 }
@@ -80,11 +89,24 @@ export function msUntilNextTick(ms: number, interval: number): number {
   return (ms % interval) + 1;
 }
 
+/** The photo when there is one, else a 40 px disc with `glyph` or the side's king. */
+function Avatar({ avatar, glyph, isWhite }: { avatar: string | null; glyph?: string; isWhite: boolean }) {
+  const src = glyph ? null : getAvatarSrc(avatar);
+  if (src) return <img className="player__avatar" src={src} alt="Avatar" width={40} height={40} />;
+  return (
+    <span className={glyph ? "player__disc liem-sparring-avatar" : "player__disc"} aria-hidden="true">
+      {glyph ?? (isWhite ? "♔" : "♚")}
+    </span>
+  );
+}
+
 export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) => {
   const { history, pendingPromotion, isPlaying, gameOver, gameId } = useAppSelector(
     (state) => state.board
   );
   const dispatch = useAppDispatch();
+  const { captured, advantage } = useMaterial(isWhite);
+  const hasMaterial = captured.length > 0 || advantage > 0;
 
   const isActive = isWhite === isWhiteClockTurn(history.length, pendingPromotion !== null);
   const gameContinues = gameOver === GameOverType.Continue;
@@ -144,21 +166,22 @@ export const Player = ({ name, title, avatar, glyph, isWhite, detail }: Props) =
   return (
     <div className="player">
       <div className="player__info">
-        {glyph ? (
-          <span className="liem-sparring-avatar" aria-hidden="true">
-            {glyph}
-          </span>
-        ) : (
-          <img className="player__avatar" src={getAvatarSrc(avatar)} alt="Avatar" width={40} height={40} />
-        )}
-        <div className="player__name">
-          {title && <span className="player__title">{title}</span>}
-          {name}
-          {detail != null && <div className="player__detail">{detail}</div>}
+        <Avatar avatar={avatar} glyph={glyph} isWhite={isWhite} />
+        <div className="player__text">
+          <div className="player__name">
+            {title && <span className="player__title">{title}</span>}
+            {name}
+          </div>
+          {(hasMaterial || detail != null) && (
+            <div className="player__sub">
+              {hasMaterial && <Material isWhite={isWhite} captured={captured} advantage={advantage} />}
+              {detail != null && <div className="player__detail">{detail}</div>}
+            </div>
+          )}
         </div>
-        <Material isWhite={isWhite} />
       </div>
-      <PlayerClock remainingMs={shownMs} isActive={isActive} playerName={name} />
+      {/* Only a running game has a running clock: once it ends, both show their final time. */}
+      <PlayerClock remainingMs={shownMs} isActive={isActive && gameContinues} playerName={name} />
     </div>
   );
 };

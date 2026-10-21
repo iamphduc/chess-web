@@ -1,14 +1,15 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Provider } from "react-redux";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createAppStore, type AppStore } from "app/store";
 import { newGame, playOpponentMove } from "features/board/BoardSlice";
 import { Player } from "features/board/components/Player";
 import type { BookLookup } from "game/opponent/book";
 import type { BookMove } from "game/opponent/types";
-import { BookNote } from "../components/BookNote";
+import { bookNoteView } from "../bookNote";
+import { BookNote, BookNoteBody, bookNoteSlot, BookNoteSlotView, type KeptNote } from "../components/BookNote";
 import { LiemCardDetail } from "../components/LiemCardDetail";
 import { gameStarted, opponentMoved, setMode, setOpponentStatus, setStrength } from "../matchSlice";
 
@@ -45,138 +46,66 @@ const detail = (store: AppStore) => render(store, <LiemCardDetail />);
 /** What a reader sees or hears: the markup without its tags. */
 const text = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'");
 
-describe("BookNote and LiemCardDetail", () => {
-  it("note and badge markup", () => {
-    // Waiting: no move of his yet.
-    const fresh = liemGame();
-    expect(note(fresh)).toMatch(/class="liem-note"[^>]*data-book-state="waiting"/);
-    expect(note(fresh)).not.toContain("data-uci");
-    expect(text(detail(fresh))).toBe("Plays Liem's openings");
-    expect(detail(fresh)).not.toContain("liem-badge");
+/** Every element in a rendered tree, depth first. */
+function elements(node: React.ReactNode): React.ReactElement<Record<string, unknown>>[] {
+  if (!React.isValidElement(node)) {
+    return Array.isArray(node) ? node.flatMap(elements) : [];
+  }
+  const el = node as React.ReactElement<Record<string, unknown>>;
+  return [el, ...elements(el.props.children as React.ReactNode)];
+}
 
-    // In book: rows with the smoke hooks, the played row marked.
+describe("BookNote and LiemCardDetail", () => {
+  it("his card detail by state", () => {
+    // Waiting: nothing under his name.
+    const fresh = liemGame();
+    expect(detail(fresh)).toBe("");
+
+    // In book: only the badge, its N the note total.
     const inBook = liemGame();
     heMoved(inBook, "book");
-    const html = note(inBook);
-    expect(html).toMatch(/class="liem-note"[^>]*data-book-state="in-book"/);
-    const rows = Array.from(html.matchAll(/<div class="([^"]*)" data-uci="([^"]+)" data-played="(true|false)"/g));
-    expect(rows.map((r) => [r[2], r[3]])).toEqual([
-      ["d2d4", "true"],
-      ["e2e4", "false"],
-      ["g1f3", "false"],
-    ]);
-    expect(rows[0][1]).toBe("liem-note__row liem-note__row--played");
-    expect(rows[1][1]).toBe("liem-note__row");
-    expect(html).toContain("1.d4");
-    expect(html).toContain('class="liem-note__bar" style="width:46%"');
-    expect(html).toContain('<span class="liem-note__count">188</span>');
-    expect(html).toContain("312");
-    // The badge's N equals the note total.
     const badge = detail(inBook);
-    expect(badge).toMatch(/class="liem-badge" data-book-games="312"/);
-    expect(badge).not.toContain("data-engine");
-    expect(text(badge)).toContain("Book · 312");
+    expect(badge).toMatch(/^<div class="liem-detail"><span class="liem-badge" data-book-games="312">/);
+    expect(text(badge)).toBe("Book · 312");
     // The ★ is an ochre shape, not ink text.
-    expect(text(badge)).not.toContain("★");
     expect(badge).toMatch(/<svg class="liem-badge__star"[^>]*aria-hidden="true"/);
-    expect(text(badge)).toContain("Plays Liem's openings");
 
-    // Out of book: the red edge and his words.
-    const out = liemGame();
-    heMoved(out, "engine");
-    const outHtml = note(out);
-    expect(outHtml).toMatch(/class="liem-note liem-note--out"[^>]*data-book-state="out"/);
-    expect(outHtml).toContain("Out of his book");
-    expect(outHtml).not.toContain("data-uci");
-
-    // Failed: Try again.
-    const failed = liemGame();
-    heMoved(failed, "book");
-    failed.dispatch(setOpponentStatus("failed"));
-    const failedHtml = note(failed);
-    expect(failedHtml).toMatch(/data-book-state="failed"/);
-    expect(failedHtml).toMatch(/<button[^>]*type="button"[^>]*>Try again<\/button>/);
-    expect(failedHtml).not.toContain("data-uci");
-    expect(detail(failed)).not.toContain("liem-badge");
-
-    // Thinking… while loading or thinking, in place of the badge.
+    // Thinking… while he loads or thinks, in place of the badge.
     const loading = liemGame();
     loading.dispatch(setOpponentStatus("loading"));
-    expect(detail(loading)).toContain("Thinking…");
+    expect(text(detail(loading))).toBe("Thinking…");
     const thinking = liemGame();
     heMoved(thinking, "book");
     thinking.dispatch(setOpponentStatus("thinking"));
-    expect(detail(thinking)).toContain("Thinking…");
+    expect(text(detail(thinking))).toBe("Thinking…");
     expect(detail(thinking)).not.toContain("liem-badge");
-    expect(detail(inBook)).not.toContain("Thinking…");
+
+    // Out of book: nothing, and no Stockfish pill. Thinking out of book still says so.
+    const out = liemGame();
+    heMoved(out, "engine");
+    expect(detail(out)).toBe("");
+    out.dispatch(setOpponentStatus("thinking"));
+    expect(text(detail(out))).toBe("Thinking…");
+
+    // After a failure: nothing.
+    const failed = liemGame();
+    heMoved(failed, "book");
+    failed.dispatch(setOpponentStatus("failed"));
+    expect(detail(failed)).toBe("");
   });
 
-  it("shows the picked level: a sparring bot's openings line, or his GM line", () => {
-    const store = createAppStore();
-    store.dispatch(setStrength("full"));
-    expect(text(detail(store))).toBe("GM · 2732");
-    store.dispatch(setStrength(1400));
-    expect(text(detail(store))).toBe("Plays Liem's openings");
-  });
-
-  it("no card says playing about", () => {
+  it("no level line on any card", () => {
     for (const step of [1400, 2100, 2500, "full"] as const) {
       const store = createAppStore();
       store.dispatch(setStrength(step));
-      expect(text(detail(store))).not.toMatch(/playing|about/);
-    }
-  });
-
-  // A phone can't fit "Plays Liem's openings" beside the badge, so the card
-  // hides "Plays " there (Board.css); each part has its own span.
-  it("the sparring line comes in parts a narrow card can drop", () => {
-    const store = liemGame();
-    expect(detail(store)).toContain(
-      '<span class="liem-detail__sub"><span class="liem-detail__lead">Plays </span>' +
-        '<span class="liem-detail__short">Liem&#x27;s openings</span></span>'
-    );
-    // His own line drops "GM · " on phones: the GM tag sits by his name.
-    const full = createAppStore();
-    full.dispatch(setStrength("full"));
-    expect(detail(full)).toContain(
-      '<span class="liem-detail__sub"><span class="liem-detail__lead">GM · </span>' +
-        '<span class="liem-detail__short">2732</span></span>'
-    );
-  });
-
-  it("badge on a sparring card", () => {
-    const sparring = () => {
-      const store = createAppStore();
-      store.dispatch(setStrength(1400));
       store.dispatch(gameStarted());
       store.dispatch(newGame({ humanColor: "black" }));
-      return store;
-    };
-
-    const inBook = sparring();
-    heMoved(inBook, "book");
-    expect(detail(inBook)).toMatch(/class="liem-badge" data-book-games="312"/);
-    expect(text(detail(inBook))).toBe("Plays Liem's openingsBook · 312");
-
-    const out = sparring();
-    heMoved(out, "engine");
-    expect(detail(out)).toContain('<span class="liem-badge liem-badge--engine" data-engine="stockfish">Stockfish</span>');
-    expect(note(out)).toContain("Stockfish at the Easy level plays from here. It isn&#x27;t trained on his games.");
-
-    const thinking = sparring();
-    thinking.dispatch(setOpponentStatus("thinking"));
-    expect(text(detail(thinking))).toBe("Plays Liem's openingsThinking…");
-  });
-
-  it("out of book names the level", () => {
-    const store = createAppStore();
-    store.dispatch(setStrength(1400));
-    store.dispatch(gameStarted());
-    store.dispatch(newGame({ humanColor: "black" }));
-    heMoved(store, "engine");
-    const out = text(note(store));
-    expect(out).toContain("Stockfish at the Easy level plays from here. It isn't trained on his games.");
-    expect(out).not.toMatch(/1400|about/);
+      expect(detail(store), `${step} waiting`).toBe("");
+      heMoved(store, "book");
+      const html = detail(store);
+      expect(text(html), `${step} in book`).toBe("Book · 312");
+      expect(html).not.toMatch(/openings|2732|GM|liem-detail__sub|playing|about/);
+    }
   });
 
   it("the book badge's count is its own part, so a phone can show just ★ Book", () => {
@@ -190,68 +119,179 @@ describe("BookNote and LiemCardDetail", () => {
     );
   });
 
-  it("out of book shows the Stockfish pill and names Stockfish", () => {
-    const out = liemGame();
-    heMoved(out, "engine");
-    const card = detail(out);
-    expect(card).toContain(
-      '<span class="liem-badge liem-badge--engine" data-engine="stockfish">Stockfish</span>'
-    );
-    expect(text(card)).not.toContain("Book ·");
-    expect(card).not.toContain("liem-badge__star");
-    expect(card).not.toContain("data-book-games");
+  it("no note out of book", () => {
+    // Waiting.
+    const fresh = liemGame();
+    expect(note(fresh)).toMatch(/^<section class="liem-note" data-book-state="waiting"/);
+    expect(note(fresh)).not.toContain("data-uci");
 
-    const html = note(out);
-    expect(html).toMatch(/class="liem-note liem-note--out"[^>]*data-book-state="out"/);
-    expect(html).toContain('<h3 class="book-note__title">Out of his book</h3>');
-    expect(html).toContain("Stockfish at the Harder level plays from here. It isn&#x27;t trained on his games.");
-    expect(html).not.toContain("Standard Stockfish");
+    // In book: rows with the smoke hooks, the played row marked.
+    const inBook = liemGame();
+    heMoved(inBook, "book");
+    const html = note(inBook);
+    expect(html).toMatch(/^<section class="liem-note" data-book-state="in-book"/);
+    const rows = Array.from(html.matchAll(/<div class="([^"]*)" data-uci="([^"]+)" data-played="(true|false)"/g));
+    expect(rows.map((r) => [r[2], r[3]])).toEqual([
+      ["d2d4", "true"],
+      ["e2e4", "false"],
+      ["g1f3", "false"],
+    ]);
+    expect(rows[0][1]).toBe("liem-note__row liem-note__row--played");
+    expect(rows[1][1]).toBe("liem-note__row");
+    expect(html).toContain("1.d4");
+    expect(html).toContain('class="liem-note__bar" style="width:46%"');
+    expect(html).toContain('<span class="liem-note__count">188</span>');
+    expect(html).toContain("312");
 
-    // His own level: full-strength Stockfish.
-    const him = createAppStore();
-    him.dispatch(setStrength("full"));
-    him.dispatch(gameStarted());
-    him.dispatch(newGame({ humanColor: "black" }));
-    heMoved(him, "engine");
-    expect(note(him)).toContain("Full-strength Stockfish 18 plays from here. It isn&#x27;t trained on his games.");
-    expect(html).not.toContain("on his own");
-  });
+    // Out of book, at every level: no note at all.
+    for (const step of [1400, 2100, "full"] as const) {
+      const out = createAppStore();
+      out.dispatch(setStrength(step));
+      out.dispatch(gameStarted());
+      out.dispatch(newGame({ humanColor: "black" }));
+      heMoved(out, "engine");
+      expect(note(out), `${step}`).toBe("");
+      // Thinking out of book doesn't bring it back.
+      out.dispatch(setOpponentStatus("thinking"));
+      expect(note(out), `${step} thinking`).toBe("");
+    }
 
-  it("thinking hides the pill", () => {
-    const store = liemGame();
-    heMoved(store, "engine");
-    store.dispatch(setOpponentStatus("thinking"));
-    expect(detail(store)).toContain("Thinking…");
-    expect(detail(store)).not.toContain("liem-badge");
-    store.dispatch(setOpponentStatus("loading"));
-    expect(detail(store)).toContain("Thinking…");
-    expect(detail(store)).not.toContain("liem-badge");
-  });
-
-  it("no pill before his first move, after a failure or in a new game", () => {
+    // Failed: Try again, which asks him again.
     const failed = liemGame();
     heMoved(failed, "engine");
     failed.dispatch(setOpponentStatus("failed"));
-    expect(detail(failed)).not.toContain("liem-badge");
-
-    const next = liemGame();
-    heMoved(next, "engine");
-    next.dispatch(newGame({ humanColor: "black" }));
-    expect(detail(next)).not.toContain("liem-badge");
+    const failedHtml = note(failed);
+    expect(failedHtml).toMatch(/^<section class="liem-note" data-book-state="failed"/);
+    expect(failedHtml).toMatch(/<button[^>]*type="button"[^>]*>Try again<\/button>/);
+    expect(failedHtml).not.toContain("data-uci");
+    const onRetry = vi.fn();
+    const button = elements(BookNoteBody({ view: { kind: "failed" }, onRetry })).find((e) => e.type === "button")!;
+    expect(onRetry).not.toHaveBeenCalled();
+    (button.props.onClick as () => void)();
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it("a note from the last game reads as waiting", () => {
+  it("a new game brings the note back", () => {
+    const store = liemGame();
+    heMoved(store, "engine");
+    expect(note(store)).toBe("");
+    store.dispatch(newGame({ humanColor: "black" }));
+    expect(note(store)).toMatch(/^<section class="liem-note" data-book-state="waiting"/);
+    expect(note(store)).toContain("His book");
+    expect(detail(store)).toBe("");
+
+    // A note from the last game in book reads as waiting too.
+    const inBook = liemGame();
+    heMoved(inBook, "book");
+    inBook.dispatch(newGame({ humanColor: "black" }));
+    expect(note(inBook)).toMatch(/data-book-state="waiting"/);
+    expect(detail(inBook)).toBe("");
+  });
+});
+
+/** The note's view for a store, as BookNote reads it. */
+const viewOf = (store: AppStore) => {
+  const { board, match } = store.getState();
+  return bookNoteView(board, match);
+};
+
+// At 375 px the note sits above the Moves card, and body has overflow-anchor: none, so a note
+// that unmounts after his reply shrinks the page and scrolls it. Its slot keeps its height.
+describe("the note's slot after he leaves his book", () => {
+  it("out of his book, the slot keeps the note's height until a new game", () => {
+    // In book (1.e4 as White in the review's repro): the note, measured at 230 px.
     const store = liemGame();
     heMoved(store, "book");
-    store.dispatch(newGame({ humanColor: "black" }));
-    expect(note(store)).toMatch(/data-book-state="waiting"/);
-    expect(detail(store)).not.toContain("liem-badge");
+    const { gameId } = store.getState().board;
+    const inBook = bookNoteSlot(null, gameId, viewOf(store));
+    expect(inBook).toEqual({ kind: "note", view: viewOf(store), minHeight: 0 });
+    const kept: KeptNote = { gameId, height: 230 };
+
+    // His reply leaves his book: an empty slot, as tall as the note was.
+    const out = liemGame();
+    heMoved(out, "engine");
+    const outView = viewOf(out);
+    expect(outView.kind).toBe("out");
+    expect(bookNoteSlot(kept, gameId, outView)).toEqual({ kind: "gone", height: 230 });
+    // Later moves out of book keep it, thinking included.
+    out.dispatch(setOpponentStatus("thinking"));
+    expect(bookNoteSlot(kept, gameId, viewOf(out))).toEqual({ kind: "gone", height: 230 });
+
+    // A new game brings the note back, not the slot.
+    out.dispatch(newGame({ humanColor: "black" }));
+    const next = out.getState().board.gameId;
+    expect(next).not.toBe(gameId);
+    expect(bookNoteSlot(kept, next, viewOf(out))).toEqual({ kind: "note", view: { kind: "waiting" }, minHeight: 0 });
+  });
+
+  it("the waiting note keeps its slot too (1.f3)", () => {
+    const store = liemGame();
+    const { gameId } = store.getState().board;
+    expect(bookNoteSlot(null, gameId, viewOf(store))).toEqual({ kind: "note", view: { kind: "waiting" }, minHeight: 0 });
+    heMoved(store, "engine");
+    expect(bookNoteSlot({ gameId, height: 120 }, gameId, viewOf(store))).toEqual({ kind: "gone", height: 120 });
+  });
+
+  it("no slot without a note from this game", () => {
+    const store = liemGame();
+    heMoved(store, "engine");
+    const { gameId } = store.getState().board;
+    // Nothing shown yet (the board opened out of book): no slot.
+    expect(bookNoteSlot(null, gameId, viewOf(store))).toBeNull();
+    // A note from another game, or one never measured, keeps nothing.
+    expect(bookNoteSlot({ gameId: gameId - 1, height: 230 }, gameId, viewOf(store))).toBeNull();
+    expect(bookNoteSlot({ gameId, height: 0 }, gameId, viewOf(store))).toBeNull();
+  });
+
+  it("a failure after he left his book shows the note again", () => {
+    const store = liemGame();
+    heMoved(store, "engine");
+    store.dispatch(setOpponentStatus("failed"));
+    const { gameId } = store.getState().board;
+    expect(bookNoteSlot({ gameId, height: 230 }, gameId, viewOf(store))).toEqual({
+      kind: "note",
+      view: { kind: "failed" },
+      minHeight: 230,
+    });
+  });
+
+  it("in a game the note never gets shorter", () => {
+    // Fewer book rows after a later move would shrink the page too: the note keeps its tallest height.
+    const store = liemGame();
+    heMoved(store, "book");
+    const { gameId } = store.getState().board;
+    expect(bookNoteSlot({ gameId, height: 230 }, gameId, viewOf(store))).toEqual({
+      kind: "note",
+      view: viewOf(store),
+      minHeight: 230,
+    });
+    // Not from another game.
+    expect(bookNoteSlot({ gameId: gameId - 1, height: 230 }, gameId, viewOf(store))).toEqual({
+      kind: "note",
+      view: viewOf(store),
+      minHeight: 0,
+    });
+    const tall = renderToStaticMarkup(
+      <BookNoteSlotView slot={{ kind: "note", view: { kind: "waiting" }, minHeight: 230 }} onRetry={() => {}} />
+    );
+    expect(tall).toMatch(/^<section class="liem-note" data-book-state="waiting" aria-label="His book" style="min-height:230px">/);
+    const plain = renderToStaticMarkup(
+      <BookNoteSlotView slot={{ kind: "note", view: { kind: "waiting" }, minHeight: 0 }} onRetry={() => {}} />
+    );
+    expect(plain).toMatch(/^<section class="liem-note" data-book-state="waiting" aria-label="His book">/);
+  });
+
+  it("the empty slot has no note in it", () => {
+    const html = renderToStaticMarkup(<BookNoteSlotView slot={{ kind: "gone", height: 230 }} onRetry={() => {}} />);
+    // No [data-book-state] and no text: the smoke checks still read "the note is gone".
+    expect(html).toBe('<div class="liem-note-slot" aria-hidden="true" style="height:230px"></div>');
+    expect(renderToStaticMarkup(<BookNoteSlotView slot={null} onRetry={() => {}} />)).toBe("");
   });
 });
 
 // Today's markup, before `detail` existed.
 const TODAY =
-  '<div class="player"><div class="player__info"><img class="player__avatar" src="/src/assets/chess-player.png" alt="Avatar" width="40" height="40"/><div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div></div><div class="player__time" role="timer" aria-label="Clock for Le Quang Liem"><svg class="clock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="clock-icon__face" cx="12" cy="12" r="10.5"></circle><line class="clock-icon__hand" x1="12" y1="13.5" x2="12" y2="5" style="transform:rotate(0deg)"></line><circle class="clock-icon__pin" cx="12" cy="12" r="1.6"></circle></svg><span class="player__timer">10:00</span></div><span class="player__alert" role="alert"></span></div>';
+  '<div class="player"><div class="player__info"><span class="player__disc" aria-hidden="true">♚</span><div class="player__text"><div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div></div></div><div class="player__time" role="timer" aria-label="Clock for Le Quang Liem"><svg class="clock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle class="clock-icon__face" cx="12" cy="12" r="10.5"></circle><line class="clock-icon__hand" x1="12" y1="13.5" x2="12" y2="5" style="transform:rotate(0deg)"></line><circle class="clock-icon__pin" cx="12" cy="12" r="1.6"></circle></svg><span class="player__timer"><span class="player__timer-digit">1</span><span class="player__timer-digit">0</span><span class="player__timer-sep">:</span><span class="player__timer-digit">0</span><span class="player__timer-digit">0</span></span></div><span class="player__alert" role="alert"></span></div>';
 
 describe("Player", () => {
   it("player card detail", () => {
@@ -263,11 +303,11 @@ describe("Player", () => {
       store,
       <Player name="Le Quang Liem" title="GM" avatar={null} isWhite={false} detail={<i>extra</i>} />
     );
-    // Under the name: inside the name block, after the name text.
+    // Under the name: the name line is the title then the name, and the detail is on the second line.
     expect(withDetail).toContain(
-      '<div class="player__name"><span class="player__title">GM</span>Le Quang Liem<div class="player__detail"><i>extra</i></div></div>'
+      '<div class="player__name"><span class="player__title">GM</span>Le Quang Liem</div><div class="player__sub"><div class="player__detail"><i>extra</i></div></div></div>'
     );
     // Everything else is the same.
-    expect(withDetail.replace('<div class="player__detail"><i>extra</i></div>', "")).toBe(TODAY);
+    expect(withDetail.replace('<div class="player__sub"><div class="player__detail"><i>extra</i></div></div>', "")).toBe(TODAY);
   });
 });

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI polish draft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Draft only: the app self-hosts Quicksand. Tokens are the ui-refresh Look. */
+  :root {
+    --bg:#F4EFE4; --surface:#FBF8F1; --surface-2:#EFE8D8; --line:#DCD2BD;
+    --ink:#1E1B16; --soft:#6B6457; --accent:#A8322B; --gold:#B8860B;
+    --go:#1E1B16; --go-ink:#FBF8F1; --light:#F0E3C8; --dark:#B98B5E;
+    --hl:rgba(204,153,26,.5);
+    --g-inacc:#146AB0; --g-mist:#A45000; --g-blun:#CF0F00; --g-best:#27744F;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:500 16px/1.4 Quicksand, sans-serif; padding:32px 16px; }
+  h1 { font-size:30px; margin:0 0 8px; }
+  h2 { font-size:20px; margin:32px 0 12px; }
+  p.lead { color:var(--soft); margin:0 0 8px; max-width:720px; }
+  .row { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .label { font-size:14px; color:var(--soft); margin:0 0 8px; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:4px; padding:16px; }
+  .stack { display:flex; flex-direction:column; gap:12px; width:380px; max-width:100%; }
+  .btn { appearance:none; font:inherit; font-weight:700; font-size:16px; border-radius:4px; padding:8px 16px; border:1px solid var(--line); background:transparent; color:var(--ink); cursor:pointer; }
+  .btn--go { background:var(--go); color:var(--go-ink); border-color:var(--go); }
+  .btn--confirm { color:var(--accent); border-color:var(--accent); }
+  .btn--resign { width:104px; white-space:nowrap; text-align:center; padding-inline:0; }
+  .wcol { --wb:500; --wh:700; font-weight:var(--wb); width:400px; max-width:100%; display:flex; flex-direction:column; gap:12px; }
+  .wcol .pname, .wcol h3, .wcol .btn, .wcol .clock { font-weight:var(--wh); }
+  .wcol h3 { font-size:30px; margin:0; line-height:1.15; }
+  .wcol p { margin:0; color:var(--soft); }
+  .wtag { font-size:14px; color:var(--soft); font-weight:700; }
+  .btn--icon { width:40px; height:40px; padding:0; background:var(--surface-2); }
+  .btn--on { background:var(--go); color:var(--go-ink); border-color:var(--go); }
+  .foot { display:flex; gap:8px; align-items:center; border-top:1px solid var(--line); margin:12px -16px -16px; padding:12px 16px; }
+  .foot .sp { flex:1; }
+  /* player cards */
+  .player { display:flex; align-items:center; gap:12px; width:420px; max-width:100%; }
+  .disc { width:40px; height:40px; border-radius:50%; background:var(--surface-2); display:grid; place-items:center; font-size:24px; line-height:1; }
+  .pname { font-weight:700; }
+  .pline { display:flex; gap:8px; align-items:center; font-size:14px; color:var(--soft); }
+  .badge { display:inline-flex; gap:4px; align-items:center; border:1px solid var(--gold); border-radius:999px; padding:0 8px; font-size:14px; color:var(--ink); }
+  .badge svg { width:12px; height:12px; fill:var(--gold); }
+  .clock { margin-left:auto; font-weight:700; font-size:20px; font-variant-numeric:tabular-nums; min-width:112px; text-align:right; padding:8px 12px; border-radius:4px; background:var(--surface-2); }
+  .clock--run { background:var(--go); color:var(--go-ink); }
+  .was { text-decoration:line-through; color:var(--soft); }
+  /* board */
+  .board { position:relative; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); width:312px; aspect-ratio:1; }
+  .board.big { width:420px; }
+  .sq { display:grid; place-items:center; font-size:26px; line-height:1; }
+  .board.big .sq { font-size:36px; }
+  .sq.l { background:var(--light); } .sq.d { background:var(--dark); } .sq.hl { background:var(--hl); }
+  .sq.check { background:rgba(168,50,43,.55); }
+  .scrim { position:absolute; inset:0; background:rgba(30,27,22,.4); display:grid; place-items:center; padding:16px; }
+  .over { background:var(--surface); border:1px solid var(--line); border-radius:4px; padding:24px; text-align:center; width:320px; max-width:100%; box-shadow:0 1px 0 var(--line); }
+  .over h3 { margin:0; font-size:20px; }
+  .over p { margin:4px 0 16px; color:var(--soft); }
+  .over .btns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  /* review */
+  .km-edge { border-left:3px solid var(--accent); }
+  .km-k { font-size:14px; color:var(--soft); display:flex; justify-content:space-between; }
+  .km h4 { margin:4px 0; font-size:20px; }
+  .graph { height:80px; width:100%; display:block; }
+  .acc { display:flex; gap:12px; align-items:baseline; margin-top:8px; font-weight:700; }
+  .acc b { font-size:20px; }
+  .acc span { font-size:14px; }
+  .sheet { font-variant-numeric:tabular-nums; }
+  .sheet .lb { font-size:14px; color:var(--soft); padding:0 0 8px; border-bottom:1px solid var(--line); margin-bottom:4px; }
+  .srow { display:grid; grid-template-columns:32px 1fr 1fr; padding:4px 8px; font-size:16px; }
+  .srow:nth-child(odd) { background:var(--surface-2); }
+  .srow .n { color:var(--soft); font-size:14px; }
+  .chip { background:var(--ink); color:var(--surface); border-radius:4px; padding:0 6px; }
+  .note { font-size:14px; color:var(--soft); margin-top:8px; max-width:420px; }
+  .phone { width:375px; max-width:100%; background:var(--bg); border:1px solid var(--line); border-radius:16px; padding:16px; overflow:hidden; }
+  .phone .board { width:100%; }
+  .bottom-sheet { background:var(--surface); border-top:1px solid var(--line); border-radius:16px 16px 0 0; margin:12px -16px -16px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  @media (max-width:520px) { .player, .board.big { width:100%; } }
+</style>
+</head>
+<body>
+<h1>UI polish — draft</h1>
+<p class="lead">The ui-refresh Look, unchanged. This shows only what the ui-polish plan adds or changes: the player cards, Resign, the game-over notice and the three-card review.</p>
+
+<h2>0 · Font weight — pick one</h2>
+<div class="row">
+  <div class="wcol" style="--wb:500;--wh:700">
+    <div class="wtag">A · today: text 500, bold 700</div>
+    <h3>Practice a grandmaster's openings.</h3>
+    <p>Bots play GM Le Quang Liem's opening lines from his real games, then Stockfish takes over at the level you pick.</p>
+    <div class="player card"><div class="disc">♞</div><div><div class="pname">Harder</div><div class="pline"><span>+1 ♙</span></div></div><div class="clock clock--run">09:41</div></div>
+    <div class="card"><div class="pname">Moves</div><div class="sheet" style="margin-top:8px"><div class="srow"><span class="n">1.</span><span>e4</span><span>e5</span></div><div class="srow"><span class="n">2.</span><span>Nf3</span><span class="chip" style="justify-self:start">Nc6</span></div></div>
+      <div class="foot"><button class="btn">New game</button><button class="btn btn--resign">Resign</button></div></div>
+    <p class="note">Today. Light, paper-like.</p>
+  </div>
+  <div class="wcol" style="--wb:600;--wh:700">
+    <div class="wtag">B · text 600, bold 700</div>
+    <h3>Practice a grandmaster's openings.</h3>
+    <p>Bots play GM Le Quang Liem's opening lines from his real games, then Stockfish takes over at the level you pick.</p>
+    <div class="player card"><div class="disc">♞</div><div><div class="pname">Harder</div><div class="pline"><span>+1 ♙</span></div></div><div class="clock clock--run">09:41</div></div>
+    <div class="card"><div class="pname">Moves</div><div class="sheet" style="margin-top:8px"><div class="srow"><span class="n">1.</span><span>e4</span><span>e5</span></div><div class="srow"><span class="n">2.</span><span>Nf3</span><span class="chip" style="justify-self:start">Nc6</span></div></div>
+      <div class="foot"><button class="btn">New game</button><button class="btn btn--resign">Resign</button></div></div>
+    <p class="note">One step heavier. Text reads firmer; headings stay as they are.</p>
+  </div>
+  <div class="wcol" style="--wb:700;--wh:700">
+    <div class="wtag">C · text 700 everywhere</div>
+    <h3>Practice a grandmaster's openings.</h3>
+    <p>Bots play GM Le Quang Liem's opening lines from his real games, then Stockfish takes over at the level you pick.</p>
+    <div class="player card"><div class="disc">♞</div><div><div class="pname">Harder</div><div class="pline"><span>+1 ♙</span></div></div><div class="clock clock--run">09:41</div></div>
+    <div class="card"><div class="pname">Moves</div><div class="sheet" style="margin-top:8px"><div class="srow"><span class="n">1.</span><span>e4</span><span>e5</span></div><div class="srow"><span class="n">2.</span><span>Nf3</span><span class="chip" style="justify-self:start">Nc6</span></div></div>
+      <div class="foot"><button class="btn">New game</button><button class="btn btn--resign">Resign</button></div></div>
+    <p class="note">Everything bold. Strongest, but headings no longer stand out from text.</p>
+  </div>
+</div>
+
+<h2>1 · Player cards</h2>
+<div class="row">
+  <div>
+    <p class="label">His card, in his book — level name, ★ Book, +N, clock</p>
+    <div class="player card">
+      <div class="disc">♞</div>
+      <div><div class="pname">Harder</div><div class="pline"><span class="badge"><svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg>Book · 807</span><span>+1 ♙</span></div></div>
+      <div class="clock">09:58</div>
+    </div>
+    <p class="label" style="margin-top:12px">His card, out of book — no "Plays Liem's openings", no Stockfish pill</p>
+    <div class="player card">
+      <div class="disc">♞</div>
+      <div><div class="pname">Harder</div><div class="pline"><span>+1 ♙</span></div></div>
+      <div class="clock">09:41</div>
+    </div>
+    <p class="note">Was: <span class="was">Plays Liem's openings</span> · <span class="was">Stockfish</span></p>
+  </div>
+  <div>
+    <p class="label">Your card — a ♔ disc (♚ when you play Black), no picture; clock box has a fixed width</p>
+    <div class="player card">
+      <div class="disc">♔</div>
+      <div><div class="pname">You</div><div class="pline"><span>+3 ♞</span></div></div>
+      <div class="clock clock--run">09:07</div>
+    </div>
+    <p class="label" style="margin-top:12px">Two players — each side gets its own disc</p>
+    <div class="player card">
+      <div class="disc">♚</div>
+      <div><div class="pname">Black</div></div>
+      <div class="clock">10:00</div>
+    </div>
+    <p class="note">Clocks use tabular figures and a 112 px minimum width, so 09:59 → 09:58 → 10:00 never moves the box.</p>
+  </div>
+</div>
+
+<h2>2 · Moves card with Resign</h2>
+<div class="row">
+  <div class="stack">
+    <p class="label">During a game</p>
+    <div class="card">
+      <div class="pname">Moves</div>
+      <div class="sheet" style="margin-top:8px"><div class="srow"><span class="n">1.</span><span>e4</span><span class="chip" style="justify-self:start">e5</span></div></div>
+      <div class="foot"><button class="btn">New game</button><button class="btn btn--resign">Resign</button><span class="sp"></span><button class="btn btn--icon">⇅</button><button class="btn btn--icon btn--on">🔊</button></div>
+    </div>
+  </div>
+  <div class="stack">
+    <p class="label">After the first press: same width, red "Confirm" (turns back after 3 s)</p>
+    <div class="card">
+      <div class="pname">Moves</div>
+      <div class="sheet" style="margin-top:8px"><div class="srow"><span class="n">1.</span><span>e4</span><span class="chip" style="justify-self:start">e5</span></div></div>
+      <div class="foot"><button class="btn">New game</button><button class="btn btn--resign btn--confirm">Confirm</button><span class="sp"></span><button class="btn btn--icon">⇅</button><button class="btn btn--icon btn--on">🔊</button></div>
+    </div>
+  </div>
+</div>
+
+<h2>3 · Game over — dimmed board, result, reason, actions</h2>
+<div class="row">
+  <div>
+    <p class="label">Desktop</p>
+    <div class="board big" id="b1"><div class="scrim"><div class="over"><h3>Black wins</h3><p>Checkmate</p><div class="btns"><button class="btn btn--go">Review game</button><button class="btn">New game</button></div></div></div></div>
+  </div>
+  <div>
+    <p class="label">Other endings</p>
+    <div class="row" style="gap:12px">
+      <div class="over card"><h3>Liem wins</h3><p style="margin:4px 0 0">You resigned</p></div>
+      <div class="over card"><h3>You win</h3><p style="margin:4px 0 0">On time</p></div>
+      <div class="over card"><h3>Draw</h3><p style="margin:4px 0 0">Stalemate</p></div>
+    </div>
+    <p class="note">Two players: no Review game button, just New game.</p>
+  </div>
+  <div class="phone">
+    <p class="label">375 px</p>
+    <div class="board" id="b2"><div class="scrim"><div class="over" style="padding:16px"><h3>Black wins</h3><p>Checkmate</p><div class="btns"><button class="btn btn--go">Review game</button><button class="btn">New game</button></div></div></div></div>
+  </div>
+</div>
+
+<h2>4 · Review — three cards, key moment first</h2>
+<div class="row">
+  <div class="stack">
+    <p class="label">Desktop sidebar (380 px)</p>
+    <div class="card km km-edge">
+      <div class="km-k"><span>Key moment 1 of 3</span><span>☆ ☆ ☆</span></div>
+      <h4>The better move</h4>
+      <div>You played <b style="color:var(--g-inacc)">6…Ne4</b> · Stockfish: <b style="color:var(--g-best)">6…Bd6</b></div>
+      <div style="margin-top:16px"><button class="btn btn--go">Next moment</button></div>
+    </div>
+    <div class="card">
+      <div class="km-k"><span>Win % · you</span><span style="color:var(--ink);font-weight:700">6.c4</span></div>
+      <svg class="graph" viewBox="0 0 340 80" preserveAspectRatio="none">
+        <rect x="0" y="0" width="30" height="80" fill="#E6DCC6"/>
+        <line x1="0" y1="40" x2="340" y2="40" stroke="#6B6457" stroke-dasharray="3 3" stroke-width="1"/>
+        <path d="M0 36 L20 34 L40 37 L60 38 L72 52 L100 54 L140 55 L150 64 L190 66 L200 74 L340 76 L340 80 L0 80Z" fill="#EFE8D8"/>
+        <path d="M0 36 L20 34 L40 37 L60 38 L72 52 L100 54 L140 55 L150 64 L190 66 L200 74 L340 76" fill="none" stroke="#1E1B16" stroke-width="2"/>
+        <line x1="72" y1="0" x2="72" y2="80" stroke="#1E1B16" stroke-width="2"/>
+        <circle cx="72" cy="52" r="5" fill="#146AB0"/><circle cx="150" cy="64" r="5" fill="#146AB0"/><circle cx="336" cy="76" r="5" fill="#146AB0"/>
+      </svg>
+      <div class="acc"><b>40 %</b><span style="color:var(--soft)">accuracy</span><span style="color:var(--g-inacc)">?! 1</span><span style="color:var(--g-mist)">? 0</span><span style="color:var(--g-blun)">?? 1</span></div>
+    </div>
+    <div class="card">
+      <div class="pname">Moves</div>
+      <div class="sheet" style="margin-top:8px">
+        <div class="lb">Left his book at move 1 · he played 1…e5 in 807 games</div>
+        <div class="srow"><span class="n">1.</span><span>f3</span><span>c5</span></div>
+        <div class="srow"><span class="n">2.</span><span>g4 <b style="color:var(--g-inacc)">?!</b></span><span>e5</span></div>
+        <div class="srow"><span class="n">3.</span><span>a3 <b style="color:var(--g-blun)">??</b></span><span class="chip" style="justify-self:start">Qh4#</span></div>
+      </div>
+      <div class="foot"><button class="btn">Back to game</button><span class="sp"></span><button class="btn btn--icon">⇅</button><button class="btn btn--icon btn--on">🔊</button></div>
+    </div>
+    <p class="note">Was five cards: graph, key moment, accuracy, Moves, Left his book. Accuracy joins the graph; "Left his book" becomes one line in Moves.</p>
+  </div>
+  <div class="phone">
+    <p class="label">375 px — sheet in the same order</p>
+    <div class="board" id="b3"></div>
+    <div class="bottom-sheet">
+      <div class="card km km-edge" style="padding:12px">
+        <div class="km-k"><span>Key moment 1 of 3</span><span>☆ ☆ ☆</span></div>
+        <h4>The better move</h4>
+        <div><button class="btn btn--go" style="margin-top:8px">Start with move 2</button></div>
+      </div>
+      <div class="card" style="padding:12px">
+        <div class="km-k"><span>Win % · you</span><span style="color:var(--ink);font-weight:700">3…Qh4#</span></div>
+        <svg class="graph" viewBox="0 0 340 80" preserveAspectRatio="none"><path d="M0 36 L110 40 L220 44 L300 78 L340 78" fill="none" stroke="#1E1B16" stroke-width="2"/><circle cx="300" cy="78" r="5" fill="#CF0F00"/></svg>
+        <div class="acc"><b>40 %</b><span style="color:var(--g-inacc)">?! 1</span><span style="color:var(--g-mist)">? 0</span><span style="color:var(--g-blun)">?? 1</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Fool's-mate-like final position for the boards.
+  const pos = [
+    "rnb.kbnr","pppp.ppp","........","....p...","......Pq",".....P..","PPPPP..P","RNBQKBNR"];
+  const glyph = {K:"♔",Q:"♕",R:"♖",B:"♗",N:"♘",P:"♙",k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
+  function fill(id){
+    const b=document.getElementById(id); const scrim=b.querySelector('.scrim');
+    for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+      const d=document.createElement('div'); const ch=pos[r][c];
+      d.className='sq '+((r+c)%2?'d':'l');
+      if((r===0&&c===3)||(r===4&&c===7)) d.className='sq hl';
+      if(r===7&&c===4) d.className='sq check';
+      d.textContent=glyph[ch]||''; b.insertBefore(d,scrim);
+    }
+  }
+  ["b1","b2","b3"].forEach(fill);
+</script>
+</body>
+</html>

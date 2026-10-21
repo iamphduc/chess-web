@@ -46,6 +46,8 @@ const LOOK: Record<string, string> = {
   "--text-body": "16px",
   "--text-small": "14px",
   "--font": '"Quicksand", sans-serif',
+  // plan ui-polish ## Look: the game-over scrim is --ink at 40 %
+  "--game-over-scrim": "rgba(30, 27, 22, 0.4)",
 };
 
 // The grade colors on the day the plan started, tuned for the old dark panels.
@@ -88,6 +90,13 @@ describe("look", () => {
     expect(last(body, "margin")).toBe("0");
   });
 
+  it("the page turns off scroll anchoring, so a move that grows the page never scrolls it", () => {
+    // plan ui-polish: Chrome's scroll anchoring moved scrollY 231 -> 303 on a move at 375 px.
+    // Only `body` (or `html`) stops it; on .app or .sidebar the page still shifts.
+    const body = declsFor(readCss("index.css"), "body");
+    expect(last(body, "overflow-anchor")).toBe("none");
+  });
+
   it("text pairs meet 4.5:1", () => {
     for (const fg of ["--ink", "--soft"]) {
       for (const bg of ["--bg", "--surface", "--surface-2"]) {
@@ -95,6 +104,9 @@ describe("look", () => {
       }
     }
     expect(contrast(token("--go-ink"), token("--go")), "--go-ink on --go").toBeGreaterThanOrEqual(4.5);
+    // plan ui-polish: Resign's Confirm is red ink on the card, the game-over reason is soft on the card
+    expect(contrast(token("--accent"), token("--surface")), "--accent on --surface").toBeGreaterThanOrEqual(4.5);
+    expect(contrast(token("--soft"), token("--surface")), "--soft on --surface").toBeGreaterThanOrEqual(4.5);
   });
 
   it("grades are retuned for cream", () => {

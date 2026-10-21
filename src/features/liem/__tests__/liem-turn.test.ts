@@ -5,7 +5,7 @@ import { initialGameState, type GameState } from "game/engine/game-state";
 import { uciToMove } from "game/opponent/position";
 import { STEP_PROFILES } from "game/opponent/step-profiles";
 import { createAppStore } from "app/store";
-import { GameOverType } from "features/board/components/GameOver";
+import { GameOverType } from "features/board/gameOverType";
 import { liemTurn, type LiemTurnBoard } from "../liemTurn";
 import { matchSlice, type MatchState, setColorPick } from "../matchSlice";
 import { liemGameId } from "../useLiemOpponent";

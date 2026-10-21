@@ -19,9 +19,10 @@ import {
   toPromotionKind,
 } from "./engineAdapter";
 import { PiecePromoted } from "./components/Promotion";
-import { GameOverType } from "./components/GameOver";
+import { GameOverType } from "./gameOverType";
 import { isWhiteClockTurn } from "./clock";
 import { MoveSound, pickSound } from "./sound";
+import { canResign, type GameEnd } from "./gameEnd";
 
 interface PieceSelection {
   pieceType: PieceType;
@@ -92,6 +93,8 @@ interface BoardState {
   /** Set when a flag falls; kept if a pending promotion is finished afterwards. */
   flagFallWinner: "White" | "Black" | null;
   isPlaying: boolean;
+  /** How the game ended: set once, when it ends. Only `reset` and `newGame` clear it. */
+  result: GameEnd | null;
   /** The last completed ply's sound: a new object per ply, `null` before the first. */
   moveSound: MoveSound | null;
 }
@@ -119,6 +122,7 @@ function createInitialState(): BoardState {
     gameOver: GameOverType.Continue,
     flagFallWinner: null,
     isPlaying: false,
+    result: null,
     moveSound: null,
   };
 }
@@ -441,8 +445,26 @@ export const boardSlice = createSlice({
         // The side whose clock was running lost on time.
         const whiteFlagged = isWhiteClockTurn(state.history.length, state.pendingPromotion !== null);
         state.flagFallWinner = whiteFlagged ? "Black" : "White";
+        state.result = { winner: whiteFlagged ? "black" : "white", reason: "time" };
       }
       // Drop a piece still held, so no move hints stay on the board.
+      state.selectedPiece = null;
+      state.possibleMoves = [];
+    },
+
+    /**
+     * You give up. vs Liem the loser is always you, even on his turn; in Two players
+     * it's the side whose clock runs (the mover while the picker is open). The clocks
+     * stop, no sound plays, and an open picker stays open (as after a flag fall).
+     */
+    resign: (state) => {
+      if (!canResign(state)) return;
+      const loser: PieceColor =
+        state.humanColor ??
+        (isWhiteClockTurn(state.history.length, state.pendingPromotion !== null) ? "white" : "black");
+      state.gameOver = GameOverType.Win;
+      state.result = { winner: loser === "white" ? "black" : "white", reason: "resigned" };
+      state.isPlaying = false;
       state.selectedPiece = null;
       state.possibleMoves = [];
     },
@@ -484,6 +506,8 @@ function appendCheckSuffix(
   const gameOver = gameOverFromStatus(next);
   state.gameOver = gameOver;
   state.pieceAttackedKing = checkedKing;
+  // The first ending sticks: a pick after a flag fall or a resign keeps that result.
+  if (state.result === null) state.result = endFromStatus(next, gameOver);
 
   if (gameOver === GameOverType.Win) {
     return notationString + SpecialCase.Checkmate;
@@ -494,6 +518,19 @@ function appendCheckSuffix(
   return notationString;
 }
 
+/** The result a move's position gives: the mover wins a mate, a stalemate is a draw. */
+function endFromStatus(next: GameState, gameOver: GameOverType): GameEnd | null {
+  switch (gameOver) {
+    case GameOverType.Win:
+      // After the mating move it's the mated side's turn.
+      return { winner: next.turn === "white" ? "black" : "white", reason: "checkmate" };
+    case GameOverType.Draw:
+      return { winner: null, reason: "stalemate" };
+    case GameOverType.Continue:
+      return null;
+  }
+}
+
 export const {
   selectPiece,
   movePiece,
@@ -502,6 +539,7 @@ export const {
   promotePawn,
   start,
   stop,
+  resign,
   reset,
   newGame,
   playOpponentMove,

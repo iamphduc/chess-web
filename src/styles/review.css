@@ -8,7 +8,7 @@
    red ink on a moment, ochre when found, olive while waiting. */
 .review-card {
   font-size: var(--text-body);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.45;
   border-left: 3px solid var(--accent);
 }
@@ -109,7 +109,7 @@
   padding: 2px var(--space-2);
   font: inherit;
   font-size: var(--text-body);
-  font-weight: 500;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   color: var(--ink);
@@ -232,16 +232,16 @@
   }
 }
 
-/* The game accuracy number. */
+/* The game accuracy, first on the summary card's accuracy line. */
 .review-accuracy {
-  font-size: var(--text-hero);
+  font-size: var(--text-body);
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
 
-/* The phone bottom sheet: the graph, then the key-moment card, with the scrim behind it. */
+/* The phone bottom sheet: the key-moment card, then the summary, with the scrim behind it. */
 .review-sheet {
   position: fixed;
   right: 0;
@@ -252,7 +252,7 @@
   overflow-y: auto;
   padding: var(--space-2) var(--space-4) var(--space-5);
   font-size: var(--text-body);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--ink);
   background-color: var(--surface);
   border-top: 1px solid var(--line);

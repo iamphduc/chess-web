@@ -2,7 +2,7 @@ import type { GameState, PieceColor } from "game/engine/game-state";
 import type { OpponentSettings } from "game/opponent/opponent";
 import { STEP_PROFILES } from "game/opponent/step-profiles";
 import { TOTAL_MS } from "features/board/clock";
-import { GameOverType } from "features/board/components/GameOver";
+import { GameOverType } from "features/board/gameOverType";
 import type { MatchState } from "./matchSlice";
 
 /** The board fields his turn depends on (a subset of the `board` state). */

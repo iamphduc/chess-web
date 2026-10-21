@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import { boardSlice, selectPiece, movePiece, promotePawn, reset } from "../BoardSlice";
 import { projectSquares } from "../engineAdapter";
-import { GameOverType } from "../components/GameOver";
+import { GameOverType } from "../gameOverType";
 import { PiecePromoted } from "../components/Promotion";
 import { PieceType } from "../../../game/piece-type";
 import {

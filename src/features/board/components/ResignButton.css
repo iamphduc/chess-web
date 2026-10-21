@@ -1,0 +1,14 @@
+/* Resign in the Moves card foot (plan ui-polish ## Look): the secondary .button at a fixed
+   width, so turning into Confirm never moves anything in the row. Tokens only. */
+.resign-button {
+  flex: none;
+  width: 104px;
+  padding-inline: 0;
+  white-space: nowrap;
+}
+
+/* Confirm: red ink text and border, same box. */
+.resign-button[data-confirm="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}

@@ -1,5 +1,6 @@
-/* The game-over notice: a card in the middle of the board. The final position stays
-   in view around it, and the board below takes no clicks once the game is over. */
+/* The game-over card over a dimmed board. The scrim takes no clicks, so the final
+   position, the last-move tint and the check glow show through it; only the card
+   takes clicks. */
 .game-over {
   position: absolute;
   inset: 0;
@@ -7,14 +8,21 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: var(--space-4);
+  background-color: var(--game-over-scrim);
   pointer-events: none;
 }
 
 .game-over__card {
-  padding: var(--space-4) var(--space-5);
+  box-sizing: border-box;
+  width: 320px;
+  max-width: 100%;
+  padding: var(--space-5);
   background-color: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  text-align: center;
+  pointer-events: auto;
 }
 
 .game-over__title {
@@ -22,4 +30,61 @@
   font-size: var(--text-title);
   font-weight: 700;
   color: var(--ink);
+}
+
+.game-over__reason {
+  margin: var(--space-1) 0 var(--space-4);
+  font-size: var(--text-body);
+  color: var(--soft);
+}
+
+/* A row when the buttons fit, stacked when they don't. */
+.game-over__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+/* The entrance (gameOverEntrance.ts holds the same numbers). After a 300 ms pause,
+   so the last move is seen landing, the scrim fades in over 200 ms and the card
+   fades in, rises 8 px and grows from 96 % over 250 ms. Ease-out only, no overshoot.
+   "both" holds the first frame through the pause and the last one after. The card
+   stays hidden through the pause, so its buttons can't be pressed unseen.
+   data-entrance="instant" (reduced motion, or back from the review) has no animation. */
+.game-over[data-entrance="animate"] {
+  animation: game-over-scrim-in 200ms ease-out 300ms both;
+}
+
+.game-over[data-entrance="animate"] .game-over__card {
+  animation: game-over-card-in 250ms ease-out 300ms both;
+}
+
+@keyframes game-over-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes game-over-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-over[data-entrance="animate"],
+  .game-over[data-entrance="animate"] .game-over__card {
+    animation: none;
+  }
 }
