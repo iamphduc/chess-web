@@ -24,6 +24,9 @@ The first screen at `#/`. It shows the ♞ mark and "Sparring", the hero "Practi
 - "★ Liem" is ink text with an ochre ★ (`Star.tsx`). Ochre (`--gold`) is never a text color, because it fails 4.5:1 on cream.
 - No sparring text or `aria-label` may contain 1400–2500 or "about". `home.test.tsx` checks the markup.
 - `emulate` in the browser tools reloads the page, which drops the picks.
+- `Home.tsx` doesn't import `Button.css`. The Two players outline works because the app ships as one bundle with no lazy routes. If home is ever split out, import it there.
+- Two players must stay the same width as Play (448 px at desktop, 343 px at 375 px). Don't give it its own `max-width`.
 
 ## History
 - 2026-10-19 · ui-refresh · new home page with the level picker, color and Play; replaces the challenge card · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/chess-web/pull/84)
+- 2026-10-21 · ui-feel · Two players becomes a full-width 48 px outlined button (`a.button.home__two-players`), with no arrow · [report](../reports/ui-feel.html), [PR #101](https://github.com/iamphduc/chess-web/pull/101)

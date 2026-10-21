@@ -1,6 +1,6 @@
 # Plan: UI feel — calmer piece moves, square avatars, a roomier player row, a Two players button
 
-_Generated: 2026-10-21 · Status: active · Grilled-with: grilling (fast)_
+_Generated: 2026-10-21 · Status: archived · Grilled-with: grilling (fast)_
 Port base: 3200
 
 ## Goal
