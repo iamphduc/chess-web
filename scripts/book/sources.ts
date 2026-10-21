@@ -7,7 +7,7 @@ export const RETRY_MS = 60_000;
 /** Retries after the first 429 before the source fails. */
 export const MAX_RETRIES = 3;
 /** Both APIs ask for a way to contact the client's author. */
-export const USER_AGENT = "chess-web-book-import/1.0 (+https://github.com/iamphduc/chess-web)";
+export const USER_AGENT = "liem-sparring-book-import/1.0 (+https://github.com/iamphduc/liem-sparring)";
 
 const LICHESS_USER = /^[A-Za-z0-9][A-Za-z0-9_-]{1,29}$/;
 

@@ -28,4 +28,4 @@ The game then ends like any other: the clocks stop and show their time, and the 
 - At 375 px the foot may wrap, but pressing Resign never moves anything in it.
 
 ## History
-- 2026-10-20 · ui-polish · Resign with a 3 s red Confirm, in both modes; resign action and `GameEnd` result · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/chess-web/pull/91)
+- 2026-10-20 · ui-polish · Resign with a 3 s red Confirm, in both modes; resign action and `GameEnd` result · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/liem-sparring/pull/91)

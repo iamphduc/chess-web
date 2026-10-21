@@ -29,6 +29,6 @@ The app says plainly who you're playing: a sparring level, or Liem himself, and 
 
 ## History
 - 2026-10-12 · human-style-strength · setup card, his card and the out-of-book note name Stockfish · [report](../reports/human-style-strength.html)
-- 2026-10-18 · sparring-ladder · sparring and Liem labels from `levelView`, ♞ card, "★ Liem" step; in-game star removed · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/chess-web/pull/79)
-- 2026-10-19 · ui-refresh · level names replace ratings; texts move to the home page and the top bar; ochre ★ via `Star.tsx` · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/chess-web/pull/84)
-- 2026-10-20 · ui-polish · his card drops "Plays Liem's openings" and the Stockfish pill; no out-of-book note; an empty slot keeps the note's height on phones · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/chess-web/pull/91), [PR #92](https://github.com/iamphduc/chess-web/pull/92)
+- 2026-10-18 · sparring-ladder · sparring and Liem labels from `levelView`, ♞ card, "★ Liem" step; in-game star removed · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/liem-sparring/pull/79)
+- 2026-10-19 · ui-refresh · level names replace ratings; texts move to the home page and the top bar; ochre ★ via `Star.tsx` · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/liem-sparring/pull/84)
+- 2026-10-20 · ui-polish · his card drops "Plays Liem's openings" and the Stockfish pill; no out-of-book note; an empty slot keeps the note's height on phones · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/liem-sparring/pull/91), [PR #92](https://github.com/iamphduc/liem-sparring/pull/92)

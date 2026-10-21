@@ -7,7 +7,7 @@ Four screens, each with its own hash: `#/` home, `#/play` the vs Liem board, `#/
 - `src/app/route.ts`: `parseHash` matches exactly (`#/play/` and `#/PLAY` are unknown); `""`, `"#"` and `"#/"` are home. `goTo(screen)` sets `location.hash`, which adds a history entry.
 - `useHashRoute` (mounted in `App.tsx`) runs `followHash` on load and on every `hashchange`. `followHash` dispatches `arriveAt(screen)`, which brings the store in line and returns the screen to show. When that screen's hash differs from the URL, it calls `replaceState`, which adds no entry and fires no event.
 - `arriveAt` falls back: review with no finished game → play; play with no vs-Liem game → home. Home runs `goHome()` (a reset) unless the store is already home. Two players calls `switchMode("two-player")`, which keeps a game in progress when you're already there.
-- Leaving the review for play: a review opened from `#/play` marks its history entry (`history.state["chess-web.reviewOverPlay"]`). **Play again** (`leaveReviewForPlay`) then steps Back onto that `#/play` entry, or replaces `#/review` with `#/play` when no entry is marked. **Back to game** is a plain `#/play` link.
+- Leaving the review for play: a review opened from `#/play` marks its history entry (`history.state["liem-sparring.reviewOverPlay"]`). **Play again** (`leaveReviewForPlay`) then steps Back onto that `#/play` entry, or replaces `#/review` with `#/play` when no entry is marked. **Back to game** is a plain `#/play` link.
 
 ## Why it's this way
 - **Hash links, no router library** (the human's choice): they work on GitHub Pages with no server. See `pod-docs/decisions.md` → "The site opens on the home page".
@@ -23,4 +23,4 @@ Four screens, each with its own hash: `#/` home, `#/play` the vs Liem board, `#/
 - New history-reading code must keep the `reviewOverPlay` marker when it calls `replaceState` (spread the existing state).
 
 ## History
-- 2026-10-19 · ui-refresh · hash screens, `arriveAt` fallbacks and ← Home; review fix: Play again steps Back onto `#/play` · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/chess-web/pull/84), [PR #85](https://github.com/iamphduc/chess-web/pull/85)
+- 2026-10-19 · ui-refresh · hash screens, `arriveAt` fallbacks and ← Home; review fix: Play again steps Back onto `#/play` · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/liem-sparring/pull/84), [PR #85](https://github.com/iamphduc/liem-sparring/pull/85)

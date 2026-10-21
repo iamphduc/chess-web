@@ -15,7 +15,7 @@ function portFromEnv(fallback: number): number {
 const svgMock = fileURLToPath(new URL("./src/__mocks__/svgMock.ts", import.meta.url));
 
 export default defineConfig({
-  base: "/chess-web/",
+  base: "/liem-sparring/",
   plugins: [react()],
   resolve: {
     // app/, assets/, features/, game/, hooks/ come from tsconfig "paths"

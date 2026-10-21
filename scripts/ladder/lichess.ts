@@ -13,7 +13,7 @@ import type { GradedGame, Score, Side } from "./rates";
 /** Wait at least this long after one request ends before the next starts. */
 export const MIN_GAP_MS = 1500;
 /** Names the tool only; no account, address or person. */
-export const USER_AGENT = "chess-web-baseline/1.0";
+export const USER_AGENT = "liem-sparring-baseline/1.0";
 /** Lichess gives no eval before the first ply; this stands in for it. */
 export const START_EVAL: Score = { cp: 15 };
 

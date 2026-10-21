@@ -32,4 +32,4 @@ Once a vs-Liem game leaves his opening book, he answers with Stockfish lite (sin
 
 ## History
 - 2026-10-12 · human-style-strength · top-lines chooser and the first step table · [report](../reports/human-style-strength.html)
-- 2026-10-18 · sparring-ladder · mistake and blunder bands, `multiPv` 10, table tuned to 75 % of human rates · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/chess-web/pull/79)
+- 2026-10-18 · sparring-ladder · mistake and blunder bands, `multiPv` 10, table tuned to 75 % of human rates · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/liem-sparring/pull/79)

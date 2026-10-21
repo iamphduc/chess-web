@@ -40,5 +40,5 @@ The card comes in once per game end: a 300 ms pause, so the last move is seen la
 - The scrim token is the only color this plan added. Don't add a second one for the card.
 
 ## History
-- 2026-10-20 · ui-polish · scrim over the board; result and reason from `GameEnd`; Review game and New game on the card; resign counts as an ending · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/chess-web/pull/91)
-- 2026-10-20 · ui-motion · the entrance: 300 ms pause, scrim fade, card rise; instant under reduced motion and on a later mount; a test that imports `gameEnd.ts` first · [report](../reports/ui-motion.html), [PR #98](https://github.com/iamphduc/chess-web/pull/98), [PR #97](https://github.com/iamphduc/chess-web/pull/97)
+- 2026-10-20 · ui-polish · scrim over the board; result and reason from `GameEnd`; Review game and New game on the card; resign counts as an ending · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/liem-sparring/pull/91)
+- 2026-10-20 · ui-motion · the entrance: 300 ms pause, scrim fade, card rise; instant under reduced motion and on a later mount; a test that imports `gameEnd.ts` first · [report](../reports/ui-motion.html), [PR #98](https://github.com/iamphduc/liem-sparring/pull/98), [PR #97](https://github.com/iamphduc/liem-sparring/pull/97)
