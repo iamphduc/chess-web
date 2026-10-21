@@ -1,11 +1,18 @@
 /*
- * How pieces move (plan ui-motion): a quick ease-out tween on the game board, and in
- * the review only for a one-ply step. Pure values and rules; Piece.tsx and
- * ReviewBoard.tsx only pass them to Framer Motion.
+ * How pieces move (plans ui-motion and ui-feel): a 200 ms ease-in-out tween on the game
+ * board, and in the review a 150 ms ease-out only for a one-ply step. Pure values and
+ * rules; Piece.tsx and ReviewBoard.tsx only pass them to Framer Motion.
  */
 
-/** Every piece move on the game board, and a one-step move on the review board. */
-export const PIECE_MOVE_TRANSITION = { type: "tween", ease: "easeOut", duration: 0.15 } as const;
+/**
+ * Every piece move on the game board (a click, a tap, his move, castling's rook, en
+ * passant). The CSS `ease-in-out` curve (Framer's "easeInOut"), written as its control
+ * points so tests can sample it: a gentle start, no overshoot.
+ */
+export const GAME_MOVE_TRANSITION = { type: "tween", ease: [0.42, 0, 0.58, 1], duration: 0.2 } as const;
+
+/** A one-ply step on the review board. */
+export const REVIEW_STEP_TRANSITION = { type: "tween", ease: "easeOut", duration: 0.15 } as const;
 
 /** No motion: the piece is on its new square at once. */
 export const SNAP_TRANSITION = { duration: 0 } as const;
@@ -51,5 +58,5 @@ export function nextReviewStep(shown: ReviewStepShown | null, next: ReviewStep):
 }
 
 export function transitionFor(motion: ReviewStepMotion) {
-  return motion === "slide" ? PIECE_MOVE_TRANSITION : SNAP_TRANSITION;
+  return motion === "slide" ? REVIEW_STEP_TRANSITION : SNAP_TRANSITION;
 }

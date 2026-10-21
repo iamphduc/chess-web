@@ -9,10 +9,11 @@ When the system asks for less motion (`prefers-reduced-motion: reduce`, the OS "
 The last-move tint, the check glow, the dots and the card's content are the same as with motion.
 
 ## How it works
-- **Pieces:** both board screens in `src/features/board/Board.tsx` (play and review) are wrapped in Framer Motion's `MotionConfig reducedMotion="user"`, which turns off transform and layout animation when the media query matches. The piece transitions themselves (`PIECE_MOVE_TRANSITION`, the review's slide or snap, in `src/features/board/pieceMotion.ts`) don't need to know.
+- **Pieces:** both board screens in `src/features/board/Board.tsx` (play and review) are wrapped in Framer Motion's `MotionConfig reducedMotion="user"`, which turns off transform and layout animation when the media query matches. The piece transitions themselves (`GAME_MOVE_TRANSITION` on the game board, the review's `REVIEW_STEP_TRANSITION` or `SNAP_TRANSITION`, in `src/features/board/pieceMotion.ts`) don't need to know.
 - **Game over:** `GameOver.tsx` asks `prefersReducedMotion()` (`gameOverEntrance.ts`, a `matchMedia` read, `false` where there's no window) and passes it to `gameOverEntrance`, which then always returns `instant`. As a second guard, `GameOver.css` has an `@media (prefers-reduced-motion: reduce)` rule that sets `animation: none` on the `animate` card and scrim.
 - **CSS-only bits:** the clock hand (`Player.css`) and the review progress bar (`src/styles/review.css`) each have their own `@media (prefers-reduced-motion: reduce)` rule.
 - The Flip and a drag drop are instant for everyone, not only under reduced motion (`useInstantLayoutTransition` in `Button.tsx` and `Square.tsx`).
+- `tests/motion-wiring.test.ts` reads the source to pin these: the drop and the Flip start an instant layout transition before they dispatch, and `Board.tsx` has exactly two `MotionConfig reducedMotion="user"` wrappers, one per board.
 
 ## Why it's this way
 - **Follow the system, no in-app switch** (plan board-feel asked for `MotionConfig reducedMotion="user"`; no `decisions.md` entry): one setting the user already has, and nothing to store.
@@ -20,7 +21,7 @@ The last-move tint, the check glow, the dots and the card's content are the same
 - **Instant, not shorter:** the plan's `## Look` rules out "motion when the system asks for reduced motion", so there's no 50 ms version.
 
 ## Watch out
-- **Fake-DOM tests can't see motion.** The rules are tested as values: `gameOverEntrance(true, …)` is `instant` (`game-over-entrance.test.ts`), a stubbed `matchMedia` renders `data-entrance="instant"` (`game-over-card.test.tsx`), and `tests/board-css.test.ts` reads the media block. For pieces, check in the browser.
+- **Fake-DOM tests can't see motion.** The rules are tested as values: `gameOverEntrance(true, …)` is `instant` (`game-over-entrance.test.ts`), a stubbed `matchMedia` renders `data-entrance="instant"` (`game-over-card.test.tsx`), and `tests/board-css.test.ts` reads the media block. For pieces, `tests/motion-wiring.test.ts` pins the wiring, and the motion itself needs the browser.
 - **Browser check:** start Chrome with `--force-prefers-reduced-motion`, or use CDP `Emulation.setEmulatedMedia`. Then sample `getComputedStyle(piece).transform` every frame: every sample should be `none`.
 - A new animation anywhere needs its own reduced-motion rule. `MotionConfig` only covers Framer Motion elements inside `Board.tsx`'s two screens; CSS animations and anything outside them are on their own.
 
