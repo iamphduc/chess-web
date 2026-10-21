@@ -1,32 +1,36 @@
 /*
- * The player card (plan ui-refresh, ## Look; plan ui-polish, draft section 1): the photo or
- * the color disc, the name with its material line under it, and the clock pill. Tokens only, from src/index.css.
+ * The player card (plan ui-refresh, ## Look; plan ui-polish, draft section 1; plan ui-feel,
+ * option C): the photo or the color disc, the name with its material line under it, and the
+ * clock pill. 16 px from the name side to the clock, 8 px above and below. Tokens only, from src/index.css.
  */
 .player {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-1) 0;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
   color: var(--ink);
 }
 
-/* The avatar and the text column (the name line, then the material line). */
+/* The avatar and the text column (the name line, then the material line), 12 px apart. */
 .player__info {
   display: flex;
   flex-grow: 1;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
   min-width: 0;
 }
 
+/* His photo: a 40 px square with the 4 px corner, like the disc. */
 .player__avatar {
   flex: none;
+  width: 40px;
+  height: 40px;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: var(--radius);
 }
 
-/* The disc in place of a photo: ♔, ♚ or his ♞, all the same 40 px circle on the raised cream. */
+/* The disc in place of a photo: ♔, ♚ or his ♞, all the same 40 px square (4 px corner) on the raised cream. */
 .player__disc {
   display: grid;
   place-items: center;
@@ -37,7 +41,7 @@
   line-height: 1;
   color: var(--ink);
   background-color: var(--surface-2);
-  border-radius: 50%;
+  border-radius: var(--radius);
   user-select: none;
 }
 
@@ -216,10 +220,10 @@
 
 /*
  * The cards above and below the board keep one height in every mode, so the
- * board never moves. Every card is 56 px: a 4 px pad, the 44 px text column and a 4 px pad.
+ * board never moves. Every card is 60 px: an 8 px pad, the 44 px text column and an 8 px pad.
  */
 .board > .player {
-  height: 56px;
+  height: 60px;
   box-sizing: border-box;
 }
 
