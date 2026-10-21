@@ -1,14 +1,14 @@
 # Sprint: feel
 
-_From plan: pod-docs/plans/ui-feel.md · Slug: feel · Status: active · Generated: 2026-10-21_
-<!-- autopilot-run: started=2026-10-21T11:30:00Z sprints=0 waves=1 -->
+_From plan: pod-docs/plans/ui-feel.md · Slug: feel · Status: done · Generated: 2026-10-21_
+<!-- autopilot-run: started=2026-10-21T11:30:00Z sprints=1 waves=1 -->
 
 ## Status board
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | M1 | Game-board moves 200 ms ease-in-out; the review keeps its step | feel-M1 | — | pending | — | — |
-| 1 | R1 | Square avatars, player row option C, the Two players button | feel-R1 | — | pending | — | — |
+| 1 | M1 | Game-board moves 200 ms ease-in-out; the review keeps its step | feel-M1 | #100 | done | high | — |
+| 1 | R1 | Square avatars, player row option C, the Two players button | feel-R1 | #100 | done | high | — |
 
 Plan branch `ui-feel`; wave head `feel-w1`; merge target `ui-feel-staging`. Port base 3200 (M1 uses 3201, R1 uses 3202 for `PORT`).
 
@@ -124,3 +124,14 @@ Plan branch `ui-feel`; wave head `feel-w1`; merge target `ui-feel-staging`. Port
 - **Depends on:** —
 - **One-way door:** none
 - **Model:** opus
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date
+- **Slices shipped:** M1, R1 (wave 1, PR #100)
+- **Queue entries:** resolved 1 (folded in: `ReviewBoard`'s optional `gameId`/`ply` props, now required), deferred 0
+- **Slice log:**
+  - M1: opus · high · test-first yes (the wiring test pinned today's behavior; each site broken by hand to prove it can fail) · runtime e2–e4 sampled per frame at desktop and 375 px, drag castle, Flip, reduced motion, his reply during a move, review steps · 5 NOTEs · time lost none (a few retries: a quoted `eval` inside `batch` fails, a same-URL `open` doesn't reload)
+  - R1: opus · high · test-first yes · runtime home and the player row at 1400, 992, 375 and 320 px, vs Medium, vs Liem and the review · 5 NOTEs · time lost none
+  - Wave fix: none. Stalls: none. agent-browser ran through plain Bash calls in both slices and the wave check with no hang.
+- **Agent context at hand-back:** about 384,900 tokens summed over the sprint-planner and 2 slice engineers — *each agent's final context size, not tokens billed*

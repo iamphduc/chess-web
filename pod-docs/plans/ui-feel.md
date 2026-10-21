@@ -36,7 +36,7 @@ Constraints: the `ui-refresh` Look with the `ui-polish` and `ui-motion` changes,
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| feel | 200 ms ease-in-out game moves; square avatars; player row option C; Two players button | active | — |
+| feel | 200 ms ease-in-out game moves; square avatars; player row option C; Two players button | done | — |
 
 Status values: `planned` / `active` / `done`. The orchestrator only flips its row's Status — it does not rewrite Goal/Depends-on retroactively.
 
