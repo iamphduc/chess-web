@@ -15,7 +15,7 @@ On a phone the bottom sheet holds the key moment and then the summary.
 - `graphPlacement({ wide, sheetOpen, low })` (`src/features/review/reviewLayout.ts`) still decides where the summary goes, so `[data-review-graph]` appears exactly once.
 - The top bar is `TopBar` with no `action`; the prop and `.top-bar__action` CSS stay, unused (`tests/review-theme.test.ts` still reads them). The `ReviewTopBar` copy is gone.
 - The foot's Play again is `button.button.button--play` and dispatches `playAgain()` (`src/features/review/reviewLayout.ts`): a new game at the same level and color, then `#/play`. The review has no `a[href="#/play"]`; the browser's Back still goes to `#/play` with the finished board.
-- **Playback motion:** `ReviewBoard` takes the `gameId` and the cursor (`ply`) and draws each piece as a `motion.div` keyed by piece, with layout id `review-<gameId>-<piece>`. `nextReviewStep` and `reviewStepMotion` (`src/features/board/pieceMotion.ts`) pick the transition: `PIECE_MOVE_TRANSITION` (0.15 s ease-out) for a one-ply step of the same game, flip and size, else `{ duration: 0 }`. The same position again keeps its motion.
+- **Playback motion:** `ReviewBoard` takes the `gameId` and the cursor (`ply`), both required, and draws each piece as a `motion.div` keyed by piece, with layout id `review-<gameId>-<piece>`. `nextReviewStep` and `reviewStepMotion` (`src/features/board/pieceMotion.ts`) pick the transition: `REVIEW_STEP_TRANSITION` (0.15 s ease-out, its own value, not the game board's 0.2 s ease-in-out `GAME_MOVE_TRANSITION`) for a one-ply step of the same game, flip and size, else `{ duration: 0 }`. The same position again keeps its motion.
 
 ## Why it's this way
 - **Three cards, key moment first** (the human's choice): "too much review cards on the right side … more simple and compact", and the key moment above the graph. The merge of accuracy into the graph card is a default. Turned down: the five cards from `ui-refresh`. See `pod-docs/decisions.md` → "The review sidebar is three cards".
@@ -32,7 +32,7 @@ On a phone the bottom sheet holds the key moment and then the summary.
 - `emulate` in the browser tools reloads the page, which goes home. Set the phone viewport before you play.
 - Each review piece must be its own element (`key={pieceType}`). Without the key, ◀ from a capture reuses the taker's element for the piece it took, and Framer fades the returning piece out to the taker's square (it ends invisible). `review-board-motion.test.tsx › a piece that comes back on ◀ is a new element` guards it.
 - A snap still sets a layout transform for one script turn, but none reaches a paint. To check, count transformed pieces in a `ResizeObserver` callback (it runs after the frame's scripts, before paint); a plain `requestAnimationFrame` sample can see one frame of offset.
-- `ReviewBoard`'s `gameId` and `ply` are optional only because `review-card.test.tsx` renders it without them; left out, nothing slides.
+- `ReviewBoard`'s `gameId` and `ply` are required (plan ui-feel): the build fails the type check if either is left out, so every render, the tests too, says which game and position it shows.
 
 ## History
 - 2026-10-16 · post-game-review · the review after a vs-Liem game: grades, accuracy, key moments, win-% graph · [report](../reports/post-game-review.html)

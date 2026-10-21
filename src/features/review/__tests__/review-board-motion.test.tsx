@@ -1,5 +1,6 @@
-// Review playback (plan ui-motion, sprint motion › P1): one step slides its move at
-// the game board's speed; every other change of position snaps. Fake-DOM tests can't
+// Review playback (plan ui-motion, sprint motion › P1; plan ui-feel › M1): one step
+// slides its move with the review's own 150 ms ease-out (not the game board's 200 ms
+// ease-in-out); every other change of position snaps. Fake-DOM tests can't
 // see motion, so a mocked motion.div records the props each piece gets.
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -10,7 +11,8 @@ import { applyMove } from "game/engine/engine";
 import { initialGameState, type GameState } from "game/engine/game-state";
 import { uciToMove } from "game/opponent/position";
 import { PieceType } from "game/piece-type";
-import { PIECE_MOVE_TRANSITION, reviewStepMotion, type ReviewStep } from "features/board/pieceMotion";
+import * as pieceMotion from "features/board/pieceMotion";
+import { reviewStepMotion, type ReviewStep } from "features/board/pieceMotion";
 import { ReviewBoard } from "../components/ReviewBoard";
 
 const recorded = vi.hoisted(() => [] as Record<string, unknown>[]);
@@ -216,11 +218,14 @@ async function mount() {
   };
 }
 
-const SLIDE = PIECE_MOVE_TRANSITION;
+const SLIDE = pieceMotion.REVIEW_STEP_TRANSITION;
 const SNAP = { duration: 0 };
 
 describe("ReviewBoard motion", () => {
   it("a snap uses no transition time", async () => {
+    // The slide is the review's step, never the game board's move.
+    expect(SLIDE).toEqual({ type: "tween", ease: "easeOut", duration: 0.15 });
+    expect(SLIDE).not.toEqual(pieceMotion.GAME_MOVE_TRANSITION);
     const show = await mount();
     // Opening the review snaps.
     expect(await show(board(3))).toEqual(SNAP);

@@ -230,7 +230,7 @@ Context: At a key moment the card says "Your move is hidden", but the move list 
 Decision: Keep showing it. You already know what you played, and the mark only says it was a mistake.
 To change: hide the played move's row (or its mark) in `MoveList` while the active moment is `trying`, and reword the card's "Your move is hidden" if needed.
 
-## 2026-10-17 — browser: chrome-devtools-axi
+## 2026-10-17 — browser: chrome-devtools-axi (superseded by "browser: agent-browser", 2026-10-21)
 
 Agents check pages with `npx -y chrome-devtools-axi` (`open`, then `eval`), each in its own session. `agent-browser` is installed, but its `open` hung again and again in the post-game-review run (see `pod-docs/known-issues/agent-browser-batch-hang.md`), while chrome-devtools-axi worked every time. (human, 2026-10-17)
 
@@ -409,7 +409,7 @@ Context: The human asked to "dim the board to make the endgame more prominent". 
 Decision: At the end of a game, `.game-over` fills `.squares` with `--game-over-scrim` (`--ink` at 40 %) and takes no clicks, so the final position, the last-move tint and the check glow show through. Inside sits a `--surface` card (`.game-over__card`) with the result ("White wins", "Black wins" or "Draw", in both modes), the reason ("Checkmate", "Stalemate", "On time" or "Resigned") and the actions: **Review game** (only when the game can be reviewed, so only vs Liem) and **New game** (`replayLiemGame` vs Liem, `reset` in Two players). The card waits for a pending promotion pick: until the pick is made it doesn't show, so the picker can still be clicked. On a phone the buttons sit in a row when they fit and stack otherwise.
 Consequences: The text and the rule for when it shows are `gameOverView` (`src/features/board/gameOverView.ts`); the look is `src/features/board/components/GameOver.css`.
 
-## 2026-10-20 — A color disc in place of a photo (default, recommended and accepted, plan ui-polish)
+## 2026-10-20 — A color disc in place of a photo (default, recommended and accepted, plan ui-polish) (the circle is superseded by "Avatars are squares with the 4 px corner", 2026-10-21; the disc stays)
 Context: Your card showed a stock photo (`chess-player.png`) while his sparring card showed a ♞ disc, so the two cards didn't match.
 Decision: A card with no photo and no glyph shows a disc: `span.player__disc[aria-hidden="true"]` with ♔ for White or ♚ for Black. His ♞ is the same disc (`.player__disc.liem-sparring-avatar`). Every disc is 40 × 40 px, a `--surface-2` circle with an ink glyph. Only his card at the Liem step has a photo. `avatarSrc` returns `null` for an unknown name, and the card then shows the disc; `chess-player.png` is gone.
 Consequences: The disc look is `.player__disc` in `src/features/board/components/Player.css`; the markup is `Avatar` in `src/features/board/components/Player.tsx`.
@@ -461,7 +461,7 @@ Context: The human found the end-of-game notice "too plain".
 Decision: After a 300 ms pause, so you see the last move, the scrim fades in over 200 ms, and the card fades in, rises 8 px and scales from 0.96 to 1 over 250 ms, ease-out with no overshoot. It runs once per game end (`data-entrance="animate"`); under `prefers-reduced-motion: reduce`, and on a later mount for the same ended game (such as back from the review), it shows at once (`data-entrance="instant"`). New game during the pause removes the card. Turned down: a bounce, and a king highlight.
 Consequences: The timings and the rule live in `src/features/board/gameOverEntrance.ts`; change them there and in its test.
 
-## 2026-10-20 — Pieces move in 150 ms with an ease-out (chosen by the human, plan ui-motion)
+## 2026-10-20 — Pieces move in 150 ms with an ease-out (chosen by the human, plan ui-motion) (the game-board part is superseded by "Game-board pieces move in 200 ms with an ease-in-out", 2026-10-21)
 Context: The human found piece movement "quite slow" with Framer Motion's default spring.
 Decision: Every piece move on the game board (click, tap, his move, castling's rook, en passant) is `PIECE_MOVE_TRANSITION`, a 0.15 s ease-out tween (`src/features/board/pieceMotion.ts`). The Flip stays instant, and a drag drop lands at once (the drag already carried the piece; castling's rook jumps with it on a drop). With reduced motion every piece jumps (`MotionConfig reducedMotion="user"`).
 Consequences: Change the speed in `pieceMotion.ts` and `piece-motion.test.tsx`; the review's one-step slide uses the same value.
@@ -485,3 +485,29 @@ Consequences: the other way centers the name until the first capture, then moves
 Context: fix PR #94 makes `npm run baseline -- --levels <N>` merge into `scripts/ladder/human-baselines.json`.
 Decision: the file's `generated` date (and `skipPlies`) comes from the latest run, so a partial run sets it to today even when no other level changed.
 Consequences: the other way stores a date for each level. To change it, edit `mergeBaseline` in `scripts/ladder/baseline.ts` and its tests.
+
+## 2026-10-21 — browser: agent-browser
+Agents check pages with `agent-browser` again, each in its own session (`--session pod-<name>`), always through the Bash tool and never with its output piped or captured (`| head`, `| tail`, `$(…)`). pod 0.3.0's probe (open and close `about:blank` twice, plain calls through the Bash tool) passed on 2026-10-21 with agent-browser 0.39.0, and a `batch` of `open`, `wait` and `eval` after a `close` returned at once. A piped or captured `open` still hangs (see `pod-docs/known-issues/agent-browser-batch-hang.md`). Supersedes "browser: chrome-devtools-axi" (2026-10-17). (human, 2026-10-21)
+
+## 2026-10-21 — merge target: ui-feel-staging
+Plan ui-feel merges into `ui-feel-staging`, cut from `main` after PR #93 merged; the human merges it into `main`. (human, 2026-10-21)
+
+## 2026-10-21 — Game-board pieces move in 200 ms with an ease-in-out (chosen by the human, plan ui-feel)
+Context: The human: "The review speed feel really good but normal pieces feel too fast, maybe because of the transition type?" Measured on 2026-10-21: chess.com's analysis board moves a piece in about 155 ms with an ease-in-out curve (6–10 % of the way after the first frames); ours took about 125–150 ms with an ease-out that covered about 20 % in the first frame, so the piece leapt off its square. Lichess's chessground and chessboard.js default to 200 ms.
+Decision: Every piece move on the game board (a click, a tap, his move, castling's rook, en passant) is `GAME_MOVE_TRANSITION = { type: "tween", ease: [0.42, 0, 0.58, 1], duration: 0.2 }`, the CSS `ease-in-out` curve as control points: under 5 % of the way after the first 1/60 s frame, no overshoot, halfway at half time. The review's one-ply step keeps its own `REVIEW_STEP_TRANSITION = { type: "tween", ease: "easeOut", duration: 0.15 }` (`transitionFor("slide")`). The old shared `PIECE_MOVE_TRANSITION` is gone. The Flip and a drag drop stay instant (`useInstantLayoutTransition`), and reduced motion still jumps (`MotionConfig reducedMotion="user"` around both boards). When his reply lands mid-move, the piece ends on the store's square: the motion is visual only. Turned down: a speed setting, springs. Supersedes the game-board part of "Pieces move in 150 ms with an ease-out", 2026-10-20.
+Consequences: Both values live in `src/features/board/pieceMotion.ts`; `piece-motion.test.tsx` samples the curve, and `tests/motion-wiring.test.ts` pins the instant paths and the old name's removal.
+
+## 2026-10-21 — Avatars are squares with the 4 px corner (chosen by the human, plan ui-feel)
+Context: The human: "Change the rounded avatar to square".
+Decision: Every avatar is a 40 × 40 px square with `border-radius: var(--radius)` (4 px): your ♔/♚ disc, his ♞ disc (`.player__disc`) and Liem's photo (`.player__avatar`), on every player card, in both modes and in the review. No `50%` is left in `Player.css`. The disc keeps its `--surface-2` fill and ink glyph. Supersedes the circle in "A color disc in place of a photo", 2026-10-20.
+Consequences: The look is `.player__disc` and `.player__avatar` in `src/features/board/components/Player.css`; `tests/player-css.test.ts` and `tests/liem-theme.test.ts` pin it.
+
+## 2026-10-21 — The player row has more room (option C) (chosen by the human from the draft, plan ui-feel)
+Context: The human: "review the gap in the player row too". Option C of `pod-docs/design-drafts/ui-feel.html` was picked.
+Decision: `.player` has `gap: var(--space-4)` (16 px from the name side to the clock) and `padding: var(--space-2) 0` (8 px above and below); `.player__info` has `gap: var(--space-3)` (12 px from the avatar to the name). Every `.board > .player` is 60 px tall (8 + 44 + 8); `.player__text` stays 44 px, and the name line, the material line, the 112 px clock pill and the "+N" and detail rules don't change. At 375 and 320 px "+N" and his detail are never cut (the glyphs cut first) and nothing scrolls sideways. `squareSizeFor` reads only the width, so the taller cards don't shrink the board; the board column is 8 px taller.
+Consequences: The row is `src/features/board/components/Player.css`; `tests/player-css.test.ts` pins the gaps, the padding and the 60 px card.
+
+## 2026-10-21 — Two players is a full-width button (chosen by the human from the draft, plan ui-feel)
+Context: The human: "For the two players, use a button instead of text button, I barely see it". The 48 px option of the draft was picked.
+Decision: Home's "Two players on one board →" text link (`a.home__alt`) becomes `<a class="button home__two-players" href="#/two-players">Two players on one board</a>`, with no arrow: the secondary `.button` look (the outline), full width, `min-height: 48px` like Play, `margin-top: var(--space-3)` (12 px) under Play. It stays an `<a>` because it goes to a screen. `.home__alt` is gone.
+Consequences: The markup is `src/features/home/Home.tsx`, the look `.home__two-players` in `Home.css`; `home.test.tsx` and `tests/home-css.test.ts` pin it.

@@ -23,13 +23,10 @@ import { choosePromotion, clickSquare, NO_SELECTION, targetsOf, type PromotionPi
 
 interface Props {
   state: GameState;
-  /**
-   * The game under review: its pieces get their own layout ids. Optional only because
-   * `review-card.test.tsx` (outside this slice) renders the board without it.
-   */
-  gameId?: number;
-  /** Which position `state` is, so a one-ply step can slide. Left out, nothing slides. */
-  ply?: number;
+  /** The game under review: its pieces get their own layout ids. */
+  gameId: number;
+  /** Which position `state` is, so a one-ply step can slide. */
+  ply: number;
   flipped: boolean;
   /** Square size in px. */
   size: number;
@@ -57,7 +54,7 @@ const PROMOTION_CHOICES: { piece: PromotionPiece; label: string; white: string; 
  * move; a promotion asks for the piece. No drag. A one-ply step slides its move;
  * any other change of position snaps (`reviewStepMotion`).
  */
-export const ReviewBoard = ({ state, gameId = 0, ply = 0, flipped, size, highlight, interactive, onMove }: Props) => {
+export const ReviewBoard = ({ state, gameId, ply, flipped, size, highlight, interactive, onMove }: Props) => {
   // Derived during render (like `held` below), so the step and its motion land together.
   const [shown, setShown] = useState<ReviewStepShown | null>(null);
   const next = nextReviewStep(shown, { gameId, ply, flipped, size });
