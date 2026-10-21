@@ -39,7 +39,7 @@ describe("review components", () => {
     const start = initialGameState();
     const board = (props: Partial<React.ComponentProps<typeof ReviewBoard>> = {}) =>
       renderToStaticMarkup(
-        <ReviewBoard state={start} flipped={false} size={52} highlight={null} interactive={false} onMove={noop} {...props} />
+        <ReviewBoard state={start} gameId={3} ply={0} flipped={false} size={52} highlight={null} interactive={false} onMove={noop} {...props} />
       );
 
     // Unflipped: a8 first, h1 last; every square named, 32 pieces drawn.
