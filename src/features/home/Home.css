@@ -182,19 +182,12 @@
   margin-top: var(--space-5);
 }
 
-.home__alt {
-  display: block;
+/* Two players: the secondary .button (an outline), as wide and as tall as Play, 12 px under it.
+   A link, since it goes to a screen. */
+.home__two-players {
+  width: 100%;
+  min-height: 48px;
   margin-top: var(--space-3);
-  color: var(--soft);
-  font-size: var(--text-small);
-  font-weight: 700;
-  text-align: center;
-  text-decoration: none;
-}
-
-.home__alt:hover {
-  color: var(--ink);
-  text-decoration: underline;
 }
 
 /* His openings · Then Stockfish · Review. */

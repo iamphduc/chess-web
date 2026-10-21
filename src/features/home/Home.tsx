@@ -118,8 +118,8 @@ export function Home({ entry = LIEM.entry }: HomeProps) {
       <button type="button" className="button button--play home__play" onClick={() => playFromHome(dispatch)}>
         Play
       </button>
-      <a className="home__alt" href="#/two-players">
-        Two players on one board →
+      <a className="button home__two-players" href="#/two-players">
+        Two players on one board
       </a>
 
       <ul className="home__strip">
