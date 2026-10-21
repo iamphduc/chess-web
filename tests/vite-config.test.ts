@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { loadConfigFromFile } from "vite";
@@ -21,10 +21,20 @@ afterEach(() => {
   else process.env.PORT = ORIGINAL_PORT;
 });
 
+describe("project name", () => {
+  it("package.json and package-lock.json name the project liem-sparring", () => {
+    const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+    const lock = JSON.parse(readFileSync(join(ROOT, "package-lock.json"), "utf8"));
+    expect(pkg.name).toBe("liem-sparring");
+    expect(lock.name).toBe("liem-sparring");
+    expect(lock.packages[""].name).toBe("liem-sparring");
+  });
+});
+
 describe("vite.config.ts", () => {
-  it("serves under /chess-web/ on 127.0.0.1", async () => {
+  it("serves under /liem-sparring/ on 127.0.0.1", async () => {
     const config = await load(undefined);
-    expect(config.base).toBe("/chess-web/");
+    expect(config.base).toBe("/liem-sparring/");
     expect(config.server?.host).toBe("127.0.0.1");
     expect(config.preview?.host).toBe("127.0.0.1");
   });

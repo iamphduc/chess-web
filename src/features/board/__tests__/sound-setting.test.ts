@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { loadSoundOn, saveSoundOn, SOUND_STORAGE_KEY } from "../soundSetting";
+import { LEGACY_SOUND_STORAGE_KEY, loadSoundOn, saveSoundOn, SOUND_STORAGE_KEY } from "../soundSetting";
 
 /** An in-memory Storage-like object. */
 function memory(initial: Record<string, string> = {}) {
@@ -29,7 +29,7 @@ afterEach(() => {
 
 describe("sound setting", () => {
   it("loadSoundOn defaults to on", () => {
-    expect(SOUND_STORAGE_KEY).toBe("chess-web.sound");
+    expect(SOUND_STORAGE_KEY).toBe("liem-sparring.sound");
 
     expect(loadSoundOn(() => memory())).toBe(true);
     expect(loadSoundOn(() => memory({ [SOUND_STORAGE_KEY]: "on" }))).toBe(true);
@@ -45,6 +45,26 @@ describe("sound setting", () => {
     expect(loadSoundOn(() => undefined)).toBe(true);
 
     expect(loadSoundOn(() => memory({ [SOUND_STORAGE_KEY]: "off" }))).toBe(false);
+  });
+
+  it("loadSoundOn keeps a setting saved under the old project name", () => {
+    expect(LEGACY_SOUND_STORAGE_KEY).toMatch(/^chess-web\.sound$/);
+    expect(loadSoundOn(() => memory({ [LEGACY_SOUND_STORAGE_KEY]: "off" }))).toBe(false);
+    expect(loadSoundOn(() => memory({ [LEGACY_SOUND_STORAGE_KEY]: "on" }))).toBe(true);
+    // A setting saved under the new name wins over the old one.
+    expect(
+      loadSoundOn(() => memory({ [LEGACY_SOUND_STORAGE_KEY]: "off", [SOUND_STORAGE_KEY]: "on" }))
+    ).toBe(true);
+    expect(
+      loadSoundOn(() => memory({ [LEGACY_SOUND_STORAGE_KEY]: "on", [SOUND_STORAGE_KEY]: "off" }))
+    ).toBe(false);
+  });
+
+  it("saveSoundOn writes only the new key", () => {
+    const store = memory({ [LEGACY_SOUND_STORAGE_KEY]: "off" });
+    saveSoundOn(() => store, true);
+    expect(store.data.get(SOUND_STORAGE_KEY)).toBe("on");
+    expect(loadSoundOn(() => store)).toBe(true);
   });
 
   it("saveSoundOn never throws", () => {

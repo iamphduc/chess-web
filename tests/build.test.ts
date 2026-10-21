@@ -10,7 +10,7 @@ let outDir: string;
 let build: SpawnSyncReturns<string>;
 
 beforeAll(() => {
-  outDir = mkdtempSync(join(tmpdir(), "chess-web-build-"));
+  outDir = mkdtempSync(join(tmpdir(), "liem-sparring-build-"));
   build = spawnSync(process.execPath, [VITE_BIN, "build", "--outDir", outDir, "--emptyOutDir"], {
     cwd: ROOT,
     encoding: "utf8",
@@ -29,16 +29,16 @@ function jsFiles(dir: string): string[] {
 }
 
 describe("production build", () => {
-  it("production build uses the /chess-web/ base", () => {
+  it("production build uses the /liem-sparring/ base", () => {
     expect(build.status, `${build.stdout}\n${build.stderr}`).toBe(0);
     const html = readFileSync(join(outDir, "index.html"), "utf8");
     const urls = [...html.matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]);
     expect(urls.length).toBeGreaterThan(0);
-    for (const url of urls) expect(url).toMatch(/^\/chess-web\//);
-    expect(urls).toContain("/chess-web/chess-icon.png");
-    expect(urls).toContain("/chess-web/logo192.png");
-    expect(urls).toContain("/chess-web/manifest.json");
-    expect(urls.some((u) => /^\/chess-web\/assets\/.+\.js$/.test(u))).toBe(true);
+    for (const url of urls) expect(url).toMatch(/^\/liem-sparring\//);
+    expect(urls).toContain("/liem-sparring/chess-icon.png");
+    expect(urls).toContain("/liem-sparring/logo192.png");
+    expect(urls).toContain("/liem-sparring/manifest.json");
+    expect(urls.some((u) => /^\/liem-sparring\/assets\/.+\.js$/.test(u))).toBe(true);
     expect(html).not.toContain("%PUBLIC_URL%");
     expect(existsSync(join(outDir, "chess-icon.png"))).toBe(true);
   });
@@ -63,7 +63,7 @@ describe("production build", () => {
   it("engine and books load lazily", () => {
     expect(build.status, `${build.stdout}\n${build.stderr}`).toBe(0);
     const html = readFileSync(join(outDir, "index.html"), "utf8");
-    const entries = [...html.matchAll(/<script\b[^>]*type="module"[^>]*src="\/chess-web\/([^"]+\.js)"/g)].map(
+    const entries = [...html.matchAll(/<script\b[^>]*type="module"[^>]*src="\/liem-sparring\/([^"]+\.js)"/g)].map(
       (m) => m[1],
     );
     expect(entries).toHaveLength(1);
