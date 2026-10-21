@@ -65,8 +65,13 @@ describe("home", () => {
       ["Then Stockfish", "At your level"],
       ["Review", "Find your better moves"],
     ]);
-    expect(html).toMatch(/<button type="button" class="button button--play home__play">Play<\/button>/);
-    expect(html).toMatch(/<a class="home__alt" href="#\/two-players">Two players on one board →<\/a>/);
+    // Play, then right after it the Two players button: an outlined link, no arrow.
+    expect(html).toMatch(
+      /<button type="button" class="button button--play home__play">Play<\/button><a class="button home__two-players" href="#\/two-players">Two players on one board<\/a>/
+    );
+    expect(html.match(/href="#\/two-players"/g)).toHaveLength(1);
+    expect(html).not.toContain("home__alt");
+    expect(html).not.toContain("→");
   });
 
   it("his name and title come from the entry", () => {

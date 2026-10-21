@@ -21,7 +21,7 @@ The app says plainly who you're playing: a sparring level, or Liem himself, and 
 
 ## Watch out
 - No sparring text or `aria-label` may contain a 4-digit number or "about". `level-view.test.ts` checks every string field.
-- No card may show "Plays Liem's openings", "Liem's openings", "GM · 2732" or `[data-engine]`. Every `.board > .player` stays 56 px tall.
+- No card may show "Plays Liem's openings", "Liem's openings", "GM · 2732" or `[data-engine]`. Every `.board > .player` stays 60 px tall.
 - The empty slot (`div.liem-note-slot`) has no `[data-book-state]` and no text. A gap above the Moves card after he leaves his book on a phone is the rule, not a bug.
 - On desktop the Moves card moves up by the note's height when he leaves his book, and moves down when the note grows; `scrollY` doesn't change. Both are open choices for the human (`decisions.md`, 2026-10-20 agent defaults).
 - Don't bring back a scroll fix that only checks moves in book. Test with the note going away.

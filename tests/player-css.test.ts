@@ -152,14 +152,43 @@ describe("Player.css", () => {
     expect(detail).toMatch(/margin-left:\s*auto/);
   });
 
-  it("the second line sits 4 px under the name in a 56 px card", () => {
+  it("the row follows option C", () => {
+    const all = rules(css());
+    const row = bodyOf(all, ".player");
+    // 16 px from the name side to the clock, 8 px above and below.
+    expect(row).toMatch(/(^|[\s;])gap:\s*var\(--space-4\)/);
+    expect(row).toMatch(/(^|[\s;])padding:\s*var\(--space-2\) 0(;|\s|$)/);
+    // 12 px from the avatar to the name.
+    expect(bodyOf(all, ".player__info")).toMatch(/(^|[\s;])gap:\s*var\(--space-3\)/);
+    // No other rule (a phone query, a state) changes the row's gap or padding.
+    for (const r of all.filter((x) => /^\.player(__info)?$/.test(x.selector) && x.media !== null)) {
+      expect(r.body, `${r.media} ${r.selector}`).not.toMatch(/(^|[\s;])(gap|padding)\s*:/);
+    }
+  });
+
+  it("avatars are 4 px squares", () => {
+    const all = rules(css());
+    for (const sel of [".player__disc", ".player__avatar"]) {
+      const body = bodyOf(all, sel);
+      expect(body, sel).toMatch(/border-radius:\s*var\(--radius\)/);
+      expect(body, sel).toMatch(/(^|[\s;])width:\s*40px/);
+      expect(body, sel).toMatch(/(^|[\s;])height:\s*40px/);
+      expect(body, sel).not.toMatch(/50%/);
+    }
+    // No round corner is left anywhere in the card (the clock hand's 50% origin is not a corner).
+    for (const r of all) {
+      expect(r.body, r.selector).not.toMatch(/border-radius:\s*50%/);
+    }
+  });
+
+  it("the second line sits 4 px under the name in a 60 px card", () => {
     const all = rules(css());
     const text = bodyOf(all, ".player__text");
     expect(text).toMatch(/flex-direction:\s*column/);
     expect(text).toMatch(/gap:\s*var\(--space-1\)/); // 4 px
     expect(text).toMatch(/min-width:\s*0/);
     // One reserved height, so the name line stays put when the material line appears.
-    expect(text).toMatch(/(^|[\s;])height:/);
+    expect(text).toMatch(/(^|[\s;])height:\s*44px/);
     expect(bodyOf(all, ".player__sub")).toMatch(/display:\s*flex/);
     // The material box is the second line's own height (20 px), so its top is the 4 px gap.
     expect(bodyOf(all, ".player__sub")).toMatch(/(^|[\s;])height:\s*var\(--text-title\)/);
@@ -167,12 +196,13 @@ describe("Player.css", () => {
     expect(material).toMatch(/align-self:\s*stretch/);
     expect(material).toMatch(/line-height:\s*1(;|\s|$)/);
     const card = bodyOf(all, ".board > .player");
-    expect(card).toMatch(/(^|[\s;])height:\s*56px/);
+    expect(card).toMatch(/(^|[\s;])height:\s*60px/);
     expect(card).toMatch(/box-sizing:\s*border-box/);
-    // The two lines plus the gap fit inside the card's padding: 19.2 + 4 + 20 <= 56 - 2 * padding.
+    // The two lines plus the gap fit inside the card's padding: 19.2 + 4 + 20 <= 60 - 2 * padding.
     const pad = bodyOf(all, ".player").match(/padding:\s*var\(--space-(\d)\)/);
     expect(pad).not.toBeNull();
     const px = [0, 4, 8, 12, 16, 24, 32][Number(pad![1])];
-    expect(Math.ceil(16 * 1.2) + 4 + 20).toBeLessThanOrEqual(56 - 2 * px);
+    expect(px).toBe(8);
+    expect(Math.ceil(16 * 1.2) + 4 + 20).toBeLessThanOrEqual(60 - 2 * px);
   });
 });

@@ -1,7 +1,7 @@
 # Board loads
 
 ## What it is
-What you see when a board screen opens, from home's **Play** or "Two players on one board →". A 56 px top bar holds "← Home" and the title: "vs Medium · you play White", "vs Liem · you play Black" or "Two players". Below it are the board column (a player card, 64 squares, a player card) and a sidebar: the book note (vs Liem only), then the Moves card. Both clocks read `10:00`. There are no mode tabs and no challenge card.
+What you see when a board screen opens, from home's **Play** or the **Two players on one board** button. A 56 px top bar holds "← Home" and the title: "vs Medium · you play White", "vs Liem · you play Black" or "Two players". Below it are the board column (a player card, 64 squares, a player card) and a sidebar: the book note (vs Liem only), then the Moves card. Both clocks read `10:00`. There are no mode tabs and no challenge card.
 
 The cards: vs Liem, your card reads "You" with a ♔ or ♚ disc, and his card shows the level name with the ♞ disc. In Two players they read "White" and "Black", each with its disc. Body text is Quicksand 600; headings, buttons, names and clocks are 700.
 
@@ -21,7 +21,7 @@ The cards: vs Liem, your card reads "You" with a ♔ or ♚ disc, and his card s
 
 ## Watch out
 - A test that builds a fresh store starts in the home state. A two-player test must call `switchMode("two-player")` first, and a vs-Liem test must start a game.
-- `.board` must stay `8 × square size` wide, with the cards inside it, and every `.board > .player` 56 px tall so `.squares` doesn't move.
+- `.board` must stay `8 × square size` wide, with the cards inside it, and every `.board > .player` 60 px tall so `.squares` doesn't move. `squareSizeFor` reads only the viewport width, so the taller cards make the board column taller, not the board smaller.
 - No CSS under `src/` may set `font-weight` to 500, 400 or `normal`; `tests/theme.test.ts` checks it. There is no 500 font file.
 - Below 992 px the book note sits above the Moves card, so anything that changes its height changes the page height. See [stockfish-is-named](stockfish-is-named.md).
 
