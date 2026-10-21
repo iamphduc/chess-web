@@ -173,8 +173,12 @@ describe("Player.css", () => {
       expect(body, sel).toMatch(/border-radius:\s*var\(--radius\)/);
       expect(body, sel).toMatch(/(^|[\s;])width:\s*40px/);
       expect(body, sel).toMatch(/(^|[\s;])height:\s*40px/);
+      expect(body, sel).not.toMatch(/50%/);
     }
-    expect(css()).not.toMatch(/50%/);
+    // No round corner is left anywhere in the card (the clock hand's 50% origin is not a corner).
+    for (const r of all) {
+      expect(r.body, r.selector).not.toMatch(/border-radius:\s*50%/);
+    }
   });
 
   it("the second line sits 4 px under the name in a 60 px card", () => {
