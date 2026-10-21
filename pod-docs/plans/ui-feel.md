@@ -73,3 +73,6 @@ The `ui-refresh` Look with the `ui-polish` and `ui-motion` changes, unchanged in
 - **Home:** Two players is a `.button` (not `a.home__alt`), full width, 48 px tall, 12 px under Play, and goes to `#/two-players`.
 - **Feature rows:** every `pod-docs/features.md` browser row passes, updated where this plan changed it on purpose.
 - **Look:** home, both board modes and the review match the Look at 1400, 992 and 375 px, with no horizontal scroll.
+
+## Queue log
+- `[2026-10-21 · PENDING · orchestrator → human]` plan ui-feel complete — final PR https://github.com/iamphduc/chess-web/pull/101, review pass, 0 open entries from this plan. **Resolution:** 2026-10-21 — final PR merged; PR #102 to main merged

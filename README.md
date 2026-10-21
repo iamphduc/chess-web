@@ -19,7 +19,7 @@ This project was inspired by [chess.com](https://www.chess.com/)
 
 ## The ladder
 
-The site opens on the home page. Pick a level and your color (White, Black or Random), then press **Play**. Bots play GM Le Quang Liem's opening lines from his real games, then Stockfish takes over at the level you pick, and every game ends with a review. **Two players on one board** is a link on the same page.
+The site opens on the home page. Pick a level and your color (White, Black or Random), then press **Play**. Bots play GM Le Quang Liem's opening lines from his real games, then Stockfish takes over at the level you pick, and every game ends with a review. **Two players on one board** is the outlined button under Play.
 
 - **Sparring levels:** Easy, Medium, Hard, Harder, Expert and Master. Each is a sparring bot (the ♞ card, "Plays Liem's openings") that plays Liem's openings, then plays at its level. The levels have names, not ratings.
 - **Liem:** the last step, "★ Liem", is the final boss: his photo and "GM · 2732" on the card, his openings, then full-strength Stockfish 18.
