@@ -14,8 +14,9 @@ import {
   stop,
 } from "../BoardSlice";
 import { projectSquares } from "../engineAdapter";
+import { materialLine } from "../material";
 import { GameOverType } from "../gameOverType";
-import { PiecePromoted } from "../components/Promotion";
+import { PiecePromoted } from "../piecePromoted";
 import { PieceType } from "../../../game/piece-type";
 import {
   EngineSquare,
@@ -119,7 +120,6 @@ function plyView(state: BoardState) {
     history: state.history,
     notation: state.notation,
     lastMoves: state.lastMoves,
-    fallenPieces: state.fallenPieces,
     moveSound: state.moveSound,
     pieceAttackedKing: state.pieceAttackedKing,
     gameOver: state.gameOver,
@@ -144,7 +144,7 @@ describe("newGame and reset", () => {
     expect(state.engineHistory).toEqual([initialGameState()]);
     expect(state.history).toHaveLength(1);
     expect(state.notation).toEqual([]);
-    expect(state.fallenPieces).toEqual([]);
+    expect(materialLine(state.engineHistory[0], "white").captured).toEqual([]);
     expect(state.gameOver).toBe(GameOverType.Continue);
     expect(state.moveSound).toBeNull();
 
@@ -248,7 +248,11 @@ describe("playOpponentMove", () => {
     }
 
     const ep = playVs("white", [["a2", "a3"], ["e7", "e5"], ["a3", "a4"], ["e5", "e4"], ["d2", "d4"], ["e4", "d3"]]);
-    expect(ep.fallenPieces).toHaveLength(1);
+    // White's d-pawn, taken en passant, is gone from d4.
+    expect(ep.history[ep.history.length - 1].squares[4][3].pieceType).toBeNull();
+    expect(materialLine(ep.engineHistory[ep.engineHistory.length - 1], "black").captured).toEqual([
+      "pawn",
+    ]);
     expect(ep.lastMoves[ep.lastMoves.length - 1]).toEqual([sq("e4"), sq("d3")]);
 
     const mate = playVs("white", [["f2", "f3"], ["e7", "e5"], ["g2", "g4"], ["d8", "h4"]]);
@@ -374,7 +378,7 @@ describe("playOpponentMove", () => {
     expect(check.pieceAttackedKing).toBe(PieceType.WhiteKing);
     expect(check.pendingPromotion).toBeNull();
 
-    // A capture promotion: the fallen piece and the file letter, like a human's.
+    // A capture promotion: the taken piece and the file letter, like a human's.
     const capture = his(
       position([
         [PieceType.WhiteKing, "h3"],
@@ -385,7 +389,13 @@ describe("playOpponentMove", () => {
       "knight"
     );
     expect(capture.notation).toEqual(["bxa1=N"]);
-    expect(capture.fallenPieces).toHaveLength(1);
+    expect(capture.history[capture.history.length - 1].squares[7][0].pieceType).toBe(
+      PieceType.BlackKnightPromoted1
+    );
+    const rooks = capture.history[capture.history.length - 1].squares
+      .flat()
+      .filter((s) => s.pieceType === PieceType.WhiteQueenRook);
+    expect(rooks).toEqual([]);
     expect(capture.moveSound?.kind).toBe("promote");
 
     // The same ply by hand in a two-player game ends in the same board and notation.

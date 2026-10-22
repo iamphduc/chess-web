@@ -11,14 +11,8 @@ import WKnight from "assets/knight-white.svg";
 import BKnight from "assets/knight-black.svg";
 import { useAppDispatch, useAppSelector } from "app/hooks";
 import { promotePawn } from "../BoardSlice";
+import { PiecePromoted } from "../piecePromoted";
 import { promotionPlacement } from "../orientation";
-
-export enum PiecePromoted {
-  Queen = "QUEEN",
-  Rook = "ROOK",
-  Bishop = "BISHOP",
-  Knight = "KNIGHT",
-}
 
 /** The picker's buttons, in order, with their screen-reader names. */
 const CHOICES: [PiecePromoted, string][] = [

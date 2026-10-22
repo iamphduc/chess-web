@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { ReviewModel } from "game/review/types";
-import { moveNumber } from "./MoveList";
+import { moveNumber } from "../moveNumber";
 
 const count = new Intl.NumberFormat("en-US");
 

@@ -9,7 +9,7 @@ import { boardSlice, movePiece, promotePawn, reset, selectPiece, start, stop } f
 import { GameOver } from "../components/GameOver";
 import { GameOverType } from "../gameOverType";
 import { Player } from "../components/Player";
-import { PiecePromoted } from "../components/Promotion";
+import { PiecePromoted } from "../piecePromoted";
 import { PieceType } from "../../../game/piece-type";
 
 const { reducer } = boardSlice;

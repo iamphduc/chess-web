@@ -11,7 +11,7 @@ import { matchSlice, setColorPick } from "features/liem/matchSlice";
 import { PieceType } from "../../../game/piece-type";
 import { boardSlice, clickSquare, movePiece, promotePawn, resign, selectPiece, start, stop } from "../BoardSlice";
 import { GameOver } from "../components/GameOver";
-import { PiecePromoted } from "../components/Promotion";
+import { PiecePromoted } from "../piecePromoted";
 import { gameOverNewGame } from "../gameOverView";
 
 type Store = ReturnType<typeof createAppStore>;
