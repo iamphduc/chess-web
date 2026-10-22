@@ -7,7 +7,7 @@ The cards: vs Liem, your card reads "You" with a ♔ or ♚ disc, and his card s
 
 ## How it works
 - `App.tsx` renders `<Home />` on home, or `.app[data-screen="play" | "two-players" | "review"]` holding `Board`.
-- `topBarTitle` (`src/features/board/topBar.ts`) builds the title. `TopBar` takes an `action` prop, which the review uses for Play again.
+- `topBarTitle` (`src/features/board/topBar.ts`) builds the title. `TopBar` has ← Home and the title only; the review's Play again is in its Moves card foot.
 - The Two players names come from `src/game/players.ts`.
 - Size: `squareSizeFor` (`boardSize.ts`) gives 39, 52 or 78 px squares. From 992 px up, the board column and a 380 px sidebar sit side by side; below that they stack.
 - No Stockfish worker, WASM or book is requested on home. `liemOpponent.ts` loads through a dynamic `import()` once a vs-Liem game starts.
@@ -31,3 +31,4 @@ The cards: vs Liem, your card reads "You" with a ♔ or ♚ disc, and his card s
 - 2026-10-19 · ui-refresh · boards open from home; top bar with ← Home and the title; tabs and challenge card removed · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/liem-sparring/pull/84)
 - 2026-10-20 · ui-polish · body text Quicksand 600; ♔/♚ discs; Two players reads White and Black; `TopBar` action prop replaces the `ReviewTopBar` copy · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/liem-sparring/pull/91)
 - 2026-10-21 · ui-feel · the entry is the Two players button; player cards are 60 px with square avatars · [report](../reports/ui-feel.html), [PR #101](https://github.com/iamphduc/liem-sparring/pull/101)
+- 2026-10-21 · fix docs-rename-followups · the tab title and the web manifest read Liem Sparring; `TopBar`'s unused `action` prop removed · [PR #104](https://github.com/iamphduc/liem-sparring/pull/104)

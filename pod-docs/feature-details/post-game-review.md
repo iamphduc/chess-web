@@ -13,7 +13,7 @@ On a phone the bottom sheet holds the key moment and then the summary.
 - The summary is `section.card[data-review-graph]` (`ReviewGraph.tsx`) with `.review-summary__accuracy`: `.review-accuracy`, then `[data-count="inaccuracy" | "mistake" | "blunder"]`. There's no book-move count.
 - `LeftBookNote` renders `[data-left-book]` as the first item of the Moves list: left with his most-played move, left with no games ("Left his book at move N"), "Stayed in his book the whole game" (`data-left-book="stayed"`), or nothing without his books.
 - `graphPlacement({ wide, sheetOpen, low })` (`src/features/review/reviewLayout.ts`) still decides where the summary goes, so `[data-review-graph]` appears exactly once.
-- The top bar is `TopBar` with no `action`; the prop and `.top-bar__action` CSS stay, unused (`tests/review-theme.test.ts` still reads them). The `ReviewTopBar` copy is gone.
+- The top bar is `TopBar`, which takes no props: ← Home and the title only. The `action` prop, its `.top-bar__action` CSS and the `ReviewTopBar` copy are gone; `tests/review-theme.test.ts` checks they stay gone.
 - The foot's Play again is `button.button.button--play` and dispatches `playAgain()` (`src/features/review/reviewLayout.ts`): a new game at the same level and color, then `#/play`. The review has no `a[href="#/play"]`; the browser's Back still goes to `#/play` with the finished board.
 - **Playback motion:** `ReviewBoard` takes the `gameId` and the cursor (`ply`), both required, and draws each piece as a `motion.div` keyed by piece, with layout id `review-<gameId>-<piece>`. `nextReviewStep` and `reviewStepMotion` (`src/features/board/pieceMotion.ts`) pick the transition: `REVIEW_STEP_TRANSITION` (0.15 s ease-out, its own value, not the game board's 0.2 s ease-in-out `GAME_MOVE_TRANSITION`) for a one-ply step of the same game, flip and size, else `{ duration: 0 }`. The same position again keeps its motion.
 
@@ -29,7 +29,7 @@ On a phone the bottom sheet holds the key moment and then the summary.
 - "Left his book at move 1 · he played 1.Nf3" when he's Black means his move in that position, the same meaning as before.
 - A key-moment try counts as found when it isn't an inaccuracy, so a good move other than Stockfish's shows "You found it". This is an open choice for the human: `decisions.md` → "A key-moment try counts as found when it isn't an inaccuracy".
 - Play again must not push a new `#/play` entry (fixed in PR #85).
-- `emulate` in the browser tools reloads the page, which goes home. Set the phone viewport before you play.
+- chrome-devtools-axi's `emulate` reloads the page, which goes home. Set the phone viewport before you play (agent-browser: `set viewport 375 812`).
 - Each review piece must be its own element (`key={pieceType}`). Without the key, ◀ from a capture reuses the taker's element for the piece it took, and Framer fades the returning piece out to the taker's square (it ends invisible). `review-board-motion.test.tsx › a piece that comes back on ◀ is a new element` guards it.
 - A snap still sets a layout transform for one script turn, but none reaches a paint. To check, count transformed pieces in a `ResizeObserver` callback (it runs after the frame's scripts, before paint); a plain `requestAnimationFrame` sample can see one frame of offset.
 - `ReviewBoard`'s `gameId` and `ply` are required (plan ui-feel): the build fails the type check if either is left out, so every render, the tests too, says which game and position it shows.

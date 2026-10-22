@@ -4,7 +4,7 @@
 **New game** starts over. It sits in the Moves card foot and, once a game ends, on the game-over card too.
 - **vs Liem:** a new game at the same level and color pick, so Random draws a color again. Both clocks start at 10:00 and run. The top bar title doesn't change. ← Home is how you change the level or color.
 - **Two players:** the old Reset under a new name. It clears the moves and stops the clocks, and **Play** starts them.
-- **Review:** **Play again** in the top bar does the vs-Liem New game, then goes to `#/play`.
+- **Review:** **Play again** in the review's Moves card foot does the vs-Liem New game, then goes to `#/play`.
 
 A new game also clears the game's result, turns a pending Resign Confirm back, and brings back the book note's waiting state.
 
@@ -23,7 +23,7 @@ A new game also clears the game's result, turns a pending Resign Confirm back, a
 
 ## Watch out
 - **Never copy clock state back into the ref on render.** As Black, his first move lands right after New game and renders before the effect's `setClock` applies (review round 1 of `ui-refresh`, fixed in PR #85). `new-game-clock.test.tsx` checks the clock on screen.
-- That test reads the wall clock and fails when the machine is busy; it passes alone and with `--maxWorkers=2`. Moving it to fake timers is queued as Fix next. See [timing-tests-under-load](../known-issues/timing-tests-under-load.md).
+- That test fakes `setTimeout`, `clearTimeout` and `Date`, so it no longer depends on real time.
 - It mounts `Player` on a small fake DOM written in the test (no jsdom). Its helper skips the disc glyph.
 - Pressing New game while his card says "Thinking…" must never play the stale move.
 - `newLiemGame` is only used by tests now (queue, Someday).

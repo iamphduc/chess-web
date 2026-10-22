@@ -84,7 +84,7 @@ const fakeDocument = Object.assign(doc, {
 });
 
 const globals = globalThis as Record<string, unknown>;
-// Only setTimeout and Date are faked, so the clock's timers and reads follow fake time
+// Only setTimeout, clearTimeout and Date are faked, so the clock's timers and reads follow fake time
 // while React's scheduler (its own timers) keeps running on the real loop.
 const realSetTimeout = setTimeout; // kept from before the fake is installed
 const flushReact = () => new Promise((resolve) => realSetTimeout(resolve, 0));

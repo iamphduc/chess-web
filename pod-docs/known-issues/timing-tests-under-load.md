@@ -4,7 +4,7 @@ _Seen: 2026-10-20 · polish sprint, wave 1 (L1 and E1)_
 
 **Symptom:** with three slices running their suites and dev servers at once (about 37 node processes on 6 cores), a full `npm test` can fail on timing tests that pass alone:
 
-- ~~`src/features/board/__tests__/new-game-clock.test.tsx`~~ (fixed: it now uses vitest fake timers for `setTimeout` and `Date`, so it no longer depends on real time. It once failed with "expected 598 to be less than or equal to 597").
+- ~~`src/features/board/__tests__/new-game-clock.test.tsx`~~ (fixed: it now uses vitest fake timers for `setTimeout`, `clearTimeout` and `Date`, so it no longer depends on real time. It once failed with "expected 598 to be less than or equal to 597").
 - A 5 s timeout in `src/game/opponent/__tests__/human-move.test.ts`.
 - `vite-config › ignores an invalid PORT`.
 

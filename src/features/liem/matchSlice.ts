@@ -19,7 +19,7 @@ export interface LastChoice {
 
 export interface MatchState {
   mode: Mode;
-  /** The setup card is showing (vs-Liem only); no game runs while it is open. */
+  /** The home page is showing (vs-Liem only); no game runs while it is open. */
   setupOpen: boolean;
   colorPick: ColorPick;
   strength: StrengthStep;
@@ -27,7 +27,7 @@ export interface MatchState {
   opponentStatus: OpponentStatus;
 }
 
-/** The page opens on vs Liem with the setup card up. Not saved: every load opens here. */
+/** The page opens on the home page, vs Liem. Not saved: every load opens here. */
 const initialState: MatchState = {
   mode: "liem",
   setupOpen: true,
@@ -45,7 +45,7 @@ export const matchSlice = createSlice({
   name: "match",
   initialState,
   reducers: {
-    /** The same mode keeps the state as is. Liem opens the setup card; two players closes it. */
+    /** The same mode keeps the state as is. Liem opens the home page; two players closes it. */
     setMode: (state, action: PayloadAction<Mode>) => {
       if (state.mode === action.payload) return;
       state.mode = action.payload;

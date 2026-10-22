@@ -19,11 +19,10 @@ The first screen at `#/`. It shows the ♞ mark and "Sparring", the hero "Practi
 - **The default stays Harder (2100) and White.** See `pod-docs/decisions.md` → "The default level stays Harder".
 
 ## Watch out
-- `setupOpen: true` now means "on the home page". The comment on `initialState` in `matchSlice.ts` still talks about the setup card; that card is gone.
 - His name and title in the paragraph come from `LIEM.entry`. Don't type them in.
 - "★ Liem" is ink text with an ochre ★ (`Star.tsx`). Ochre (`--gold`) is never a text color, because it fails 4.5:1 on cream.
 - No sparring text or `aria-label` may contain 1400–2500 or "about". `home.test.tsx` checks the markup.
-- `emulate` in the browser tools reloads the page, which drops the picks.
+- chrome-devtools-axi's `emulate` reloads the page, which drops the picks. agent-browser's `set viewport 375 812` doesn't reload.
 - `Home.tsx` doesn't import `Button.css`. The Two players outline works because the app ships as one bundle with no lazy routes. If home is ever split out, import it there.
 - Two players must stay the same width as Play (448 px at desktop, 343 px at 375 px). Don't give it its own `max-width`.
 
