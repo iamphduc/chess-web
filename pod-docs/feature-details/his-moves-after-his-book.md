@@ -27,7 +27,7 @@ Once a vs-Liem game leaves his opening book, he answers with Stockfish lite (sin
 - Going up the steps, the chances, `blunderMaxCp` and `hangWeight` must never rise (tested). Because the human targets barely fall from 2100 to 2500, 2300 and 2500 share their chances and differ only by depth.
 - Measured rates move about ±10 % between 40-game runs of the same table. Rerun with more games before trusting one cell. The ladder check (8 games a pair) sits near 50 % at 1400 against 1700.
 - The bots hang pieces 1.2–2.4× and miss captures 2–5× as often as humans. Neither rate has a target, and `hangWeight` alone barely moves them.
-- The review grades only your moves, so a bot's blunder shows only as a swing in the graph.
+- The review grades his moves after his book too (2026-10-22), so a bot's blunder carries a mark in the review's move list; the graph, counts and key moments stay about your moves.
 
 ## History
 - 2026-10-12 · human-style-strength · top-lines chooser and the first step table · [report](../reports/human-style-strength.html)

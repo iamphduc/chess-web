@@ -1,6 +1,6 @@
 # Idea: mark the bot's mistakes in the review
 
-Status: parked
+Status: built — PR_URL
 
 _Noted: 2026-10-19 · From: the `ui-refresh` plan interview; first raised by the sparring-ladder T1 slice · Decision: "The review marks only your moves" in [decisions](../decisions.md)_
 
