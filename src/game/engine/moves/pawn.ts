@@ -1,8 +1,7 @@
 import { GameState } from "../game-state";
-import { Move, Position } from "../engine";
+import { Move, Position } from "../move";
 import { PromotionKind } from "./promotion";
 import {
-  pieceKind,
   colorOf,
   inBounds,
   occupant,
@@ -55,9 +54,7 @@ export function pawnMoves(state: GameState, from: Position): Move[] {
   const [y, x] = from;
 
   const piece = occupant(state, y, x);
-  // Defensive only: this generator is dispatched for pawns. Promoted ids are
-  // never pawns, so they never reach here; bail on anything non-pawn.
-  if (piece === null || pieceKind(piece) !== "pawn") return [];
+  if (piece === null) return [];
 
   const color = colorOf(piece);
   const forward = color === "white" ? -1 : 1;
