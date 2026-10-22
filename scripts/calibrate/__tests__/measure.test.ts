@@ -5,13 +5,14 @@ import type { EngineLine, Score } from "../../../src/game/opponent/engine/lines"
 import type { Analysis } from "../../../src/game/opponent/engine/move-engine";
 import { uciToMove } from "../../../src/game/opponent/position";
 import { STEP_PROFILES } from "../../../src/game/opponent/step-profiles";
-import type { StrengthStep } from "../../../src/game/opponent/strength";
+import { STRENGTH_STEPS, type StrengthStep } from "../../../src/game/opponent/strength";
 import { REVIEW_LIMITS } from "../../../src/features/review/reviewLimits";
 import { loadAccuracy } from "../accuracy";
 import {
   MEASURE_CLOCK,
   measureOneGame,
   playSelfGame,
+  profileLine,
   runMeasure,
   type MeasureArgs,
   type MeasureDeps,
@@ -348,5 +349,21 @@ describe("measure report", () => {
 
     // A module without the function gives no column.
     expect(await loadAccuracy({ exists: () => true, load: async () => ({}) })).toBeNull();
+  });
+});
+
+describe("profileLine", () => {
+  it("profileLine prints the band fields of every step", () => {
+    for (const step of STRENGTH_STEPS) {
+      const p = STEP_PROFILES[step];
+      const line = profileLine(step, 2700);
+      expect(line, String(step)).toContain(
+        `mistake ${p.mistakeChance}, blunder ${p.blunderChance} up to ${p.blunderMaxCp} cp, ` +
+          `hang weight ${p.hangWeight}`
+      );
+    }
+    expect(profileLine("full", 2700)).toMatch(/mistake 0, blunder 0 up to 0 cp, hang weight 0$/);
+    // Each sparring step has bands of its own, so the line isn't printing a fallback.
+    expect(profileLine(1400, 2700)).toContain("mistake 0.4, blunder 0.36 up to 800 cp, hang weight 0.8");
   });
 });

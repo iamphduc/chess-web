@@ -2,10 +2,12 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   BaselineFile,
+  LevelKey,
   mergeBaseline,
   parseArgs,
   parseExistingBaseline,
   runBaseline,
+  saveBaseline,
   serializeBaseline,
   SPARRING_LEVELS,
   summaryLines,
@@ -249,5 +251,132 @@ describe("parseExistingBaseline", () => {
   it("reads a good file", () => {
     const text = serializeBaseline({ format: 1, generated: "d", source: "s", skipPlies: 10, levels: {} });
     expect(parseExistingBaseline(text)?.generated).toBe("d");
+  });
+});
+
+// --- Saving and the summary: a fake file, full level entries. ---
+
+function level(games: number): NonNullable<BaselineFile["levels"]["1400"]> {
+  const grades = { inaccuracy: 1, mistake: 0.5, blunder: 0.25 };
+  return {
+    ratingMin: 1300,
+    ratingMax: 1500,
+    games,
+    droppedGames: 0,
+    speeds: { blitz: games, rapid: 0 },
+    lowSample: false,
+    rates: {
+      games,
+      gradedMoves: games * 40,
+      per40: { review: grades, lichess: grades, hung: 0.1, missedCapture: 0.2 },
+      avgLoss: 3,
+      accuracy: 80,
+      sides: games * 2,
+    },
+  };
+}
+
+function baselineFile(generated: string, levels: BaselineFile["levels"]): BaselineFile {
+  return { format: 1, generated, source: "src", skipPlies: 10, levels };
+}
+
+/** A fake saved file: counts reads, keeps every write. */
+function fakeIo(saved: string | null, writeError?: Error) {
+  const io = {
+    reads: 0,
+    writes: [] as string[],
+    read: async () => {
+      io.reads++;
+      return saved;
+    },
+    write: async (text: string) => {
+      if (writeError) throw writeError;
+      io.writes.push(text);
+    },
+  };
+  return io;
+}
+
+const KEPT = " (kept from the saved file)";
+
+describe("saveBaseline", () => {
+  const old = baselineFile("2026-10-18", { "1400": level(1), "1700": level(2), "2500": level(3) });
+
+  it("saveBaseline writes the merged file on a partial run", async () => {
+    const run = baselineFile("2026-10-20", { "1700": level(99) });
+    const io = fakeIo(serializeBaseline(old));
+    const written = await saveBaseline(run, [1700], io);
+    expect(io.reads).toBe(1);
+    expect(io.writes).toHaveLength(1);
+    const expected = baselineFile("2026-10-20", { "1400": level(1), "1700": level(99), "2500": level(3) });
+    expect(io.writes[0]).toBe(serializeBaseline(expected));
+    expect(io.writes[0]).not.toBe(serializeBaseline(run));
+    expect(written).toEqual(expected);
+  });
+
+  it("saveBaseline writes a full run whole without reading", async () => {
+    const run = baselineFile("2026-10-20", { "1400": level(7), "2100": level(8) });
+    for (const levels of [SPARRING_LEVELS, [2500, 2300, 2100, 1900, 1700, 1400]]) {
+      const io = fakeIo(serializeBaseline(old));
+      const written = await saveBaseline(run, levels, io);
+      expect(io.reads).toBe(0);
+      expect(io.writes).toEqual([serializeBaseline(run)]);
+      expect(written).toEqual(run);
+    }
+  });
+
+  it("saveBaseline starts empty when the saved file is missing or broken", async () => {
+    const run = baselineFile("2026-10-20", { "2300": level(5) });
+    for (const saved of [null, "{ nope", '{"format":2,"levels":{}}']) {
+      const io = fakeIo(saved);
+      const written = await saveBaseline(run, [2300, 2500], io);
+      expect(io.reads).toBe(1);
+      expect(io.writes).toEqual([serializeBaseline(run)]);
+      expect(Object.keys(written.levels)).toEqual(["2300"]);
+    }
+  });
+
+  it("saveBaseline rejects when the write fails", async () => {
+    const boom = new Error("disk full");
+    const io = fakeIo(serializeBaseline(old), boom);
+    await expect(saveBaseline(baselineFile("2026-10-20", {}), [1400], io)).rejects.toBe(boom);
+    await expect(saveBaseline(baselineFile("2026-10-20", {}), SPARRING_LEVELS, io)).rejects.toBe(boom);
+  });
+});
+
+describe("summaryLines marks", () => {
+  const merged = baselineFile("2026-10-20", { "1400": level(1), "1700": level(99), "2500": level(3) });
+
+  it("summaryLines marks levels this run didn't measure", () => {
+    const lines = summaryLines(merged, ["1700"]);
+    expect(lines).toHaveLength(6);
+    expect(lines[0].startsWith("1400: 1 games")).toBe(true);
+    expect(lines[0].endsWith(KEPT)).toBe(true);
+    expect(lines[1].startsWith("1700: 99 games")).toBe(true);
+    expect(lines[1]).not.toContain(KEPT);
+    expect(lines[5].endsWith(KEPT)).toBe(true);
+    // Unmarked, the line is the same as before.
+    expect(lines[0]).toBe(summaryLines(merged)[0] + KEPT);
+    for (const i of [2, 3, 4]) expect(lines[i]).toBe(`${SPARRING_LEVELS[i]}: no baseline`);
+  });
+
+  it("summaryLines marks an old level the run kept no games for", async () => {
+    // --levels 1400,1700: 1700 kept games, 1400 kept none, so its old entry stayed.
+    const run = baselineFile("2026-10-20", { "1700": level(99) });
+    const old = baselineFile("2026-10-18", { "1400": level(1), "1700": level(2) });
+    const written = await saveBaseline(run, [1400, 1700], fakeIo(serializeBaseline(old)));
+    const lines = summaryLines(written, Object.keys(run.levels) as LevelKey[]);
+    expect(lines[0].startsWith("1400: 1 games")).toBe(true);
+    expect(lines[0].endsWith(KEPT)).toBe(true);
+    expect(lines[1]).not.toContain(KEPT);
+  });
+
+  it("summaryLines marks nothing after a full run", () => {
+    const full = baselineFile("2026-10-20", { "1400": level(1), "1900": level(2) });
+    for (const lines of [summaryLines(full), summaryLines(full, ["1400", "1900"]), summaryLines(merged)]) {
+      expect(lines.some((l) => l.includes(KEPT))).toBe(false);
+    }
+    expect(summaryLines(full, ["1400", "1900"])[1]).toBe("1700: no baseline");
+    expect(summaryLines(merged, [])[2]).toBe("1900: no baseline");
   });
 });

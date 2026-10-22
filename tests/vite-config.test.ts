@@ -56,7 +56,10 @@ describe("vite.config.ts", () => {
     expect(again.server?.port).toBe(5173);
   });
 
-  it("ignores an invalid PORT", async () => {
+  // Nine Vite config loads: under a loaded machine they pass 5 s
+  // (pod-docs/known-issues/timing-tests-under-load.md).
+  it("ignores an invalid PORT", async ({ task }) => {
+    expect(task.timeout).toBe(30_000);
     for (const env of ["", "abc", "0", "70000", "65536", "-1", "12.5", "6123abc", " "]) {
       const config = await load(env);
       expect(config.server?.port, JSON.stringify(env)).toBe(5173);
