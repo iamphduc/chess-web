@@ -31,3 +31,4 @@ The cards: vs Liem, your card reads "You" with a ♔ or ♚ disc, and his card s
 - 2026-10-19 · ui-refresh · boards open from home; top bar with ← Home and the title; tabs and challenge card removed · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/liem-sparring/pull/84)
 - 2026-10-20 · ui-polish · body text Quicksand 600; ♔/♚ discs; Two players reads White and Black; `TopBar` action prop replaces the `ReviewTopBar` copy · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/liem-sparring/pull/91)
 - 2026-10-21 · ui-feel · the entry is the Two players button; player cards are 60 px with square avatars · [report](../reports/ui-feel.html), [PR #101](https://github.com/iamphduc/liem-sparring/pull/101)
+- 2026-10-21 · fix docs-rename-followups · the tab title and the web manifest read Liem Sparring; `TopBar`'s unused `action` prop removed · [PR #104](https://github.com/iamphduc/liem-sparring/pull/104)
