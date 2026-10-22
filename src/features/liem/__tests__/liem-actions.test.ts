@@ -6,7 +6,8 @@ import { setFlipped } from "features/board/viewSlice";
 import { openReview } from "features/review/reviewActions";
 import type { MoveChoice } from "game/opponent/opponent";
 import { uciToMove } from "game/opponent/position";
-import { goHome, newLiemGame, replayLiemGame, startLiemGame, switchMode } from "../liemActions";
+import * as liemActions from "../liemActions";
+import { goHome, replayLiemGame, startLiemGame, switchMode } from "../liemActions";
 import { setColorPick, setStrength } from "../matchSlice";
 import type { LiemOpponent } from "../opponentController";
 import { createLiemController, syncLiemTurn } from "../useLiemOpponent";
@@ -109,7 +110,7 @@ describe("startLiemGame", () => {
     const store = liemStore();
     store.dispatch(setColorPick("black"));
     store.dispatch(startLiemGame());
-    store.dispatch(newLiemGame());
+    store.dispatch(goHome());
     store.dispatch(setColorPick("white"));
     store.dispatch(startLiemGame());
     expect(store.getState().view.flipped).toBe(false);
@@ -155,13 +156,14 @@ describe("startLiemGame", () => {
   });
 });
 
-describe("newLiemGame", () => {
-  it("resets the board (isPlaying false, gameId + 1) and opens the card", () => {
+describe("goHome ends the game", () => {
+  it("exports no newLiemGame; goHome ends the game", () => {
+    expect(liemActions).not.toHaveProperty("newLiemGame");
     const store = liemStore();
     store.dispatch(setColorPick("black"));
     store.dispatch(startLiemGame());
     const gameId = store.getState().board.gameId;
-    store.dispatch(newLiemGame());
+    store.dispatch(goHome());
     const { board, match } = store.getState();
     expect(board.isPlaying).toBe(false);
     expect(board.gameId).toBe(gameId + 1);
@@ -169,14 +171,6 @@ describe("newLiemGame", () => {
     expect(board.engineHistory).toHaveLength(1);
     expect(match.setupOpen).toBe(true);
     expect(match.colorPick).toBe("black");
-  });
-
-  it("does nothing in two-player mode", () => {
-    const store = twoPlayerStore();
-    const before = store.getState();
-    store.dispatch(newLiemGame());
-    expect(store.getState().board).toBe(before.board);
-    expect(store.getState().match).toBe(before.match);
   });
 });
 
@@ -196,7 +190,7 @@ describe("picks across switches", () => {
     // A game, then New game: still the same picks.
     store.dispatch(startLiemGame());
     expect(store.getState().board.humanColor).toBe("black");
-    store.dispatch(newLiemGame());
+    store.dispatch(goHome());
     expect(store.getState().match).toMatchObject({ setupOpen: true, colorPick: "black", strength: 1400 });
 
     // The board's reset clears the game, not the picks.
