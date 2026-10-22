@@ -221,7 +221,7 @@ describe("BoardSlice — moved and dropped fields", () => {
       [PieceType.WhitePawnE, 4, 4, [3, 3]],
     ] as const) {
       state = reducer(state, selectPiece({ pieceType, y, x }));
-      state = reducer(state, movePiece({ to }));
+      state = reducer(state, movePiece({ to: [to[0], to[1]] }));
     }
     expect(state.notation).toEqual(["e4", "d5", "exd5"]);
     expect("fallenPieces" in state).toBe(false);
