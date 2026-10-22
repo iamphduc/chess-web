@@ -289,10 +289,39 @@ export function mergeBaseline(existing: BaselineFile | null, measured: BaselineF
   return { ...measured, levels };
 }
 
+/** Reads and writes the saved baseline file; `read` gives null when there is none. */
+export interface BaselineIo {
+  read(): Promise<string | null>;
+  write(text: string): Promise<void>;
+}
+
+/**
+ * Saves a run and returns the file it wrote. A run of all six levels is
+ * written whole, without reading. A partial run is merged over the saved file
+ * (a missing or broken one counts as empty) and written once.
+ */
+export async function saveBaseline(
+  measured: BaselineFile,
+  levels: readonly number[],
+  io: BaselineIo
+): Promise<BaselineFile> {
+  const full = SPARRING_LEVELS.every((l) => levels.includes(l));
+  const file = full ? measured : mergeBaseline(parseExistingBaseline(await io.read()), measured);
+  await io.write(serializeBaseline(file));
+  return file;
+}
+
+/** Ends the summary line of a level this run didn't write. */
+export const KEPT_MARK = " (kept from the saved file)";
+
 const fmt = (n: number | null, digits = 2) => (n === null ? "-" : n.toFixed(digits));
 
-/** One line per sparring level, for the console and the PR body. */
-export function summaryLines(file: BaselineFile): string[] {
+/**
+ * One line per sparring level, for the console and the PR body. With
+ * `measured` (the levels this run wrote), every other level's line ends in
+ * `KEPT_MARK`; without it, nothing is marked.
+ */
+export function summaryLines(file: BaselineFile, measured?: readonly LevelKey[]): string[] {
   return SPARRING_LEVELS.map((level) => {
     const l = file.levels[String(level) as LevelKey];
     if (l === undefined) return `${level}: no baseline`;
@@ -304,7 +333,8 @@ export function summaryLines(file: BaselineFile): string[] {
       `blitz ${l.speeds.blitz}, dropped ${l.droppedGames})${l.lowSample ? " LOW SAMPLE" : ""}, ` +
       `${r.gradedMoves} moves | per 40 ?!/?/?? review ${g(r.per40.review)}, ` +
       `lichess ${g(r.per40.lichess)} | hung ${fmt(r.per40.hung)}, missed capture ` +
-      `${fmt(r.per40.missedCapture)} | avg loss ${fmt(r.avgLoss)} | accuracy ${fmt(r.accuracy, 1)}`
+      `${fmt(r.per40.missedCapture)} | avg loss ${fmt(r.avgLoss)} | accuracy ${fmt(r.accuracy, 1)}` +
+      (measured !== undefined && !measured.includes(String(level) as LevelKey) ? KEPT_MARK : "")
     );
   });
 }
@@ -335,19 +365,18 @@ async function main(): Promise<void> {
     now: () => Date.now(),
     cache: fileCache,
   });
-  const file = await runBaseline(opts, {
+  const measured = await runBaseline(opts, {
     client,
     today: () => new Date(),
     log: (line) => console.log(line),
   });
-  // A run of some levels merges into the saved file; a run of all six writes it whole.
-  const partial = SPARRING_LEVELS.some((l) => !opts.levels.includes(l));
-  const existing = partial
-    ? parseExistingBaseline(await readFile(OUT, "utf8").catch(() => null))
-    : null;
-  await writeFile(OUT, serializeBaseline(partial ? mergeBaseline(existing, file) : file));
+  const written = await saveBaseline(measured, opts.levels, {
+    read: () => readFile(OUT, "utf8").catch(() => null),
+    write: (text) => writeFile(OUT, text),
+  });
   console.log(`\nwrote ${OUT} in ${Math.round((Date.now() - started) / 60_000)} min`);
-  for (const line of summaryLines(partial ? mergeBaseline(existing, file) : file)) console.log(line);
+  // Levels the run kept no games for keep their old entry, so they're marked too.
+  for (const line of summaryLines(written, Object.keys(measured.levels) as LevelKey[])) console.log(line);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
