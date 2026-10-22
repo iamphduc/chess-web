@@ -76,13 +76,14 @@ export function keyStep(key: StepKey, review: ReviewState): number | null {
 
 /**
  * Selects a position from the graph or the move list. Landing on a flagged
- * move reopens the phone's key-moment sheet.
+ * move of yours reopens the phone's key-moment sheet; his marks don't.
  */
 export const selectPosition =
   (n: number, model: Pick<ReviewModel, "moves">): ReviewThunk =>
   (dispatch) => {
     dispatch(stepTo(n));
-    if (model.moves[n - 1]?.grade != null) dispatch(sheetOpened());
+    const move = model.moves[n - 1];
+    if (move?.byHuman && move.grade !== null) dispatch(sheetOpened());
   };
 
 /** Searches one position (the runner's `check`). */

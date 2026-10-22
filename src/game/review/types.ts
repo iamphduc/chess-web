@@ -25,7 +25,11 @@ export interface ReviewMove {
   byHuman: boolean;
   /** Games behind the resulting position when it's a human move into his book. */
   bookGames: number | null;
-  /** Human plies only, once both evals are in. */
+  /**
+   * Both sides' plies, once both evals are in; his plies stay `null` while he's
+   * in his book. The engine's best move is 0, 100 and no grade as soon as the
+   * eval before it is in.
+   */
   drop: number | null;
   accuracy: number | null;
   grade: Grade | null;

@@ -107,11 +107,42 @@ describe("moves", () => {
     expect(model.whiteWin).toEqual(POS.map(() => null));
   });
 
-  it("never grades Liem's plies", () => {
+  it("grades his plies with the same rule and levels as yours", () => {
     const wins = [...FLAT];
-    wins[2] = 90; // Liem's ply 1 drops the human's win from 50 to 90: a loss for Liem
+    wins[2] = 90; // his ply 1 lifts your win from 50 to 90: he lost 40 points
+    wins[4] = 90;
+    wins[5] = 60;
+    wins[6] = 75; // his ply 5: 60 → 75 for you, he lost 15
+    wins[7] = 75;
+    wins[8] = 75; // his ply 7 holds: no grade
     const model = buildReview(input({ evals: evalsFrom(wins) }));
-    expect(model.moves[1]).toMatchObject({ drop: null, accuracy: null, grade: null, bookGames: null });
+    expect(model.moves[1]).toMatchObject({ byHuman: false, grade: "blunder", bookGames: null });
+    expect(model.moves[1].drop).toBeCloseTo(40, 6);
+    expect(model.moves[1].accuracy).toBeCloseTo(moveAccuracy(50, 10), 6);
+    expect(model.moves[5].grade).toBe("inaccuracy");
+    expect(model.moves[7]).toMatchObject({ grade: null });
+    expect(model.moves[7].drop).toBeCloseTo(0, 6);
+  });
+
+  it("his marks stay out of your counts and key moments", () => {
+    const wins = POS.map((_, i) => (i >= 2 ? 90 : 50)); // only his ply 1 moves the eval
+    const model = buildReview(input({ evals: evalsFrom(wins) }));
+    expect(model.moves[1].grade).toBe("blunder");
+    expect(model.counts).toEqual({ inaccuracy: 0, mistake: 0, blunder: 0 });
+    expect(model.keyMoments).toEqual([]);
+  });
+
+  it("a locked ply of his never becomes a key moment", () => {
+    const wins = POS.map((_, i) => (i >= 2 ? 90 : 50)); // only his ply 1 moves the eval
+    const model = buildReview(input({ evals: evalsFrom(wins), locked: [1] }));
+    expect(model.keyMoments).toEqual([]);
+  });
+
+  it("grades his plies as Black's moves when you play Black", () => {
+    const wins = POS.map((_, i) => (i >= 1 ? 90 : 50)); // his ply 0 (White) lifts your win from 50 to 90
+    const model = buildReview(input({ humanColor: "black", evals: evalsFrom(wins, "black") }));
+    expect(model.moves[0]).toMatchObject({ byHuman: false, grade: "blunder" });
+    expect(model.counts).toEqual({ inaccuracy: 0, mistake: 0, blunder: 0 });
   });
 
   it("whiteWin is White's win % per analysed position, and counts analysed", () => {
@@ -159,6 +190,92 @@ describe("book moves are never flagged", () => {
   it("only human moves carry book games", () => {
     const model = buildReview(input({ books: booksAt({ 2: [bm("g1f3", 5)] }) }));
     expect(model.moves[1].bookGames).toBeNull();
+  });
+});
+
+describe("his moves in his book", () => {
+  // You leave his book with 3.Bc4 (ply 4): his plies 1 and 3 came before that.
+  const BOOKS = booksAt({ 1: [bm("e7e5", 30)], 3: [bm("b8c6", 20)], 4: [bm("f1c4", 5)] });
+  /** Your win jumps by 40 on each of his plies, then comes back on yours. */
+  const swings = (): number[] => POS.map((_, i) => (i % 2 === 0 ? 50 : 10));
+
+  it("are never graded before he leaves his book; after it they are", () => {
+    const model = buildReview(input({ evals: evalsFrom(swings()), books: BOOKS }));
+    expect(model.bookPlies).toBe(4);
+    for (const ply of [1, 3]) {
+      expect(model.moves[ply]).toMatchObject({ drop: null, accuracy: null, grade: null, bookGames: null });
+    }
+    expect(model.moves[5].grade).toBe("blunder");
+    expect(model.moves[7].grade).toBe("blunder");
+  });
+
+  it("are never graded in a game that stayed in his book", () => {
+    const books = booksAt({ 1: [bm("e7e5", 9)], 3: [bm("b8c6", 9)], 5: [bm("g8f6", 9)], 7: [bm("f8c5", 9)], 9: [bm("d7d6", 9)] });
+    const model = buildReview(input({ evals: evalsFrom(swings()), books }));
+    expect(model.moves.filter((m) => !m.byHuman).every((m) => m.grade === null && m.drop === null)).toBe(true);
+  });
+
+  it("are graded from his first move without his books", () => {
+    const model = buildReview(input({ evals: evalsFrom(swings()), books: null }));
+    expect(model.moves[1].grade).toBe("blunder");
+  });
+
+  it("when he's White, his first move is in his book until you leave it", () => {
+    // You play Black and leave his book with 1...e5 (ply 1): his ply 0 came before it.
+    const wins = POS.map((_, i) => (i % 2 === 1 ? 50 : 10));
+    const books = booksAt({ 0: [bm("e2e4", 50)] });
+    const model = buildReview(input({ humanColor: "black", evals: evalsFrom(wins, "black"), books }));
+    expect(model.bookPlies).toBe(1);
+    expect(model.moves[0]).toMatchObject({ byHuman: false, grade: null, drop: null });
+    expect(model.moves[2].grade).toBe("blunder");
+  });
+});
+
+describe("the engine's best move is never graded", () => {
+  it("your move that is Stockfish's best scores 0 and 100 with no grade, even when the next search scores it lower", () => {
+    const wins = [...FLAT];
+    wins[3] = 15; // ply 2 (2.Nf3) drops 35 by the next search
+    const model = buildReview(input({ evals: evalsFrom(wins, "white", { 2: "g1f3" }) }));
+    expect(model.moves[2]).toMatchObject({ drop: 0, accuracy: 100, grade: null });
+    expect(model.counts).toEqual({ inaccuracy: 0, mistake: 0, blunder: 0 });
+    expect(model.keyMoments).toEqual([]);
+  });
+
+  it("stays out of the key moments even when it was locked", () => {
+    const wins = [...FLAT];
+    wins[3] = 15;
+    const model = buildReview(input({ evals: evalsFrom(wins, "white", { 2: "g1f3" }), locked: [2] }));
+    expect(model.keyMoments).toEqual([]);
+  });
+
+  it("his move that is Stockfish's best has no mark", () => {
+    const wins = [...FLAT];
+    wins[2] = 90; // ply 1 (1...e5) costs him 40 by the next search
+    const model = buildReview(input({ evals: evalsFrom(wins, "white", { 1: "e7e5" }) }));
+    expect(model.moves[1]).toMatchObject({ drop: 0, accuracy: 100, grade: null });
+  });
+
+  it("holds before the position after it is analysed", () => {
+    const wins: (number | null)[] = [...FLAT];
+    wins[3] = null;
+    const model = buildReview(input({ evals: evalsFrom(wins, "white", { 2: "g1f3" }) }));
+    expect(model.moves[2]).toMatchObject({ drop: 0, accuracy: 100, grade: null });
+  });
+
+  it("a mate rule doesn't grade it either", () => {
+    const evals = evalsFrom(FLAT, "white", { 2: "g1f3" });
+    evals[2] = { score: { mate: 3 }, best: "g1f3" };
+    evals[3] = { score: { cp: 0 }, best: null }; // the mate is gone by the next search
+    const model = buildReview(input({ evals }));
+    expect(model.moves[2]).toMatchObject({ drop: 0, accuracy: 100, grade: null });
+  });
+
+  it("another move than the best is still graded", () => {
+    const wins = [...FLAT];
+    wins[3] = 15;
+    const model = buildReview(input({ evals: evalsFrom(wins, "white", { 2: "f1c4" }) }));
+    expect(model.moves[2].grade).toBe("blunder");
+    expect(model.keyMoments.map((k) => k.ply)).toEqual([2]);
   });
 });
 

@@ -2,7 +2,11 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import type { ReviewModel, ReviewMove } from "game/review/types";
+import { applyMove } from "game/engine/engine";
+import { initialGameState } from "game/engine/game-state";
+import { uciToMove } from "game/opponent/position";
+import { buildReview } from "game/review/build-review";
+import type { PositionEval, ReviewModel, ReviewMove } from "game/review/types";
 import { MoveList } from "../components/MoveList";
 import { ReviewGraph } from "../components/ReviewGraph";
 import { StepButtons, stepForKey } from "../components/StepButtons";
@@ -80,6 +84,19 @@ describe("graph", () => {
     expect(html).toContain("review-graph__dot--blunder");
     // Ply 4 ends at position 5 of 8: 62.5 % across.
     expect(html).toMatch(/data-ply="4"[^>]*style="left:62.5%/);
+  });
+
+  it("draws no point for his graded moves, and his tooltip is only the label", () => {
+    const base = sample();
+    const moves = base.moves.map((m) =>
+      m.ply === 5 ? { ...m, drop: 35, accuracy: 10, grade: "blunder" as const } : m
+    );
+    const model = sample({ moves });
+    const plies = Array.from(graph(model, 0).matchAll(/class="review-graph__dot[^"]*"[^>]*data-ply="(\d+)"/g)).map(
+      (m) => m[1]
+    );
+    expect(plies).toEqual(["4", "6"]);
+    expect(graph(model, 6)).toContain(">3...Nf6<");
   });
 
   it("puts the olive book band over the book plies, and none without them", () => {
@@ -163,6 +180,35 @@ describe("move list", () => {
       /data-ply="6" data-grade="blunder"[^>]*>Ng5<span class="review-grade--blunder"[^>]*>\?\?</
     );
     expect(html).not.toMatch(/data-ply="5"[^>]*data-grade/);
+  });
+
+  it("marks his moves with the same chips as yours, from the real model", () => {
+    // 1.e4 e5 2.Nf3 Qh4: by the searches, his 2...Qh4 drops his win from 50 to 10.
+    const ucis = ["e2e4", "e7e5", "g1f3", "d8h4"];
+    const positions = [initialGameState()];
+    for (const uci of ucis) {
+      const last = positions[positions.length - 1];
+      positions.push(applyMove(last, uciToMove(last, uci)!));
+    }
+    const cp = (win: number) => -Math.log(2 / (1 + (win - 50) / 50) - 1) / 0.00368208;
+    // Each position's eval from the side to move: White to move at 0, 2, 4.
+    const evals: PositionEval[] = [50, 50, 50, 50, 90].map((white, i) => ({
+      score: { cp: i % 2 === 0 ? cp(white) : -cp(white) },
+      best: null,
+    }));
+    const model = buildReview({
+      positions,
+      humanColor: "white",
+      clock: { baseMs: 600_000, incrementMs: 0 },
+      evals,
+      books: null,
+      locked: [],
+    });
+    expect(model.counts.blunder).toBe(0);
+    const html = list(model, 0);
+    expect(html).toMatch(
+      /data-ply="3" data-grade="blunder"[^>]*aria-label="2...Qh4, blunder"[^>]*>Qh4<span class="review-grade--blunder"[^>]*>\?\?</
+    );
   });
 
   it("writes rows by move number", () => {

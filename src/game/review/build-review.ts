@@ -88,13 +88,20 @@ function plyTexts(positions: readonly GameState[]): PlyText[] {
   return texts;
 }
 
+/**
+ * One ply. Both sides' moves are graded by `gradeMove`, except his moves
+ * before `hisBookEnd` (he was still in his book) and any move that is the
+ * engine's best there: search noise can score the best move lower one
+ * position on, so it's never graded.
+ */
 function reviewPly(
   input: BuildReviewInput,
   ply: number,
   { uci, label }: PlyText,
-  evalAt: (i: number) => PositionEval | null
+  evalAt: (i: number) => PositionEval | null,
+  hisBookEnd: number
 ): ReviewMove {
-  const { positions, humanColor, books, clock } = input;
+  const { positions, humanColor, books } = input;
   const state = positions[ply];
   const byHuman = state.turn === humanColor;
   const move: ReviewMove = {
@@ -107,12 +114,15 @@ function reviewPly(
     accuracy: null,
     grade: null,
   };
-  if (!byHuman) return move;
+  if (!byHuman && ply < hisBookEnd) return move;
 
-  if (books !== null) move.bookGames = lookupBook(books, positions[ply + 1], clock)?.games ?? null;
+  if (byHuman && books !== null) move.bookGames = bookGamesAfter(input, ply);
   const before = evalAt(ply);
   const after = evalAt(ply + 1);
-  if (before !== null && after !== null) {
+  if (before !== null && before.best === uci) {
+    move.drop = 0;
+    move.accuracy = 100;
+  } else if (before !== null && after !== null) {
     const graded = gradeMove(before, after);
     move.drop = graded.drop;
     move.accuracy = graded.accuracy;
@@ -125,6 +135,23 @@ function reviewPly(
   return move;
 }
 
+/** Games behind the position after ply `ply`, or `null` when it isn't in his book. */
+function bookGamesAfter({ positions, books, clock }: BuildReviewInput, ply: number): number | null {
+  return books === null ? null : lookupBook(books, positions[ply + 1], clock)?.games ?? null;
+}
+
+/**
+ * The first human ply that leaves his book (the moves count without one), or
+ * `null` without his books. Book games don't depend on the evals.
+ */
+function leftBookPly(input: BuildReviewInput, texts: readonly PlyText[]): number | null {
+  if (input.books === null) return null;
+  for (let ply = 0; ply < texts.length; ply++) {
+    if (input.positions[ply].turn === input.humanColor && bookGamesAfter(input, ply) === null) return ply;
+  }
+  return texts.length;
+}
+
 /**
  * The review of a finished game, from whatever evals are in so far. Throws a
  * RangeError when two neighbouring positions aren't one legal move apart.
@@ -133,7 +160,9 @@ export function buildReview(input: BuildReviewInput): ReviewModel {
   const { positions, books, clock, evals } = input;
   const evalAt = (i: number): PositionEval | null => evals[i] ?? null;
 
-  const moves = plyTexts(positions).map((text, ply) => reviewPly(input, ply, text, evalAt));
+  const texts = plyTexts(positions);
+  const left = leftBookPly(input, texts);
+  const moves = texts.map((text, ply) => reviewPly(input, ply, text, evalAt, left ?? 0));
   const whiteWin = positions.map((p, i) => {
     const e = evalAt(i);
     return e === null ? null : winFor(e, p.turn, "white");
@@ -142,7 +171,8 @@ export function buildReview(input: BuildReviewInput): ReviewModel {
   const counts: Record<Grade, number> = { inaccuracy: 0, mistake: 0, blunder: 0 };
   const candidates: MomentCandidate[] = [];
   for (const m of moves) {
-    if (m.grade === null || m.drop === null) continue;
+    // The summary and the key moments are about your moves only.
+    if (!m.byHuman || m.grade === null || m.drop === null) continue;
     counts[m.grade]++;
     candidates.push({ ply: m.ply, grade: m.grade, drop: m.drop });
   }
@@ -163,16 +193,14 @@ export function buildReview(input: BuildReviewInput): ReviewModel {
 
   let bookPlies = 0;
   let leftBook: ReviewModel["leftBook"] = null;
-  if (books !== null) {
-    const left = moves.find((m) => m.byHuman && m.bookGames === null);
-    if (left === undefined) {
-      bookPlies = moves.length;
-    } else {
-      bookPlies = left.ply;
+  if (books !== null && left !== null) {
+    bookPlies = left;
+    if (left < moves.length) {
+      const m = moves[left];
       leftBook = {
-        ply: left.ply,
-        played: { uci: left.uci, label: left.label },
-        his: hisMoves(books, positions[left.ply], clock, left.ply),
+        ply: left,
+        played: { uci: m.uci, label: m.label },
+        his: hisMoves(books, positions[left], clock, left),
       };
     }
   }
