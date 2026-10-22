@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { boardSlice, selectPiece, movePiece, promotePawn, reset } from "../BoardSlice";
 import { projectSquares } from "../engineAdapter";
 import { GameOverType } from "../gameOverType";
-import { PiecePromoted } from "../components/Promotion";
+import { PiecePromoted } from "../piecePromoted";
 import { PieceType } from "../../../game/piece-type";
 import {
   EngineSquare,
@@ -117,7 +117,7 @@ describe("BoardSlice — engine wiring", () => {
 
   it("(d) reset fully clears state across two consecutive games", () => {
     // A position where the white pawn can capture-AND-promote, so the game ends
-    // with non-empty fallenPieces AND an advanced promotion counter.
+    // with a captured piece AND an advanced promotion counter.
     const grid = emptyGrid();
     grid[7][4] = PieceType.WhiteKing;
     grid[0][7] = PieceType.BlackKing;
@@ -133,10 +133,12 @@ describe("BoardSlice — engine wiring", () => {
     state = reducer(state, movePiece({ to: [0, 1] }));
     state = reducer(state, promotePawn({ piecePromoted: PiecePromoted.Rook }));
 
-    // Pre-reset: the captured knight is in fallenPieces, notation is non-empty,
-    // and the engine's promotionCount advanced (a rook was handed out).
-    expect(state.fallenPieces.length).toBe(1);
-    expect(state.fallenPieces[0].pieceType).toBe(PieceType.BlackQueenKnight);
+    // Pre-reset: the captured knight is gone from the board, notation is
+    // non-empty, and the engine's promotionCount advanced (a rook was handed out).
+    const taken = state.history[state.history.length - 1].squares
+      .flat()
+      .filter((sq) => sq.pieceType === PieceType.BlackQueenKnight);
+    expect(taken).toEqual([]);
     expect(state.notation.length).toBeGreaterThan(0);
     const counts = state.engineHistory[state.engineHistory.length - 1].promotionCount;
     expect(counts.some((c) => c > 0)).toBe(true);
@@ -148,7 +150,6 @@ describe("BoardSlice — engine wiring", () => {
     expect(state.history.length).toBe(1);
     expect(state.engineHistory.length).toBe(1);
     expect(state.engineHistory[0]).toEqual(initialGameState());
-    expect(state.fallenPieces).toEqual([]);
     expect(state.notation).toEqual([]);
     expect(state.possibleMoves).toEqual([]);
     expect(state.promotionPosition).toEqual([-1, -1]);
@@ -178,5 +179,55 @@ describe("BoardSlice — engine wiring", () => {
       reference.engineHistory[reference.engineHistory.length - 1].turn
     );
     expect(replay.notation).toEqual(reference.notation);
+  });
+});
+
+describe("BoardSlice — moved and dropped fields", () => {
+  it("promotePawn with PiecePromoted from its own module", async () => {
+    expect(Object.entries(PiecePromoted)).toEqual([
+      ["Queen", "QUEEN"],
+      ["Rook", "ROOK"],
+      ["Bishop", "BISHOP"],
+      ["Knight", "KNIGHT"],
+    ]);
+    // The picker component uses it but doesn't hand it out.
+    const promotionModule: Record<string, unknown> = await import("../components/Promotion");
+    expect("PiecePromoted" in promotionModule).toBe(false);
+
+    // A pick still promotes: Black's pawn on h2 becomes a knight on h1.
+    const grid = emptyGrid();
+    grid[7][0] = PieceType.WhiteKing;
+    grid[0][4] = PieceType.BlackKing;
+    grid[6][7] = PieceType.BlackPawnH;
+    let state = stateFromEngine({ ...initialGameState(), squares: grid, turn: "black" });
+    state = reducer(state, selectPiece({ pieceType: PieceType.BlackPawnH, y: 6, x: 7 }));
+    state = reducer(state, movePiece({ to: [7, 7] }));
+    state = reducer(state, promotePawn({ piecePromoted: PiecePromoted.Knight }));
+    expect(state.engineHistory[state.engineHistory.length - 1].squares[7][7]).toBe(
+      PieceType.BlackKnightPromoted1
+    );
+    expect(state.notation).toEqual(["h1=N"]);
+  });
+
+  it("reset returns a fresh state with no fallenPieces", () => {
+    const fresh = freshState();
+    expect("fallenPieces" in fresh).toBe(false);
+
+    // 1.e4 d5 2.exd5: a capture, then reset.
+    let state = fresh;
+    for (const [pieceType, y, x, to] of [
+      [PieceType.WhitePawnE, 6, 4, [4, 4]],
+      [PieceType.BlackPawnD, 1, 3, [3, 3]],
+      [PieceType.WhitePawnE, 4, 4, [3, 3]],
+    ] as const) {
+      state = reducer(state, selectPiece({ pieceType, y, x }));
+      state = reducer(state, movePiece({ to }));
+    }
+    expect(state.notation).toEqual(["e4", "d5", "exd5"]);
+    expect("fallenPieces" in state).toBe(false);
+
+    const after = reducer(state, reset());
+    expect("fallenPieces" in after).toBe(false);
+    expect({ ...after, gameId: 0 }).toEqual(fresh);
   });
 });

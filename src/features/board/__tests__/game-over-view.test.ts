@@ -8,7 +8,7 @@ import { PieceType } from "game/piece-type";
 import { boardSlice, clickSquare, promotePawn, resign, start, stop } from "../BoardSlice";
 import { projectSquares } from "../engineAdapter";
 import { gameOverView } from "../gameOverView";
-import { PiecePromoted } from "../components/Promotion";
+import { PiecePromoted } from "../piecePromoted";
 
 const { reducer } = boardSlice;
 type BoardState = ReturnType<typeof reducer>;
