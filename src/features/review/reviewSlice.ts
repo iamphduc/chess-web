@@ -2,13 +2,7 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import { newGame, reset } from "features/board/BoardSlice";
 import type { GameState } from "game/engine/game-state";
-import type { Score } from "game/opponent/engine/lines";
-
-/** One position's search result, side to move's view; `best` is UCI. */
-export interface PositionEval {
-  score: Score;
-  best: string | null;
-}
+import type { PositionEval } from "game/review/types";
 
 export type MomentStatus = "trying" | "checking" | "wrong" | "check-failed" | "found" | "revealed" | "skipped";
 export type ReviewStatus = "idle" | "analysing" | "done" | "failed";

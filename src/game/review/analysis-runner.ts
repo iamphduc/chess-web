@@ -1,15 +1,10 @@
 // Relative imports only, like the rest of src/game/.
 import type { GameState } from "../engine/game-state";
 import { gameStatus } from "../engine/game-status";
-import type { Score, SearchLimits } from "../opponent/engine/lines";
+import type { SearchLimits } from "../opponent/engine/lines";
 import { EngineError, type Analysis } from "../opponent/engine/move-engine";
 import { toFen } from "../opponent/position";
-
-/** One position's eval from the side to move's view; `best` is UCI, null for a terminal position. */
-export interface PositionEval {
-  score: Score;
-  best: string | null;
-}
+import type { PositionEval } from "./types";
 
 /** What the runner searches with (his controller's `analyse` in the app). */
 export interface ReviewEngine {

@@ -28,8 +28,8 @@ Once a vs-Liem game leaves his opening book, he answers with Stockfish lite (sin
 - Measured rates move about ±10 % between 40-game runs of the same table. Rerun with more games before trusting one cell. The ladder check (8 games a pair) sits near 50 % at 1400 against 1700.
 - The bots hang pieces 1.2–2.4× and miss captures 2–5× as often as humans. Neither rate has a target, and `hangWeight` alone barely moves them.
 - The review grades only your moves, so a bot's blunder shows only as a swing in the graph.
-- `?? 0` fallbacks in `scripts/calibrate/measure.ts` are left over; the fields are required now.
 
 ## History
 - 2026-10-12 · human-style-strength · top-lines chooser and the first step table · [report](../reports/human-style-strength.html)
 - 2026-10-18 · sparring-ladder · mistake and blunder bands, `multiPv` 10, table tuned to 75 % of human rates · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/liem-sparring/pull/79)
+- 2026-10-21 · tidy · the `?? 0` fallbacks on the four band fields are gone from `bandPick` and `profileLine` (the fields are required); slow sampling tests get a 30 s timeout; no behavior change · [report](../reports/tidy.html), [PR #107](https://github.com/iamphduc/liem-sparring/pull/107), [PR #108](https://github.com/iamphduc/liem-sparring/pull/108)

@@ -5,7 +5,8 @@ import { PieceType } from "../../piece-type";
 import type { SearchLimits } from "../../opponent/engine/lines";
 import { EngineError, type Analysis } from "../../opponent/engine/move-engine";
 import { toFen, uciToMove } from "../../opponent/position";
-import { createAnalysisRunner, type PositionEval, type ReviewEngine } from "../analysis-runner";
+import { createAnalysisRunner, type ReviewEngine } from "../analysis-runner";
+import type { PositionEval } from "../types";
 
 // ---- fixtures ---------------------------------------------------------------
 

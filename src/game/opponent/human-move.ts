@@ -135,13 +135,11 @@ function bandPick(
   profile: StepProfile,
   random: () => number
 ): Candidate | null {
-  const mistakeChance = profile.mistakeChance ?? 0;
-  const blunderChance = profile.blunderChance ?? 0;
+  const { mistakeChance, blunderChance, blunderMaxCp, hangWeight } = profile;
   const top = firstBest(safe, (a, b) => a.win > b.win);
   if (!(mistakeChance + blunderChance > 0) || top.win >= AHEAD_WIN) return null;
 
   const r = random();
-  const blunderMaxCp = profile.blunderMaxCp ?? 0;
   let inBand: (c: Candidate, loss: number) => boolean;
   if (r < blunderChance) {
     inBand = (c, loss) =>
@@ -159,7 +157,6 @@ function bandPick(
     .filter(({ c, loss }) => inBand(c, loss));
   if (band.length === 0) return null;
   const least = Math.min(...band.map((x) => x.loss));
-  const hangWeight = profile.hangWeight ?? 0;
   const weighted = band.map(({ c, loss }) => ({
     c,
     weight: Math.exp(-(loss - least) / BAND_TEMPERATURE) * (isHanging(c.net) ? hangWeight : 1),

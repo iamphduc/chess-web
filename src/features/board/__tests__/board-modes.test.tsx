@@ -9,7 +9,7 @@ import { createAppStore } from "app/store";
 import { LIEM } from "game/opponent/players";
 import { uciToMove } from "game/opponent/position";
 import type { MoveChoice } from "game/opponent/opponent";
-import { newLiemGame, replayLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
+import { goHome, replayLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
 import { setColorPick, setStrength } from "features/liem/matchSlice";
 import { toggleFlip } from "../viewSlice";
 import type { LiemOpponent } from "features/liem/opponentController";
@@ -588,7 +588,7 @@ describe("liem opponent wiring", () => {
     expect(id()).toBeNull(); // card open again
     store.dispatch(startLiemGame());
     expect(id()).toBe(store.getState().board.gameId);
-    store.dispatch(newLiemGame());
+    store.dispatch(goHome());
     expect(id()).toBeNull();
   });
 
@@ -626,7 +626,7 @@ describe("liem opponent wiring", () => {
     await flush();
     const choice = e2e4(store);
 
-    store.dispatch(newLiemGame());
+    store.dispatch(goHome());
     syncLiemTurn(controller, store.getState().board, store.getState().match);
     answer(choice);
     await flush();

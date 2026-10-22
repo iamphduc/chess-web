@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createAppStore } from "app/store";
 import { newGame, reset } from "features/board/BoardSlice";
 import { type GameState, initialGameState } from "game/engine/game-state";
+import type { PositionEval } from "game/review/types";
 
 import * as slice from "../reviewSlice";
 import {
@@ -17,7 +18,6 @@ import {
   momentOpened,
   momentSkipped,
   moveTried,
-  type PositionEval,
   reviewClosed,
   reviewOpened,
   reviewSlice,
