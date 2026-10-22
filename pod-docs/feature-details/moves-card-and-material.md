@@ -42,7 +42,6 @@ The board screen's sidebar card, and the player cards around the board.
 - **`min-width: 0` on every flex box from `.player__info` down to `.player__captured`.** Without it on `.player__material`, the box can't shrink below its glyph row, the ellipsis never applies, and at 375 px "+N" and his detail slide under the clock (or the page scrolls sideways). Don't add `overflow: hidden` to `.player__material`: it would clip "+N". `tests/player-css.test.ts` › `the material line never cuts +N` checks both. Found in review of PR #98, fixed in PR #99.
 - Below about 300 px of viewport his detail and "+N" could overlap (not reproduced; 320 and 375 px fit). Queued as Someday.
 - The second line is always kept, so on a card with no captures and no detail the name sits about 12 px above the disc's middle. That's on purpose: see `decisions.md` → "The name stays put on a card with no captures".
-- `BoardSlice.fallenPieces` is still filled, but nothing reads it (queue, Someday).
 - Never use `--gold` for text.
 - `Player.css` still has two `50%` values: the clock hand's `transform-origin` and a `clip-path: inset(50%)`. They aren't corners. `tests/player-css.test.ts` bans only `border-radius: 50%`, so don't widen it to every `50%`.
 - Every `.board > .player` is 60 px (8 + 44 + 8). If you change the pad, the text column or a line height, change that height and its test with it.
