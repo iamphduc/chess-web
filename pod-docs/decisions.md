@@ -521,3 +521,6 @@ Consequences: Docs written before 2026-10-21 (plans, archived sprints, reports, 
 Context: the human asked for a staging branch named after the feature ("I want something to reflect our new feature", 2026-10-19) instead of one shared `pod-staging`.
 Decision: each autopilot plan cuts `<feature>-staging` from `main` (for example `ui-polish-staging`, `ui-feel-staging`), merges into it, and the human merges it into `main`; the branch is then deleted. Fixes made while a plan's staging branch is open may target it, so they ship together.
 Consequences: record each plan's branch as a `## <date> — merge target: <branch>` entry. (human, 2026-10-19 to 2026-10-21)
+
+## 2026-10-21 — merge target: tidy-staging
+Plan tidy merges into `tidy-staging`, cut from `main` after PR #106 merged; the human merges it into `main`. (human, 2026-10-21)

@@ -12,8 +12,9 @@ import {
   stop,
 } from "../BoardSlice";
 import { projectSquares } from "../engineAdapter";
+import { materialLine } from "../material";
 import { GameOverType } from "../gameOverType";
-import { PiecePromoted } from "../components/Promotion";
+import { PiecePromoted } from "../piecePromoted";
 import { PieceType } from "../../../game/piece-type";
 import { EngineSquare, GameState, initialGameState } from "../../../game/engine/game-state";
 
@@ -86,7 +87,11 @@ describe("move sound", () => {
 
     // 1.e4 a6 2.e5 d5 3.exd6 e.p.
     const ep = play([["e2", "e4"], ["a7", "a6"], ["e4", "e5"], ["d7", "d5"], ["e5", "d6"]]);
-    expect(ep.fallenPieces.length).toBe(1);
+    // The d5 pawn taken en passant is gone from the board.
+    expect(ep.history[ep.history.length - 1].squares[3][3].pieceType).toBeNull();
+    expect(materialLine(ep.engineHistory[ep.engineHistory.length - 1], "white").captured).toEqual([
+      "pawn",
+    ]);
     expect(kind(ep)).toBe("capture");
 
     const castling = () =>
@@ -159,7 +164,14 @@ describe("move sound", () => {
       drag(promoting("h6", [[PieceType.BlackQueenRook, sq("a8")]]), "b7", "a8"),
       promotePawn({ piecePromoted: PiecePromoted.Knight })
     );
-    expect(capturing.fallenPieces.length).toBe(1);
+    // The a8 rook is gone: a white knight stands there now.
+    expect(capturing.history[capturing.history.length - 1].squares[0][0].pieceType).toBe(
+      PieceType.WhiteKnightPromoted1
+    );
+    const rooks = capturing.history[capturing.history.length - 1].squares
+      .flat()
+      .filter((s) => s.pieceType === PieceType.BlackQueenRook);
+    expect(rooks).toEqual([]);
     expect(kind(capturing)).toBe("promote");
 
     // Played by clicking too.

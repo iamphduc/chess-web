@@ -5,32 +5,10 @@ import { knightMoves } from "./moves/knight";
 import { kingMoves } from "./moves/king";
 import { pawnMoves } from "./moves/pawn";
 import { isInCheck } from "./moves/attack";
-import { allocatePromotedId, PromotionKind } from "./moves/promotion";
+import { allocatePromotedId } from "./moves/promotion";
+import { Move, Position } from "./move";
 
-/**
- * A board position as `[y, x]` (0-indexed), matching the `GameState` grid:
- * `squares[y][x]`, row 0 is Black's back rank, row 7 White's.
- */
-export type Position = readonly [number, number];
-
-/**
- * A move from one square to another.
- *
- * Quiet moves, captures, castling and en passant are fully described by their
- * endpoints — {@link applyMove} infers castling and en passant from geometry, so
- * they carry no marker fields. The only extra datum is {@link promotion}: when
- * set, the pawn on `from` reaches `to` and becomes that kind. It is `undefined`
- * for every non-promotion move.
- */
-export interface Move {
-  readonly from: Position;
-  readonly to: Position;
-  /**
-   * Set only for a pawn promotion: the kind the pawn becomes on reaching `to`
-   * (queen / rook / bishop / knight). `undefined` for all other moves.
-   */
-  readonly promotion?: PromotionKind;
-}
+export type { Move, Position } from "./move";
 
 /**
  * Pseudo-legal destinations for the piece on `from`, given whose turn it is.

@@ -117,6 +117,7 @@ describe("initialGameState fresh-value guarantee", () => {
     const b = initialGameState();
     expect(a.castling).not.toBe(b.castling);
     expect(a.castling.white).not.toBe(b.castling.white);
+    expect(a.castling.black).not.toBe(b.castling.black);
     expect(a.promotionCount).not.toBe(b.promotionCount);
   });
 

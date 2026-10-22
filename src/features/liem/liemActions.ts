@@ -16,13 +16,6 @@ export const switchMode =
     dispatch(setMode(mode));
   };
 
-/** Ends the vs-Liem game and goes back to the home page. Does nothing in two-player mode. */
-export const newLiemGame = (): LiemThunk => (dispatch, getState) => {
-  if (getState().match.mode !== "liem") return;
-  dispatch(reset());
-  dispatch(openSetup());
-};
-
 /**
  * Starts a vs-Liem game with the home page's color pick; Black sees the board flipped.
  * Does nothing unless the home page is open, so a second Play keeps the game.

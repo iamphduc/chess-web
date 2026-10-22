@@ -5,8 +5,8 @@ _Seen: 2026-10-20 · polish sprint, wave 1 (L1 and E1)_
 **Symptom:** with three slices running their suites and dev servers at once (about 37 node processes on 6 cores), a full `npm test` can fail on timing tests that pass alone:
 
 - ~~`src/features/board/__tests__/new-game-clock.test.tsx`~~ (fixed: it now uses vitest fake timers for `setTimeout`, `clearTimeout` and `Date`, so it no longer depends on real time. It once failed with "expected 598 to be less than or equal to 597").
-- A 5 s timeout in `src/game/opponent/__tests__/human-move.test.ts`.
-- `vite-config › ignores an invalid PORT` (`tests/vite-config.test.ts`): it starts Vite under the default 5 s Vitest timeout; first seen 2026-10-10 (liem-opponent wave 2), never in CI so far. Fix later: give it a longer timeout.
+- ~~A 5 s timeout in `src/game/opponent/__tests__/human-move.test.ts`.~~ (fixed: every sampling test over about 1 s alone has a 30 000 ms timeout: `picks split by exp(-loss/temperature)`, `never skips a free queen when far ahead`, `mistake band`, `blunder band`, `band never walks into mate`, `no roll draws nothing` and `hang weight`. Alone, `hang weight` takes about 14 s.)
+- ~~`vite-config › ignores an invalid PORT` (`tests/vite-config.test.ts`)~~ (fixed: it has a 30 000 ms timeout, and asserts it. It loads the Vite config nine times and once passed the default 5 s; first seen 2026-10-10, liem-opponent wave 2.)
 
 **What to do:** rerun the failing file alone, or the whole suite with `npx vitest run --maxWorkers=2`. A failure that only shows under load and passes both ways is this issue, not your change. Say so in your report.
 

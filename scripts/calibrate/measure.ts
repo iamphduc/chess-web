@@ -290,15 +290,15 @@ function table(head: string[], body: string[][]): string[] {
   return [row(head), ...body.map(row)];
 }
 
-/** The step's search and pick settings, the new band fields included (missing = 0). */
+/** The step's search and pick settings, its mistake and blunder bands included. */
 export function profileLine(step: StrengthStep, rating: number): string {
   const p = STEP_PROFILES[step];
   return (
     `Step ${step} (about ${strengthElo(step, rating)}): depth ${p.search.depth}, multiPv ${p.search.multiPv}, ` +
     `${p.search.movetimeMs} ms; maxLoss ${p.maxLoss}, temperature ${p.temperature}, ` +
     `slip ${p.slipChance} up to ${p.slipMaxLoss}, ahead ${p.aheadMaxLoss}, mate in ${p.forceMateIn}; ` +
-    `mistake ${p.mistakeChance ?? 0}, blunder ${p.blunderChance ?? 0} up to ${p.blunderMaxCp ?? 0} cp, ` +
-    `hang weight ${p.hangWeight ?? 0}`
+    `mistake ${p.mistakeChance}, blunder ${p.blunderChance} up to ${p.blunderMaxCp} cp, ` +
+    `hang weight ${p.hangWeight}`
   );
 }
 

@@ -8,13 +8,12 @@ import { uciToMove } from "game/opponent/position";
 import { isFound, winFor } from "game/review/grade";
 import { gameMoves } from "game/review/moves";
 import { buildReview } from "game/review/build-review";
-import type { BuildReviewInput, ReviewModel } from "game/review/types";
+import type { BuildReviewInput, PositionEval, ReviewModel } from "game/review/types";
 import { TOTAL_MS } from "features/board/clock";
 import { stepForKey, type StepKey } from "./components/StepButtons";
 import {
   checkFailed,
   moveTried,
-  type PositionEval,
   reviewClosed,
   reviewOpened,
   type ReviewState,

@@ -5,7 +5,7 @@ import { Move, Position } from "../../game/engine/engine";
 import { gameStatus } from "../../game/engine/game-status";
 import { findKing, isInCheck } from "../../game/engine/moves/attack";
 import { PromotionKind } from "../../game/engine/moves/promotion";
-import { PiecePromoted } from "./components/Promotion";
+import { PiecePromoted } from "./piecePromoted";
 import { GameOverType } from "./gameOverType";
 
 /**

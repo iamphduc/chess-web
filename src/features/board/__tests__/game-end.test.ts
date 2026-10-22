@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { boardSlice, clickSquare, promotePawn, start, stop } from "../BoardSlice";
 import { projectSquares } from "../engineAdapter";
 import { gameEnd } from "../gameEnd";
-import { PiecePromoted } from "../components/Promotion";
+import { PiecePromoted } from "../piecePromoted";
 import { PieceType } from "../../../game/piece-type";
 import { EngineSquare, GameState, initialGameState } from "../../../game/engine/game-state";
 

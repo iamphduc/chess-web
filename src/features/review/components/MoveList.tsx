@@ -2,15 +2,13 @@ import React, { useEffect, useId, useRef, useState } from "react";
 
 import "./MoveList.css";
 import type { Grade, ReviewModel, ReviewMove } from "game/review/types";
+import { moveNumber } from "../moveNumber";
 import { LeftBookNote } from "./LeftBookNote";
 
 export const GRADE_MARK: Record<Grade, string> = { inaccuracy: "?!", mistake: "?", blunder: "??" };
 
 /** `"13.Nd5"` and `"13...Nc6"` without the move number. */
 export const sanOf = (label: string): string => label.replace(/^\d+\.(\.\.)?/, "");
-
-/** The move number a ply belongs to. */
-export const moveNumber = (ply: number): number => Math.floor(ply / 2) + 1;
 
 const count = new Intl.NumberFormat("en-US");
 
