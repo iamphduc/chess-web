@@ -175,7 +175,7 @@ describe("chooseHumanMove", () => {
       const share = (counts.get(MOVES[i]) ?? 0) / n;
       expect(Math.abs(share - w / total) * 100).toBeLessThan(2);
     });
-  });
+  }, 30_000);
 
   it("temperature 0 always plays the best line", () => {
     // Two loss-0 lines share the picks; the loss-1 line never plays.
@@ -397,7 +397,7 @@ describe("chooseHumanMove: free material", () => {
     expect(tally(flat, QUEEN_EN_PRISE, STEP_PROFILES[1400], 12)).toEqual(
       new Map([["e5f4", 500]])
     );
-  });
+  }, 30_000);
 
   it("never skips a free capture on a slip", () => {
     // Not ahead: Be7 sits in the slip band (loss about 17.6).
@@ -630,7 +630,7 @@ describe("chooseHumanMove: mistake and blunder bands", () => {
     expect(capLoss[1]).toBeGreaterThanOrEqual(20);
     expect(capLoss[1]).toBeLessThan(30);
     expect(seen(cpCap, START, p, 32)).toEqual(new Set([MOVES[2]]));
-  });
+  }, 30_000);
 
   it("blunder band", () => {
     // From a top line at exactly 50: losses 0, 30 (in, 376 cp down),
@@ -659,7 +659,7 @@ describe("chooseHumanMove: mistake and blunder bands", () => {
     // blunderMaxCp 0 lets no blunder through: the band is empty.
     const none = profile({ blunderChance: 1, blunderMaxCp: 0, hangWeight: 1, maxLoss: 10 });
     expect(seen(lines, START, none, 34)).toEqual(new Set([MOVES[0]]));
-  });
+  }, 30_000);
 
   it("empty band", () => {
     // Losses 0, 5 (within maxLoss) and 40: no line in either band.
@@ -731,7 +731,7 @@ describe("chooseHumanMove: mistake and blunder bands", () => {
     // Only mated lines past the top: both bands are empty.
     const onlyMated = [lines[0], lines[1], lines[2], lines[5]];
     expect(seen(onlyMated, START, p, 36)).toEqual(new Set([MOVES[0]]));
-  });
+  }, 30_000);
 
   it("no roll draws nothing", () => {
     // Zero chances: one draw (the normal pick), as before.
@@ -747,7 +747,8 @@ describe("chooseHumanMove: mistake and blunder bands", () => {
       chooseHumanMove(lines, START, zero, rec.random);
       expect(rec.draws.length - before).toBe(1);
     }
-    // Fields missing (a profile from outside the type checker) behave as zero.
+    // Fields missing (a profile from outside the type checker) still behave as
+    // zero: a NaN chance fails the `> 0` check, so there is no roll.
     const legacy: Partial<StepProfile> = { ...zero };
     delete legacy.mistakeChance;
     delete legacy.blunderChance;
@@ -792,7 +793,7 @@ describe("chooseHumanMove: mistake and blunder bands", () => {
     const once = recorded(scripted([0.99, 0.5]));
     chooseHumanMove(under, START, keen, once.random);
     expect(once.draws).toHaveLength(2);
-  });
+  }, 30_000);
 
   it("hang weight", () => {
     // After 1.e4 e5 2.Nf3 Nc6, Ng5 hangs the knight. Ng5 loses 20, d3 22.

@@ -56,7 +56,7 @@ describe("vite.config.ts", () => {
     expect(again.server?.port).toBe(5173);
   });
 
-  // Nine Vite config loads: under a loaded machine they pass 5 s
+  // Nine Vite config loads: on a loaded machine they can take over 5 s
   // (pod-docs/known-issues/timing-tests-under-load.md).
   it("ignores an invalid PORT", async ({ task }) => {
     expect(task.timeout).toBe(30_000);
@@ -65,5 +65,5 @@ describe("vite.config.ts", () => {
       expect(config.server?.port, JSON.stringify(env)).toBe(5173);
       expect(config.preview?.port, JSON.stringify(env)).toBe(4173);
     }
-  });
+  }, 30_000);
 });
