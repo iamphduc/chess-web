@@ -262,9 +262,9 @@ describe("trying a move", () => {
   });
 });
 
-/** Just enough of a model for the graded checks: ply 2 is graded. */
+/** Just enough of a model for the graded checks: your ply 2 and his ply 3 are graded. */
 const MODEL = {
-  moves: [0, 1, 2, 3].map((ply) => ({ ply, grade: ply === 2 ? "blunder" : null })),
+  moves: [0, 1, 2, 3].map((ply) => ({ ply, byHuman: ply % 2 === 0, grade: ply >= 2 ? "blunder" : null })),
 } as unknown as ReviewModel;
 
 describe("stepping in the review", () => {
@@ -293,6 +293,15 @@ describe("stepping in the review", () => {
     store.dispatch(selectPosition(3, MODEL)); // after ply 2, the blunder
     expect(store.getState().review.cursor).toBe(3);
     expect(store.getState().review.sheetOpen).toBe(true);
+  });
+
+  it("selecting his flagged move only moves the cursor", () => {
+    const store = liemGame("white", FOOLS_MATE);
+    store.dispatch(openReview());
+    store.dispatch({ type: "review/sheetClosed" });
+    store.dispatch(selectPosition(4, MODEL)); // after his ply 3, a blunder
+    expect(store.getState().review.cursor).toBe(4);
+    expect(store.getState().review.sheetOpen).toBe(false);
   });
 });
 
