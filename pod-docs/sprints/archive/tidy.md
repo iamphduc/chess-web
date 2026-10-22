@@ -1,16 +1,16 @@
 # Sprint: Tidy
 
-_From plan: pod-docs/plans/tidy.md · Slug: tidy · Status: active · Generated: 2026-10-21_
+_From plan: pod-docs/plans/tidy.md · Slug: tidy · Status: done · Generated: 2026-10-21_
 
-<!-- autopilot-run: started=2026-10-21T00:00:00Z sprints=0 waves=0 -->
+<!-- autopilot-run: started=2026-10-21T00:00:00Z sprints=0 waves=1 -->
 
 ## Status board
 
 | Wave | Slice | Title | Branch | PR | Status | Confidence | Depends on |
 |------|-------|-------|--------|----|--------|------------|------------|
-| 1 | C1 | Import loops broken, a cycle test over all of `src`, `fallenPieces` gone, engine nits | tidy-C1 | — | pending | — | — |
-| 1 | D1 | Dead code out (`newLiemGame`, `previewSize`, `ButtonType.Undo`), one `PositionEval` | tidy-D1 | — | pending | — | — |
-| 1 | S1 | Baseline save step tested, kept levels marked in the summary, `?? 0` fallbacks, timing-test timeouts | tidy-S1 | — | pending | — | — |
+| 1 | C1 | Import loops broken, a cycle test over all of `src`, `fallenPieces` gone, engine nits | tidy-C1 | #107 | merged | medium | — |
+| 1 | D1 | Dead code out (`newLiemGame`, `previewSize`, `ButtonType.Undo`), one `PositionEval` | tidy-D1 | #107 | merged | high | — |
+| 1 | S1 | Baseline save step tested, kept levels marked in the summary, `?? 0` fallbacks, timing-test timeouts | tidy-S1 | #107 | merged | medium | — |
 
 Plan branch `tidy`; wave head `tidy-w1`. Merge target `tidy-staging` (`pod-docs/decisions.md` → "merge target: tidy-staging").
 
@@ -121,3 +121,15 @@ Nothing a player sees changes. Every slice keeps `npm run build && npx vitest ru
 - **Depends on:** —
 - **One-way door:** none. `npm run baseline` isn't run in this sprint, and the committed `human-baselines.json` is untouched.
 - **Model:** opus
+
+## Sprint summary
+
+- **Synced with merge-target:** up to date
+- **Slices shipped:** C1, D1, S1 (wave PR #107)
+- **Queue entries:** resolved 10, deferred 0
+- **Slice log:**
+  - C1: opus · medium · test-first yes · runtime two-player castle, en passant, all four promotions at 1400 and 375 px, a vs-Liem game into the review · 3 NOTEs (branched off `tidy` as dispatched; `Piece.getWeight()` now unused; cycle-test limits) · time lost none
+  - D1: sonnet · high · test-first yes · runtime vs-Liem Moves card at 1400 px, touch drag at 375 px (39 px preview) · 0 NOTEs · time lost none
+  - S1: opus · medium · test-first partly — the `?? 0` removal and the full-run summary can't go red, since behavior didn't change · runtime `saveBaseline` on a scratch copy of the baselines file, the CLI flag error · 5 NOTEs · time lost none
+  - Wave check: build and 1266 tests pass; a two-player game to mate in the browser. No wave fix.
+- **Agent context at hand-back:** 365k (each agent's final context size, not tokens billed)

@@ -39,7 +39,7 @@ Constraints: no visible behavior change, no new dependencies, static GitHub Page
 
 | Sprint | Goal | Status | Depends on |
 |--------|------|--------|------------|
-| tidy | No import loops, dead code gone, one `PositionEval`, engine nits closed, baseline merge tested | planned | — |
+| tidy | No import loops, dead code gone, one `PositionEval`, engine nits closed, baseline merge tested | done | — |
 
 Status values: `planned` / `active` / `done`. The orchestrator only flips its row's Status — it does not rewrite Goal/Depends-on retroactively.
 
