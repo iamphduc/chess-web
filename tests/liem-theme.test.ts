@@ -90,8 +90,8 @@ describe("liem theme", () => {
         for (const [prop, value] of declarations(body)) {
           if (prop === "color") expect(value, `${file}: ${selector} { color }`).not.toMatch(/--gold/);
         }
-        // the dead tab, setup card, tile, step, star and dimmed rules are gone
-        expect(selector, file).not.toMatch(/\.(liem-tabs?|liem-tiles?|liem-steps?|liem-card|liem-elo|liem-star|setup-card|liem-dimmed)\b/);
+        // the dead tab, setup card, tile, step, star, dimmed and sub-label rules are gone
+        expect(selector, file).not.toMatch(/\.(liem-tabs?|liem-tiles?|liem-steps?|liem-card|liem-elo|liem-star|setup-card|liem-dimmed|liem-detail__sub)\b/);
       }
     }
 
