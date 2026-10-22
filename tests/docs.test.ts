@@ -50,7 +50,7 @@ describe("docs", () => {
     const urls = recipe.match(/https?:\/\/[^\s`)*]+/g) ?? [];
     expect(urls.length).toBeGreaterThanOrEqual(2);
     for (const url of urls) {
-      expect(url).toMatch(/^http:\/\/127\.0\.0\.1:[^/]+\/chess-web\/$/);
+      expect(url).toMatch(/^http:\/\/127\.0\.0\.1:[^/]+\/liem-sparring\/$/);
     }
     expect(recipe).toMatch(/\bPORT\b/);
     expect(recipe).toMatch(/Verification:/);
@@ -90,7 +90,7 @@ describe("docs", () => {
     expect(ci.trim()).not.toMatch(/^None\b/);
     expect(ci).toContain(".github/workflows/pod-ci.yml");
     expect(existsSync(join(ROOT, ".github/workflows/pod-ci.yml"))).toBe(true);
-    for (const text of ["pull_request", "main", "Node 24", "https://iamphduc.github.io/chess-web/"]) {
+    for (const text of ["pull_request", "main", "Node 24", "https://iamphduc.github.io/liem-sparring/"]) {
       expect(ci.includes(text), text).toBe(true);
     }
   });

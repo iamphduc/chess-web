@@ -1,4 +1,4 @@
-# Chess Web
+# Liem Sparring
 
 This project was inspired by [chess.com](https://www.chess.com/)
 
@@ -15,7 +15,7 @@ This project was inspired by [chess.com](https://www.chess.com/)
 
 ## Demo
 
-[https://iamphduc.github.io/chess-web](https://iamphduc.github.io/chess-web/)
+[https://iamphduc.github.io/liem-sparring](https://iamphduc.github.io/liem-sparring/)
 
 ## The ladder
 
@@ -31,9 +31,9 @@ The site opens on the home page. Pick a level and your color (White, Black or Ra
 
 Each screen has its own link, so the browser's Back and Forward buttons move between them:
 
-- [`#/`](https://iamphduc.github.io/chess-web/#/): the home page
+- [`#/`](https://iamphduc.github.io/liem-sparring/#/): the home page
 - `#/play`: the game against a bot or Liem
-- [`#/two-players`](https://iamphduc.github.io/chess-web/#/two-players): two players on one board
+- [`#/two-players`](https://iamphduc.github.io/liem-sparring/#/two-players): two players on one board
 - `#/review`: the review of the game that just ended
 
 The page keeps no game between loads, so opening `#/play` or `#/review` with no game in progress (or any other link) shows the home page. Going home ends the game in progress.
@@ -50,7 +50,7 @@ After a vs-Liem game ends at any level (checkmate, stalemate or time), press **R
 
 ## Licence
 
-Chess Web is free software under the GNU General Public License, version 3 or (at your option) any later version. See [LICENSE](LICENSE). The app ships the Stockfish engine, which is GPL v3, so the whole app is offered under the GPL.
+Liem Sparring is free software under the GNU General Public License, version 3 or (at your option) any later version. See [LICENSE](LICENSE). The app ships the Stockfish engine, which is GPL v3, so the whole app is offered under the GPL.
 
 ## Credits
 

@@ -78,7 +78,7 @@ export interface HashWindow {
 }
 
 /** Marks a `#/review` history entry that sits right on top of a `#/play` entry. */
-const OVER_PLAY = "chess-web.reviewOverPlay";
+const OVER_PLAY = "liem-sparring.reviewOverPlay";
 
 function isOverPlay(state: unknown): boolean {
   return typeof state === "object" && state !== null && (state as Record<string, unknown>)[OVER_PLAY] === true;

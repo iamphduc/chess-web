@@ -178,7 +178,7 @@ describe("fetch retries and failures", () => {
     const { fetch, calls } = fakeFetch({ "https://example.test/ua": "ok" });
     await fetchText("https://example.test/ua", deps(fetch));
     expect(calls[0].headers["User-Agent"]).toBe(USER_AGENT);
-    expect(USER_AGENT).toMatch(/https:\/\/github\.com\/iamphduc\/chess-web/);
+    expect(USER_AGENT).toMatch(/https:\/\/github\.com\/iamphduc\/liem-sparring/);
   });
 
   it("Lichess games come from the documented export endpoint as PGN", async () => {

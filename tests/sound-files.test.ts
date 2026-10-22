@@ -15,7 +15,7 @@ let outDir: string;
 let build: SpawnSyncReturns<string>;
 
 beforeAll(() => {
-  outDir = mkdtempSync(join(tmpdir(), "chess-web-sounds-"));
+  outDir = mkdtempSync(join(tmpdir(), "liem-sparring-sounds-"));
   build = spawnSync(process.execPath, [VITE_BIN, "build", "--outDir", outDir, "--emptyOutDir"], {
     cwd: ROOT,
     encoding: "utf8",

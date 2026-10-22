@@ -27,7 +27,7 @@ The cards: vs Liem, your card reads "You" with a ♔ or ♚ disc, and his card s
 - Below 992 px the book note sits above the Moves card, so anything that changes its height changes the page height. See [stockfish-is-named](stockfish-is-named.md).
 
 ## History
-- 2026-10-18 · sparring-ladder · page opens on vs Liem with the setup card; his card shows the sparring bot at 2100 · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/chess-web/pull/79)
-- 2026-10-19 · ui-refresh · boards open from home; top bar with ← Home and the title; tabs and challenge card removed · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/chess-web/pull/84)
-- 2026-10-20 · ui-polish · body text Quicksand 600; ♔/♚ discs; Two players reads White and Black; `TopBar` action prop replaces the `ReviewTopBar` copy · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/chess-web/pull/91)
-- 2026-10-21 · ui-feel · the entry is the Two players button; player cards are 60 px with square avatars · [report](../reports/ui-feel.html), [PR #101](https://github.com/iamphduc/chess-web/pull/101)
+- 2026-10-18 · sparring-ladder · page opens on vs Liem with the setup card; his card shows the sparring bot at 2100 · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/liem-sparring/pull/79)
+- 2026-10-19 · ui-refresh · boards open from home; top bar with ← Home and the title; tabs and challenge card removed · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/liem-sparring/pull/84)
+- 2026-10-20 · ui-polish · body text Quicksand 600; ♔/♚ discs; Two players reads White and Black; `TopBar` action prop replaces the `ReviewTopBar` copy · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/liem-sparring/pull/91)
+- 2026-10-21 · ui-feel · the entry is the Two players button; player cards are 60 px with square avatars · [report](../reports/ui-feel.html), [PR #101](https://github.com/iamphduc/liem-sparring/pull/101)

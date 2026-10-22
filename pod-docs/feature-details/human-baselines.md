@@ -24,4 +24,4 @@
 
 ## History
 - 2026-10-20 · fix · `--levels` merges into the saved file instead of replacing it
-- 2026-10-18 · sparring-ladder · `npm run baseline`, `rates.ts`, first committed baselines (150 games a level) · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/chess-web/pull/79)
+- 2026-10-18 · sparring-ladder · `npm run baseline`, `rates.ts`, first committed baselines (150 games a level) · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/liem-sparring/pull/79)

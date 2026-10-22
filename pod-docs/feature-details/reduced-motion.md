@@ -27,4 +27,4 @@ The last-move tint, the check glow, the dots and the card's content are the same
 
 ## History
 - 2026-10-06 · board-feel (sprint board-interaction, F1) · `MotionConfig reducedMotion="user"` on the board; pieces jump under reduced motion · [report](../reports/board-feel.html)
-- 2026-10-20 · ui-motion · the game-over entrance is `instant` under reduced motion; the row now checks it · [report](../reports/ui-motion.html), [PR #98](https://github.com/iamphduc/chess-web/pull/98)
+- 2026-10-20 · ui-motion · the game-over entrance is `instant` under reduced motion; the row now checks it · [report](../reports/ui-motion.html), [PR #98](https://github.com/iamphduc/liem-sparring/pull/98)

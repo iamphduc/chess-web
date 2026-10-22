@@ -265,7 +265,7 @@ describe("polite fetching", () => {
     expect(init.credentials).not.toBe("include");
     expect(headers.get("accept")).toBe("application/x-ndjson");
     const ua = headers.get("user-agent") ?? "";
-    expect(ua).toMatch(/^chess-web-baseline\//);
+    expect(ua).toMatch(/^liem-sparring-baseline\//);
     expect(ua).not.toMatch(/@|github|iamphduc/i);
   });
 
