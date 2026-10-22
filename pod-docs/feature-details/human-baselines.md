@@ -23,6 +23,6 @@
 - `chess.js` is used only under `scripts/`, never in the app.
 
 ## History
-- 2026-10-21 · tidy · the save step moves into the tested `saveBaseline`; the summary marks levels kept from the saved file
+- 2026-10-21 · tidy · the save step moves into the tested `saveBaseline`; the summary marks levels kept from the saved file · [report](../reports/tidy.html), [PR #107](https://github.com/iamphduc/liem-sparring/pull/107), [PR #108](https://github.com/iamphduc/liem-sparring/pull/108)
 - 2026-10-20 · fix · `--levels` merges into the saved file instead of replacing it
 - 2026-10-18 · sparring-ladder · `npm run baseline`, `rates.ts`, first committed baselines (150 games a level) · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/liem-sparring/pull/79)

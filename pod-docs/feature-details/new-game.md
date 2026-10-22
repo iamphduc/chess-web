@@ -30,4 +30,4 @@ A new game also clears the game's result, turns a pending Resign Confirm back, a
 ## History
 - 2026-10-19 · ui-refresh · Reset becomes New game; vs Liem New game replays the level and color; review fix: the clock restarts as Black · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/liem-sparring/pull/84), [PR #85](https://github.com/iamphduc/liem-sparring/pull/85)
 - 2026-10-20 · ui-polish · New game on the game-over card; a new game clears the result, the resign confirm and the note slot · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/liem-sparring/pull/91)
-- 2026-10-21 · tidy · Removed the unused `newLiemGame`; `goHome` does the same
+- 2026-10-21 · tidy · Removed the unused `newLiemGame`; `goHome` does the same · [report](../reports/tidy.html), [PR #107](https://github.com/iamphduc/liem-sparring/pull/107), [PR #108](https://github.com/iamphduc/liem-sparring/pull/108)

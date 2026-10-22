@@ -1,6 +1,6 @@
 # Plan: Tidy — break the import loops, drop dead code, close the engine and script nits
 
-_Generated: 2026-10-21 · Status: active · Grilled-with: pod (fast)_
+_Generated: 2026-10-21 · Status: archived · Grilled-with: pod (fast)_
 Port base: 3200
 
 ## Goal
