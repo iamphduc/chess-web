@@ -10,7 +10,6 @@ import { browserStorage, saveSoundOn } from "../soundSetting";
 export enum ButtonType {
   Play = "Play",
   Reset = "Reset",
-  Undo = "Undo",
   Flip = "Flip",
   Sound = "Sound",
 }

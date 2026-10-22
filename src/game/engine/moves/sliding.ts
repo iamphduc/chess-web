@@ -1,5 +1,6 @@
+import { PieceType } from "../../piece-type";
 import { GameState } from "../game-state";
-import { Move, Position } from "../engine";
+import { Move, Position } from "../move";
 import {
   pieceKind,
   colorOf,
@@ -64,10 +65,7 @@ export function slidingMoves(state: GameState, from: Position): Move[] {
 }
 
 /** The ray set for a sliding piece, or `null` when the piece does not slide. */
-function directionsFor(
-  piece: GameState["squares"][number][number]
-): readonly (readonly [number, number])[] | null {
-  if (piece === null) return null;
+function directionsFor(piece: PieceType): readonly (readonly [number, number])[] | null {
   switch (pieceKind(piece)) {
     case "bishop":
       return BISHOP_DIRS;

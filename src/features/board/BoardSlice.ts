@@ -4,7 +4,7 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import { PieceType } from "game/piece-type";
 import { pieceFactory } from "game/piece-factory";
 import { HistorySquares } from "game/board-types";
-import { FallenPiece, MoveNotation, pieceNotation, SpecialCase } from "game/piece-notation";
+import { MoveNotation, pieceNotation, SpecialCase } from "game/piece-notation";
 import { Position as PiecePosition } from "game/pieces/piece";
 import { Pawn } from "game/pieces/pawn";
 import { GameState, initialGameState, PieceColor } from "../../game/engine/game-state";
@@ -18,7 +18,7 @@ import {
   projectSquares,
   toPromotionKind,
 } from "./engineAdapter";
-import { PiecePromoted } from "./components/Promotion";
+import { PiecePromoted } from "./piecePromoted";
 import { GameOverType } from "./gameOverType";
 import { isWhiteClockTurn } from "./clock";
 import { MoveSound, pickSound } from "./sound";
@@ -86,7 +86,6 @@ interface BoardState {
   pendingPromotion: PendingPromotion | null;
   lastMoves: [PiecePosition, PiecePosition][];
 
-  fallenPieces: FallenPiece[];
   notation: string[];
 
   gameOver: GameOverType;
@@ -117,7 +116,6 @@ function createInitialState(): BoardState {
         [-1, -1],
       ],
     ], // Fallback for case En Passent
-    fallenPieces: [],
     notation: [],
     gameOver: GameOverType.Continue,
     flagFallWinner: null,
@@ -131,7 +129,7 @@ const initialState = createInitialState();
 
 /**
  * Play the selected piece to `dest`, as `movePiece` and a click on a legal square
- * both do: notation, fallen pieces, the last-move highlight and the promotion step.
+ * both do: notation, the last-move highlight and the promotion step.
  */
 function playMove(state: BoardState, dest: PiecePosition): void {
   const { selectedPiece } = state;
@@ -140,17 +138,15 @@ function playMove(state: BoardState, dest: PiecePosition): void {
 }
 
 /**
- * Play `from` → `to` for the side to move: notation, fallen pieces, the last-move
+ * Play `from` → `to` for the side to move: notation, the last-move
  * highlight, check, game over and the sound. A pawn reaching the last rank with
  * no `promotion` stops for the picker (a human move). With one, the ply completes.
  */
 function playPly(state: BoardState, from: Position, to: Position, promotion?: PromotionKind): void {
-  const { fallenPieces } = state;
   const [fromY, fromX] = from;
   const [toY, toX] = to;
 
   const engine = state.engineHistory[state.engineHistory.length - 1];
-  const projected = state.history[state.history.length - 1].squares;
   const pieceType = engine.squares[fromY][fromX] as PieceType;
   const piece = pieceFactory.getPiece(pieceType);
 
@@ -174,7 +170,7 @@ function playPly(state: BoardState, from: Position, to: Position, promotion?: Pr
   ];
 
   // --- Notation (reducer-side presentation, unchanged source) ---
-  // Disambiguation + fallen pieces are computed from the PRE-move board.
+  // Disambiguation is computed from the PRE-move board.
   const abbreviationSuffix = pieceNotation.getSuffixAbbreviation(engine, from, to);
   let newNotation: MoveNotation = {
     abbreviation: piece.getAbbreviation() + abbreviationSuffix,
@@ -185,20 +181,11 @@ function playPly(state: BoardState, from: Position, to: Position, promotion?: Pr
     newNotation.abbreviation =
       toX - fromX === 2 ? SpecialCase.KingSideCastling : SpecialCase.QueenSideCastling;
   } else if (isEnPassant) {
-    // The captured pawn sits beside the destination, on the mover's rank.
-    const capturedPieceType = projected[fromY][toX].pieceType;
-    if (capturedPieceType) {
-      pieceNotation.addFallenPiece(fallenPieces, capturedPieceType);
-    }
     newNotation = {
       abbreviation: String.fromCharCode(fromX + 97) + SpecialCase.Capture,
       position: [toY, toX],
     };
   } else if (isCapture) {
-    const capturedPieceType = projected[toY][toX].pieceType;
-    if (capturedPieceType) {
-      pieceNotation.addFallenPiece(fallenPieces, capturedPieceType);
-    }
     // Pawn captures are written with the origin file letter.
     if (isPawn) {
       newNotation.abbreviation = String.fromCharCode(fromX + 97);

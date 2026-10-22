@@ -1,5 +1,3 @@
-import { pieceFactory } from "./piece-factory";
-import { PieceType } from "./piece-type";
 import { Position } from "./pieces/piece";
 import { GameState } from "./engine/game-state";
 import { legalMoves, Position as EnginePosition } from "./engine/engine";
@@ -15,26 +13,12 @@ export enum SpecialCase {
   Checkmate = "#",
 }
 
-export interface FallenPiece {
-  pieceType: PieceType;
-  weight: number;
-  isWhite: boolean;
-}
-
 export interface MoveNotation {
   abbreviation: string;
   position: Position;
 }
 
 export class PieceNotation {
-  public addFallenPiece(fallenPieces: FallenPiece[], pieceType: PieceType): void {
-    const piece = pieceFactory.getPiece(pieceType);
-    const weight = piece.getWeight();
-    const isWhite = piece.isWhitePiece();
-    fallenPieces.push({ pieceType, weight, isWhite });
-    fallenPieces.sort((pieceA, pieceB) => pieceB.weight - pieceA.weight);
-  }
-
   /**
    * SAN disambiguation: when another piece of the same kind and colour can also
    * LEGALLY move to `to`, return what tells the mover apart — its origin file if

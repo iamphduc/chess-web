@@ -12,7 +12,7 @@ import { GameState, EngineSquare, PieceColor } from "../game-state";
  *
  * Each per-piece generator (pawn, knight, bishop/rook/queen sliders, king)
  * takes the current `GameState` and the `from` square as a `Position` (`[y, x]`,
- * imported from `../engine`) and returns the pseudo-legal `Move[]` for the piece
+ * imported from `../move`) and returns the pseudo-legal `Move[]` for the piece
  * standing there. It does NOT verify the piece kind/colour matches the side to
  * move and does NOT do check filtering — the dispatcher owns turn dispatch and
  * a later slice owns king safety. Generators decide stop/capture purely through
@@ -36,11 +36,13 @@ export type Relation = "empty" | "friendly" | "enemy";
  * Map a concrete `PieceType` id to its abstract kind, collapsing both the
  * starting pieces and the promoted ids.
  *
- * The `PieceType` string values are matched suffix-first to avoid the back-rank
- * ambiguity: `WHITE_QUEEN_ROOK` contains both `QUEEN` and `ROOK` but is a rook,
- * and `WHITE_KING_BISHOP` is a bishop. Promoted ids (`*_KNIGHT_PROMOTED_n`,
- * `*_BISHOP_PROMOTED_n`, `*_ROOK_PROMOTED_n`, `*_QUEEN_PROMOTED_n`) collapse to
- * their base kind; base pawns are `*_PAWN_A..H`.
+ * The id is tested with `includes` for each kind word in a fixed order, and the
+ * first match wins: PAWN, then KNIGHT, BISHOP, ROOK, QUEEN; anything else is a
+ * king. The order settles the back-rank ids that hold two kind words:
+ * `WHITE_QUEEN_ROOK` is a rook and `WHITE_KING_BISHOP` a bishop, because ROOK
+ * and BISHOP are tested before QUEEN and no word matches KING. Promoted ids
+ * (`*_QUEEN_PROMOTED_n` and the rest) hold one kind word, so they collapse to
+ * it; base pawns are `*_PAWN_A..H`.
  */
 export function pieceKind(piece: PieceType): PieceKind {
   const id = piece as string;
@@ -49,9 +51,6 @@ export function pieceKind(piece: PieceType): PieceKind {
   if (id.includes("KNIGHT")) return "knight";
   if (id.includes("BISHOP")) return "bishop";
   if (id.includes("ROOK")) return "rook";
-  // After ruling out the above, anything containing QUEEN is a queen (the
-  // back-rank `*_QUEEN_ROOK`/`*_QUEEN_KNIGHT`/`*_QUEEN_BISHOP` ids were already
-  // caught by their trailing kind word).
   if (id.includes("QUEEN")) return "queen";
   return "king";
 }

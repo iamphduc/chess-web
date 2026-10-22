@@ -22,7 +22,7 @@ import {
   stop,
 } from "../BoardSlice";
 import { canResign, gameEnd } from "../gameEnd";
-import { PiecePromoted } from "../components/Promotion";
+import { PiecePromoted } from "../piecePromoted";
 
 type Store = ReturnType<typeof createAppStore>;
 const { reducer } = boardSlice;

@@ -14,12 +14,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { LeftBookNote } from "../components/LeftBookNote";
 import type { GameState } from "game/engine/game-state";
 import { uciToMove } from "game/opponent/position";
-import type { ReviewModel } from "game/review/types";
+import type { PositionEval, ReviewModel } from "game/review/types";
 import {
   answerShown,
   evalReceived,
   momentOpened,
-  type PositionEval,
 } from "../reviewSlice";
 import {
   backToGame,

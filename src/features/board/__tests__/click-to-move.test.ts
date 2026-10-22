@@ -11,8 +11,9 @@ import {
   stop,
 } from "../BoardSlice";
 import { projectSquares } from "../engineAdapter";
+import { materialLine } from "../material";
 import { GameOverType } from "../gameOverType";
-import { PiecePromoted } from "../components/Promotion";
+import { PiecePromoted } from "../piecePromoted";
 import { PieceType } from "../../../game/piece-type";
 import { EngineSquare, GameState, initialGameState } from "../../../game/engine/game-state";
 
@@ -125,7 +126,10 @@ describe("click to move", () => {
     expect(state.history).toHaveLength(4);
     expect(state.engineHistory[state.engineHistory.length - 1].turn).toBe("black");
     expect(state.history[3].squares[3][3].pieceType).toBe(PieceType.WhitePawnE);
-    expect(state.fallenPieces.length).toBeGreaterThan(0);
+    // Black's d-pawn is gone from the board: White's line shows the pawn taken.
+    const pawns = state.history[3].squares.flat().filter((sq) => sq.pieceType === PieceType.BlackPawnD);
+    expect(pawns).toEqual([]);
+    expect(materialLine(state.engineHistory[3], "white").captured).toEqual(["pawn"]);
   });
 
   it("click into promotion waits for the picker", () => {

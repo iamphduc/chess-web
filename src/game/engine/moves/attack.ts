@@ -1,5 +1,5 @@
 import { GameState, PieceColor } from "../game-state";
-import { Position } from "../engine";
+import { Position } from "../move";
 import {
   pieceKind,
   colorOf,

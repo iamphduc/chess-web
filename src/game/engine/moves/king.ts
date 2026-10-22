@@ -1,4 +1,4 @@
-import { Move, Position } from "../engine";
+import { Move, Position } from "../move";
 import { GameState, PieceColor } from "../game-state";
 import {
   colorOf,
