@@ -109,27 +109,27 @@ Context: White text on the app green `#059862` is 3.7:1, under the 4.5:1 that no
 Decision: The human chose `#047A4F` (5.38:1 with white). It replaces `#059862` everywhere the app uses it as a button color: `.button--play` in `src/features/board/components/Button.css`, and `--board-sound-on` and `--liem-start` in `src/index.css`, so the app keeps one green. Hover stays `filter: brightness(0.8)`, so it darkens in step. `tests/liem-theme.test.ts › start pair matches the Play green` and `tests/board-theme.test.ts` now require 4.5:1.
 Consequences: The green reads a little deeper next to the board's olive squares. To change it again, change all three values and the two theme tests together.
 
-## 2026-10-10 — His books have no Lichess games (agent default — override anytime)
+## 2026-10-10 — His books have no Lichess games (agent default, kept by the human 2026-10-22)
 Context: The Lichess FIDE page `lichess.org/fide/12401137/Le_Quang_Liem` links no Lichess account, and the human didn't give a username.
 Decision: `player.json` keeps `sources.lichessUser: null`, so both books come from his Chess.com games only (3,692 kept).
 Consequences: Give his Lichess username and run `npm run book:import -- --lichess-user <name>` to add his Lichess games, then commit both book files.
 
-## 2026-10-10 — The slow book stays thin until his over-the-board games are added (agent default — override anytime)
+## 2026-10-10 — The slow book stays thin until his over-the-board games are added (agent default, kept by the human 2026-10-22)
 Context: Only 129 of his Chess.com games are slow (15 minutes or more), so the slow book has 130 positions and most slow lines fall back to the online book. vs-Liem games use 10+0 today, so they use the online book anyway.
 Decision: Ship the thin slow book, with the fallback to the online book on lines under 3 games.
 Consequences: Put his over-the-board PGN (for example from TWIC) in `games/otb/*.pgn` and re-run `npm run book:import`. It matters once a clock choice exists (see `pod-docs/ideas/clock-choice.md`).
 
-## 2026-10-10 — Quicksand is self-hosted (agent default — override anytime)
+## 2026-10-10 — Quicksand is self-hosted (agent default, kept by the human 2026-10-22)
 Context: The app loaded Quicksand from Google Fonts. The vs-Liem look added more text in it, and a third-party font request on every load leaks visits to Google.
 Decision: Quicksand 500 and 700 ship as woff2 files under `src/assets/fonts/`, with their OFL licence, through `@font-face` rules in `src/index.css`. No CSS names an http(s) URL.
 Consequences: To go back to Google Fonts, restore the `@import` and drop the `@font-face` rules and `tests/theme.test.ts › quicksand is served from the app`.
 
-## 2026-10-10 — vs-Liem setup defaults (agent default — override anytime)
+## 2026-10-10 — vs-Liem setup defaults (agent default, kept by the human 2026-10-22)
 Context: The plan left the setup card's starting values open.
 Decision: The card opens on White and strength 2100; the clock is the app's 10+0, so he plays from his online book; his card shows "Thinking…" while he loads or thinks, and the book note shows "He couldn't move" with Try again when the engine or a book fails to load.
 Consequences: Change the defaults in `src/features/liem/matchSlice.ts` (`colorPick`, `strength`); a clock choice is in `pod-docs/ideas/clock-choice.md`.
 
-## 2026-10-10 — Switching modes keeps the board's flip (agent default — override anytime)
+## 2026-10-10 — Switching modes keeps the board's flip (agent default, kept by the human 2026-10-22)
 Context: After a vs-Liem game as Black the board is flipped. The sprint contract said switching mode "leaves the flip as is", so a two-player game then starts with White at the top.
 Decision: Keep the flip on a mode switch; Flip board turns it back.
 Consequences: To unflip on the switch to Two players, dispatch `setFlipped(false)` in `switchMode` in `src/features/liem/liemActions.ts`.
@@ -186,7 +186,7 @@ At depth 8 with 4 lines, a line 10–15 points below the best is rare, so the 5 
 Decision: Keep the calibrated table. Tune from the human's own play.
 To change: in `STEP_PROFILES` (`src/game/opponent/step-profiles.ts`), lower 1400's `search.depth`, or raise its `maxLoss`, `temperature` or `slipChance`. Keep `step-profiles.test.ts` green; it requires depth never to fall and loss limits never to rise going up the steps. Then check with `npm run calibrate -- --games 4 --anchors none`.
 
-## 2026-10-12 — A free capture is never skipped, and a drop of a piece is outside every limit (agent default — override anytime)
+## 2026-10-12 — A free capture is never skipped, and a drop of a piece is outside every limit (agent default, kept by the human 2026-10-22)
 Context: Win % flattens when one side is far ahead or behind. At 1400 and about +7, he answered a hanging queen with Be7, because the queen was worth only about 3 win % points there. At about −800 cp, a −2000 cp line loses only about 4.9 points, inside 1400's limit of 10, so in lost positions he picked almost evenly among his top lines.
 Decision: Two rules in `chooseHumanMove` (`src/game/opponent/human-move.ts`), for every step:
 - **Free captures (`FREE_CAPTURE` = 3):** `materialNet` (`material.ts`) is what a move takes, plus a promotion's gain, less the opponent's best capture back, one exchange deep, with the same piece values as `hangsMaterial`. When a line nets 3 or more, any line that nets less is dropped, unless the engine rates it strictly better. This applies to slips too, and a seen mate still comes first.
@@ -216,7 +216,7 @@ Context: The app has one Stockfish worker, the one he plays with. After the game
 Decision: The review's analysis pass and the checks of tried moves run on his worker, through `OpponentController.analyse` (exposed by `useLiemOpponent`). There is no second worker. His next turn (`request()`) aborts every review search first, and closing the review or starting a new game stops the pass. A review search that fails or times out drops the engine, so his next use loads a fresh one.
 Consequences: No extra download or memory for the review. A review and his play can never search at the same time.
 
-## 2026-10-16 — Review searches stop at 500 ms or depth 18 (agent default — override anytime)
+## 2026-10-16 — Review searches stop at 500 ms or depth 18 (agent default, kept by the human 2026-10-22)
 Context: The plan set about 0.5 s a position with a depth cap of 18, to be checked on desktop and on a phone.
 Speed check (`npm run preview`, Chrome through `chrome-devtools-axi`, games against the 1400 step played by random clicks; the times run from pressing Review game to `data-review-state="done"`):
 - Desktop (1400 px, no throttling): a 27-move game, 55 positions, took 20.9 s (380 ms a position). The first key moment was ready after 7.5 s.
@@ -225,7 +225,7 @@ On desktop many searches reach depth 18 before 500 ms; throttled, nearly every s
 Decision: `REVIEW_LIMITS` in `src/features/review/reviewLimits.ts` is `{ depth: 18, multiPv: 1, movetimeMs: 500 }`. The progress bar and key moments that show as soon as their moves are analysed make the wait usable.
 To change: `movetimeMs` there (`review-actions.test.ts › review limits` keeps it from 100 to 1000 ms). Lower it if a real phone is too slow; scores get noisier below about 300 ms.
 
-## 2026-10-16 — The move list shows your move while you look for a better one (agent default — override anytime)
+## 2026-10-16 — The move list shows your move while you look for a better one (agent default, kept by the human 2026-10-22)
 Context: At a key moment the card says "Your move is hidden", but the move list beside it (or under the phone sheet) still shows the move you played with its mark, for example `2. g4 ??`. The better move, which is the answer, stays hidden. Raised by the reviewer of PR #73.
 Decision: Keep showing it. You already know what you played, and the mark only says it was a mistake.
 To change: hide the played move's row (or its mark) in `MoveList` while the active moment is `trying`, and reword the card's "Your move is hidden" if needed.
@@ -249,7 +249,7 @@ Decision: `src/features/liem/levelView.ts` holds every text a level shows, and t
 - **Out of book:** "Stockfish at about N plays from here. It isn't trained on his games.", or "Full-strength Stockfish 18 plays from here. It isn't trained on his games." at the Liem level.
 Consequences: Liem's short name ("Liem") is the last word of `player.json`'s `name`. On a phone the sparring line next to "★ Book" ends as "Liem's …". To change a word, edit `levelView.ts` and `src/features/liem/__tests__/level-view.test.ts` together.
 
-## 2026-10-18 — Sparring step table tuned to 75 % of human mistake rates (agent default — override anytime)
+## 2026-10-18 — Sparring step table tuned to 75 % of human mistake rates (agent default, kept by the human 2026-10-22)
 Context: Plan sparring-ladder: at every sparring level, his mistake and blunder rates per 40 moves after the book should be 75 % of Lichess players at that level, ±25 % of that target. C1 added the mistake and blunder bands to `chooseHumanMove`, H1 the human baselines, M1 `npm run calibrate -- --measure`. This entry supersedes "Strength step table set from the first calibration runs" (2026-10-12) and "The 1400 step plays like 1400" (2026-10-12): the band fields change how every sparring level plays, so the human's 1400 play check needs doing again.
 Baselines (`scripts/ladder/human-baselines.json`, generated 2026-10-18, Lichess rated blitz and rapid games with Lichess analysis, both players within ±100 of the level, graded from ply 10): 150 games at every level, none dropped, none `lowSample`. Bands and speeds (blitz/rapid): 1400 1300–1500, 103/47; 1700 1600–1800, 127/23; 1900 1800–2000, 141/9; 2100 2000–2200, 131/19; 2300 2200–2400, 143/7; 2500 2400–2600, 148/2. **Caveat:** the human rates are mostly blitz, and 2300 and 2500 come mostly from the opponents of arena players, so their time pressure adds mistakes a 10-minute game wouldn't have. The 75 % target allows for some of that.
 Targets per 40 (review mistake / blunder): 1400 1.00 / 1.10; 1700 0.77 / 1.07; 1900 0.81 / 0.78; 2100 0.68 / 0.65; 2300 0.59 / 0.62; 2500 0.61 / 0.62.
@@ -281,27 +281,27 @@ Consequences:
 - The biggest drops are missed tactics and loose pieces in sharp middlegames and endgames (a rook move that drops the h-pawn race, a king step into a fork), not a queen left for nothing.
 - **Play check** (agent, `npm run dev`, 1400, as White, two games played by a scripted Stockfish): in the second game, level at about 50 %, he played 13...Rxd2 and left his queen on a2 to 14.Qxa2. The review's graph shows his side drop 34 win % there, a blunder by the review's levels. The review grades only your own moves, so his slip shows in the graph, not as a mark in the move list. The human's own 1400 play check is still to do.
 
-## 2026-10-18 — 2300 and 2500 baselines include arena players' opponents (agent default — override anytime)
+## 2026-10-18 — 2300 and 2500 baselines include arena players' opponents (agent default, kept by the human 2026-10-22)
 
 Recent arenas had only 7 players near 2300 and 1 near 2500, so `npm run baseline` also reads the opponents those players met within ±150 of the level. The 2300 and 2500 baselines rest almost entirely on them. To use arena players only, change the sourcing in `scripts/ladder/baseline.ts` and rerun `npm run baseline`.
 
-## 2026-10-18 — His rating reads "2732" on phones (agent default — override anytime) (restated in "Phone lines after the refresh", 2026-10-19)
+## 2026-10-18 — His rating reads "2732" on phones (agent default, kept by the human 2026-10-22) (restated in "Phone lines after the refresh", 2026-10-19)
 
 Below 768 px the Liem card's line reads "2732" instead of "GM · 2732", because the GM tag already sits by his name and the full line cut to "GM · 27…" next to "★ Book". Screen readers still get "GM · 2732". Change it in `src/features/liem/levelView.ts`.
 
-## 2026-10-18 — His name may end in an ellipsis at 375 px (agent default — override anytime)
+## 2026-10-18 — His name may end in an ellipsis at 375 px (agent default, kept by the human 2026-10-22)
 
 At 375 px the in-game Liem card reads "Le Quang Li…" (the name box is 136 px; the GM tag and name need 145 px), as it did before the sparring ladder. Options: hide the GM tag on phones, show "Liem" as the phone name, or tighten the GM tag and name margins (`src/features/board/components/Player.css`).
 
-## 2026-10-18 — The ladder check is 8 games a pair (agent default — override anytime)
+## 2026-10-18 — The ladder check is 8 games a pair (agent default, kept by the human 2026-10-22)
 
 The final `npm run calibrate -- --games 8 --anchors none` run has each level at or under 50 % against the next (50.0 / 25.0 / 37.5 / 6.3 / 43.8 / 0 %). A 16-game run of the same table had 1400 at 56.3 % against 1700, because their human targets are close. To make the test stricter, run 16 or more games a pair and retune 1400 or 1700 until it holds.
 
-## 2026-10-18 — The review marks only your moves (agent default — override anytime)
+## 2026-10-18 — The review marks only your moves (agent default — superseded by "The review marks his moves too", 2026-10-22)
 
 A sparring bot's mistake shows as a drop in the review graph, never as a mark in the move list, because the review grades only the human's moves (`byHuman` in `src/game/review/build-review.ts`). Marking his moves too would be a review change, which the sparring-ladder plan left out of scope.
 
-## 2026-10-18 — The tuned table stands until you replay 1400 (agent default — override anytime)
+## 2026-10-18 — The tuned table stands until you replay 1400 (agent default, kept by the human 2026-10-22)
 
 The 2026-10-12 "The 1400 step plays like 1400" check is superseded by the tuned table. The bots now hang pieces 1.2–2.4× and miss captures 2–5× as often as humans; those two rates have no target. Play a few 1400 games and say if it feels too loose: lower `hangWeight` or `blunderMaxCp` in `src/game/opponent/step-profiles.ts`.
 
@@ -316,7 +316,7 @@ Context: The human wanted "a home page to start first, not just straight to the 
 Decision: Screens are hash links (`#/` home, `#/play`, `#/two-players`, `#/review`, in `src/app/route.ts`), with no router library, so they work on GitHub Pages with no server. Home holds the level picker, your color, Play and the "Two players on one board" link. It has no photo and no "beat him" message. The board screen has no mode tabs and no challenge card. `match` still starts as `"liem"` with `setupOpen: true`, which is now the home state.
 Consequences: Back and forward move between the screens. A reload of `#/play` or `#/review` goes home, because the store isn't saved, and an unknown hash goes home too.
 
-## 2026-10-19 — Going home ends the game (agent default — override anytime)
+## 2026-10-19 — Going home ends the game (agent default, kept by the human 2026-10-22)
 Context: ← Home, the browser's Back from `#/play` and an edited hash all reach home mid-game.
 Decision: Arriving home resets the board (`goHome`). The level and color picks stay until a reload. The board unmounts on home, so the next game loads his engine again, from the browser cache.
 Consequences: There is no "resume game". To keep a game across home, stop `arriveAt("home")` from resetting and let `#/play` show the game in progress.
@@ -326,7 +326,7 @@ Context: A 1000-rated player who beats "1400" easily would think the app is wron
 Decision: The seven steps read Easy, Medium, Hard, Harder, Expert, Master and ★ Liem (`LEVEL_NAMES` in `src/features/liem/levelView.ts`, the one place to change them). A bot's card reads its name with the ♞ and "Plays Liem's openings". The home engine line reads "A sparring bot plays his openings, then Stockfish at the Medium level.", and out of book "Stockfish at the Medium level plays from here. It isn't trained on his games." No sparring level puts a rating or "about" in any text or `aria-label`. Only Liem shows "GM · 2732"; the Liem texts don't change. "★ Liem" is ink text with an ochre ★ (`src/features/liem/components/Star.tsx`).
 Consequences: The numbers stay in code, `npm run calibrate` and the docs. To rename a level, edit `LEVEL_NAMES` and `src/features/liem/__tests__/level-view.test.ts` together.
 
-## 2026-10-19 — The default level stays Harder (agent default — override anytime)
+## 2026-10-19 — The default level stays Harder (agent default, kept by the human 2026-10-22)
 Context: The home page needs a level picked on load.
 Decision: The default stays strength 2100, which is now named "Harder" (as in "vs-Liem setup defaults", 2026-10-10), and White.
 Consequences: Change `strength` and `colorPick` in `src/features/liem/matchSlice.ts`.
@@ -336,12 +336,12 @@ Context: The early dark UI and the newer vs Liem and review UI felt like two app
 Decision: `src/index.css` `:root` holds the Look's tokens: the palette (`--bg` #F4EFE4, `--surface` #FBF8F1, `--surface-2` #EFE8D8, `--line` #DCD2BD, `--ink` #1E1B16, `--soft` #6B6457, `--accent` #A8322B, `--gold` #B8860B, `--go` #1E1B16 with `--go-ink` #FBF8F1), the wood board (#F0E3C8 and #B98B5E), the spacing scale (4, 8, 12, 16, 24 and 32 px), a 4 px radius and four type sizes (30, 20, 16 and 14 px). The old `--dark-*`, `--liem-*`, `--book-bar`, `--review-page`, `--board-sound-on`, `--background` and `--text` tokens are gone. Play and Sound-on are ink, not green. Light only, with no dark mode. Ochre is never a text color. `tests/leftover-styles.test.ts` keeps old tokens, undeclared tokens and literal colors out of `src/`.
 Consequences: To change a color, change its token; no CSS file outside `index.css` names a color. A dark mode would be a second set of the same tokens.
 
-## 2026-10-19 — Grade and low-time colors on cream (agent default — override anytime)
+## 2026-10-19 — Grade and low-time colors on cream (agent default, kept by the human 2026-10-22)
 Context: The review's grade colors and the low-time clock were set for a dark page, and some failed 4.5:1 on cream.
 Decision: Each grade keeps its old hue (within 10°), darkened just enough to read at 4.5:1 on `--surface` and `--surface-2`: `--grade-inaccuracy` #146AB0, `--grade-mistake` #A45000, `--grade-blunder` #CF0F00, `--grade-best` #27744F and `--grade-book` #686A2D. Chips put `--grade-ink` (the `--surface` cream) on the grade color. Low time is red ink (`--accent`) with `--surface` text; waiting is `--soft` on `--surface-2`, running is `--bg` on `--ink`.
 Consequences: Change a value in `src/index.css`; `tests/look.test.ts` and `tests/theme.test.ts` check the contrast.
 
-## 2026-10-19 — The last-move highlight is an ochre tint (agent default — override anytime)
+## 2026-10-19 — The last-move highlight is an ochre tint (agent default, kept by the human 2026-10-22)
 Context: The old `--board-highlight`, `rgba(255, 255, 51, 0.5)` yellow, was loud on the wood board, and the Look gave no value for it.
 Decision: `--board-highlight` is `rgba(204, 153, 26, 0.5)`, an ochre tint close to `--gold`. It marks the last move and the selected square, and stays readable on both the light and the dark squares.
 Consequences: Change it in `src/index.css`. It must stay see-through so the square color shows.
@@ -351,17 +351,17 @@ Context: The gaps around the tabs, the separate buttons box and the Fallen Piece
 Decision: A 56 px top bar holds ← Home and the title ("vs Medium · you play White"). Fallen Pieces becomes a "+N" line with the captured pieces on each player card. The buttons join the Moves card's foot. In vs Liem the foot is Review game (once the game can be reviewed), New game, Flip and Sound; in Two players it is Play, New game (the old Reset), Flip and Sound.
 Consequences: The review's foot is Back to game, Flip and Sound.
 
-## 2026-10-19 — New game replays the level and color; Random draws again (agent default — override anytime)
+## 2026-10-19 — New game replays the level and color; Random draws again (agent default, kept by the human 2026-10-22)
 Context: With the setup card gone, New game in vs Liem needed a meaning.
 Decision: New game (`replayLiemGame`) starts a new game at the same level and color pick, so Random draws a color again. ← Home is how you change the level or color.
 Consequences: To keep the drawn color, pass the last `humanColor` in `replayLiemGame` instead of the pick.
 
-## 2026-10-19 — Review game sits in the Moves card (agent default — override anytime)
+## 2026-10-19 — Review game sits in the Moves card (agent default, kept by the human 2026-10-22)
 Context: With the buttons box gone, Review game needed a place.
 Decision: Review game is the first item in the Moves card foot, as the primary button (`a.button.button--play[href="#/review"]`), and shows only once the game can be reviewed.
 Consequences: Move it in `src/features/board/Board.tsx`.
 
-## 2026-10-19 — "+N" counts promotions (agent default — override anytime)
+## 2026-10-19 — "+N" counts promotions (agent default, kept by the human 2026-10-22)
 Context: The "+N" material line needs a rule for a promoted pawn.
 Decision: `materialLine` (`src/features/board/material.ts`) counts material on the board, so a promotion adds the new piece's value and takes away the pawn's. The captured-piece glyphs show only what was taken. At 375 px his card's glyphs can be cut, but "+N" itself never is.
 Consequences: Change the counting in `material.ts` and its tests together.
@@ -424,7 +424,7 @@ Context: Once he left his book, the sidebar note turned red and said "Out of his
 Decision: The book note (`[data-book-state]`) shows `waiting`, `in-book` and `failed` (with Try again) as before. Out of his book there is no note: no `out` state in the DOM and no "Out of his book" text. Below 992 px an empty slot keeps the note's tallest height for the rest of the game, so the page never gets shorter and never scrolls (review fix, PR #92); from 992 px the slot is hidden. A new game clears the slot and brings back `waiting`.
 Consequences: `bookNoteView` still returns `{ kind: "out" }`; `BookNote` renders `null` for it. `.liem-note--out` is gone from `src/styles/liem.css`.
 
-## 2026-10-20 — Two players cards read White and Black (agent default from the sprint contract — override anytime)
+## 2026-10-20 — Two players cards read White and Black (agent default, kept by the human 2026-10-22)
 Context: The two-player board named its sides "Le Quang Liem" (with his photo and GM tag) and "Me". This supersedes the 2026-10-19 entry that kept "Le Quang Liem" and "Me" on the cards.
 Decision: In Two players the cards read "White" and "Black" (`src/game/players.ts`), each with its color disc, with no photo and no GM tag. "Thinking…" stays his status vs Liem only.
 Consequences: The clock `aria-label`s read "Clock for White" and "Clock for Black".
@@ -434,16 +434,16 @@ Context: From 768 px up the review sidebar held the graph, the key moment, the a
 Decision: From 768 px up `.review .sidebar` holds exactly three cards: the key-moment card, the summary card (`section.card[data-review-graph]`: the 80 px graph, then the accuracy line "40 % · ?! N · ? N · ?? N" in grade colors, "—" until ready, no book-move count), and the Moves card, whose list starts with the left-book line ("Left his book at move N · he played X in G games", "Left his book at move N", "Stayed in his book the whole game", or no line without his books). `AccuracyPanel` and the left-book card are gone. Below 768 px the sheet holds the key moment and then the summary; `graphPlacement` still decides where the summary goes, so `[data-review-graph]` appears once.
 Consequences: Built by slice V1 (sprint polish); the review layout and smoke steps are in `pod-docs/codebase-structure.md`.
 
-## 2026-10-20 — The book note's space stays on phones after he leaves his book (agent default — override anytime)
+## 2026-10-20 — The book note's space stays on phones after he leaves his book (agent default, kept by the human 2026-10-22)
 Below 992 px, once he leaves his book, an empty slot keeps the note's tallest height for the rest of the game, so the page never gets shorter and never scrolls. A new game clears it. To move the note under the Moves card on phones instead, change the order in `src/features/board/Board.tsx`; that still shortens the page when you're scrolled to the bottom.
 
-## 2026-10-20 — The book note may grow, and the Moves card moves down with it (agent default — override anytime)
+## 2026-10-20 — The book note may grow, and the Moves card moves down with it (agent default, kept by the human 2026-10-22)
 When the note grows (waiting → in his book, or more book rows later), the Moves card moves down; `scrollY` doesn't change. To stop it, give the note one fixed height for its tallest state in `src/features/liem/components/BookNote.css`, at the cost of more empty space early on.
 
-## 2026-10-20 — On desktop the Moves card moves up when he leaves his book (agent default — override anytime)
+## 2026-10-20 — On desktop the Moves card moves up when he leaves his book (agent default, kept by the human 2026-10-22)
 From 992 px the empty slot is hidden, so the Moves card moves up by the note's height when he leaves his book; `scrollY` doesn't change. To keep the space on desktop too, drop the `display: none` rule for the slot in `src/features/liem/components/BookNote.css`.
 
-## 2026-10-20 — A key-moment try counts as found when it isn't an inaccuracy (agent default — override anytime)
+## 2026-10-20 — A key-moment try counts as found when it isn't an inaccuracy (agent default, kept by the human 2026-10-22)
 Any try that loses less than an inaccuracy (10 win-% points) counts as found, so a good move other than Stockfish's (for example 2.a3 when it names 2.d4) shows "You found it". This is the 2026-10-16 grade rule, unchanged. To require Stockfish's move, change the found rule in `src/game/review/`.
 
 ## 2026-10-20 — The material line sits under the name, pieces then +N (chosen by the human, plan ui-motion) (the 56 px height is superseded by "The player row has more room (option C)", 2026-10-21)
@@ -451,7 +451,7 @@ Context: The human found "+4" before the glyphs on the name's line "reversed" ("
 Decision: On every player card, in both modes and in the review, `.player__material` is its own line under the name, 4 px below it: the captured pieces first, then "+N" (for example `♛♜♝♞♞♟ +4`). The glyph colors and the counting (`material.ts`) don't change, and "+N" is never cut; the glyphs cut first. Every `.board > .player` stays 56 px. Supersedes the order and place in "The board screen has a top bar and one Moves card", 2026-10-19.
 Consequences: The layout lives in `Player.tsx` and `Player.css`; `tests/player-css.test.ts` pins the spacing and what gives way.
 
-## 2026-10-20 — His card's detail shares the material line, material first (agent default — override anytime)
+## 2026-10-20 — His card's detail shares the material line, material first (agent default, kept by the human 2026-10-22)
 Context: His card already used its second line for "★ Book · N" or "Thinking…", and three lines don't fit the 56 px card.
 Decision: The material and his detail share the second line: the material first, the detail at the line's end, so neither moves when the other comes or goes. The other way (detail first) makes the material jump about 70 px each time "Thinking…" comes and goes.
 Consequences: To swap them, change the order in `Player.tsx` and its test (`player.test.tsx › with a detail, the material comes first on the second line`). Queued for the human in `handoff-queue.md`.
@@ -476,12 +476,12 @@ Context: The human: "What is the point of "Back to game" button? It should be th
 Decision: The review's Moves card foot is Play again (`button.button--play`, `playAgain`: a new game at the same level and color, then `#/play`), Flip and Sound. The review's top bar holds only ← Home and the title. There's no Back to game link; the browser's Back still goes to `#/play` with the finished board. Supersedes "The review's top bar has Play again; Back to game stays in the review", 2026-10-19.
 Consequences: `TopBar`'s `action` prop and the `.top-bar__action` CSS stay, unused (`tests/review-theme.test.ts` still reads them). To change what Play again does, edit `playAgain` in `src/features/review/reviewLayout.ts`.
 
-## 2026-10-20 — The name stays put on a card with no captures (agent default — override anytime)
+## 2026-10-20 — The name stays put on a card with no captures (agent default, kept by the human 2026-10-22)
 Context: plan ui-motion puts the material line under the name. Keeping that line's space on every card means the name never moves at the first capture.
 Decision: the second line is always kept, so on a card with no captures and no detail (You, White and Black at the start) the name sits about 12 px above the disc's middle.
 Consequences: the other way centers the name until the first capture, then moves it up once. To change it, edit `.player__text` and `.player__sub` in `src/features/board/components/Player.css` and `tests/player-css.test.ts`.
 
-## 2026-10-20 — One `generated` date for the whole baseline file (agent default — override anytime)
+## 2026-10-20 — One `generated` date for the whole baseline file (agent default, kept by the human 2026-10-22)
 Context: fix PR #94 makes `npm run baseline -- --levels <N>` merge into `scripts/ladder/human-baselines.json`.
 Decision: the file's `generated` date (and `skipPlies`) comes from the latest run, so a partial run sets it to today even when no other level changed.
 Consequences: the other way stores a date for each level. To change it, edit `mergeBaseline` in `scripts/ladder/baseline.ts` and its tests.
@@ -524,3 +524,10 @@ Consequences: record each plan's branch as a `## <date> — merge target: <branc
 
 ## 2026-10-21 — merge target: tidy-staging
 Plan tidy merges into `tidy-staging`, cut from `main` after PR #106 merged; the human merges it into `main`. (human, 2026-10-21)
+
+## 2026-10-22 — The agent defaults are kept, except two review changes
+Context: the human went through every open choice: the 29 live agent defaults in this file and the six decision items in the queue.
+Decision: keep them all as they are, now as the human's choices (marked "kept by the human 2026-10-22"). Two things change:
+- **Your best move is never marked.** A move that matches the engine's best move for that position gets no grade, even when the next search scores it a little lower (the 500 ms search noise).
+- **The review marks his moves too.** It supersedes "The review marks only your moves" (2026-10-18). See `pod-docs/ideas/mark-bot-mistakes.md`.
+Also kept from the queue: the old Sound key fallback, the promotion cap of 4 per type, no jsdom, the possible overlap below 300 px, and one `generated` date for the baseline file. (human, 2026-10-22)
