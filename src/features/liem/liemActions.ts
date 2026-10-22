@@ -16,7 +16,7 @@ export const switchMode =
     dispatch(setMode(mode));
   };
 
-/** Ends the vs-Liem game and reopens the setup card. Does nothing in two-player mode. */
+/** Ends the vs-Liem game and goes back to the home page. Does nothing in two-player mode. */
 export const newLiemGame = (): LiemThunk => (dispatch, getState) => {
   if (getState().match.mode !== "liem") return;
   dispatch(reset());
@@ -24,8 +24,8 @@ export const newLiemGame = (): LiemThunk => (dispatch, getState) => {
 };
 
 /**
- * Starts a vs-Liem game with the card's color pick; Black sees the board flipped.
- * Does nothing unless the setup card is open, so a second Start keeps the game.
+ * Starts a vs-Liem game with the home page's color pick; Black sees the board flipped.
+ * Does nothing unless the home page is open, so a second Play keeps the game.
  */
 export const startLiemGame =
   (random?: () => number): LiemThunk =>
