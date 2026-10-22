@@ -18,12 +18,14 @@ const n3 = (v: number): number => Math.round(v * 1000) / 1000;
 const pct = (v: number): string => `${n3(v)}%`;
 
 /**
- * The cursor's move, in the head: "27.Qe2?? −44 %". His moves show only the label, a
- * book move says so, and a drop under half a point isn't shown. `null` at the start.
+ * The cursor's move, in the head: "27.Qe2?? −44 %". His moves show only the label (the
+ * graph is your win %), a book move says so, and a drop under half a point isn't shown.
+ * `null` at the start.
  */
 export function cursorTip(model: ReviewModel, cursor: number): string | null {
   const move = model.moves[cursor - 1];
   if (move === undefined) return null;
+  if (!move.byHuman) return move.label;
   const mark = move.grade === null ? "" : GRADE_MARK[move.grade];
   if (move.bookGames !== null) return `${move.label} · book`;
   const drop = move.drop === null ? 0 : Math.round(move.drop);
@@ -92,7 +94,8 @@ export const ReviewGraph = ({ model, humanColor, cursor, onSelect }: Props) => {
   const band = model.bookPlies > 0 ? n3(positionX(model.bookPlies, last, 100)) : 0;
   const cursorX = positionX(cursor, last, 100);
   const tip = cursorTip(model, cursor);
-  const graded = model.moves.filter((m) => m.grade !== null && points[m.ply + 1] != null);
+  // Points for your graded moves only; his marks are in the move list.
+  const graded = model.moves.filter((m) => m.byHuman && m.grade !== null && points[m.ply + 1] != null);
 
   const select = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
