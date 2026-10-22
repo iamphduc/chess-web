@@ -7,7 +7,7 @@ The cards: vs Liem, your card reads "You" with a ♔ or ♚ disc, and his card s
 
 ## How it works
 - `App.tsx` renders `<Home />` on home, or `.app[data-screen="play" | "two-players" | "review"]` holding `Board`.
-- `topBarTitle` (`src/features/board/topBar.ts`) builds the title. `TopBar` takes an `action` prop, which the review uses for Play again.
+- `topBarTitle` (`src/features/board/topBar.ts`) builds the title. `TopBar` has ← Home and the title only; the review's Play again is in its Moves card foot.
 - The Two players names come from `src/game/players.ts`.
 - Size: `squareSizeFor` (`boardSize.ts`) gives 39, 52 or 78 px squares. From 992 px up, the board column and a 380 px sidebar sit side by side; below that they stack.
 - No Stockfish worker, WASM or book is requested on home. `liemOpponent.ts` loads through a dynamic `import()` once a vs-Liem game starts.

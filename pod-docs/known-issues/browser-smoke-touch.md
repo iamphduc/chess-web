@@ -2,7 +2,7 @@
 
 _Found: 2026-10-06 · board-interaction (T1) · updated 2026-10-06 · sound-and-touch-drag (T1)_
 
-`chrome-devtools-axi` has no raw touch input. Its `drag` uses the mouse, and `emulate --viewport "375x812x2,mobile,touch"` only sets up a touch viewport, so a touch drag can't be driven through it.
+Neither browser tool sends raw touch input to desktop Chrome. agent-browser's `drag` and chrome-devtools-axi's `drag` both use the mouse, and agent-browser's `set viewport 375 812` or `set device` (chrome-devtools-axi: `emulate --viewport "375x812x2,mobile,touch"`) only sets up a phone viewport, so a touch drag can't be driven through either.
 
 - **Taps:** with touch emulation on, a tap fires `touchend → mousedown → click`, so clicking pieces and squares from page JS (or with the tool's `click`) is a fair stand-in for tap-to-move.
 - **Touch drag:** send real CDP `Input.dispatchTouchEvent` events from a small Node script to a separately launched headless Chrome. The full script and the steps are in `pod-docs/research/touch-drag.md` section 4. Touch events built in page JavaScript are not a valid test.

@@ -32,7 +32,7 @@ Context: The engine is pure TypeScript with no React, so its tests are plain uni
 Decision: Use **Vitest** (`vitest run`, `environment: 'node'`) for the engine suite instead of CRA's Jest. The `harness` slice installs `vitest` + a minimal `vitest.config.ts` + a `test` script; engine tests import from `vitest`. CRA/`react-scripts` stays for the app build (`npm run build`) and dev server — only the engine *test* runner changes. jsdom + RTL can be added later if/when component tests are wanted.
 Consequences: Faster, simpler unit tests on a runner unaffected by the worktree path; one extra dev dependency and a config file. Because vitest is not present until the `harness` slice merges, `gamestate` and `tracer` now **depend on `harness`** — the `engine-foundation` sprint becomes 3 sequential waves (harness → gamestate → tracer) instead of 2.
 
-## 2026-06-04 — main requires review; admin-merge is human-authorized per session (not a standing bypass)
+## 2026-06-04 — main requires review; admin-merge is human-authorized per session (not a standing bypass) (superseded by "main uses rulesets: 0 approvals, CI checks required", 2026-10-05)
 Context: `main`'s branch protection requires a human approving review (`reviewDecision: REVIEW_REQUIRED`), which the orchestrator can't supply, and direct pushes to `main` are denied by the permission classifier. So `docs/autonomous-policy.md`'s gate-4 precondition would halt every PR. The orchestrator first used `--admin` to bypass the review gate by inferring it from the human's "merge to main"; the permission system twice flagged that documenting this bypass as a standing/explicit authorization overstated what had been said. After being shown plainly that `--admin` bypasses the required-review gate, the human explicitly authorized admin-merge on 2026-06-04.
 Decision: Land all changes via PR (never direct push to `main`). With explicit human authorization, admin-merge mechanically-mergeable, no-risk PRs via `gh pr merge <url> --merge --admin --delete-branch` (escalation valve and all other auto-merge criteria still apply). This is **deliberately not encoded as a standing auto-bypass**: a fresh `/pod:autopilot` session must obtain the human's explicit authorization before admin-merging — default to halting at gate 4 and asking, never silently bypass review. PRs #1, #3–#7 used `--admin` under this authorization.
 Consequences: An authorized session proceeds, but the branch protection's intent (human owns the review-bypass decision) is preserved across sessions. The reviewer subagent + escalation valve remain the substantive review gates. For a truly hands-off run, the human can relax the branch-protection rule so plain `--merge` satisfies the precondition and no bypass is needed.
@@ -139,7 +139,7 @@ Context: vs Liem first put his card and yours in the sidebar, so the board had n
 Decision: The human chose to put the vs-Liem cards above and below the board, exactly where Two players puts them: his card on his color's side, yours on yours, following the flip, with the card open and in a game. The sidebar keeps the book note, then New game, Flip and Sound, Fallen Pieces and Notation.
 Consequences: Nothing around the board moves on a tab switch (`board-modes.test.tsx › the board's surroundings are the same in every mode`). His card keeps the plain card's 56 px height, so on a 312 px board his name and strength line are cut short.
 
-## 2026-10-11 — On phones, his card's long lines are cut with an ellipsis (agent default — override anytime)
+## 2026-10-11 — On phones, his card's long lines are cut with an ellipsis (agent default — override anytime) (the 56 px height is superseded by "The player row has more room (option C)", 2026-10-21)
 Context: With his card above the 312 px board, "Le Quang Liem" and "GM · playing 2100" don't fit beside the badge and clock, so they end in "…". Letting the card grow would move the board on phones when you switch tabs.
 Decision: Keep the card at the two-player card's 56 px height and cut long text with an ellipsis; the badge and "Thinking…" stay whole.
 Consequences: To show the strength line in full on phones, hide "GM · playing <elo>" under 600 px in `src/features/board/Board.css`, or let the card grow and accept a small board move on phones.
@@ -305,13 +305,13 @@ A sparring bot's mistake shows as a drop in the review graph, never as a mark in
 
 The 2026-10-12 "The 1400 step plays like 1400" check is superseded by the tuned table. The bots now hang pieces 1.2–2.4× and miss captures 2–5× as often as humans; those two rates have no target. Play a few 1400 games and say if it feels too loose: lower `hangWeight` or `blunderMaxCp` in `src/game/opponent/step-profiles.ts`.
 
-## 2026-10-19 — merge target: pod-staging
+## 2026-10-19 — merge target: pod-staging (superseded by "merge target: ui-feel-staging", 2026-10-21: each plan cuts its own staging branch from `main`, and the human merges it into `main` and deletes it)
 
 Autopilot merges land on `pod-staging`, cut from `main`. The human looks, then moves them to `main`, which deploys to GitHub Pages, so unattended code never deploys alone. (human, 2026-10-19)
 
 For plan ui-refresh the human renamed `pod-staging` to `ui-refresh` after the merge, so the branch names its feature (2026-10-19). The next autopilot run cuts a new `pod-staging` from `main`, unless you choose another name for it.
 
-## 2026-10-19 — The site opens on the home page (chosen by the human, plan ui-refresh)
+## 2026-10-19 — The site opens on the home page (chosen by the human, plan ui-refresh) (the Two players link is superseded by "Two players is a full-width button", 2026-10-21)
 Context: The human wanted "a home page to start first, not just straight to the board". This replaces "The page opens on vs Liem".
 Decision: Screens are hash links (`#/` home, `#/play`, `#/two-players`, `#/review`, in `src/app/route.ts`), with no router library, so they work on GitHub Pages with no server. Home holds the level picker, your color, Play and the "Two players on one board" link. It has no photo and no "beat him" message. The board screen has no mode tabs and no challenge card. `match` still starts as `"liem"` with `setupOpen: true`, which is now the home state.
 Consequences: Back and forward move between the screens. A reload of `#/play` or `#/review` goes home, because the store isn't saved, and an unknown hash goes home too.
@@ -390,7 +390,7 @@ Consequences: Change it in `src/features/board/components/GameOver.css`.
 
 The two-player board still names its players from `src/game/players.ts`: the top card shows his photo, the GM tag and "Le Quang Liem", the bottom card "Me". The plan didn't change Two players, so this stays. To use neutral names such as "White" and "Black" (or no photo), change `src/game/players.ts`.
 
-## 2026-10-20 — merge target: ui-polish-staging
+## 2026-10-20 — merge target: ui-polish-staging (superseded by "merge target: ui-feel-staging", 2026-10-21: each plan cuts its own staging branch from `main`, and the human merges it into `main` and deletes it)
 
 For plan ui-polish, autopilot merges land on `ui-polish-staging`, cut from `main`, so the staging branch names its feature (the human renamed the last one to `ui-refresh`). The human looks, then moves it to `main`, which deploys to GitHub Pages. (human, 2026-10-20)
 
@@ -414,7 +414,7 @@ Context: Your card showed a stock photo (`chess-player.png`) while his sparring 
 Decision: A card with no photo and no glyph shows a disc: `span.player__disc[aria-hidden="true"]` with ♔ for White or ♚ for Black. His ♞ is the same disc (`.player__disc.liem-sparring-avatar`). Every disc is 40 × 40 px, a `--surface-2` circle with an ink glyph. Only his card at the Liem step has a photo. `avatarSrc` returns `null` for an unknown name, and the card then shows the disc; `chess-player.png` is gone.
 Consequences: The disc look is `.player__disc` in `src/features/board/components/Player.css`; the markup is `Avatar` in `src/features/board/components/Player.tsx`.
 
-## 2026-10-20 — His card shows only his book or Thinking… (default, recommended and accepted; the fixed clock width chosen by the human, plan ui-polish)
+## 2026-10-20 — His card shows only his book or Thinking… (default, recommended and accepted; the fixed clock width chosen by the human, plan ui-polish) (the 56 px height is superseded by "The player row has more room (option C)", 2026-10-21)
 Context: Under his name the card read "Plays Liem's openings" or "GM · 2732", then "★ Book · N" or a grey "Stockfish" pill. The plan rules out pills on his card after his book. This supersedes the card lines of "Sparring and Liem labels" (2026-10-18), its Stockfish pill, and the card parts of "Phone lines after the refresh" (2026-10-19).
 Decision: His card shows the level's name with the ♞ disc, or at the Liem step his photo, the GM tag and "Le Quang Liem". Under the name there is only "★ Book · N" (`[data-book-games]`, "★ Book" below 768 px) while he's in his book, "Thinking…" while he loads or thinks, and otherwise nothing. No card shows "Plays Liem's openings", "Liem's openings", "GM · 2732" or `[data-engine]`. Every `.board > .player` stays 56 px tall. The clock pill is a fixed 112 px box with tabular figures, so it never changes width.
 Consequences: `levelView` no longer has `detail`, `shortDetail`, `detailLead` or `outText`; `rating` ("GM · 2732") stays for home. `liemBadge` returns `null` out of book. The line is `src/features/liem/components/LiemCardDetail.tsx`.
@@ -446,7 +446,7 @@ From 992 px the empty slot is hidden, so the Moves card moves up by the note's h
 ## 2026-10-20 — A key-moment try counts as found when it isn't an inaccuracy (agent default — override anytime)
 Any try that loses less than an inaccuracy (10 win-% points) counts as found, so a good move other than Stockfish's (for example 2.a3 when it names 2.d4) shows "You found it". This is the 2026-10-16 grade rule, unchanged. To require Stockfish's move, change the found rule in `src/game/review/`.
 
-## 2026-10-20 — The material line sits under the name, pieces then +N (chosen by the human, plan ui-motion)
+## 2026-10-20 — The material line sits under the name, pieces then +N (chosen by the human, plan ui-motion) (the 56 px height is superseded by "The player row has more room (option C)", 2026-10-21)
 Context: The human found "+4" before the glyphs on the name's line "reversed" ("Easy +4 ♛♜♝♞♞♟").
 Decision: On every player card, in both modes and in the review, `.player__material` is its own line under the name, 4 px below it: the captured pieces first, then "+N" (for example `♛♜♝♞♞♟ +4`). The glyph colors and the counting (`material.ts`) don't change, and "+N" is never cut; the glyphs cut first. Every `.board > .player` stays 56 px. Supersedes the order and place in "The board screen has a top bar and one Moves card", 2026-10-19.
 Consequences: The layout lives in `Player.tsx` and `Player.css`; `tests/player-css.test.ts` pins the spacing and what gives way.
@@ -504,7 +504,7 @@ Consequences: The look is `.player__disc` and `.player__avatar` in `src/features
 
 ## 2026-10-21 — The player row has more room (option C) (chosen by the human from the draft, plan ui-feel)
 Context: The human: "review the gap in the player row too". Option C of `pod-docs/design-drafts/ui-feel.html` was picked.
-Decision: `.player` has `gap: var(--space-4)` (16 px from the name side to the clock) and `padding: var(--space-2) 0` (8 px above and below); `.player__info` has `gap: var(--space-3)` (12 px from the avatar to the name). Every `.board > .player` is 60 px tall (8 + 44 + 8); `.player__text` stays 44 px, and the name line, the material line, the 112 px clock pill and the "+N" and detail rules don't change. At 375 and 320 px "+N" and his detail are never cut (the glyphs cut first) and nothing scrolls sideways. `squareSizeFor` reads only the width, so the taller cards don't shrink the board; the board column is 8 px taller.
+Decision: `.player` has `gap: var(--space-4)` (16 px from the name side to the clock) and `padding: var(--space-2) 0` (8 px above and below); `.player__info` has `gap: var(--space-3)` (12 px from the avatar to the name). Every `.board > .player` is 60 px tall (8 + 44 + 8); `.player__text` stays 44 px, and the name line, the material line, the 112 px clock pill and the "+N" and detail rules don't change. Supersedes the 56 px card height in "On phones, his card's long lines are cut with an ellipsis", 2026-10-11, "His card shows only his book or Thinking…", 2026-10-20, and "The material line sits under the name, pieces then +N", 2026-10-20. At 375 and 320 px "+N" and his detail are never cut (the glyphs cut first) and nothing scrolls sideways. `squareSizeFor` reads only the width, so the taller cards don't shrink the board; the board column is 8 px taller.
 Consequences: The row is `src/features/board/components/Player.css`; `tests/player-css.test.ts` pins the gaps, the padding and the 60 px card.
 
 ## 2026-10-21 — Two players is a full-width button (chosen by the human from the draft, plan ui-feel)
