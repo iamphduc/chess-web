@@ -111,7 +111,8 @@ describe("moves", () => {
     const wins = [...FLAT];
     wins[2] = 90; // his ply 1 lifts your win from 50 to 90: he lost 40 points
     wins[4] = 90;
-    wins[6] = 75; // his ply 5: 90 → 75 for you, he lost 15
+    wins[5] = 60;
+    wins[6] = 75; // his ply 5: 60 → 75 for you, he lost 15
     wins[7] = 75;
     wins[8] = 75; // his ply 7 holds: no grade
     const model = buildReview(input({ evals: evalsFrom(wins) }));
@@ -138,8 +139,7 @@ describe("moves", () => {
   });
 
   it("grades his plies as Black's moves when you play Black", () => {
-    const wins = [...FLAT];
-    wins[1] = 90; // his ply 0 (White) lifts your win from 50 to 90
+    const wins = POS.map((_, i) => (i >= 1 ? 90 : 50)); // his ply 0 (White) lifts your win from 50 to 90
     const model = buildReview(input({ humanColor: "black", evals: evalsFrom(wins, "black") }));
     expect(model.moves[0]).toMatchObject({ byHuman: false, grade: "blunder" });
     expect(model.counts).toEqual({ inaccuracy: 0, mistake: 0, blunder: 0 });
