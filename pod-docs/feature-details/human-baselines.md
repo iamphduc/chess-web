@@ -18,10 +18,11 @@
 
 ## Watch out
 - The file holds no usernames, game ids, game dates or moves, and a test checks its shape. Keep it that way.
-- **`--levels N` merges into the file:** the levels it measured are replaced, the others stay, in ascending order. A run with no `--levels` writes the whole file. A missing or unreadable file starts empty. A level with no games kept leaves its old entry. The header (`generated`, `skipPlies`) comes from the latest run, so mixing `--skip-plies` values across partial runs gives levels graded differently; rerun all levels after changing it.
+- **`--levels N` merges into the file:** the levels it measured are replaced, the others stay, in ascending order. A run with no `--levels` writes the whole file. A missing or unreadable file starts empty. A level with no games kept leaves its old entry. In the summary, each level the file kept from an earlier run (outside `--levels`, or in it with no games kept) ends with ` (kept from the saved file)`; a full run marks nothing. The read-merge-write step is `saveBaseline`, tested with a fake file. The header (`generated`, `skipPlies`) comes from the latest run, so mixing `--skip-plies` values across partial runs gives levels graded differently; rerun all levels after changing it.
 - The rates are mostly blitz (rapid is 47/23/9/19/7/2 of 150, from 1400 up to 2500), so they carry time-pressure mistakes. The 75 % target allows for some of that.
 - `chess.js` is used only under `scripts/`, never in the app.
 
 ## History
+- 2026-10-21 · tidy · the save step moves into the tested `saveBaseline`; the summary marks levels kept from the saved file
 - 2026-10-20 · fix · `--levels` merges into the saved file instead of replacing it
 - 2026-10-18 · sparring-ladder · `npm run baseline`, `rates.ts`, first committed baselines (150 games a level) · [report](../reports/sparring-ladder.html), [PR #79](https://github.com/iamphduc/liem-sparring/pull/79)
