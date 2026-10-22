@@ -2,9 +2,9 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { PieceDragImage, previewSize } from "../components/PieceDragPreview";
+import * as preview from "../components/PieceDragPreview";
+import { PieceDragImage } from "../components/PieceDragPreview";
 import { PieceType } from "../../../game/piece-type";
-import { SQUARE_SIZE_MD, SQUARE_SIZE_XL, SQUARE_SIZE_XS } from "../../../constants";
 
 describe("PieceDragImage", () => {
   it("drag image draws the piece at the square size", () => {
@@ -33,20 +33,8 @@ describe("PieceDragImage", () => {
   });
 });
 
-describe("previewSize", () => {
-  // Media query results at a given viewport width, as Board.tsx asks them.
-  const at = (width: number) => previewSize(width >= 768, width >= 1200);
-
-  it("preview size follows the board breakpoints", () => {
-    expect(at(375)).toBe(SQUARE_SIZE_XS);
-    expect(at(767)).toBe(SQUARE_SIZE_XS);
-    expect(at(768)).toBe(SQUARE_SIZE_MD);
-    expect(at(1199)).toBe(SQUARE_SIZE_MD);
-    expect(at(1200)).toBe(SQUARE_SIZE_XL);
-    expect(at(1920)).toBe(SQUARE_SIZE_XL);
-  });
-
-  it("the wide query wins, as in Board.tsx", () => {
-    expect(previewSize(false, true)).toBe(SQUARE_SIZE_XL);
+describe("PieceDragPreview module", () => {
+  it("preview module has no size helper of its own", () => {
+    expect(Object.keys(preview).sort()).toEqual(["PieceDragImage", "PieceDragPreview"]);
   });
 });

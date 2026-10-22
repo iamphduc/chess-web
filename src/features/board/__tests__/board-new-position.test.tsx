@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { createAppStore } from "app/store";
 import { uciToMove } from "game/opponent/position";
-import { newLiemGame, replayLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
+import { goHome, replayLiemGame, startLiemGame, switchMode } from "features/liem/liemActions";
 import { setColorPick } from "features/liem/matchSlice";
 import { clickSquare, playOpponentMove, reset } from "../BoardSlice";
 import { toggleFlip } from "../viewSlice";
@@ -135,7 +135,7 @@ describe("each game has its own piece layout ids", () => {
     seen.push(layoutId(store, "a1"));
     store.dispatch(replayLiemGame());
     seen.push(layoutId(store, "a1"));
-    store.dispatch(newLiemGame());
+    store.dispatch(goHome());
     store.dispatch(startLiemGame());
     seen.push(layoutId(store, "a1"));
     store.dispatch(switchMode("two-player"));

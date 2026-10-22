@@ -26,8 +26,8 @@ A new game also clears the game's result, turns a pending Resign Confirm back, a
 - That test fakes `setTimeout`, `clearTimeout` and `Date`, so it no longer depends on real time.
 - It mounts `Player` on a small fake DOM written in the test (no jsdom). Its helper skips the disc glyph.
 - Pressing New game while his card says "Thinking…" must never play the stale move.
-- `newLiemGame` is only used by tests now (queue, Someday).
 
 ## History
 - 2026-10-19 · ui-refresh · Reset becomes New game; vs Liem New game replays the level and color; review fix: the clock restarts as Black · [report](../reports/ui-refresh.html), [PR #84](https://github.com/iamphduc/liem-sparring/pull/84), [PR #85](https://github.com/iamphduc/liem-sparring/pull/85)
 - 2026-10-20 · ui-polish · New game on the game-over card; a new game clears the result, the resign confirm and the note slot · [report](../reports/ui-polish.html), [PR #91](https://github.com/iamphduc/liem-sparring/pull/91)
+- 2026-10-21 · tidy · Removed the unused `newLiemGame`; `goHome` does the same
